@@ -37,10 +37,17 @@ case class GridLoadAds(
 
 /** Клик по карточке в плитке.
   *
-  * @param nodeId id карточки-узла, по которой кликнули.
+  * @param gridKey Указатель на кликнутую карточку.
+  *                Может отсутствовать в дереве плитки, и тогда используется nodeId.
+  * @param adId id фокусируемой рекламной карточки, если gridPtr отсутствует.
   * @param noOpen Не раскрывать указанную карточку, а только проскроллить к ней.
   */
-case class GridBlockClick(nodeId: String, noOpen: Boolean = false)
+case class GridBlockClick(
+                           gridPath   : Option[List[GridAdKey_t]],
+                           gridKey    : Option[GridAdKey_t],
+                           adId       : Option[String]    = None,
+                           noOpen     : Boolean           = false,
+                         )
   extends IGridAction
   with IScApiRespReason
 

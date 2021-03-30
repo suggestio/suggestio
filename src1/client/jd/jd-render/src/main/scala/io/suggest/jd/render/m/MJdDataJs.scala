@@ -2,6 +2,7 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.common.html.HtmlConstants._
+import io.suggest.jd.tags.MJdTagNames
 import io.suggest.jd.{MJdData, MJdDoc}
 import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
@@ -45,7 +46,18 @@ object MJdDataJs {
 
   def doc      = GenLens[MJdDataJs](_.doc)
   def edges    = GenLens[MJdDataJs](_.edges)
-  def title = GenLens[MJdDataJs]( _.title )
+  def title    = GenLens[MJdDataJs]( _.title )
+
+
+  implicit final class JdDataJsExt( private val jdDataJs: MJdDataJs ) extends AnyVal {
+
+    /** Открытая карточка подразумевает, что она содержит документ с блоками.
+      * false значит, что тут только main-блок и без оборачивающего документа.
+      */
+    def isOpened: Boolean =
+      jdDataJs.doc.template.rootLabel.name ==* MJdTagNames.DOCUMENT
+
+  }
 
 }
 

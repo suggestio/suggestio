@@ -8,7 +8,7 @@ import io.suggest.es.model.{EsModelDi, MEsInnerHitsInfo, MEsNestedSearch, MEsUuI
 import io.suggest.es.search.MRandomSortData
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.tags.JdTag
-import io.suggest.n2.edge.{MPredicate, MPredicates}
+import io.suggest.n2.edge.{MEdgeFlags, MPredicate, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{IMNodes, MNode, MNodeFields, MNodeTypes}
@@ -461,9 +461,8 @@ trait ScAdsTile
             brArgs.mad.edges
               .withPredicateIter( MPredicates.Receiver, MPredicates.TaggedBy )
               .exists { medge =>
-                // Сначала проверяем flag - это O(1). Перестановка мест слагаемых для оптимизации.
-                (medge.info.flag contains true) &&
-                (medge.nodeIds contains nodeId.id)
+                (medge.nodeIds contains nodeId.id) &&
+                (medge.info.flagsMap contains MEdgeFlags.AlwaysOpened)
               }
           }
 

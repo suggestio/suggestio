@@ -21,10 +21,10 @@ object SysMdrUtil {
   def mkJdRuntime(docs: LazyList[MJdDoc],
                   jdRuntimeOpt: Option[MJdRuntime] = None): MJdRuntime = {
     val jdRuntime2 = JdUtil
-      .mkRuntime(JD_CONF)
+      .prepareJdRuntime(JD_CONF)
       .docs(docs)
       .prev( jdRuntimeOpt )
-      .result
+      .make
 
     jdRuntimeOpt
       // Не пересобирать JdCss, если args не изменились.

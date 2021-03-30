@@ -93,7 +93,7 @@ class ScRootR (
             mrootProxy.wrap(_.index)( welcomeR.component.apply ),
 
             // Рендер плитки карточек узла:
-            mrootProxy.wrap( _.grid )( gridR.component.apply )( implicitly, MGridS.MGridSFastEq ),
+            mrootProxy.wrap( _.grid )( gridR.component.apply ),
           )
 
           s.isRenderScC { isRenderSomeProxy =>

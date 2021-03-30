@@ -108,7 +108,7 @@ class DocEditAh[M](
           .set(jdDoc2)
 
         if (runtime) {
-          val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
+          val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).make
           modAccF = modAccF andThen (MJdArgs.jdRuntime set jdRuntime2)
         }
 
@@ -153,7 +153,7 @@ class DocEditAh[M](
           .set( jdDoc2 ) andThen
         MJdArgs.jdRuntime.set(
           mkJdRuntime2(jdDoc2, jdArgs0.conf, jdRuntime1)
-            .result
+            .make
         )
       )
     )( v0 )
@@ -224,7 +224,7 @@ class DocEditAh[M](
           ) andThen
           MJdArgs.jdRuntime.set(
             mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-              .result
+              .make
           ) andThen
           MJdArgs.renderArgs
             .composeLens( MJdRenderArgs.selPath )
@@ -393,7 +393,7 @@ class DocEditAh[M](
               ) andThen
               MJdArgs.jdRuntime.set(
                 mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                  .result
+                  .make
               )
             )
           ) andThen
@@ -650,7 +650,7 @@ class DocEditAh[M](
               )
             ) andThen
             MJdArgs.jdRuntime.set(
-              mkJdRuntime(jdDoc2, v2.jdDoc.jdArgs).result
+              mkJdRuntime(jdDoc2, v2.jdDoc.jdArgs).make
             )
           )(v2.jdDoc.jdArgs)
 
@@ -857,7 +857,7 @@ class DocEditAh[M](
           .composeLens( MJdDataJs.doc )
           .set( jdDoc2 ) andThen
         MJdArgs.jdRuntime.set(
-          mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
+          mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).make
         )
       )(v0.jdDoc.jdArgs)
 
@@ -904,7 +904,7 @@ class DocEditAh[M](
           val jdArgs0 = v0.jdDoc.jdArgs
           val jdArgs2 = jdArgs0.copy(
             data        = (MJdDataJs.doc set jdDoc2)( jdArgs0.data ),
-            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0).result,
+            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0).make,
             renderArgs  = (MJdRenderArgs.selPath set None)( jdArgs0.renderArgs ),
           )
           val v2 = (
@@ -1124,7 +1124,7 @@ class DocEditAh[M](
         .modify { jdArgs0 =>
           jdArgs0.copy(
             data        = MJdDataJs.doc.set(jdDoc2)( jdArgs0.data ),
-            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0).result,
+            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0).make,
             renderArgs  = (
               MJdRenderArgs.selPath
                 .set( tpl2.nodeToPath( loc2.getLabel ) ) andThen
@@ -1273,7 +1273,7 @@ class DocEditAh[M](
           ) andThen
           MJdArgs.jdRuntime.set {
             mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-              .result
+              .make
           }
         )(v0.jdDoc.jdArgs)
 
@@ -1363,7 +1363,7 @@ class DocEditAh[M](
                 .set(jdDoc2) andThen
               MJdArgs.jdRuntime.set(
                 mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                  .result
+                  .make
               )
             )(v0)
 
@@ -1456,7 +1456,7 @@ class DocEditAh[M](
                   .set( jdDoc2 ) andThen
                 MJdArgs.jdRuntime.set(
                   mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                    .result
+                    .make
                 )
               ) andThen
             MDocS.editors
@@ -1534,7 +1534,7 @@ class DocEditAh[M](
 
         if (isQdBl) {
           jdArgsModF = jdArgsModF andThen MJdArgs.jdRuntime
-            .set( mkJdRuntime(jdDoc2, jdArgs0).result )
+            .set( mkJdRuntime(jdDoc2, jdArgs0).make )
         }
         // else - css можно не обновлять, т.к. там просто поменяется порядок стилей без видимых изменений.
 
@@ -1574,7 +1574,7 @@ class DocEditAh[M](
             .set( jdDoc2 ) andThen
           MJdArgs.jdRuntime.set(
             mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-              .result
+              .make
           )
         )(v0.jdDoc.jdArgs)
 
@@ -1650,7 +1650,7 @@ class DocEditAh[M](
                 .set( jdDoc2 ) andThen
               MJdArgs.jdRuntime.set(
                 mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                  .result
+                  .make
               )
             )( v0 )
 
@@ -1798,7 +1798,7 @@ class DocEditAh[M](
           .set( tpl2.nodeToPath( newStripTree.rootLabel ) ) andThen
         MJdArgs.jdRuntime.set(
           mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-            .result
+            .make
         )
       )(v0.jdDoc.jdArgs)
 
@@ -1831,7 +1831,7 @@ class DocEditAh[M](
           .set( conf2 ) andThen
         MJdArgs.jdRuntime.set(
           mkJdRuntime2(jdArgs0.data.doc, conf2, jdArgs0.jdRuntime)
-            .result
+            .make
         )
       )(jdArgs0)
 
@@ -2040,7 +2040,7 @@ object DocEditAh {
     mkJdRuntime2(jdDoc, jdArgs.conf, jdArgs.jdRuntime)
   def mkJdRuntime2(jdDoc: MJdDoc, jdConf: MJdConf, jdRuntime0: MJdRuntime) = {
     JdUtil
-      .mkRuntime( jdConf )
+      .prepareJdRuntime( jdConf )
       .docs( jdDoc )
       .prev( jdRuntime0 )
   }

@@ -96,13 +96,16 @@ final case class MJdTagId(
   with IHashCodeLazyVal
 {
 
-  override lazy val toString: String = {
+  def toStringItemsAcc: List[Any] = {
     var acc: List[Any] = selPathRev
     for (bexp <- blockExpand)
       acc ::= bexp.value
     for (id <- nodeId)
       acc ::= id
-    acc.mkString( HtmlConstants.MINUS )
+    acc
   }
+
+  override lazy val toString: String =
+    toStringItemsAcc.mkString( HtmlConstants.MINUS )
 
 }

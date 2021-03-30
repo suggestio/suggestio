@@ -49,7 +49,7 @@ object Lists {
 
 
   /**
-   * Тоже самое для mutable-словаря. Стоит заменить это добро на нормальный вызов с collections.MapLike и манифестами.
+   * mergeMaps() для mutable-словаря. Стоит заменить это добро на нормальный вызов с collections.MapLike и манифестами.
    * @return
    */
   def mergeMutableMaps[K,V](ms: mutable.Map[K,V] *)(f: (K,V,V) => V): mutable.Map[K,V] = {
@@ -74,6 +74,27 @@ object Lists {
     }
   }
 
+  /** Поиск общего префикса между двумя списками.
+    *
+    * @param l1 Список 1.
+    * @param l2 Список 2.
+    * @return Nil, если общего префикса нет.
+    *         Иначе - наибольший общий префикс с исходном порядке.
+    */
+  def largestCommonPrefix[T: UnivEq](l1: List[T], l2: List[T]): List[T] =
+    _largestCommonPrefixRevAcc(l1, l2, Nil)
+
+  @tailrec private def _largestCommonPrefixRevAcc[T: UnivEq](
+                                                              l1: List[T],
+                                                              l2: List[T],
+                                                              prefixRev0: List[T]): List[T] = {
+    if (l1.nonEmpty && l2.nonEmpty && l1.head ==* l2.head) {
+      _largestCommonPrefixRevAcc( l1.tail, l2.tail, l1.head :: prefixRev0 )
+    } else {
+      prefixRev0.reverse
+    }
+  }
+
 
   /**
    * Поиск общего хвоста между двумя списками одинаковой длины.
@@ -81,18 +102,19 @@ object Lists {
    * @param l1 Один список.
    * @param l2 Другой список.
    * @tparam T Тип элементов в списках.
-   * @return Общий хвост. Если такого нет, то будет Nil. Если длины списков разные, то IllegialArgumentException.
+   * @return Общий хвост.
+   *         Если такого нет, то будет Some(Nil).
+   *         Если длины списков различаются, то None.
    */
-  def getCommonTail[T: UnivEq](l1: List[T], l2: List[T]): List[T] = {
+  @tailrec def largestCommonTailSameLen[T: UnivEq](l1: List[T], l2: List[T]): List[T] = {
     if (l1 ==* l2) {
       l1
     } else if (l1.isEmpty || l2.isEmpty) {
       throw new IllegalArgumentException("List arguments must have same length. Rests are: " + l1 + " and " + l2)
     } else {
-      getCommonTail(l1.tail, l2.tail)
+      largestCommonTailSameLen(l1.tail, l2.tail)
     }
   }
-
 
 
   /**
@@ -103,13 +125,13 @@ object Lists {
    * @return Наибольшая общая под-последовательность или Nil, если ничего не найдено.
    *         Если найденная подпоследовательность состоит из одного элемента, то тоже будет Nil.
    */
-  def findLCS[T](a: List[T], b: List[T]): List[T] = {
+  def largestCommonSeq[T](a: List[T], b: List[T]): List[T] = {
     val aLen = a.size
     val bLen = b.size
     if (aLen >= bLen) {
-      findLCS1(a, b, bLen)
+      largestCommonSeq1(a, b, bLen)
     } else {
-      findLCS1(b, a, aLen)
+      largestCommonSeq1(b, a, aLen)
     }
   }
 
@@ -123,7 +145,7 @@ object Lists {
    * @return Наибольшая общая подпоследовательность в исходном порядке.
    *         Если найденная подпоследовательность состоит из одного элемента, то тоже будет Nil.
    */
-  def findLCS1[T](longer: List[T], shorter: List[T], shorterSize: Int): List[T] = {
+  def largestCommonSeq1[T](longer: List[T], shorter: List[T], shorterSize: Int): List[T] = {
     val minSliceLen = 2
     // Отбрасываем головы от shorter-списка (без мусора) и дергаем containsSlice().
     @tailrec def shortenHeads(slice:List[T], sliceLen:Int): List[T] = {
@@ -183,7 +205,7 @@ object Lists {
    * @tparam T Тип элементов массивов.
    * @return Непрерывная общая под-последовательность элементов или Nil, если ничего общего не найдено.
    */
-  def findRaggedLCS[T: UnivEq](x: Array[T], y: Array[T]): List[T] = {
+  def raggedLargestCommonSeq[T: UnivEq](x: Array[T], y: Array[T]): List[T] = {
     var i = 0
     var j = 0
     /* initialize the n x m matrix B and C for dynamic programming

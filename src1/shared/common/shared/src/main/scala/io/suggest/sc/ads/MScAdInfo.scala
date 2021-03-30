@@ -7,6 +7,7 @@ import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -35,6 +36,10 @@ object MScAdInfo extends IEmpty {
         { matchInfos => Option.when( matchInfos.nonEmpty )( matchInfos ) }
       )
   )(apply, unlift(unapply))
+
+  def canEditOpt = GenLens[MScAdInfo](_.canEditOpt)
+  def flags = GenLens[MScAdInfo](_.flags)
+  def matchInfos = GenLens[MScAdInfo](_.matchInfos)
 
 }
 

@@ -26,10 +26,11 @@ class MEdgeInfoSpec extends AnyFlatSpec with PlayJsonTestUtil {
     jsonTest {
       MEdgeInfo(
         dateNi      = Some( OffsetDateTime.now().minusDays(3) ),
-        textNi   = Some("test test 2"),
+        textNi      = Some("test test 2"),
         flag        = Some(true),
-        tags        = Set("test", "vasya", "123"),
-        geoShapes   = List(
+        flags       = MEdgeFlagData( MEdgeFlags.AlwaysOutlined ) :: Nil,
+        tags        = Set.empty + "test" + "vasya" + "123",
+        geoShapes   = (
           MEdgeGeoShape(
             id     = 5,
             glevel = MNodeGeoLevels.NGL_BUILDING,
@@ -37,10 +38,11 @@ class MEdgeInfoSpec extends AnyFlatSpec with PlayJsonTestUtil {
               center  = MGeoPoint(lat = 10.1, lon = 11.2),
               radiusM = Distance(10.55, DistanceUnit.KILOMETERS).meters
             )
-          )
+          ) :: Nil
         ),
-        geoPoints = List(
-          MGeoPoint(-10.1, 20.55)
+        geoPoints = (
+          MGeoPoint(-10.1, 20.55) ::
+          Nil
         )
       )
     }

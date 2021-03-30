@@ -3,10 +3,13 @@ package io.suggest.scalaz
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.msg.ErrorMsgs
 import scalaz.{EphemeralStream, Tree, TreeLoc, Validation, ValidationNel}
+import ScalazUtil.Implicits._
 import japgolly.univeq._
 import scalaz.syntax.apply._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+
+import scala.annotation.tailrec
 
 /**
   * Suggest.io
@@ -146,6 +149,10 @@ object ZTreeUtil {
 
   }
 
+  def toIterator[A](ztree: Tree[A]): Iterator[A] =
+    ztree.flatten.iterator
+
+
   /** Цикл погружения в TreeLoc и получения оттуда.
     *
     * @param loc TreeLoc корня или текущего под-дерева.
@@ -170,20 +177,46 @@ object ZTreeUtil {
   }
 
 
+  implicit final class TreeLocIndexedOps[A](private val treeLocInx: TreeLoc[(A, Int)]) extends AnyVal {
+
+    /** Аналог TreeLocOps.toNodePath, но использует индексы узлов дерева вместо вычисления length.
+      * O(n), где n - высота дерева.
+      */
+    def toNodePathByIndex: NodePath_t = {
+      // TODO Opt тут лишнее действие - добавление в акк и удаление самого верхнего элемента
+      val l0 = treeLocInx.getLabel._2
+      // Пройтись вверх по цепочке родительских узлов.
+      treeLocInx
+        .parents
+        .foldLeft( l0 :: Nil ) {
+          case (acc, (_, (_, index), _)) =>
+            index :: acc
+        }
+        // Отбросить 0 с нулевого уровня.
+        .tail
+    }
+
+  }
 
   implicit final class TreeLocOps[A](private val treeLoc: TreeLoc[A]) extends AnyVal {
 
-    def toNodePath: NodePath_t = {
+    def toNodePathWithLeadingZero: NodePath_t = {
+      // TODO Opt тут лишнее действие - добавление в акк и удаление самого верхнего элемента
       val l0 = treeLoc.lefts.length
       // Пройтись вверх до самой макушки.
-      val pathWithTop0 = treeLoc
+      treeLoc
         .parents
         .foldLeft[NodePath_t](l0 :: Nil) {
           case (acc, (pLefts, _, _)) =>
             pLefts.length :: acc
         }
-      // Отбросить 0 с нулевого уровня.
-      pathWithTop0.tail
+    }
+
+    /** O(n*x), где n - высота дерева, x - среднее кол-во элементов слева на каждом этаже. */
+    def toNodePath: NodePath_t = {
+      toNodePathWithLeadingZero
+        // Отбросить постоянный 0 с нулевого уровня.
+        .tail
     }
 
 
@@ -212,6 +245,42 @@ object ZTreeUtil {
           .parent
           .flatMap( _.findUp(f) )
       }
+    }
+
+    def onlyLowest: List[TreeLoc[A]] = {
+
+      // Сборка сразу в прямом порядке:
+      val accBuilder = List.newBuilder[TreeLoc[A]]
+
+      // Рекурсивный обход вглубь и вправо.
+      @tailrec def __walk(loc: TreeLoc[A], canAcc: Boolean, canGoDown: Boolean = true): Unit = {
+        if (canGoDown && loc.hasChildren) {
+          // Спускаемся на самый нижний уровень везде и всегда:
+          val chLoc = loc.firstChild.get
+          __walk(chLoc, canAcc = true)
+
+        } else if (!loc.rights.isEmpty) {
+          // Нет дочерних элементов, но есть элементы справа.
+          if (canAcc)
+            accBuilder += loc
+
+          __walk( loc.right.get, canAcc = true )
+
+        } else if (!loc.parents.isEmpty) {
+          // Нет ни дочерних, ни правых элементов. Подняться на уровень вверх.
+          if (canAcc)
+            accBuilder += loc
+
+          __walk( loc.parent.get, canAcc = false, canGoDown = false )
+
+        } else {
+          // do nothing: выход из рекурсии на root-элементе дерева. Игнорируем canAcc, т.к. root-элемент обычно бесполезен.
+        }
+      }
+
+      __walk( treeLoc, canAcc = false )
+
+      accBuilder.result()
     }
 
   }
@@ -246,7 +315,6 @@ object ZTreeUtil {
   implicit final class TreeOps[A]( private val tree: Tree[A] ) extends AnyVal {
 
     def filter(f: A => Boolean): Option[Tree[A]] = {
-      import ScalazUtil.Implicits._
       Option.when(f(tree.rootLabel)) {
         Tree.Node(
           root = tree.rootLabel,

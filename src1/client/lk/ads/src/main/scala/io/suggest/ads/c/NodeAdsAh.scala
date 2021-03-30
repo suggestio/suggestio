@@ -196,7 +196,7 @@ class NodeAdsAh[M](
             ads         = v0.ads.ready(ads2),
             hasMoreAds  = respAds.lengthCompare(LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST) >= 0,
             jdRuntime   = JdUtil
-              .mkRuntime(confRO.value.jdConf)
+              .prepareJdRuntime(confRO.value.jdConf)
               .docs(
                 ads2
                   .iterator
@@ -204,7 +204,7 @@ class NodeAdsAh[M](
                   .to( LazyList )
               )
               .prev( v0.jdRuntime )
-              .result,
+              .make,
           )
         }
       )

@@ -5,8 +5,9 @@ import diode.data.Pot
 import diode.{ActionResult, Effect, ModelRO}
 import io.suggest.grid.GridScrollUtil
 import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
-import io.suggest.jd.{MJdDoc, MJdTagId}
+import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.MJdDataJs
+import io.suggest.jd.render.u.JdUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.dia.err.MScErrorDia
@@ -16,9 +17,11 @@ import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -40,14 +43,17 @@ final class GridRespHandler(
     ctx.m.reason.isInstanceOf[GridLoadAds]
   }
 
+  private def _scRoot_grid_core_ads_adPtrs_LENS = MScRoot.grid
+    .composeLens( MGridS.core )
+    .composeLens( MGridCoreS.ads )
+    .composeLens( MGridAds.adsTreePot )
+
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
-    Some( ctx.value0.grid.core.ads )
+    Some( _scRoot_grid_core_ads_adPtrs_LENS.get( ctx.value0 ) )
   }
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
-    val lens = MScRoot.grid
-      .composeLens(MGridS.core)
-      .composeLens( MGridCoreS.ads )
+    val lens = _scRoot_grid_core_ads_adPtrs_LENS
 
     val v2 = (lens modify (_.fail(ex)) )( ctx.value0 )
 
@@ -71,14 +77,15 @@ final class GridRespHandler(
     val gridResp = ra.ads.get
     val g0 = ctx.value0.grid
 
-    val mGla = Some( ctx.m.reason ).collect {
+    // Нужен ли тут Some(), если в isMyReqReason() запрещает иные варианты?
+    val loadAdsAction = Some( ctx.m.reason ).collect {
       case gla: GridLoadAds => gla
     }
 
-    val isSilentOpt = mGla.flatMap(_.silent)
+    val isSilentOpt = loadAdsAction.flatMap(_.silent)
     val qs = ctx.m.qs
 
-    val isGridPatching = mGla.exists(_.onlyMatching.nonEmpty)
+    val isGridPatching = loadAdsAction.exists(_.onlyMatching.nonEmpty)
 
     // Если происходит частичный патчинг выдачи, то это не clean-заливка:
     val isCleanLoad = !isGridPatching &&
@@ -88,15 +95,19 @@ final class GridRespHandler(
     val reusableAdsMap: Map[String, MScAdData] = {
       if (
         isCleanLoad &&
-          (isSilentOpt contains true) &&
-          gridResp.ads.nonEmpty &&
-          g0.core.ads.nonEmpty
+        (isSilentOpt contains[Boolean] true) &&
+        gridResp.ads.nonEmpty &&
+        g0.core.ads.adsTreePot.nonEmpty
       ) {
         // Есть условия для сборки карты текущих карточек:
-        g0.core.ads
-          .iterator
-          .flatten
-          .zipWithIdIter[String]
+        (for {
+          adsTree   <- g0.core.ads.adsTreePot.iterator
+          scAd      <- adsTree.flatten.iterator
+          jdData    <- scAd.data.iterator
+          nodeId    <- jdData.doc.tagId.nodeId.iterator
+        } yield {
+          nodeId -> scAd
+        })
           .to( Map )
       } else {
         // Сборка карты текущих карточек не требуется в данной ситуации.
@@ -104,19 +115,22 @@ final class GridRespHandler(
       }
     }
 
+    // Счётчик ключей элементов плитки.
+    var idCounterNext = g0.core.ads.idCounter
+
     // Подготовить полученные с сервера карточки:
     val newScAds = (for {
       sc3AdData <- gridResp.ads.iterator
-      nodeIdOpt = sc3AdData.jd.doc.tagId.nodeId
     } yield {
       // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
-      (for {
-        nodeId <- nodeIdOpt
+      val scAdData: MScAdData = (for {
+        nodeId <- sc3AdData.jd.doc.tagId.nodeId
         scAd0  <- reusableAdsMap.get( nodeId )
+        if scAd0.data.nonEmpty
       } yield {
         // При focused index ad open, возможна ситуация с focused.pending. Нужно сбросить pending:
-        if (scAd0.focused.isPending)
-          (MScAdData.focused set Pot.empty)(scAd0)
+        if (scAd0.data.isPending)
+          MScAdData.data.modify( _.unPending )(scAd0)
         else
           scAd0
       })
@@ -125,12 +139,42 @@ final class GridRespHandler(
           // Собрать начальное состояние карточки.
           // Сервер может присылать уже открытые карточи - это нормально.
           // Главное - их сразу пропихивать и в focused, и в обычные блоки.
+          val jdJs = MJdDataJs.fromJdData( sc3AdData.jd, sc3AdData.info )
+          val jdDoc0 = sc3AdData.jd.doc
+          val hasSeveralGridItems = jdDoc0.template
+            .gridItemsIter
+            .take(2)
+            .length > 1
+
           MScAdData(
-            main = MJdDataJs.fromJdData( sc3AdData.jd, sc3AdData.info ),
+            data = Pot.empty.ready( jdJs ),
+            gridItems = {
+              (for {
+                itemSubTree <- JdUtil.mkTreeIndexed( jdDoc0 ).gridItemsIter
+                (jdTagId, _) = itemSubTree.rootLabel
+              } yield {
+                val gridKey = idCounterNext
+                idCounterNext += 1
+                MGridItem(
+                  gridKey,
+                  jdDoc = if (hasSeveralGridItems) {
+                    jdDoc0.copy(
+                      template = itemSubTree.map(_._2),
+                      tagId    = jdTagId,
+                    )
+                  } else jdDoc0,
+                )
+              })
+                .toSeq
+            },
+            partialItems = false,
           )
         }
+
+      // Ленивость не имеет смысла, т.к. список будет многократно использоваться ниже по тексту.
+      Tree.Leaf( scAdData )
     })
-      .to( Vector )
+      .to( List )
 
     // Самоконтроль для отладки: Проверить, совпадает ли SzMult между сервером и клиентом?
     //if (gridResp.szMult !=* g0.core.jdConf.szMult)
@@ -138,95 +182,114 @@ final class GridRespHandler(
 
     // Новые (добавляемые) карточки по id.
     lazy val newScAdsById = newScAds
+      .iterator
+      .map(_.rootLabel)
       .zipWithIdIter[String]
       .to( Map )
 
     // Собрать обновлённый Pot с карточками.
-    val ads0 = g0.core.ads
-    val onlyMatchingInfoOpt = mGla
+    val gridAds0 = g0.core.ads
+    val onlyMatchingInfoOpt = loadAdsAction
       .flatMap(_.onlyMatching)
-    val ads2 = ads0.ready {
-      // Записать порядковый номер в scAd.main.doc.tagId.selPath
-      val scAd_jdDataJs_doc_jdId_selPathRev_LENS = MScAdData.main
-        .composeLens( MJdDataJs.doc )
-        .composeLens( MJdDoc.jdId )
-        .composeLens( MJdTagId.selPathRev )
-      /** Добавление в selPathRev порядкового номера карточки с текущим nodeId среди карточек с таким же nodeId. */
-      def _appendSelPathRevDupIndexes(scAds0: Vector[MScAdData], state0: Map[Option[String], Int]): Vector[MScAdData] = {
-        // Добавить порядковый номер на случай повторяющихся id карточек. Повторятся id могут даже внутри newScAds.
-        var state = state0
-        for (scAd <- scAds0) yield {
-          val adId = scAd.nodeId
-          // Определить очередной порядковый номер для карточки с данными id:
-          val index2 = state
-            .get( adId )
-            .fold(0)(_ + 1)
-          state += (adId -> index2)
-          scAd_jdDataJs_doc_jdId_selPathRev_LENS
-            .modify( index2 :: _ )(scAd)
-        }
-      }
 
-      /** Сборка state0 (карты dup-индексов - порядковых номеров среди карточек с одинаковым nodeId)
-        * для _appendSelPathRevDupIndexes() на основе списка имеющихся карточек. */
-      def _buildDupIndexes(scAds0: Iterable[MScAdData]): Map[Option[String], Int] = {
-        scAds0
-          .groupMapReduce( _.nodeId )( scAd_jdDataJs_doc_jdId_selPathRev_LENS.get(_).headOption.getOrElse(0) )( Math.max )
-      }
+    val newScAdsKeyed = (for {
+      (scAd, i) <- newScAds.iterator.zipWithIndex
+      gridKey: GridAdKey_t = gridAds0.idCounter + i
+    } yield {
+      gridKey -> scAd
+    })
+      .to( List )
 
-      (for {
-        ads0 <- ads0.toOption
-        if !isCleanLoad && ads0.nonEmpty
-      } yield {
+    val newScAdPtrsEph = newScAds.toEphemeralStream
+
+    val gridAds2 = (for {
+      adsPtrs0 <- gridAds0.adsTreePot.toOption
+      if !isCleanLoad && !adsPtrs0.subForest.isEmpty
+    } yield {
+      val adsPtrs2 = onlyMatchingInfoOpt.fold {
+        // Без матчинга, без патчинга. Просто докидываем новые карточки в конец списка:
+        Tree.Node(
+          root = adsPtrs0.rootLabel,
+          forest = adsPtrs0.subForest ++ newScAdPtrsEph
+        )
+
+      } { onlyMatchingInfo =>
         // Если активен матчинг, то надо удалить только обновляемые карточки, которые подпадают под матчинг.
         // В рамках текущей реализации, при пропатчивании выдачи, карточки заменяются (добавляются) только в начало.
-        onlyMatchingInfoOpt.fold {
-          // Без матчинга, без патчинга. Просто докидываем новые карточки в конец списка:
-          val newScAds2 = _appendSelPathRevDupIndexes( newScAds, _buildDupIndexes(ads0) )
-          ads0 ++ newScAds2
+        Tree.Node(
+          root = adsPtrs0.rootLabel,
+          forest = {
+            val adsPtrs1 = adsPtrs0
+              .subForest
+              .iterator
+              .filter { scAdDataSubtree =>
+                val scAdData = scAdDataSubtree.rootLabel
+                (for {
+                  scAd <- scAdData.data.toOption
+                } yield {
+                  val isDelete = scAd.info.isMad404 || {
+                    // Проверить данные карточки, чтобы решить, надо ли её удалять отсюда:
+                    // - если карточка содержит критерии и подпадающие, и НЕподпадающие => смотрим по newScAdsById, удаляем если она там есть.
+                    // - если карточка полностью подпадает под критерий отбора => удаляем
+                    // - иначе - карточку оставляем в покое.
+                    val scAdNodeMatches = scAd.info
+                      .matchInfos
+                      .flatMap(_.nodeMatchings)
 
-        } { onlyMatchingInfo =>
-          val ads1 = ads0.filterNot { scAd =>
-            scAd.main.info.isMad404 || {
-              // Проверить данные карточки, чтобы решить, надо ли её удалять отсюда:
-              // - если карточка содержит критерии и подпадающие, и НЕподпадающие => смотрим по newScAdsById, удаляем если она там есть.
-              // - если карточка полностью подпадает под критерий отбора => удаляем
-              // - иначе - карточку оставляем в покое.
-              val scAdNodeMatches = scAd.main.info
-                .matchInfos
-                .flatMap(_.nodeMatchings)
+                    val __isMatches = GridAh._isMatches( onlyMatchingInfo, _ )
 
-              val __isMatches = GridAh._isMatches( onlyMatchingInfo, _ )
+                    // true значит - Карточка полностью удалябельна при обновлении (размещена только в ble-маячке)
+                    val isDrop = scAdNodeMatches.nonEmpty && {
+                      scAdNodeMatches.forall(__isMatches) || {
+                        scAdNodeMatches.exists(__isMatches) &&
+                          // Карточка размещена и в маячке, и как-то ещё, поэтому удалять её можно только
+                          // с целью дедубликации между старыми карточками и добавляемым набором выдачи.
+                          scAd.doc.tagId.nodeId
+                            .fold(false)( newScAdsById.contains )
+                      }
+                    }
+                    isDrop
+                  }
 
-              // true значит - Карточка полностью удалябельна при обновлении (размещена только в ble-маячке)
-              val isDrop = scAdNodeMatches.nonEmpty && {
-                scAdNodeMatches.forall(__isMatches) || {
-                  scAdNodeMatches.exists(__isMatches) &&
-                    // Карточка размещена и в маячке, и как-то ещё, поэтому удалять её можно только
-                    // с целью дедубликации между старыми карточками и добавляемым набором выдачи.
-                    scAd.nodeId.fold(false)( newScAdsById.contains )
-                }
+                  !isDelete
+                })
+                  .getOrElse {
+                    logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = (scAdDataSubtree.rootLabel, g0.core.ads.adsTreePot.iterator.flatMap(_.flatten.iterator).flatMap(_.nodeId).mkString("[", ", ", "]")) )
+                    false
+                  }
               }
-              isDrop
-            }
+              .toList
+
+            newScAdPtrsEph ++ adsPtrs1.toEphemeralStream
           }
+        )
+      }
 
-          // Одна и та же карточка может идти в выдаче несколько раз в разных ипостасях.
-          // Добавить в jdTagId.selPathRev порядковый номер дубликата карточки с учётом уже имеющихся карточек и учитывая предшествующие добавляемые карточки.
-          val newScAds2 = _appendSelPathRevDupIndexes(newScAds, _buildDupIndexes(ads1))
-          newScAds2 ++ ads1
-        }
-      })
-        .getOrElse {
-          // Добавить порядковый номер на случай повторяющихся id карточек. Повторятся id могут даже внутри newScAds.
-          _appendSelPathRevDupIndexes( newScAds, Map.empty )
-        }
-    }
+      // Собрать обновлённый gridAds.
+      gridAds0.copy(
+        idCounter  = idCounterNext,
+        adsTreePot = gridAds0.adsTreePot.ready( adsPtrs2 ),
+      )
+    })
+      .getOrElse {
+        // Чистый запуск. Сохранить только полученные карточки, забыл о предыдущих карточках.
+        gridAds0.copy(
+          adsTreePot = gridAds0.adsTreePot.ready(
+            Tree.Node(
+              gridAds0
+                .adsTreePot
+                .fold( MScAdData.empty )( _.rootLabel ),
+              newScAdPtrsEph,
+            )
+          ),
+          idCounter = idCounterNext,
+        )
+      }
 
-    val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core)
+    val jdRuntime2 = GridAh.mkJdRuntime(gridAds2, g0.core)
     val g2 = g0.copy(
       core = {
-        var gbRes = GridAh.rebuildGrid( ads2, g0.core.jdConf, jdRuntime2 )
+        var gbRes = GridAh.rebuildGrid( gridAds2, g0.core.jdConf, jdRuntime2 )
 
         if (isGridPatching) {
           gbRes = MGridBuildResult.nextRender
@@ -236,13 +299,13 @@ final class GridRespHandler(
 
         g0.core.copy(
           jdRuntime   = jdRuntime2,
-          ads         = ads2,
+          ads         = gridAds2,
           // Отребилдить плитку:
           gridBuild   = gbRes,
         )
       },
       hasMoreAds = {
-        if (mGla.flatMap(_.onlyMatching).isEmpty) {
+        if (loadAdsAction.flatMap(_.onlyMatching).isEmpty) {
           qs.search.limit.fold(true) { limit =>
             gridResp.ads.lengthCompare(limit) >= 0
           }
@@ -268,7 +331,7 @@ final class GridRespHandler(
     var fxAcc = g0.afterUpdate
 
     // Если есть эффекты в самом исходном экшене, то отработать:
-    for (reason <- mGla; fx <- reason.afterLoadFx)
+    for (reason <- loadAdsAction; fx <- reason.afterLoadFx)
       fxAcc ::= fx
 
     // Если patch-запрос выдачи, пришли новые карточки и всё такое, то можно отрендерить системный нотификейшен.
@@ -277,7 +340,10 @@ final class GridRespHandler(
       onlyMatchingInfoOpt.nonEmpty &&
       // Есть хотя бы одна не-404 карточка?
       newScAds.exists { scAdData =>
-        !scAdData.main.info.isMad404
+        !scAdData
+          .rootLabel
+          .data
+          .exists(_.info.isMad404)
       } &&
       // Системно разрешён рендер нотификации в текущем состоянии выдачи.
       isDoOsNotify.value
@@ -286,7 +352,8 @@ final class GridRespHandler(
       val unNotifiedAdIds = newScAdsById -- g0.gNotify.seenAdIds
       // Собрать карточки по которым не было уведомлений (хотя бы одна карточка тут будет):
       val unNotifiedAds = (for {
-        scAd      <- newScAds.iterator
+        scAdTree      <- newScAds.iterator
+        scAd = scAdTree.rootLabel
         adNodeId  <- scAd.nodeId
         if unNotifiedAdIds contains adNodeId
       } yield {

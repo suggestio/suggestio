@@ -16,8 +16,7 @@ trait IRespHandler {
 
   /** Определить, относится ли запрос в целом к данному handler'у.
     *
-    * @param reason Экшен, запустивший запрос к серверу ранее.
-    * @return
+    * @return true, если текущий запрос можно отработать данным контроллером.
     */
   def isMyReqReason(ctx: MRhCtx): Boolean
 

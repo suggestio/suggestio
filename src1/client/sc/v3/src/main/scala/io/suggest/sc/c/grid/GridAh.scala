@@ -4,6 +4,7 @@ import com.github.fisshy.react.scroll.AnimateScroll
 import diode._
 import diode.data.{PendingBase, Pot}
 import io.suggest.ad.blk.BlockPaddings
+import io.suggest.common.coll.Lists
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult, MGridRenderInfo}
@@ -23,15 +24,20 @@ import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.log.Log
+import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.v.styl.ScCss
+import io.suggest.scalaz.NodePath_t
+import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.scalaz.ZTreeUtil.{TreeLocOps, ZTreeOps}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
+import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom
-import scalaz.Tree
+import scalaz.{Tree, TreeLoc}
 
 import scala.util.Success
 
@@ -41,7 +47,7 @@ import scala.util.Success
   * Created: 14.11.17 18:59
   * Description: Утиль контроллера плитки карточек.
   */
-object GridAh {
+object GridAh extends Log {
 
   private def GRID_CONF = MGridCalcConf.EVEN_GRID
 
@@ -63,8 +69,7 @@ object GridAh {
 
 
   /** Выполнение ребилда плитки. */
-  def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
-
+  def rebuildGrid(ads: MGridAds, jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
     /** Конвертация одной карточки в один блок для рендера в плитке. */
     def blockRenderData2GbPayload(blk: JdTag, brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
       // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
@@ -88,45 +93,46 @@ object GridAh {
 
     // Приведение списка карточек к grid-блокам и подблоков обсчёта плитки.
     val itmDatas = (for {
-      scAdData <- ads
+      adsTree <- ads.adsTreePot.iterator
+      scAdDataLoc <- adsTree
+        .loc.onlyLowest
         .iterator
-        .flatten
+      scAdData = scAdDataLoc.getLabel
+      adData <- scAdData.data.iterator
     } yield {
-      scAdData
-        .focOrAlwaysOpened
-        .fold [Tree[MGbBlock]] {
-          // Несфокусированная карточка. Вернуть данные единственного блока.
-          val brd = scAdData.main
-          blockRenderData2GbPayload( brd.doc.template.rootLabel, brd, brd.doc.tagId )
+      if (!adData.isOpened) {
+        // Несфокусированная или не раскрытая карточка. Только один блок:
+        val brd = scAdData.data.get
+        blockRenderData2GbPayload( brd.doc.template.rootLabel, brd, brd.doc.tagId )
 
-        } { fullAdData =>
-          // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
-          Tree.Node(
-            root = {
-              val jdt = fullAdData.doc.template.rootLabel
-              val jdId = fullAdData.doc.tagId
+      } else {
+        // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
+        Tree.Node(
+          root = {
+            val jdt = adData.doc.template.rootLabel
+            val jdId = adData.doc.tagId
 
-              MGbBlock(
-                jdId = jdId,
-                size = GridBuilderUtilJs.gbSizeFromJdt(
-                  jdt       = jdt,
-                  jdRuntime = jdRuntime,
-                  jdConf    = jdConf,
-                  jdId      = jdId,
-                ),
-                jdt = jdt,
-              )
-            },
-            forest = for {
-              tplIndexedTree <- JdUtil
-                .mkTreeIndexed( fullAdData.doc )
-                .subForest
-            } yield {
-              val (subJdId, subJdt) = tplIndexedTree.rootLabel
-              blockRenderData2GbPayload( subJdt, fullAdData, subJdId )
-            },
-          )
-        }
+            MGbBlock(
+              jdId = jdId,
+              size = GridBuilderUtilJs.gbSizeFromJdt(
+                jdt       = jdt,
+                jdRuntime = jdRuntime,
+                jdConf    = jdConf,
+                jdId      = jdId,
+              ),
+              jdt = jdt,
+            )
+          },
+          forest = for {
+            tplIndexedTree <- JdUtil
+              .mkTreeIndexed( adData.doc )
+              .subForest
+          } yield {
+            val (subJdId, subJdt) = tplIndexedTree.rootLabel
+            blockRenderData2GbPayload( subJdt, adData, subJdId )
+          },
+        )
+      }
     })
       .to( LazyList )
 
@@ -142,36 +148,43 @@ object GridAh {
 
 
   /** Сборка аргументов для рендера JdCss. */
-  def mkJdRuntime(ads: Pot[Seq[MScAdData]], g: MGridCoreS): MJdRuntime =
-    mkJdRuntime(ads, g.jdConf, g.jdRuntime)
-  def mkJdRuntime(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MJdRuntime = {
+  def mkJdRuntime(gridAds: MGridAds, g: MGridCoreS): MJdRuntime =
+    mkJdRuntime(gridAds, g.jdConf, g.jdRuntime)
+  def mkJdRuntime(gridAds: MGridAds, jdConf: MJdConf, jdRuntime: MJdRuntime): MJdRuntime = {
     JdUtil
-      .mkRuntime( jdConf )
-      .docs(
-        ads
-          .iterator
-          .flatten
-          .flatMap { adData =>
-            JdUtil.flatGridTemplates( adData.focOrMain )
-          }
+      .prepareJdRuntime( jdConf )
+      .docs {
+        (for {
+          // adPtrsSet: не нужно рендерить стили для карточек, которых нет на экране или которые дублируются в плитке.
+          scAds <- gridAds.adsTreePot.iterator
+          scAdLoc <- scAds
+            .loc.onlyLowest
+            .iterator
+          scAd = scAdLoc.getLabel
+          gridItem <- scAd.gridItems
+        } yield {
+          gridItem.jdDoc
+        })
           .to( LazyList )
-      )
+      }
       .prev( jdRuntime )
-      .result
+      .make
   }
 
 
   /** Эффект скроллинга к указанной карточке. */
+  // TODO Унести на уровень view (в GridR), законнектится на поле MGridS().interactWith для инфы по скроллу.
   def scrollToAdFx(toAd    : MScAdData,
                    gbRes   : MGridBuildResult
                   ): Effect = {
     // Карточка уже открыта, её надо свернуть назад в main-блок.
     // Нужно узнать координату в плитке карточке
     Effect.action {
-      JdUtil.flatGridTemplates( toAd.focOrMain )
+      toAd
+        .gridItems
         .iterator
-        .flatMap { scAd =>
-          gbRes.coordsById.get( scAd.tagId )
+        .flatMap { gridItem =>
+          gbRes.coordsById.get( gridItem.jdDoc.tagId )
         }
         // Взять только самый верхний блок карточки. Он должен быть первым по порядку:
         .nextOption()
@@ -188,27 +201,22 @@ object GridAh {
   }
 
 
-  def saveAdIntoValue(index: Int, newAd: MScAdData, v0: MGridS): MGridS = {
-    MGridS.core
-      .composeLens( MGridCoreS.ads )
-      .set( saveAdIntoAds(index, newAd, v0) )(v0)
-  }
-
-  /** Залить в состояние обновлённый инстанс карточки. */
-  def saveAdIntoAds(index: Int, newAd: MScAdData, v0: MGridS): Pot[Vector[MScAdData]] = {
-    for (ads0 <- v0.core.ads) yield {
-      ads0.updated(index, newAd)
-    }
-  }
-
-
   /** Найти карточку с указанным id в состоянии, вернув её и её индекс. */
-  def findAd(nodeId: String, v0: MGridCoreS): Option[(MScAdData, Int)] = {
-    v0.ads
-      .iterator
-      .flatten
-      .zipWithIndex
-      .find( _._1.nodeId contains[String] nodeId )
+  def findAd(m: GridBlockClick, v0: MGridAds): Option[TreeLoc[MScAdData]] = {
+    v0.adsTreePot
+      .toOption
+      .flatMap { adsTree =>
+        m.gridPath
+          // map+flatten вместо flatMap, чтобы быстрее обнаруживать ошибки неправильных gridPath.
+          .map { gridPath =>
+            adsTree.loc.findByGridKeyPath( gridPath )
+          }
+          .orElse {
+            m.gridKey
+              .map ( adsTree.loc.findByGridKey )
+          }
+          .flatten
+      }
   }
 
 
@@ -256,42 +264,99 @@ object GridAh {
   /** Сброс фокуса у всех карточек, кроме указанной.
     * Указанная карточка - перезаписывается указанным инстансом.
     *
-    * @param index Порядковый номер обновляемой карточки в плитке.
-    * @param scAd2 Обновлённая карточка для индекса.
+    * @param gridKeyOpt Порядковый номер обновляемой карточки в плитке.
     * @param gridCore0 Исходное состояние плитки.
     * @return Обновлённое состояние плитки.
     */
-  def resetFocus(index: Int, scAd2: MScAdData, gridCore0: MGridCoreS): MGridCoreS = {
-    val adsPot2 = for (ads0 <- gridCore0.ads) yield {
-      val emptyPot = Pot.empty[MJdDataJs]
-      ads0
-        .iterator
-        .zipWithIndex
-        .map { case (xad0, i) =>
-          if (i ==* index) {
-            // Раскрыть выбранную карточку.
-            scAd2
-          } else if (xad0.focused !=* emptyPot) {
-            // Скрыть все уже открытые карточки.
-            (MScAdData.focused set emptyPot)(xad0)
-          } else {
-            // Нераскрытые карточки - пропустить без изменений.
-            xad0
-          }
-        }
-        .toVector
-    }
+  def resetFocus(gridKeyOpt: Option[GridAdKey_t], gridCore0: MGridCoreS): MGridCoreS = {
+    // Т.к. фокусировка может быть вложенная, а дерево надо проходить по всем под-уровням, то сначала надо поискать
+    // локацию указанной карточки в дереве, вычислить node path и сравнивать все проходимые элементы дерева
+    // с целевым nodePath, чтобы не ломать линию фокуса.
+    val gridAds2 = MGridAds.adsTreePot.modify {
+      _.map { adsPtrs0 =>
+        (for {
+          // Не трогать фокусировку элемента дерева по указанному пути.
+          // Должен начинаться с корневого 0-элемента, т.к. нижнее дерево
+          keepNodePath <- gridKeyOpt
+            // Nil NodePath_t подразумевает, что надо свернуть карточки вплость до root.subForest.
+            .fold [Option[NodePath_t]] (Some(Nil)) { gridKey =>
+              adsPtrs0
+                .loc
+                .findByGridKey( gridKey )
+                // Получить node path.
+                .map(_.toNodePath)
+            }
+          keepNodePathLen = keepNodePath.length
 
-    val jdRuntime2 = GridAh.mkJdRuntime( adsPot2, gridCore0 )
+        } yield {
+          /** Пройтись по каждому уровню карточек, подредактировав всё дерево.
+            *
+            * @param loc0 Текущая локация в дереве.
+            * @param parentNodePathRev Обратный путь к родительскому узлу.
+            * @param dropFirst Отбросить первый элемент?
+            *                  true на нулевом шаге.
+            *                  А потом - false.
+            *                  toNodePath() всегда отбрасывает 0-элемент от корня дерева, поэтому и тут требуется отбрасывать.
+            * @return Почищенный TreeLoc.
+            */
+          def __processNodeLoc(loc0: TreeLoc[(MScAdData, Int)],
+                               parentNodePathRev: NodePath_t,
+                               dropFirst: Boolean = false,
+                              ): TreeLoc[(MScAdData, Int)] = {
+            val thisNodePathRev = if (dropFirst) {
+              parentNodePathRev
+            } else {
+              loc0.getLabel._2 :: parentNodePathRev
+            }
+
+            // Если есть под-элементы, то обсчитать решение по ним.
+            (if (loc0.hasChildren) {
+              val thisNodePath = thisNodePathRev.reverse
+
+              val commonPathPrefix = Lists.largestCommonPrefix( keepNodePath, thisNodePath )
+              val commonPathPrefixLen = commonPathPrefix.length
+
+              if (keepNodePathLen ==* commonPathPrefixLen) {
+                // Если NodePath текущей карточки включает в себя запрашиваемый, то пройти subForest текущего узла.
+                __processNodeLoc( loc0.firstChild.get, thisNodePathRev )
+              } else {
+                // Если текущий NodePath не коррелирует с необходимым, то обнулить subForest.
+                loc0.setTree( Tree.Leaf( loc0.getLabel ) )
+              }
+            } else {
+              // Нет subForest у текущего дочернего элемента. Нет смысла что-то дальше проверять. Просто пропускаем текущий узел и идём дальше.
+              loc0
+            })
+              .right
+              .fold( loc0 )( __processNodeLoc(_, thisNodePathRev) )
+          }
+
+          __processNodeLoc(
+            loc0                    = adsPtrs0.zipWithIndex.loc,
+            parentNodePathRev       = Nil,
+            dropFirst               = true,
+          )
+            .map(_._1)
+            .toTree
+        })
+          .getOrElse {
+            // should never happen: узел с указанными gridKey не найден в дереве.
+            logger.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (ErrorMsgs.NODE_NOT_FOUND, gridKeyOpt) )
+            adsPtrs0
+          }
+      }
+    }( gridCore0.ads )
+
+    val jdRuntime2 = GridAh.mkJdRuntime( gridAds2, gridCore0 )
     val gridBuild2 = GridAh.rebuildGrid(
-      ads = adsPot2,
+      ads = gridAds2,
       jdConf = gridCore0.jdConf,
       jdRuntime = jdRuntime2,
     )
 
     gridCore0.copy(
       jdRuntime = jdRuntime2,
-      ads       = adsPot2,
+      ads       = gridAds2,
       gridBuild = gridBuild2,
     )
   }
@@ -319,7 +384,7 @@ class GridAh[M](
       val v0 = value
 
       if (
-        !v0.core.ads.isPending &&
+        !v0.core.ads.adsTreePot.isPending &&
         v0.hasMoreAds && {
           // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
           val contentHeight = v0.core.gridBuild.gridWh.height + GridConst.CONTAINER_OFFSET_TOP
@@ -334,6 +399,7 @@ class GridAh[M](
         // Выставить pending в состояние, чтобы повторные события скролла игнорились.
         val v2 = MGridS.core
           .composeLens( MGridCoreS.ads )
+          .composeLens( MGridAds.adsTreePot )
           .modify(_.pending())(v0)
         updatedSilent(v2, fx)
 
@@ -347,12 +413,12 @@ class GridAh[M](
     case m: GridLoadAds =>
       val v0 = value
 
-      if (v0.core.ads.isPending && !m.ignorePending) {
+      if (v0.core.ads.adsTreePot.isPending && !m.ignorePending) {
         logger.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
         noChange
 
       } else {
-        val nextReqPot2 = v0.core.ads.pending()
+        val nextReqPot2 = v0.core.ads.adsTreePot.pending()
 
         // Если обновление m.onlyMatching, то возможна ситуация просто удаления каких-то карточек из выдачи:
         // Например, все маячки исчезли, и маячковые карточки надо удалить БЕЗ каких-либо запросов на сервер.
@@ -378,22 +444,40 @@ class GridAh[M](
               val mroot = scRootRO.value
               val bcns0 = mroot.locEnvBleBeacons
 
-              lazy val ads2 = v0.core.ads.map { _.filterNot { scAdData =>
-                // true для тех карточек, которые надо удалить.
-                val matchInfos = scAdData.main.info.matchInfos
-                val isDrop = matchInfos.nonEmpty && matchInfos.forall { matchInfo =>
-                  matchInfo
-                    .nodeMatchings
-                    .exists { nodeMatchInfo =>
-                      nodeMatchInfo.ntype contains[MNodeType] bleNtype
-                    }
+              val gridAds0 = v0.core.ads
+              val gridAds2 = MGridAds.adsTreePot.modify {
+                _.map { adsPtrs0 =>
+                  Tree.Node(
+                    root = adsPtrs0.rootLabel,
+                    forest = (for {
+                      childSubTree0 <- adsPtrs0.subForest.iterator
+                      scAdData = childSubTree0.rootLabel
+                      adData <- scAdData.data
+                        .toOption
+                        .iterator
+                      if {
+                        // isDrop=true для тех карточек, которые надо удалить.
+                        val matchInfos = adData.info.matchInfos
+                        val isDrop = matchInfos.nonEmpty && matchInfos.forall { matchInfo =>
+                          matchInfo
+                            .nodeMatchings
+                            .exists { nodeMatchInfo =>
+                              nodeMatchInfo.ntype contains[MNodeType] bleNtype
+                            }
+                        }
+                        !isDrop
+                      }
+                    } yield {
+                      childSubTree0
+                    })
+                      .to( LazyList )
+                      .toEphemeralStream,
+                  )
                 }
-                //println(s"QS scAd#${scAdData.id.orNull} vs m[$matchInfos] => drop?$isDrop")
-                isDrop
-              }}
+              }(gridAds0)
 
               // если карточек вообще не осталось, то надо отрендерить 404-карточку.
-              val isReturn404 = ads2.exists(_.isEmpty)
+              val isReturn404 = gridAds2.adsTreePot.exists(_.subForest.isEmpty)
 
               // ads2.exists(_.isEmpty): Если после зачистки BLE-карточек, не осталось карточек, то запросить 404-карточку с сервера.
               Either.cond(
@@ -404,23 +488,22 @@ class GridAh[M](
                   // TODO А может просто перетасовать карточки, если порядок маячков просто немного изменился? Или это BleBeaconer уже отрабатывает?
                   // allow404 обычно false, т.к. обычно есть карточки помимо маячковых.
                   val qs4Ble = ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value, allow404 = isReturn404 )
-                  //println(s"QS only Beaconed ask, qs = $qs4Ble")
                   Some(qs4Ble)
                 },
 
                 left = {
                   // Нет маячков в qs, но видимо ранее они были.
                   // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
-                  val jdRuntime2 = GridAh.mkJdRuntime(ads2, v0.core)
+                  val jdRuntime2 = GridAh.mkJdRuntime( gridAds2, v0.core )
                   val gbRes2 = MGridBuildResult.nextRender
                     .composeLens( MGridRenderInfo.animate )
                     .set( false )(
-                      GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
+                      GridAh.rebuildGrid( gridAds2, v0.core.jdConf, jdRuntime2 )
                     )
                   val v2 = MGridS.core.modify(
                     _.copy(
                       jdRuntime = jdRuntime2,
-                      ads       = ads2,
+                      ads       = gridAds2,
                       gridBuild = gbRes2,
                     )
                   )(v0)
@@ -439,10 +522,10 @@ class GridAh[M](
               // Надо делать эффект запроса на сервер с указанными qs.
               val fx = Effect {
                 val args2 = reqScQsOpt getOrElse {
-                  val offset = v0.core.ads
+                  val offset = v0.core.ads.adsTreePot
                     // Если clean, то нужно обнулять offset.
                     .filter(_ => !m.clean)
-                    .fold(0)(_.size)
+                    .fold(0)(_.subForest.length)
                   ScQsUtil.gridAdsQs( scRootRO.value, offset )
                 }
 
@@ -465,6 +548,7 @@ class GridAh[M](
 
               val v2 = MGridS.core
                 .composeLens( MGridCoreS.ads )
+                .composeLens( MGridAds.adsTreePot )
                 .set( nextReqPot2 )(v0)
               updated(v2, fx)
             }
@@ -477,11 +561,197 @@ class GridAh[M](
     // Возможны разные варианты: фокусировка в карточку, переход в выдачу другого узла, и т.д. Всё это расскажет сервер.
     case m: GridBlockClick =>
       val v0 = value
+      val gridAds0 = v0.core.ads
 
       // Поискать запрошенную карточку в состоянии.
-      GridAh
-        .findAd(m.nodeId, v0.core)
-        .fold {
+      (for {
+        gridKey <- m.gridKey
+        scAdLoc <- GridAh.findAd(m, gridAds0)
+        scAdData = scAdLoc.getLabel
+        adData <- scAdData.data.toOption
+      } yield {
+        if (adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOpened)) {
+          // Клик по всегда развёрнутой карточке должен приводить к скроллу к началу карточки без загрузки.
+          val scrollFx = GridAh.scrollToAdFx( scAdData, v0.core.gridBuild )
+          val v2 = (
+            MGridS.core.modify { gridCore0 =>
+              // Состояние обновляем на данную карточку, чтобы sc-nodes-форма могла корректно определить текущую выбранную карточку.
+              // Для индикации фокуса на карточке, используем Pot.focused.unavailable(), чтобы scAd.focused отличался от Pot.empty.
+              val gridCore1 = MGridCoreS.ads
+                .composeLens( MGridAds.interactWith )
+                .set( Some((scAdLoc.gridKeyPath, gridKey)) )(gridCore0)
+              GridAh.resetFocus( m.gridKey, gridCore1)
+            }
+          )(v0)
+          updatedSilent(v2, scrollFx)
+
+        } else if (adData.isOpened) {
+          // Карточка уже раскрыта. Синхронное сокрытие карточки.
+          val adPtrs2 = scAdLoc
+            .delete
+            .get
+            .toTree
+
+          val gridAds2 = (
+            MGridAds.adsTreePot
+              .modify(_.map(_ => adPtrs2)) andThen
+            // Текущее взаимодействие выставить на родительский элемент:
+            MGridAds.interactWith.set {
+              for {
+                parentLoc  <- scAdLoc.parent
+                firstBlock <- parentLoc.getLabel.gridItems.headOption
+              } yield {
+                parentLoc.gridKeyPath -> firstBlock.gridKey
+              }
+            }
+          )(gridAds0)
+
+          val jdRuntime2  = GridAh.mkJdRuntime(gridAds2, v0.core)
+          val gridBuild2  = GridAh.rebuildGrid(gridAds2, v0.core.jdConf, jdRuntime2)
+          val v2          = (
+            MGridS.core.modify { core0 =>
+              core0.copy(
+                ads       = gridAds2,
+                jdRuntime = jdRuntime2,
+                gridBuild = gridBuild2
+              )
+            }
+          )(v0)
+
+          // В фоне - запустить скроллинг к началу карточки.
+          val scrollFx      = GridAh.scrollToAdFx( scAdData, gridBuild2 )
+          val resetRouteFx  = ResetUrlRoute().toEffectPure
+          val fxs           = scrollFx + resetRouteFx
+          updated(v2, fxs)
+
+        } else if ( m.noOpen ) {
+          // Ничего загружать не требуется, только прокрутить к указанной карточке.
+          // Возможно, это переход "назад" из другой выдачи.
+          val fx = GridAh.scrollToAdFx( scAdData, v0.core.gridBuild )
+          effectOnly(fx)
+
+        } else {
+          // Запуск запроса за данными карточки на сервер.
+          val fx = gridFocusReqFx(
+            adId = adData.doc.tagId.nodeId.get,
+            m
+          )
+
+          var adPtrsModAcc = List.empty[Pot[Tree[MScAdData]] => Pot[Tree[MScAdData]]]
+          val isPtrsPending = gridAds0.adsTreePot.isPending
+          if (!isPtrsPending) {
+            adPtrsModAcc ::= {
+              ptrsTreePot: Pot[Tree[MScAdData]] =>
+                ptrsTreePot.pending()
+            }
+          }
+
+          // выставить текущей карточке, что она pending:
+          if (!scAdData.data.isPending) {
+            adPtrsModAcc ::= {
+              ptrsTreePot: Pot[Tree[MScAdData]] =>
+                for (_ <- ptrsTreePot) yield {
+                  scAdLoc
+                    .modifyLabel( MScAdData.data.modify(_.pending()) )
+                    .toTree
+                }
+            }
+          }
+
+          // Не ясно, надо ли заменять значение interactWith, т.к. состояние плитки пока не изменилось...
+          //if (!(v0.interactWith contains m.gridKey))
+          //  modsAcc ::= MGridS.interactWith.set( Some(m.gridKey) )
+
+          val v2Opt = adPtrsModAcc
+            .reduceLeftOption(_ andThen _)
+            .map { modF =>
+              MGridS.core
+                .composeLens( MGridCoreS.ads )
+                .composeLens( MGridAds.adsTreePot )
+                .modify( modF )(v0)
+            }
+
+          // silent = isPtrsPending: Т.к. пока это всё не влияет на рендер конкретной карточки, сверяем всё это лишь отчасти.
+          ah.optionalResult( v2Opt, Some(fx), silent = isPtrsPending )
+        }
+      })
+        .orElse {
+          // Если задан adId вместо карточки в плитке, надо поискать карточку с таким id или загрузить её с сервера.
+          for {
+            adId <- m.adId
+          } yield {
+            // Поискать карточку среди имеющихся. Карточка может отсутствовать в состоянии, может быть в карте,
+            // может быть в карте и дереве, может быть открытой и в виде main-блока.
+            val adsKnown = gridAds0
+              .adsTreePot
+              .iterator
+              .flatMap { tree =>
+                tree
+                  .cobind(_.loc)
+                  .flatten
+                  .filter { loc =>
+                    loc.getLabel.data
+                      .exists(_.doc.tagId.nodeId contains[String] adId)
+                  }
+                  .iterator
+              }
+              .to( LazyList )
+
+            // Нужно разобраться, есть ли открытая карточка на руках.
+            adsKnown
+              .find(_.getLabel.data.exists(_.isOpened))
+              .fold {
+                // Если нет в наличии сфокусированной карточки, то поискать хоть какую-нибудь, но запросить с сервера opened-вариант.
+                var fxAcc = List.empty[Effect]
+                var gridAdsMods = List.empty[MGridAds => MGridAds]
+
+                // Ищем возможный main-блок карточки:
+                adsKnown
+                  .minByOption { loc =>
+                    // Выбрать наиболее верхний элемент, присутствующий в плитке:
+                    loc.getLabel.gridItems
+                      .headOption
+                      .map(_.gridKey)
+                  }
+                  .fold [Unit] {
+                    // Добавлять в дерево карточек не надо (Вдруг, запрос обломится?..
+                    // На рендер плитки пустая дырка под карточку не влияет, пока что.
+                    if (!gridAds0.adsTreePot.isPending)
+                      gridAdsMods ::= MGridAds.adsTreePot.modify(_.pending())
+
+                  } { loc =>
+                    // Выставить pending для найденной карточки.
+                    val scAd = loc.getLabel
+                    fxAcc ::= GridAh.scrollToAdFx( scAd, v0.core.gridBuild )
+                    gridAdsMods ::= MGridAds.adsTreePot.modify { adPtrsPot0 =>
+                      for (_ <- adPtrsPot0) yield {
+                        loc
+                          .modifyLabel( MScAdData.data.modify( _.pending() ) )
+                          .toTree
+                      }
+                    }
+                  }
+
+                val v2Opt = gridAdsMods
+                  .reduceLeftOption(_ andThen _)
+                  .map { modF =>
+                    MGridS.core
+                      .composeLens( MGridCoreS.ads )
+                      .modify(modF)( v0 )
+                  }
+
+                fxAcc ::= gridFocusReqFx( adId, m )
+
+                ah.optionalResult( v2Opt, fxAcc.mergeEffects, silent = false )
+
+              } { openedAdLoc =>
+                // Нужно просто прокрутить к уже раскрытой карточке.
+                val fx = GridAh.scrollToAdFx( openedAdLoc.getLabel, v0.core.gridBuild )
+                effectOnly(fx)
+              }
+          }
+        }
+        .getOrElse {
           // TODO Отработать LoadMore, когда m.noLoad (т.е. идёт возврат из другой выдачи)
           if (m.noOpen && v0.hasMoreAds) {
             val fx = Effect.action {
@@ -497,85 +767,6 @@ class GridAh[M](
             logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
             noChange
           }
-
-        } { case (ad0, index) =>
-          if (ad0.isAlwaysOpened) {
-            // Клик по всегда развёрнутой карточке должен приводить к скроллу к началу карточки без загрузки.
-            val scrollFx = GridAh.scrollToAdFx( ad0, v0.core.gridBuild )
-            // Состояние обновляем на данную карточку, чтобы sc-nodes-форма могла корректно определить текущую выбранную карточку.
-            // Для индикации фокуса на карточке, используем Pot.focused.unavailable(), чтобы scAd.focused отличался от Pot.empty.
-            val ad2 = MScAdData.focused.modify(_.unavailable())(ad0)
-            val v2 = MGridS.core.modify( GridAh.resetFocus(index, ad2, _) )(v0)
-            updatedSilent(v2, scrollFx)
-
-          } else if (ad0.focused.nonEmpty) {
-            // Карточка уже раскрыта. Синхронное сокрытие карточки.
-            val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
-            val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
-            val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core)
-            val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
-            val v2          = MGridS.core.modify { core0 =>
-              core0.copy(
-                ads       = ads2,
-                jdRuntime = jdRuntime2,
-                gridBuild = gridBuild2
-              )
-            }(v0)
-            // В фоне - запустить скроллинг к началу карточки.
-            val scrollFx      = GridAh.scrollToAdFx( ad1, gridBuild2 )
-            val resetRouteFx  = ResetUrlRoute().toEffectPure
-            val fxs           = scrollFx + resetRouteFx
-            updated(v2, fxs)
-
-          } else {
-            // Карточка сейчас скрыта, её нужно раскрыть.
-            // Собрать запрос фокусировки на ровно одной рекламной карточке.
-            if ( m.noOpen ) {
-              // Ничего загружать не требуется, только прокрутить к указанной карточке.
-              // Возможно, это переход "назад" из другой выдачи.
-              val fx = GridAh.scrollToAdFx( ad0, v0.core.gridBuild )
-              effectOnly(fx)
-
-            } else {
-              // Запуск запроса за данными карточки на сервер.
-              val fx = Effect {
-                val qs = ScQsUtil.focAdsQs( scRootRO.value, m.nodeId )
-
-                api.pubApi( qs )
-                  .transform { tryResp =>
-                    val r = HandleScApiResp(
-                      reqTimeStamp  = None,
-                      qs            = qs,
-                      tryResp       = tryResp,
-                      reason        = m,
-                      // Если сервер вернёт index ad open, то этот indexSwitch поможет потому вернутся юзеру назад.
-                      switchCtxOpt  = Some(
-                        MScSwitchCtx(
-                          // TODO indexQsArgs: Как тут None пропихнуть? Эти аргументы имеют мало смысла тут.
-                          indexQsArgs = MScIndexArgs(
-                            geoIntoRcvr = false,
-                            retUserLoc = false,
-                          ),
-                          afterBackGrid = Some( Effect.action {
-                            m.copy(noOpen = true)
-                          } ),
-                          // В случае, если сервер пришлёт index ad open вместо плитки, новый индекс надо добавить в стопку поверх существующего.
-                          viewsAction = MScSwitchCtx.ViewsAction.PUSH,
-                        )
-                      )
-                    )
-                    Success(r)
-                  }
-              } + OnlineCheckConn.toEffectPure
-
-              // выставить текущей карточке, что она pending
-              val ad1 = MScAdData.focused
-                .modify(_.pending())(ad0)
-
-              val v2 = GridAh.saveAdIntoValue(index, ad1, v0)
-              updated(v2, fx)
-            }
-          }
         }
 
 
@@ -587,7 +778,6 @@ class GridAh[M](
 
       val jdConf0 = v0.core.jdConf
       val szMultMatches = jdConf0.szMult ==* szMult2
-      //println( s"gridColumnCount=$gridColsCount2 $szMultMatches ${jdConf0.szMult} => $szMult2" )
 
       if (
         !m.force &&
@@ -630,6 +820,44 @@ class GridAh[M](
       val v2 = MGridS.afterUpdate.modify( m.effect :: _ )(v0)
       updatedSilent(v2)
 
+  }
+
+
+  /** Эффект запроса к серверу на фокусировку карточки. */
+  def gridFocusReqFx(adId: String, m: GridBlockClick): Effect = {
+    Effect {
+      val qs = ScQsUtil.focAdsQs(
+        scRootRO.value,
+        adId = adId,
+      )
+
+      api
+        .pubApi( qs )
+        .transform { tryResp =>
+          val r = HandleScApiResp(
+            reqTimeStamp  = None,
+            qs            = qs,
+            tryResp       = tryResp,
+            reason        = m,
+            // Если сервер вернёт index ad open, то этот indexSwitch поможет потому вернутся юзеру назад.
+            switchCtxOpt  = Some(
+              MScSwitchCtx(
+                // TODO indexQsArgs: Как тут None пропихнуть? Эти аргументы имеют мало смысла тут.
+                indexQsArgs = MScIndexArgs(
+                  geoIntoRcvr = false,
+                  retUserLoc = false,
+                ),
+                afterBackGrid = Some( Effect.action {
+                  m.copy(noOpen = true)
+                } ),
+                // В случае, если сервер пришлёт index ad open вместо плитки, новый индекс надо добавить в стопку поверх существующего.
+                viewsAction = MScSwitchCtx.ViewsAction.PUSH,
+              )
+            ),
+          )
+          Success(r)
+        }
+    } + OnlineCheckConn.toEffectPure
   }
 
 }

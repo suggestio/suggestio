@@ -1,7 +1,6 @@
 package util.sys
 
 import io.suggest.adn.MAdnRight
-import io.suggest.n2.edge.{MEdge, MEdgeInfo}
 import io.suggest.n2.extra.domain.MDomainExtra
 import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.n2.node.{MNode, MNodeTypesJvm}
@@ -12,9 +11,6 @@ import models.msys.{MSysNodeInstallFormData, NodeCreateParams}
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
-import util.FormUtil
-
-import scala.collection.immutable.ArraySeq
 
 /**
  * Suggest.io
@@ -22,7 +18,7 @@ import scala.collection.immutable.ArraySeq
  * Created: 06.04.15 21:37
  * Description: Утиль для контроллеров Sys-Market. Формы, код и т.д.
  */
-class SysMarketUtil extends MacroLogsDyn {
+final class SysMarketUtil extends MacroLogsDyn {
 
   /** Форма для маппинг метаданных произвольного узла ADN. */
   private def adnNodeMetaM: Mapping[MMeta] = mapping(
@@ -216,99 +212,5 @@ class SysMarketUtil extends MacroLogsDyn {
   }
 
   def nodeCreateParamsFormM = Form(nodeCreateParamsM)
-
-
-  def _setMapping[T](strMapping: Mapping[String])(f: Seq[String] => IterableOnce[T]): Mapping[Set[T]] = {
-    optional(
-      strMapping
-        .transform(strTrimSanitizeF, strIdentityF)
-    )
-      .transform[Option[String]] ( emptyStrOptToNone, identity )
-      .transform[Set[T]] (
-        { _.fold(Set.empty[T]) { s =>
-           val r = ArraySeq.unsafeWrapArray( s.split("\\s*[,;]\\s*") )
-           f(r)
-             .iterator
-             .toSet
-          }
-        },
-        { ids =>
-          if (ids.isEmpty) None else Some( ids.mkString(", ") )
-        }
-      )
-  }
-
-  /** Маппинг для списка id узлов (эджа). */
-  def nodeIdsListM: Mapping[Set[String]] = {
-    _setMapping[String] (text(maxLength = 512)) (identity)
-  }
-
-  def itemIdsListM: Mapping[Set[Long]] = {
-    _setMapping[Long] (text(minLength = 1, maxLength = 128)) (_.iterator.map(_.toLong))
-  }
-
-  def tagsListM: Mapping[Set[String]] = {
-    _setMapping[String] (text(maxLength = 512)) (identity)
-  }
-
-  /** Маппинг для поля info в эдже. */
-  def edgeInfoM: Mapping[MEdgeInfo] = {
-    mapping(
-      "commentNi"  -> optional( text(maxLength = 256) ),
-      "flag"       -> optional( boolean ),
-      "tags"       -> tagsListM
-    )
-    { (commentNiOpt, flagOpt, tags) =>
-      MEdgeInfo(
-        textNi   = commentNiOpt,
-        flag        = flagOpt,
-        tags        = tags
-      )
-    }
-    { ei =>
-      Some((ei.textNi, ei.flag, ei.tags))
-    }
-  }
-
-  /** Маппинг для эджа. */
-  def edgeM: Mapping[MEdge] = {
-    mapping(
-      "predicate" -> FormUtil.predicateM,
-      "nodeIds"   -> nodeIdsListM,
-      "order"     -> optional( number ),
-      "info"      -> edgeInfoM
-    )
-    { (predicate, nodeIds, orderOpt, eInfo) =>
-      MEdge(
-        predicate = predicate,
-        nodeIds   = nodeIds,
-        order     = orderOpt,
-        info      = eInfo
-      )
-    }
-    {e =>
-      Some((e.predicate, e.nodeIds, e.order, e.info))
-    }
-  }
-
-  def edgeFormM = Form(edgeM)
-
-
-  /** Накатить результат формы edgeFormM на существующий эдж. */
-  def updateEdge(mEdge0: MEdge, e: MEdge): MEdge = {
-    mEdge0.copy(
-      predicate = e.predicate,
-      nodeIds   = e.nodeIds,
-      order     = e.order,
-      info      = {
-        val i = e.info
-        mEdge0.info.copy(
-          textNi      = i.textNi,
-          flag        = i.flag,
-          tags        = i.tags
-        )
-      }
-    )
-  }
 
 }

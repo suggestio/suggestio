@@ -92,7 +92,8 @@ class ScNodesDiaAh[M](
             _nodesCircuitInitFx( circuit )
           }
 
-          val focusedAdId = sc3Circuit.focusedAdRO
+          val focusedAdId = sc3Circuit
+            .focusedAdRO
             .value
             .flatMap(_.id)
           val v2 = v0.copy(

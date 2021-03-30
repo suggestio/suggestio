@@ -83,23 +83,22 @@ class EditAdR(
       State(
 
         adIdOptC = propsProxy.connect { props =>
-          // Без for-yield, чтобы гарантировать референсную целостность через отсутствие .map().
-          // sbt-плагин с этим тоже должен бы справляться, но нужны гарантии.
-          props.grid.core
-            .focusedAdOpt
-            .flatMap { focusedAdOuter =>
-              focusedAdOuter.focused
-                .toOption
-                .filter(_.info.canEdit)
-                .flatMap( _ => focusedAdOuter.nodeId )
-            }
+          val gridAds = props.grid.core.ads
+          (for {
+            focLoc <- gridAds.interactAdOpt
+            scAd   = focLoc.getLabel
+            adData <- scAd.data.toOption
+            if adData.info.canEdit
+          } yield {
+            // Чтобы гарантировать референсную целостность результата, не раскрываем финальный Option nodeId.
+            adData.doc.tagId.nodeId
+          })
+            .flatten
         },
 
       )
     }
     .renderBackend[Backend]
     .build
-
-  def apply(propsValProxy: Props) = component( propsValProxy )
 
 }

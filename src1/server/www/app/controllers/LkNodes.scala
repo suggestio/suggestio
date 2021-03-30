@@ -110,8 +110,7 @@ final class LkNodes @Inject() (
           MLknOpKeys.ShowOpened -> MLknOpValue(
             bool = OptionUtil.SomeBool(
               edgeOpt
-                .flatMap(_.info.flag)
-                .getOrElseFalse
+                .fold(false)( _.info.flagsMap contains MEdgeFlags.AlwaysOpened )
             ),
           ),
           // Постоянная обводка карточки:
@@ -883,7 +882,7 @@ final class LkNodes @Inject() (
         errorHandler.onClientError(request, NOT_FOUND, s"!pred: $pred for $nodeId")
 
       } { edge0 =>
-        if (edge0.info.flag.getOrElseFalse ==* isEnabled) {
+        if ((edge0.info.flagsMap contains MEdgeFlags.AlwaysOpened) ==* isEnabled) {
           LOGGER.debug(s"$logPrefix Nothing to do.")
           NoContent
 
@@ -893,8 +892,15 @@ final class LkNodes @Inject() (
             MEdge.nodeIds
               .set( Set.empty + nodeId ) andThen
             MEdge.info
-              .composeLens( MEdgeInfo.flag )
-              .set( OptionUtil.maybeTrue(isEnabled) )
+              .composeLens( MEdgeInfo.flags )
+              .modify { flags0 =>
+                if (isEnabled) {
+                  MEdgeFlagData( MEdgeFlags.AlwaysOpened ) +: flags0.toSeq
+                } else {
+                  flags0
+                    .filter(_.flag !=* MEdgeFlags.AlwaysOpened)
+                }
+              }
           )(edge0)
 
           // Если в данном эдже было несколко nodeIds, то распилить на несколько эджей.

@@ -388,7 +388,7 @@ final class MdrUtil @Inject() (
   def mdrEdgeInfo(reasonOpt: Option[String]): MEdgeInfo = {
     MEdgeInfo(
       dateNi    = someNow,
-      textNi = reasonOpt,
+      textNi    = reasonOpt,
       flag      = Some(reasonOpt.isEmpty)
     )
   }

@@ -1,6 +1,6 @@
 package io.suggest.sc.m.grid
 
-import diode.{Effect, FastEq}
+import diode.Effect
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -12,14 +12,6 @@ import monocle.macros.GenLens
   * Description: Состояние плитки, включающее в себя неотображаемые части плитки.
   */
 object MGridS {
-
-  implicit object MGridSFastEq extends FastEq[MGridS] {
-    override def eqv(a: MGridS, b: MGridS): Boolean = {
-      (a.core       ===* b.core) &&
-      (a.hasMoreAds ==*  b.hasMoreAds)
-      // afterUpdate: игнорим, т.к. живёт только на уровне контроллера.
-    }
-  }
 
   @inline implicit def univEq: UnivEq[MGridS] = UnivEq.force
 
@@ -42,4 +34,6 @@ case class MGridS(
                    hasMoreAds       : Boolean               = true,
                    afterUpdate      : List[Effect]          = List.empty,
                    gNotify          : MGridNotifyS          = MGridNotifyS.empty,
-                 )
+                 ) {
+
+}

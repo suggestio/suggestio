@@ -38,8 +38,9 @@ class MNodeEdgesSpec extends AnyFlatSpec with PlayJsonTestUtil {
         info = MEdgeInfo(
           dateNi = Some( OffsetDateTime.now().minusDays(1) ),
           textNi = Some("asdas asd as a#$!#@$ds'ad''''!"),
-          flag = Some(true),
-          tags    = Set("asd", "bbb"),
+          flag   = Some(true),
+          flags  = MEdgeFlagData( MEdgeFlags.AlwaysOutlined ) :: Nil,
+          tags   = Set.empty + "asd" + "bbb",
           geoShapes = List(
             MEdgeGeoShape(
               id = 1,

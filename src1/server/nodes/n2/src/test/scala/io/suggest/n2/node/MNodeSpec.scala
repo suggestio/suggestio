@@ -64,7 +64,11 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
                   nodeIds = Set("fa4f493wfr3420f3904__4"),
                   info = MEdgeInfo(
                     flag = Some(true),
-                    geoShapes = List(
+                    flags =
+                      MEdgeFlagData( MEdgeFlags.AlwaysOutlined ) ::
+                      MEdgeFlagData(MEdgeFlags.AlwaysOpened) ::
+                      Nil,
+                    geoShapes =
                       MEdgeGeoShape(
                         id = 1,
                         glevel = MNodeGeoLevels.NGL_BUILDING,
@@ -72,8 +76,8 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
                           center  = MGeoPoint(lat = 10, lon = 15),
                           radiusM = 2000
                         )
-                      )
-                    )
+                      ) ::
+                      Nil,
                   )
                 )
               )

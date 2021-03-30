@@ -4,8 +4,8 @@ import javax.inject.Inject
 import io.suggest.n2.node.MNodesJmx
 import models.adv.MExtTargetsJmx
 import models.mcal.MCalendarJmx
-import java.lang.management.ManagementFactory
 
+import java.lang.management.ManagementFactory
 import io.suggest.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
 import io.suggest.sec.util.SCryptUtilJmx
 import io.suggest.stat.inx.StatIndexUtilJmx
@@ -19,6 +19,7 @@ import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.{Bill2UtilJmx, BillDebugUtilJmx, TfDailyUtilJmx}
 import util.billing.cron.ReActivateCurrentAdvsJmx
+import util.compat.AdvAlwaysOpenedFlagIntoFlagsJmx
 import util.es.SiowebEsModelJmx
 import util.img.{DynImgUtilJmx, ImgMaintainUtilJmx}
 
@@ -53,6 +54,7 @@ case class JmxImpl @Inject()(
                                nodesUtilJmx                  : NodesUtilJmx,
                                imgMaintainUtilJmx            : ImgMaintainUtilJmx,
                                lifecycle                     : ApplicationLifecycle,
+                               advAlwaysOpenedFlagIntoFlagsJmx: AdvAlwaysOpenedFlagIntoFlagsJmx,
                                implicit private val ec       : ExecutionContext,
                              )
   extends MacroLogsImplLazy

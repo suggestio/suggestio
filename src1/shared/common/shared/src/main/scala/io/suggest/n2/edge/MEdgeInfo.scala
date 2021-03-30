@@ -241,6 +241,14 @@ final case class MEdgeInfo(
     for (flag1 <- flag)
       sb.append(flag1)
 
+    if (flags.nonEmpty) {
+      sb.append('[')
+      for (flagData <- flags)
+        sb.append(flagData)
+          .append(',')
+      sb.append(']')
+    }
+
     if (tags.nonEmpty) {
       sb.append("tags=")
       for (tag <- tags) {

@@ -165,21 +165,21 @@ object JdUtil {
   }
 
 
-  object mkRuntime {
+  object prepareJdRuntime {
 
-    val jdDocs      = GenLens[mkRuntime](_.jdDocs)
-    val prevOpt     = GenLens[mkRuntime](_.prevOpt)
+    val jdDocs      = GenLens[prepareJdRuntime](_.jdDocs)
+    val prevOpt     = GenLens[prepareJdRuntime](_.prevOpt)
 
-    implicit class OpsExt( val args: mkRuntime ) extends AnyVal {
+    implicit class OpsExt( val args: prepareJdRuntime ) extends AnyVal {
 
-      def docs[D: JdDocsGetter](from: D): mkRuntime =
+      def docs[D: JdDocsGetter](from: D): prepareJdRuntime =
         jdDocs.set( implicitly[JdDocsGetter[D]].apply(from) )(args)
 
-      def prev[P: JdRuntimeGetter](from: P): mkRuntime =
+      def prev[P: JdRuntimeGetter](from: P): prepareJdRuntime =
         prevOpt.set( implicitly[JdRuntimeGetter[P]].apply(from) )(args)
 
       /** Финальная сборка состояния рантайма. Сравнительно ресурсоёмкая операция. */
-      def result: MJdRuntime = {
+      def make: MJdRuntime = {
         val tplsIndexed = args.jdDocs
           .map( mkTreeIndexed )
 
@@ -218,7 +218,7 @@ object JdUtil {
     *                Некоторые данные переносятся с предшествующего состояния.
     * @return Инстанс [[MJdRuntime]].
     */
-  case class mkRuntime(
+  case class prepareJdRuntime(
                         jdConf        : MJdConf,
                         jdDocs        : LazyList[MJdDoc]      = LazyList.empty,
                         prevOpt       : Option[MJdRuntime]    = None,

@@ -70,6 +70,10 @@ final class CanDynImg @Inject() (
 
           nodeOrig = {
             LOGGER.trace(s"$logPrefix orig?$isImgOrig fileNodesMap = $fileNodesMap")
+
+            if (fileNodesMap.isEmpty)
+              LOGGER.info(s"$logPrefix If fileNodesMap[${fileNodesMap.size}].isEmpty=${fileNodesMap.isEmpty}, but node must be here exist, ensure elasticsearch nodes connectivity.")
+
             fileNodesMap
               .get( mimg.dynImgId.origNodeId )
               .filter { mnode =>

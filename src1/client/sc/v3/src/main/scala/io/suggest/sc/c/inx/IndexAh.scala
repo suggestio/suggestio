@@ -29,7 +29,6 @@ import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.styl.ScCss
-import io.suggest.sc.c.inx.IndexAh.{MAP_ZOOM_ON_NODE, setMap}
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import scalaz.NonEmptyList
@@ -146,7 +145,7 @@ object IndexAh {
           if !(geo_mapInit_state_LENS.get(i0.search).center ~= mgp)
         } yield {
           geo_mapInit_state_LENS
-            .modify( setMap(mgp, inx.nodeId) )(s0)
+            .modify( IndexAh.setMap(mgp, inx.nodeId) )(s0)
         })
           .getOrElse( s0 )
 
@@ -854,7 +853,7 @@ class IndexAh[M](
           val v2 = outer_LENS
             .composeLens( MGeoTabS.mapInit )
             .composeLens( MMapInitState.state )
-            .modify( setMap(gp, m.rcvrId) )(v0)
+            .modify( IndexAh.setMap(gp, m.rcvrId) )(v0)
           updated(v2)
         })
           .getOrElse( noChange )
@@ -867,7 +866,7 @@ class IndexAh[M](
         for (gp <- geoPointNextOpt) {
           // Перемещение в данную точку:
           mapInitModF = mapInitModF andThen MMapInitState.state
-            .modify( setMap(gp, m.rcvrId) )
+            .modify( IndexAh.setMap(gp, m.rcvrId) )
         }
 
         var geoTabModF = MGeoTabS.mapInit.modify( mapInitModF )

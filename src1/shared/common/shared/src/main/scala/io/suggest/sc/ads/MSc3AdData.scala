@@ -3,14 +3,14 @@ package io.suggest.sc.ads
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.MJdData
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 15.03.18 22:04
-  * Description: Контейнер для рекламной карточки и каких-то других данных в контексте выдачи s3.
+  * Created: 15.03.18 22:04 Description: Контейнер для рекламной карточки и каких-то других данных в контексте выдачи s3.
   * Впихивать некоторые sc3-only вещи внутрь MJdAdData очень нерационально, поэтому тут расширябельная модель-контейнер.
   */
 object MSc3AdData {
@@ -27,6 +27,9 @@ object MSc3AdData {
 
   @inline implicit def univEq: UnivEq[MSc3AdData] = UnivEq.derive
 
+  def jd = GenLens[MSc3AdData](_.jd)
+  def info = GenLens[MSc3AdData](_.info)
+
 }
 
 
@@ -34,7 +37,7 @@ object MSc3AdData {
   *
   * @param jd Данные для рендера карточки.
   */
-case class MSc3AdData(
-                       jd       : MJdData,
-                       info     : MScAdInfo,
-                     )
+final case class MSc3AdData(
+                             jd       : MJdData,
+                             info     : MScAdInfo,
+                           )

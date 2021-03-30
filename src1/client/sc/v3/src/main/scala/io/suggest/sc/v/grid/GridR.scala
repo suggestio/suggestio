@@ -9,14 +9,15 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.CssR
 import io.suggest.grid.{GridBuilderUtilJs, GridConst, GridScrollUtil}
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
-import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.render.v.{JdCss, JdCssStatic, JdR, JdRrr}
 import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.grid.{GridBlockClick, GridScroll, MGridCoreS, MGridS}
+import io.suggest.sc.m.grid.{GridAdKey_t, GridBlockClick, GridScroll, MGridCoreS, MGridS}
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
+import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import io.suggest.tv.SmartTvUtil
+import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -58,10 +59,20 @@ class GridR(
       ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll(scrollTop))
     }
 
-    /** Клик по карточке в плитке. */
-    private def onBlockClick(nodeId: String)(e: ReactMouseEvent): Callback = {
+    /** Клик по карточке в плитке.
+      *
+      * @param gridKeyPath Путь до карточки в дереве adsTree.
+      * @param gridItemKey Ключ gridItem в карточке.
+      * @param e Исходное событие.
+      * @return Callback.
+      */
+    private def onGridItemClick(gridKeyPath: List[GridAdKey_t], gridItemKey: GridAdKey_t)
+                               (e: ReactMouseEvent): Callback = {
       Callback.when( e.button ==* 0 ) {
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $, GridBlockClick( nodeId ) )
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, GridBlockClick(
+          gridPath = Some( gridKeyPath ),
+          gridKey  = Some( gridItemKey ),
+        ))
       }
     }
 
@@ -86,62 +97,61 @@ class GridR(
           // для кликов подсвечиваются только ссылки.
           // Поэтому для SmartTV используется <A>-тег, хотя это вызовет ошибку ссылка-внутри-ссылки и ругань react-dev.
           val gridElTag: TagOf[html.Element] =
-          if (SmartTvUtil.isSmartTvUserAgentCached) <.a
-          else <.div
+            if (SmartTvUtil.isSmartTvUserAgentCached) <.a
+            else <.div
 
-          // TODO routerCtl.urlFor() внутри <a.href>
           (for {
-            ad <- mgrid.ads
-              .iterator
-              .flatten
-
-            adData = ad.focOrMain
+            adPtrsTree <- mgrid.ads.adsTreePot.iterator
+            scAdDataLoc <- adPtrsTree.loc.onlyLowest.iterator
+            scAdData = scAdDataLoc.getLabel
+            // TODO Pot().iterator: Надо отрабатывать рендером pending и прочие состояния конкретной карточки.
+            adData <- scAdData.data.iterator
 
             // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
             jdRenderArgs = (for {
-              adDataForJdRenderArgs <- {
-                if (adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOutlined))
-                  Some(adData)
-                else
-                  ad.focOrAlwaysOpened
-              }
+              adDataForJdRenderArgs <- Option.when(
+                adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOutlined) ||
+                adData.isOpened
+              )(adData)
               bgColorOpt = adDataForJdRenderArgs.doc.template.getMainBgColor
               if bgColorOpt.nonEmpty
             } yield {
               MJdRenderArgs(
-                groupOutLined = bgColorOpt
+                groupOutLined = bgColorOpt,
               )
             })
               .getOrElse( MJdRenderArgs.empty )
 
+            // Получить стабильный путь до карточки в дереве:
+            scAdDataPath = scAdDataLoc.gridKeyPath
+
             // Пройтись по шаблонам карточки
-            jdDoc2 <- JdUtil.flatGridTemplates( adData )
+            gridItem <- scAdData.gridItems.iterator
 
           } yield {
             // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
             gridElTag(
-              // TODO key: Какой ключ генерить, когда одна карточка повторяется в плитке? Сейчас этого нет, но это ведь возможно в будущем.
-              ^.key := jdDoc2.tagId.toString,
+              ^.key := gridItem.gridKey,
+
+              // TODO routerCtl.urlFor() внутри <a.href> ?
 
               // Реакция на клики, когда nodeId задан.
-              ad.nodeId.whenDefined { nodeId =>
-                ^.onClick ==> onBlockClick(nodeId)
-              },
+              ^.onClick ==> onGridItemClick( scAdDataPath, gridItem.gridKey ),
 
               // Выставить класс для ремонта z-index контейнера блока.
-              jdRrr.fixZIndexIfBlock( jdDoc2.template.rootLabel ),
+              jdRrr.fixZIndexIfBlock( gridItem.jdDoc.template.rootLabel ),
 
               jdR {
                 // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
                 mgridProxy.resetZoom(
                   MJdArgs(
-                    data        = (MJdDataJs.doc set jdDoc2)(adData),
+                    data        = (MJdDataJs.doc set gridItem.jdDoc)(adData),
                     jdRuntime   = mgrid.jdRuntime,
                     conf        = mgrid.jdConf,
                     renderArgs  = jdRenderArgs,
                   )
                 )
-              }
+              },
 
             )
           })
@@ -229,10 +239,10 @@ class GridR(
           props.core.gridBuild.gridWh
         }( FastEq.ValueEq ),
 
-        gridCoreC = propsProxy.connect(_.core)( MGridCoreS.MGridCoreSFastEq ),
+        gridCoreC = propsProxy.connect(_.core),
 
         loaderPotC = propsProxy.connect { props =>
-          OptionUtil.SomeBool( props.core.ads.isPending )
+          OptionUtil.SomeBool( props.core.ads.adsTreePot.isPending )
         }( FastEq.AnyRefEq ),
 
       )

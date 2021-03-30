@@ -43,12 +43,13 @@ final class ScNotifications(
         // Надо собрать title'ы карточек, добавив расстояния до маячков.
         val adTitlesWithDistRendered = (for {
           scAd <- unNotifiedAds.iterator
+          adData <- scAd.data.iterator
           // Используем в работе только карточки с заголовком, присланным с сервера.
-          adTitle <- scAd.main.title.iterator
+          adTitle <- adData.title.iterator
         } yield {
           val distancesCm = (for {
             // Поискать id маячка, с помощью которого найдена карточка.
-            adMatchInfo <- scAd.main.info.matchInfos.iterator
+            adMatchInfo <- adData.info.matchInfos.iterator
             if adMatchInfo.predicates.exists(_ eqOrHasParent MPredicates.Receiver)
             adMatchNodeInfo <- adMatchInfo.nodeMatchings.iterator
             if adMatchNodeInfo.ntype contains MNodeTypes.BleBeacon

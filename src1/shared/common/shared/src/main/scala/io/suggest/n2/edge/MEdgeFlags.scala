@@ -25,8 +25,11 @@ object MEdgeFlags extends StringEnum[MEdgeFlag] {
     */
   case object InProgress extends MEdgeFlag("~")
 
+  /** Всегда раскрытая (на конкретном узле) карточка. */
+  case object AlwaysOpened extends MEdgeFlag("OP")
 
-  override val values = findValues
+
+  override def values = findValues
 
 }
 
@@ -49,8 +52,12 @@ object MEdgeFlag {
 
     /** Разрешается отправлять данный флаг в выдачу? */
     def isScClientSide: Boolean = {
-      // AlwaysOutlined - отрабатывается только на клиенте.
-      true
+      ef match {
+        case MEdgeFlags.InProgress => false
+        // AlwaysOutlined - отрабатывается только на клиенте.
+        // AlwaysOpened - отрабатывается на клиенте и на сервере.
+        case _ => true
+      }
     }
 
   }

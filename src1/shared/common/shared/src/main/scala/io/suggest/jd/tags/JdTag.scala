@@ -10,6 +10,7 @@ import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.ErrorMsgs
+import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -174,6 +175,8 @@ object JdTag {
               tree
                 .subForest
                 .zipWithIndex
+                // 2021.03.17 При обсчёте тарифов размещения карточки требуется именно БЛОК, а не qd-bl контент, иначе будет ошибка.
+                .filter(_._1.rootLabel.name ==* MJdTagNames.STRIP)
                 .headOption
             }
             .getOrElse {
@@ -205,6 +208,15 @@ object JdTag {
         .iterator
         .zipWithIdIter[EdgeUid_t]
         .to( Map )
+    }
+
+    def gridItemsIter: Iterator[Tree[From]] = {
+      tree.rootLabel.name match {
+        case MJdTagNames.DOCUMENT =>
+          tree.subForest.iterator
+        case _ =>
+          Iterator.single( tree )
+      }
     }
 
   }

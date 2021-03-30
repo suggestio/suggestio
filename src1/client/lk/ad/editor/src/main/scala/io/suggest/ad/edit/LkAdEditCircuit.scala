@@ -105,9 +105,9 @@ class LkAdEditCircuit(
           data        = jdDataJs,
           conf        = jdConf,
           jdRuntime   = JdUtil
-            .mkRuntime(jdConf)
+            .prepareJdRuntime(jdConf)
             .docs(jdDataJs.doc)
-            .result,
+            .make,
         )
         MDocS(
           jdDoc = MJdDocEditS(
@@ -226,7 +226,7 @@ class LkAdEditCircuit(
                 MJdArgs.jdRuntime.set {
                   DocEditAh
                     .mkJdRuntime(jdDoc2, mdoc0.jdDoc.jdArgs)
-                    .result
+                    .make
                 }
               ) andThen
             MDocS.editors
@@ -340,7 +340,7 @@ class LkAdEditCircuit(
             val jdDoc1 = (MJdDoc.template set mPictureAh.view)( jdDoc0 )
             val jdRuntime11 = DocEditAh
               .mkJdRuntime(jdDoc1, jdArgs0)
-              .result
+              .make
             (jdDoc1, jdRuntime11)
           } else {
             // Не изменился шаблон, вернуть исходник

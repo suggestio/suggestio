@@ -36,32 +36,32 @@ object ListsSpec extends SimpleTestSuite {
 
   test("findLCS() should find longest common sub-seq, not ragged") {
     assertEquals(
-      findLCS(List(1,2,3,4,5,6,7,8,9), List(7,8,9,10)) ,
+      largestCommonSeq(List(1,2,3,4,5,6,7,8,9), List(7,8,9,10)) ,
       List(7,8,9)
     )
     assertEquals(
-      findLCS(List(1,2,3,4,5,6,7,8,9), List(1,4,7,8,9,10)) ,
+      largestCommonSeq(List(1,2,3,4,5,6,7,8,9), List(1,4,7,8,9,10)) ,
       List(7,8,9)
     )
     assertEquals(
-      findLCS(List(1,2,3,4,5,6,7,8,9), List(1)),
+      largestCommonSeq(List(1,2,3,4,5,6,7,8,9), List(1)),
       Nil
     )
     assertEquals(
-      findLCS(List(1,2,3,4,5,6,7,8,9), Nil) ,
+      largestCommonSeq(List(1,2,3,4,5,6,7,8,9), Nil) ,
       Nil
     )
-    assertEquals( findLCS(Nil, Nil), Nil )
+    assertEquals( largestCommonSeq(Nil, Nil), Nil )
     assertEquals(
-      findLCS(List(1,2,3,4,5,6,7,8,9), List(1,2,3, 5,6,7,8,9, 10)) ,
+      largestCommonSeq(List(1,2,3,4,5,6,7,8,9), List(1,2,3, 5,6,7,8,9, 10)) ,
       List(5,6,7,8,9)
     )
     assertEquals(
-      findLCS(List(1,2,3,4,5,6,7,8,9), List(1,2, 4,5,6,7,8, 10)) ,
+      largestCommonSeq(List(1,2,3,4,5,6,7,8,9), List(1,2, 4,5,6,7,8, 10)) ,
       List(4,5,6,7,8)
     )
     assertEquals(
-      findLCS(
+      largestCommonSeq(
         List(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17),
         List(1,2,3,4,10,11,12,13,14,15,16,17)
       ),
@@ -72,19 +72,19 @@ object ListsSpec extends SimpleTestSuite {
 
   test("findRaggedLCS() should find longest common ragged sub-sequence") {
     assertEquals(
-      findRaggedLCS(Array("a", "b", "c"), Array("b", "c", "d")) ,
+      raggedLargestCommonSeq(Array("a", "b", "c"), Array("b", "c", "d")) ,
       List("b", "c")
     )
     assertEquals(
-      findRaggedLCS(Array("a", "b", "c"), Array("e", "d", "f")) ,
+      raggedLargestCommonSeq(Array("a", "b", "c"), Array("e", "d", "f")) ,
       Nil
     )
     assertEquals(
-      findRaggedLCS(Array(1, 2, 3, 4, 5), Array(2, 4, 6)) ,
+      raggedLargestCommonSeq(Array(1, 2, 3, 4, 5), Array(2, 4, 6)) ,
       List(2, 4)
     )
     assertEquals(
-      findRaggedLCS(
+      raggedLargestCommonSeq(
         Array(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17),
         Array(1,2,3,4, 10,11,12,13,14,15,16,17)
       ),

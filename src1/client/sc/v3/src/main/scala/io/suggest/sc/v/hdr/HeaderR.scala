@@ -123,7 +123,7 @@ class HeaderR(
         hdrProgressC = propsProxy.connect { mroot =>
           val r =
             mroot.index.resp.isPending ||
-            mroot.grid.core.adsHasPending
+            mroot.grid.core.ads.adsHasPending
           OptionUtil.SomeBool( r )
         }( FastEq.AnyRefEq ),
 

@@ -24,9 +24,9 @@ object CartUtil {
   /** Сборка пустого стиля для jd-рендера. */
   def mkJdRuntime(templates: LazyList[MJdDoc] = LazyList.empty): MJdRuntime = {
     JdUtil
-      .mkRuntime(JD_CONF)
+      .prepareJdRuntime(JD_CONF)
       .docs(templates)
-      .result
+      .make
   }
 
 }

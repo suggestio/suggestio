@@ -48,7 +48,7 @@ class LkAdsCircuit(
         jdConf  = jdConf
       ),
       ads = MAdsS(
-        jdRuntime = JdUtil.mkRuntime(jdConf).result,
+        jdRuntime = JdUtil.prepareJdRuntime(jdConf).make,
       )
     )
   }

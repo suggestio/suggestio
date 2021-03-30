@@ -85,7 +85,6 @@ object TailAh {
             .map(_._2.point)
         }
     }
-    //println(s"BootingRoute prev.locEnv = ${bootingRoute.flatMap(_.locEnv)} |||| ${bootingRoute}\n next mapCenter = ${v0.index.search.geo.mapInit.state.center}\n locEnv2 => $locEnv2 wz1Done?${v0.internals.boot.wzFirstDone}")
 
     SioPages.Sc3(
       nodeId        = currRcvrId,
@@ -97,11 +96,13 @@ object TailAh {
       tagNodeId     = selTagIdOpt,
       menuOpened    = v0.index.menu.opened,
       focusedAdId   = for {
-        scAdData <- v0.grid.core.focusedAdOpt
-        if scAdData.focused.nonEmpty
-        adNodeId <- scAdData.nodeId
+        scAdLoc   <- v0.grid.core.ads.interactAdOpt
+        scAd      = scAdLoc.getLabel
+        adData    <- scAd.data.toOption
+        if adData.isOpened
+        nodeId    <- adData.doc.tagId.nodeId
       } yield {
-        adNodeId
+        nodeId
       },
       firstRunOpen = v0.dialogs.first.view.nonEmpty,
       dlAppOpen    = v0.index.menu.dlApp.opened,
@@ -589,8 +590,8 @@ class TailAh(
           .set(generation2)
         // generation не совпадает. Надо будет перезагрузить плитку.
         if (isFullyReady) {
-          val adsPot = v0.grid.core.ads
-          if (adsPot.isPending || adsPot.exists(_.nonEmpty))
+          val adsPot = v0.grid.core.ads.adsTreePot
+          if (adsPot.isPending || adsPot.exists(!_.subForest.isEmpty))
             isGridNeedsReload = true
         } else {
           jsRouterAwaitRoute = true
@@ -673,10 +674,15 @@ class TailAh(
         !isToReloadIndex
       ) {
         if (isFullyReady) {
-          for {
-            focusedAdId <- m.mainScreen.focusedAdId orElse currMainScreen.focusedAdId
-          } {
-            fxsAcc ::= GridBlockClick(nodeId = focusedAdId).toEffectPure
+          val focusedAdIdOpt = m.mainScreen.focusedAdId
+            .orElse( currMainScreen.focusedAdId )
+          if (focusedAdIdOpt.nonEmpty) {
+            // Для GridBlockClick надо вычислить gridKey, поискав карточку с таким nodeId в текущей плитке:
+            fxsAcc ::= GridBlockClick(
+              adId = focusedAdIdOpt,
+              gridPath = None,
+              gridKey = None,
+            ).toEffectPure
           }
         } else {
           jsRouterAwaitRoute = true
@@ -832,7 +838,6 @@ class TailAh(
       var modsAcc = List.empty[MScRoot => MScRoot]
       var fxAcc = List.empty[Effect]
       var nonSilentUpdate = false
-
 
       for {
         geoLockTimerId <- v0.internals.info.geoLockTimer

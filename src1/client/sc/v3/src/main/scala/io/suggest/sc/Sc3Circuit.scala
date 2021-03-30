@@ -41,7 +41,7 @@ import io.suggest.sc.m.boot.{Boot, IBootAction, MBootServiceIds, MSpaRouterState
 import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.m.dia.err.MScErrorDia
-import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
+import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS, MScAdData}
 import io.suggest.sc.m.in.{MInternalInfo, MScDaemon, MScInternals}
 import io.suggest.sc.m.inx.{IIndexAction, IWelcomeAction, MScIndex, MScIndexState}
 import io.suggest.sc.m.menu.{IScAppAction, MDlAppDia, MMenuS}
@@ -81,6 +81,7 @@ import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.spa.delay.{ActionDelayerAh, IDelayAction}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -112,7 +113,6 @@ class Sc3Circuit(
 
   import MScIndex.MScIndexFastEq
   import m.in.MScInternals.MScInternalsFastEq
-  import MGridS.MGridSFastEq
   import MScDev.MScDevFastEq
   import MScScreenS.MScScreenSFastEq
   import m.dev.MScGeoLoc.MScGeoLocFastEq
@@ -207,7 +207,7 @@ class Sc3Circuit(
         MGridS(
           core = MGridCoreS(
             jdConf    = jdConf,
-            jdRuntime = JdUtil.mkRuntime(jdConf).result,
+            jdRuntime = JdUtil.prepareJdRuntime(jdConf).make,
           )
         )
       },
@@ -270,11 +270,10 @@ class Sc3Circuit(
 
     // Заголовок карточки.
     for {
-      scAd <- mroot.grid.core.ads
-        .iterator
-        .flatten
-      foc <- scAd.focused
-      focAdTitle <- foc.title
+      scAdData  <- mroot.grid.core.ads.interactAdOpt
+      adData    <- scAdData.getLabel.data.toOption
+      if adData.isOpened
+      focAdTitle <- adData.title
     } {
       acc ::= focAdTitle
     }
@@ -319,8 +318,9 @@ class Sc3Circuit(
     }
   }
 
-  private def gridRW              = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
-  private def gridCoreRW          = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
+  private def gridRW              = mkLensRootZoomRW(this, MScRoot.grid)
+  private def gridCoreRW          = mkLensZoomRW( gridRW, MGridS.core )
+  private def gridAdsRW           = mkLensZoomRW( gridCoreRW, MGridCoreS.ads )( FastEqUtil.AnyRefFastEq )
   private def jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
 
   private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
@@ -365,7 +365,14 @@ class Sc3Circuit(
 
   private def delayerRW           = mkLensZoomRW( internalsRW, MScInternals.delayer )
 
-  private[sc] def focusedAdRO = gridCoreRW.zoom(_.myFocusedAdOpt)
+  /** Текущая открытая карточка, пригодная для операций над ней: размещение в маячке, например. */
+  private[sc] def focusedAdRO     = gridRW.zoom [Option[MScAdData]] { mgrid =>
+    for {
+      scAdLoc <- mgrid.core.ads.interactAdOpt
+      scAd = scAdLoc.getLabel
+      if scAd.canEdit
+    } yield scAd
+  }
 
   // notifications
   private def scNotifications = new ScNotifications(
