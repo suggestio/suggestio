@@ -174,12 +174,12 @@ object JdTag {
       *                   None - попытаться вернуть БЛОК, но если блоков нет, то вернуть то, что возможно.
       * @return
       */
-    // TODO Результат сделать опциональным
-    def getMainBlockOrFirst(blockOnly: Option[Boolean] = None): (Tree[From], Int) = {
+    def getMainBlockOrFirst(blockOnly: Option[Boolean] = None): Option[(Tree[From], Int)] = {
       tree.rootLabel.name match {
         case MJdTagNames.DOCUMENT =>
           getMainBlock
             .orElse {
+              // main-блок не найден. Выбрать первый блок:
               val allForestInx = tree
                 .subForest
                 .zipWithIndex
@@ -198,24 +198,21 @@ object JdTag {
               forestInx
                 .headOption
             }
-            .getOrElse {
-              // Поиск блока в пустом документе - это ненормально, падаем.
-              throw new IllegalStateException( (ErrorMsgs.JD_TREE_UNEXPECTED_CHILDREN, tree.rootLabel).toString() )
-            }
         case jdtName if !(blockOnly contains[Boolean] true) || (jdtName ==* MJdTagNames.STRIP) =>
           // По идее, поиск главного блока в блоке - это логическая ошибка. Но шаблон бывает разный, и это может быть предосторожность, поэтому реагируем молча.
-          tree -> 0
-        case other =>
-          throw new IllegalArgumentException( (ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, other).toString() )
+          Some( tree -> 0 )
+        case _ =>
+          None
       }
     }
 
     def getMainBgColor: Option[MColorData] = {
-      getMainBlockOrFirst()
-        ._1
-        .rootLabel
-        .props1
-        .bgColor
+      for {
+        (mainJdtTree, _) <- getMainBlockOrFirst()
+        bgColor <- mainJdtTree.rootLabel.props1.bgColor
+      } yield {
+        bgColor
+      }
     }
 
     def edgesUidsMap: Map[EdgeUid_t, MJdEdgeId] = {

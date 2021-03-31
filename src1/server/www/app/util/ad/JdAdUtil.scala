@@ -234,9 +234,6 @@ class JdAdUtil @Inject()(
   }
 
 
-  def getNodeTpl(mad: MNode) = mad.extras.doc.get.template
-
-
   /** traversal от JdTag до bm.isWide-флага. */
   private def _jdt_p1_bm_wide_LENS = {
     JdTag.props1
@@ -445,7 +442,7 @@ class JdAdUtil @Inject()(
 
       override def nodeTitle = mad.meta.basic.nameOpt
 
-      override lazy val tpl = getNodeTpl(mad)
+      override lazy val tpl = mad.extras.doc.get.template
 
       override lazy val nodeEdges = mad.edges
 

@@ -210,10 +210,22 @@ final class LkAds @Inject() (
 
     // Рендерим карточки в потоке:
     val adsRenderedSrc = allAdsSrc
+      .mapConcat { mad =>
+        val r = (for {
+          doc <- mad.extras.doc
+          mainRes <- doc.template.getMainBlockOrFirst()
+        } yield {
+          mainRes -> mad
+        })
+
+        if (r.isEmpty)
+          LOGGER.error(s"$logPrefix Skip render of node#${mad.idOrNull} ntype=${mad.common.ntype}: empty document or zero-blocks jd-tree: ${mad.extras.doc}")
+
+        r.toList
+      }
       // Параллельно рендерим запрошенные карточки:
-      .mapAsync(8) { mad =>
+      .mapAsync(8) { case ((mainTpl, mainBlkIndex), mad) =>
         LOGGER.trace(s"$logPrefix Will render ${mad.idOrNull}")
-        val (mainTpl, mainBlkIndex) = jdAdUtil.getNodeTpl(mad).getMainBlockOrFirst()
         // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
         val mainNonWideTpl = jdAdUtil.resetBlkWide( mainTpl )
         val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)

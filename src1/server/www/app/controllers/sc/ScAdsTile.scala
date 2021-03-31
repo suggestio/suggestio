@@ -10,6 +10,7 @@ import io.suggest.geo.MLocEnv
 import io.suggest.jd.tags.JdTag
 import io.suggest.n2.edge.{MEdgeFlags, MPredicate, MPredicates}
 import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.extra.doc.MNodeDoc
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{IMNodes, MNode, MNodeFields, MNodeTypes}
 import io.suggest.primo.TypeT
@@ -61,6 +62,9 @@ trait ScAdsTile
   protected case class MAdInfo(
                                 mnode           : MNode,
                                 matchInfos      : Iterable[MScAdMatchInfo] = Nil,
+                                doc             : MNodeDoc,
+                                mainBlock       : Tree[JdTag],
+                                mainBlockIndex  : Int,
                               )
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
@@ -166,10 +170,13 @@ trait ScAdsTile
         } yield {
           val res = (for {
             searchHit <- searchHits.iterator
-          } yield {
-            // Распарсить узел-карточку:
-            val mNode = mNodes.deserializeOne2( searchHit )
 
+            // Распарсить узел-карточку:
+            mNode = mNodes.deserializeOne2( searchHit )
+            doc <- mNode.extras.doc
+            (mainJdt, mainIndex) <- doc.template.getMainBlockOrFirst()
+
+          } yield {
             // Надо получить инфу по найденным предикатам из inner_hits:
             val ihAdMatchInfos = (for {
               edgeInnerHits <- Option( searchHit.getInnerHits )
@@ -241,7 +248,7 @@ trait ScAdsTile
             if (ihAdMatchInfos.nonEmpty)
               LOGGER.trace(s"$logPrefix Found ${ihAdMatchInfos.size} ad-matchings for nodeAd#${searchHit.getId}:\n ${ihAdMatchInfos.mkString(",\n ")}")
 
-            MAdInfo( mNode, ihAdMatchInfos )
+            MAdInfo( mNode, ihAdMatchInfos, doc, mainJdt, mainIndex )
           })
             // Сразу рендерим без лени.
             .to( List )
@@ -318,7 +325,11 @@ trait ScAdsTile
             // TODO Передавать на клиент, что нет больше карточек, чтобы не было дальнейшего запроса подгрузки ещё карточек.
             LOGGER.trace(s"$logPrefix mads[${mads.length}] offset=$offset => 404")
             for (mads404 <- mads404Fut) yield {
-              for (mad404 <- mads404) yield {
+              for {
+                mad404 <- mads404
+                doc <- mad404.extras.doc
+                (mainJdt, mainIndex) <- doc.template.getMainBlockOrFirst()
+              } yield {
                 MAdInfo(
                   mnode = mad404,
                   // Сообщить на клиент, что это 404-карточка, чтобы клиент НЕ уведомлял юзера о какой-либо полезной инфе.
@@ -328,6 +339,9 @@ trait ScAdsTile
                       nodeId = Some( nodeId404 ),
                     ) :: Nil
                   ) :: Nil,
+                  mainBlock = mainJdt,
+                  mainBlockIndex = mainIndex,
+                  doc = doc,
                 )
               }
             }
@@ -469,13 +483,10 @@ trait ScAdsTile
         // Узнать, какой шаблон рендерить.
         val (tpl2, selPathRev): (Tree[JdTag], List[Int]) = if (isDisplayOpened) {
           LOGGER.trace(s"$logPrefix Ad#${brArgs.mad.idOrNull} renders focused by default.")
-          jdAdUtil.getNodeTpl( brArgs.mad ) -> Nil
+          adInfo.doc.template -> Nil
         } else {
-          val (tpl1, i) = jdAdUtil
-            .getNodeTpl( brArgs.mad )
-            .getMainBlockOrFirst()
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
-          jdAdUtil.resetBlkWide( tpl1 ) -> (i :: Nil)
+          jdAdUtil.resetBlkWide( adInfo.mainBlock ) -> (adInfo.mainBlockIndex :: Nil)
         }
 
         // Собираем необходимые эджи и упаковываем в переносимый контейнер:

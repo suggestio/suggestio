@@ -59,11 +59,9 @@ final class AdvUtil @Inject() (
   def getAdvMainBlock(mad: MNode, blockOnly: Option[Boolean] = None): Option[Tree[JdTag]] = {
     for {
       doc <- mad.extras.doc
+      (mainTree, _) <- doc.template.getMainBlockOrFirst( blockOnly )
     } yield {
-      // v2-карточки, брать block-meta от главного блока
-      doc.template
-        .getMainBlockOrFirst( blockOnly )
-        ._1
+      mainTree
     }
   }
 

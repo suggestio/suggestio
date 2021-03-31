@@ -611,7 +611,7 @@ trait ScFocusedAds
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
       Future {
         val mad = args.brArgs.mad
-        val tpl = jdAdUtil.getNodeTpl( mad )
+        val tpl = mad.extras.doc.get.template
         val edges2 = jdAdUtil.filterEdgesForTpl(tpl, mad.edges)
         val jdFut = jdAdUtil.mkJdAdDataFor
           .show(

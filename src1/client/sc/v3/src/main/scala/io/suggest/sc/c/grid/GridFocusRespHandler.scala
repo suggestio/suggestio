@@ -140,6 +140,23 @@ final class GridFocusRespHandler
           // Задан ключ элемента плитки. Надо добавить туда:
           GridAh.findAd( _, gridAds0 )
         }
+
+      // Найдена точка в дереве, куда надо добавить полученную карточку.
+      focResp <- ra.ads
+      focAdResp <- focResp.ads.headOption
+
+      // Отрендерить все gridItems для принятой карточки:
+      focAdJdDoc = focAdResp.jd.doc
+      focAdIndexed = JdUtil.mkTreeIndexed( focAdJdDoc )
+
+      // Поиск main-блока в focused-ответе:
+      (mainBlockJdId, mainBlockIndex) <- {
+        val r = focAdIndexed.getMainBlockOrFirst()
+        if (r.isEmpty)
+          logger.error( ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, msg = (focAdIndexed, r) )
+        r
+      }
+
     } yield {
       // Убрать возможный pending на родительской карточке:
       val parent = parentLoc0.getLabel
@@ -151,20 +168,8 @@ final class GridFocusRespHandler
 
       val parentLevel = parentLoc.parents.length
 
-      // Найдена точка в дереве, куда надо добавить полученную карточку.
-      val focResp = ra.ads.get
-      val focAdResp = focResp.ads.head
-
-      // Отрендерить все gridItems для принятой карточки:
-      val focAdJdDoc = focAdResp.jd.doc
-
       // Следующий id для сохранения в состоянии:
       var idCounter2 = gridAds0.idCounter
-
-      val focAdIndexed = JdUtil.mkTreeIndexed( focAdJdDoc )
-
-      // Поиск main-блока в focused-ответе:
-      val (mainBlockJdId, mainBlockIndex) = focAdIndexed.getMainBlockOrFirst()
 
       val focAdGridItems = focAdIndexed
         .gridItemsIter

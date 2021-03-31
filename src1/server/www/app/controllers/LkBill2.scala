@@ -619,23 +619,35 @@ final class LkBill2 @Inject() (
 
       // Дождаться прочитанных узлов:
       allNodesMap <- allNodesMapFut
-      adNodesMap = allNodesMap
+      adNodes = allNodesMap
         .view
         .filterKeys( itemNodeIds.contains )
-        .filter { case (_, mnode) =>
+        .valuesIterator
+        .filter { mnode =>
           // Если не отфильтровать только карточки (могут быть и adn-узлы), то зафейлится jd-рендер.
           (mnode.common.ntype ==* MNodeTypes.Ad) &&
             mnode.extras.doc.nonEmpty
         }
+        .flatMap { mad =>
+          val r = for {
+            doc <- mad.extras.doc
+            mainRes <- doc.template.getMainBlockOrFirst()
+          } yield {
+            mainRes -> mad
+          }
+
+          if (r.isEmpty)
+            LOGGER.warn(s"$logPrefix Ad#${mad.idOrNull} missing main-block in jd-tree: ${mad.extras.doc}")
+
+          r
+        }
+        .to( LazyList )
 
       // Начинаем рендерить
       jdConf = MJdConf.simpleMinimal
-      adDatas <- Future.traverse( adNodesMap.values ) { mad =>
+      adDatas <- Future.traverse( adNodes ) { case ((mainTpl, mainBlkIndex), mad) =>
         // Для ускорения рендера - каждую карточку отправляем сразу в фон:
         Future {
-          val (mainTpl, mainBlkIndex) = jdAdUtil
-            .getNodeTpl(mad)
-            .getMainBlockOrFirst()
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
           val mainNonWideTpl = jdAdUtil.resetBlkWide( mainTpl )
           val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)

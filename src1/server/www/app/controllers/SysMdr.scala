@@ -310,7 +310,7 @@ final class SysMdr @Inject() (
         }
 
         // И организуется jd-рендер:
-        tpl = jdAdUtil.getNodeTpl( mad )
+        tpl = mad.extras.doc.get.template
         edges2 = jdAdUtil.filterEdgesForTpl(tpl, mad.edges)
         jdAdData <- jdAdUtil
           .mkJdAdDataFor
