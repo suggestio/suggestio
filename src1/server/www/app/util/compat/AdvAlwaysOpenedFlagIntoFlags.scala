@@ -77,7 +77,7 @@ final class AdvAlwaysOpenedFlagIntoFlags @Inject() (
         val mNode2 = node_edges_out_LENS.modify { edges0 =>
           for (e <- edges0) yield {
             if (
-              (preds contains[MPredicate] e.predicate) &&
+              preds.exists( e.predicate.eqOrHasParent ) &&
               edge_info_flag_LENS.exist(_.nonEmpty)(e)
             ) {
               // Требуется обработка данного эджа:
