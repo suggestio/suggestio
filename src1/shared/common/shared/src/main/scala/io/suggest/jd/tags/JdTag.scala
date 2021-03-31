@@ -166,24 +166,43 @@ object JdTag {
         .headOption
     }
 
-    /** Вернуть главый блок, либо первый блок. */
-    def getMainBlockOrFirst: (Tree[From], Int) = {
+    /** Вернуть главый блок, либо первый блок.
+      *
+      * @param blockOnly В качестве блока возвращать только главный БЛОК или допускать вариации?
+      *                   true - жестко возвращать MJdTagNames.STRIP или exception.
+      *                   false - возвращать что угодно.
+      *                   None - попытаться вернуть БЛОК, но если блоков нет, то вернуть то, что возможно.
+      * @return
+      */
+    // TODO Результат сделать опциональным
+    def getMainBlockOrFirst(blockOnly: Option[Boolean] = None): (Tree[From], Int) = {
       tree.rootLabel.name match {
         case MJdTagNames.DOCUMENT =>
           getMainBlock
             .orElse {
-              tree
+              val allForestInx = tree
                 .subForest
                 .zipWithIndex
-                // 2021.03.17 При обсчёте тарифов размещения карточки требуется именно БЛОК, а не qd-bl контент, иначе будет ошибка.
-                .filter(_._1.rootLabel.name ==* MJdTagNames.STRIP)
+              var forestInx = allForestInx
+
+              // 2021.03.17 При обсчёте тарифов размещения карточки требуется именно БЛОК, а не qd-bl контент, иначе будет ошибка.
+              if (!(blockOnly contains[Boolean] false)) {
+                forestInx = forestInx
+                  .filter(_._1.rootLabel.name ==* MJdTagNames.STRIP)
+
+                // Если чёткий критерий blocksOnly не задан, но блоков не найдено, вернуть то, что есть.
+                if (blockOnly.isEmpty && forestInx.isEmpty)
+                  forestInx = allForestInx
+              }
+
+              forestInx
                 .headOption
             }
             .getOrElse {
               // Поиск блока в пустом документе - это ненормально, падаем.
               throw new IllegalStateException( (ErrorMsgs.JD_TREE_UNEXPECTED_CHILDREN, tree.rootLabel).toString() )
             }
-        case MJdTagNames.STRIP =>
+        case jdtName if !(blockOnly contains[Boolean] true) || (jdtName ==* MJdTagNames.STRIP) =>
           // По идее, поиск главного блока в блоке - это логическая ошибка. Но шаблон бывает разный, и это может быть предосторожность, поэтому реагируем молча.
           tree -> 0
         case other =>
@@ -192,7 +211,7 @@ object JdTag {
     }
 
     def getMainBgColor: Option[MColorData] = {
-      getMainBlockOrFirst
+      getMainBlockOrFirst()
         ._1
         .rootLabel
         .props1

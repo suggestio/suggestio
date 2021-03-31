@@ -90,7 +90,8 @@ final class AdRenderUtil @Inject() (
    * @return Фьючерс с байтами картинки.
    */
   def renderAd2img(adArgs: OneAdQsArgs, mad: MNode): Future[File] = {
-    val wh = advUtil.getAdvMainBlock(mad)
+    val wh = advUtil
+      .getAdvMainBlock(mad)
       .get
       .rootLabel
       .props1

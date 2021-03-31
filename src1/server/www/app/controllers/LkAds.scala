@@ -213,7 +213,7 @@ final class LkAds @Inject() (
       // Параллельно рендерим запрошенные карточки:
       .mapAsync(8) { mad =>
         LOGGER.trace(s"$logPrefix Will render ${mad.idOrNull}")
-        val (mainTpl, mainBlkIndex) = jdAdUtil.getNodeTpl(mad).getMainBlockOrFirst
+        val (mainTpl, mainBlkIndex) = jdAdUtil.getNodeTpl(mad).getMainBlockOrFirst()
         // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
         val mainNonWideTpl = jdAdUtil.resetBlkWide( mainTpl )
         val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)

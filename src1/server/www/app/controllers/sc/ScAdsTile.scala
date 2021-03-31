@@ -473,7 +473,7 @@ trait ScAdsTile
         } else {
           val (tpl1, i) = jdAdUtil
             .getNodeTpl( brArgs.mad )
-            .getMainBlockOrFirst
+            .getMainBlockOrFirst()
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
           jdAdUtil.resetBlkWide( tpl1 ) -> (i :: Nil)
         }

@@ -4,6 +4,7 @@ import diode.Circuit
 import io.suggest.log.{ILogAppender, MLogMsg}
 import io.suggest.primo.Keep
 import io.suggest.sjs.common.view.CommonPage
+import io.suggest.spa.DoNothingActionProcessor
 
 import scala.util.Try
 
@@ -38,6 +39,9 @@ final class BufLogAppender(
   Try {
     CommonPage.onClose( () => dispatch(ExpTimerAlarm) )
   }
+
+
+  addProcessor( DoNothingActionProcessor[MBufAppendS] )
 
 }
 

@@ -633,7 +633,9 @@ final class LkBill2 @Inject() (
       adDatas <- Future.traverse( adNodesMap.values ) { mad =>
         // Для ускорения рендера - каждую карточку отправляем сразу в фон:
         Future {
-          val (mainTpl, mainBlkIndex) = jdAdUtil.getNodeTpl(mad).getMainBlockOrFirst
+          val (mainTpl, mainBlkIndex) = jdAdUtil
+            .getNodeTpl(mad)
+            .getMainBlockOrFirst()
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
           val mainNonWideTpl = jdAdUtil.resetBlkWide( mainTpl )
           val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)

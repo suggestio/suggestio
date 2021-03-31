@@ -164,7 +164,7 @@ final class GridFocusRespHandler
       val focAdIndexed = JdUtil.mkTreeIndexed( focAdJdDoc )
 
       // Поиск main-блока в focused-ответе:
-      val (mainBlockJdId, mainBlockIndex) = focAdIndexed.getMainBlockOrFirst
+      val (mainBlockJdId, mainBlockIndex) = focAdIndexed.getMainBlockOrFirst()
 
       val focAdGridItems = focAdIndexed
         .gridItemsIter

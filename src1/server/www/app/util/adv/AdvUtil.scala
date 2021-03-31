@@ -1,17 +1,18 @@
 package util.adv
 
 import java.time.{DayOfWeek, LocalDate}
-
 import io.suggest.ad.blk.{BlockHeights, BlockPaddings, BlockWidths}
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dt.MYmd
 import io.suggest.es.model.EsModel
 import io.suggest.jd.tags.JdTag
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.Inject
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mcal.MCalsCtx
@@ -55,13 +56,13 @@ final class AdvUtil @Inject() (
 
 
   /** Извлечь главный BlockMeta из узла-карточки. */
-  def getAdvMainBlock(mad: MNode): Option[Tree[JdTag]] = {
+  def getAdvMainBlock(mad: MNode, blockOnly: Option[Boolean] = None): Option[Tree[JdTag]] = {
     for {
       doc <- mad.extras.doc
     } yield {
       // v2-карточки, брать block-meta от главного блока
       doc.template
-        .getMainBlockOrFirst
+        .getMainBlockOrFirst( blockOnly )
         ._1
     }
   }
@@ -78,7 +79,7 @@ final class AdvUtil @Inject() (
   def getAdModulesCount(mad: MNode): Int = {
     // Тут поддержка разных кар
     // TODO Следует ли отрабатывать ситуацию, когда нет BlockMeta?
-    val jdt = getAdvMainBlock(mad)
+    val jdt = getAdvMainBlock( mad, blockOnly = OptionUtil.SomeBool.someTrue )
       .get
       .rootLabel
     getAdModulesCount(jdt)
@@ -98,7 +99,7 @@ final class AdvUtil @Inject() (
     wmul * hmul
   }
   def maybeAdModulesCount(mad: MNode): Option[Int] = {
-    getAdvMainBlock(mad)
+    getAdvMainBlock(mad, blockOnly = OptionUtil.SomeBool.someTrue)
       .map { m => getAdModulesCount(m.rootLabel) }
   }
 
