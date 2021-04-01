@@ -470,28 +470,36 @@ final class JdRrr(
 
       def _renderGrid(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
         val state = propsProxy.value
-
-        // Плитку отсюда полностью вынести не удалось.
-        CSSGrid {
-          GridBuilderUtilJs.mkCssGridArgs(
-            gbRes = state.gridBuildRes.getOrElse {
-              logger.error( ErrorMsgs.GRID_BUILD_RES_MISSING, msg = state.tagId.toString )
-              throw new NoSuchElementException( ErrorMsgs.GRID_BUILD_RES_MISSING )
-            },
-            conf = state.jdArgs.conf,
-            tagName = GridComponents.DIV,
+        state.gridBuildRes.fold {
+          // should never happen, but may happen in case of logical errors
+          // Передан для рендера документ, но не передано плитки. Надо рендерить содержащую его плитку, ругнувшись в логи.
+          logger.error( ErrorMsgs.GRID_BUILD_RES_MISSING, msg = state.tagId.toString )
+          React.Fragment(
+            pureChildren( renderChildrenWithId( propsProxy ) )
+              .toVdomArray
           )
-        } (
-          renderChildrenWithId( propsProxy )
-            // Тут тег-обёртка-костыль - что для CSSGrid нужен обязательно теги, а НЕ react-компоненты в children.
-            .map { case (id, jdTree, p) =>
-              <.div(
-                ^.key := id.toString,
-                fixZIndexIfBlock( jdTree.rootLabel ),
-                p
-              )
-            }: _*
-        )
+
+        } { gbRes =>
+          // Плитку отсюда полностью вынести окончательно пока не удалось.
+          // TODO Плитки тут быть не должно, чтобы не воротить костыли типа обрамляющего Option.fold.
+          CSSGrid {
+            GridBuilderUtilJs.mkCssGridArgs(
+              gbRes = gbRes,
+              conf = state.jdArgs.conf,
+              tagName = GridComponents.DIV,
+            )
+          } (
+            renderChildrenWithId( propsProxy )
+              // Тут тег-обёртка-костыль - что для CSSGrid нужен обязательно теги, а НЕ react-компоненты в children.
+              .map { case (id, jdTree, p) =>
+                <.div(
+                  ^.key := id.toString,
+                  fixZIndexIfBlock( jdTree.rootLabel ),
+                  p
+                )
+              }: _*
+          )
+        }
       }
 
     }
