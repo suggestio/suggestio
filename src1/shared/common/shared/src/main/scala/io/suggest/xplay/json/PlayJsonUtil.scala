@@ -10,7 +10,8 @@ import play.api.libs.json.{Format, JsArray, JsBoolean, JsNull, JsNumber, JsObjec
   */
 object PlayJsonUtil {
 
-  var THROW_ERRORS = true
+  /** dirty-флаг для переключения подавления ошибок при работе с JSON. */
+  private[json] var THROW_ERRORS = true
 
   /** Рекурсивная конвертация из play-json в нативный JSON.
     *

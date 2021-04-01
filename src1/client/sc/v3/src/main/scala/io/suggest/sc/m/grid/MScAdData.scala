@@ -1,16 +1,18 @@
 package io.suggest.sc.m.grid
 
 import diode.data.Pot
+import io.suggest.common.coll.Lists
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.log.Log
 import io.suggest.primo.id.OptStrId
 import io.suggest.scalaz.ScalazUtil.Implicits.OptionExt
-import io.suggest.scalaz.ZTreeUtil.TreeOps
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
 import scalaz.{Cord, EphemeralStream, Show, Tree, TreeLoc}
+
+import scala.annotation.tailrec
 
 /**
   * Suggest.io
@@ -116,6 +118,85 @@ object MScAdData extends Log {
       */
     def findByGridKeyPath(pathIter: IterableOnce[GridAdKey_t]): Option[TreeLoc[MScAdData]] =
       _pathToNodeLoc( adsTreeLoc, pathIter.iterator )
+
+
+
+    def dropChildrenUntilPath(keepPath: List[GridAdKey_t]): TreeLoc[MScAdData] = {
+      val keepPathLen = keepPath.length
+
+      /** Идём всю плитку по нижним уровням, отбрасывая ненужные под-уровни, сверяясь с keepPath-ориентиром.
+        *
+        * @param parentNodePathRev Путь до родительского узла (развёрнутый)
+        * @param loc Текущая локация в дереве.
+        * @param canDropChildren Можно ли на текущем шаге спиливать нижний уровень?
+        * @param isRootNode Это корневой элемент?
+        * @param canWalkDown Разрешено ли идти вниз по дереву?
+        * @return Обновлённая локация для сборки обновлённого дерева.
+        */
+      @tailrec
+      def __dropChildrenExceptNodeWalker(parentNodePathRev: List[GridAdKey_t],
+                                         loc: TreeLoc[MScAdData],
+                                         canDropChildren: Boolean,
+                                         isRootNode: Boolean = false,
+                                         canWalkDown: Boolean = true,
+                                        ): TreeLoc[MScAdData] = {
+
+        // Есть дочерние элементы и возможен спуск на уровень ниже. Нужно решить, дропаем ли children на текущем уровне?
+        // Текущий путь до узла:
+        lazy val currNodePathRev = loc.getLabel
+          .firstGridKey
+          .filter( _ => !isRootNode )
+          .fold( parentNodePathRev )( _ :: parentNodePathRev )
+
+        if (
+          canWalkDown &&
+          loc.hasChildren && {
+            val currNodePath = currNodePathRev.reverse
+            val commonKeepPrefix = Lists.largestCommonPrefix( currNodePath, keepPath )
+            val commonKeepPrefixLen = commonKeepPrefix.length
+
+            (commonKeepPrefixLen ==* keepPathLen) ||           // Мы на обоначенной цели
+            (commonKeepPrefixLen ==* currNodePath.length)    // Либо, идём по пути к цели, на каком-то промежуточном шаге. Продолжаем погружение вглубь.
+          }
+        ) {
+          // Этот узел оставляем вместе с под-элементами. Но под-под-элементы надо зачищать:
+          val firstChildLoc = loc.firstChild.get
+          __dropChildrenExceptNodeWalker( currNodePathRev, firstChildLoc, canWalkDown = false, canDropChildren = true )
+
+        } else if ( canDropChildren && loc.hasChildren ) {
+          // Мы или достигли цели и гуляем по подуровням цели, или какой-либо не-keepPath-элемент. Дропаем все элементы ниже:
+          //
+          val loc2 = loc.setTree(
+            Tree.Leaf( loc.getLabel )
+          )
+          __dropChildrenExceptNodeWalker( parentNodePathRev, loc2, canWalkDown = false, canDropChildren = false )
+
+        } else if (!loc.rights.isEmpty) {
+          // Есть элемент справа, хотя нет children'ов.
+          val rightLoc = loc.right.get
+          __dropChildrenExceptNodeWalker( parentNodePathRev, rightLoc, canWalkDown = true, canDropChildren = true )
+
+        } else if (!loc.parents.isEmpty) {
+          // Нет ни справа, ни внизу. Подняться на шаг вверх:
+          val parentLoc = loc.parent.get
+          val isRootNode2 = parentNodePathRev.isEmpty
+          val parentPathRev2 = if (isRootNode2) parentNodePathRev else parentNodePathRev.tail
+          __dropChildrenExceptNodeWalker( parentPathRev2, parentLoc, canWalkDown = false, canDropChildren = false, isRootNode = isRootNode2 )
+
+        } else {
+          // Нет родительских элементов и !canWalkDown. Вы прошли дерево и вернулись на самый верх. Вернуть текущую локацию в дереве.
+          loc
+        }
+      }
+
+      __dropChildrenExceptNodeWalker(
+        parentNodePathRev = Nil,
+        loc               = adsTreeLoc,
+        isRootNode        = true,
+        canWalkDown       = true,
+        canDropChildren   = false,
+      )
+    }
 
   }
 

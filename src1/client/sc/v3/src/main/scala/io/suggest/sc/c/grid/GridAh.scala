@@ -293,57 +293,11 @@ object GridAh extends Log {
 
             r
           }
-          keepNodePathLen = keepNodePath.length
 
         } yield {
-          /** Пройтись по каждому уровню карточек, подредактировав всё дерево.
-            *
-            * @param loc0 Текущая локация в дереве.
-            * @param parentNodePathRev Обратный путь к родительскому узлу.
-            * @param dropFirst Отбросить первый элемент?
-            *                  true на нулевом шаге.
-            *                  А потом - false.
-            *                  toNodePath() всегда отбрасывает 0-элемент от корня дерева, поэтому и тут требуется отбрасывать.
-            * @return Почищенный TreeLoc.
-            */
-          def __processNodeLoc(loc0: TreeLoc[(MScAdData, Int)],
-                               parentNodePathRev: NodePath_t,
-                               dropFirst: Boolean = false,
-                              ): TreeLoc[(MScAdData, Int)] = {
-            val thisNodePathRev = if (dropFirst) {
-              parentNodePathRev
-            } else {
-              loc0.getLabel._2 :: parentNodePathRev
-            }
-
-            // Если есть под-элементы, то обсчитать решение по ним.
-            (if (loc0.hasChildren) {
-              val thisNodePath = thisNodePathRev.reverse
-
-              val commonPathPrefix = Lists.largestCommonPrefix( keepNodePath, thisNodePath )
-              val commonPathPrefixLen = commonPathPrefix.length
-
-              if (keepNodePathLen ==* commonPathPrefixLen) {
-                // Если NodePath текущей карточки включает в себя запрашиваемый, то пройти subForest текущего узла.
-                __processNodeLoc( loc0.firstChild.get, thisNodePathRev )
-              } else {
-                // Если текущий NodePath не коррелирует с необходимым, то обнулить subForest.
-                loc0.setTree( Tree.Leaf( loc0.getLabel ) )
-              }
-            } else {
-              // Нет subForest у текущего дочернего элемента. Нет смысла что-то дальше проверять. Просто пропускаем текущий узел и идём дальше.
-              loc0
-            })
-              .right
-              .fold( loc0 )( __processNodeLoc(_, thisNodePathRev) )
-          }
-
-          __processNodeLoc(
-            loc0                    = adsPtrs0.zipWithIndex.loc,
-            parentNodePathRev       = Nil,
-            dropFirst               = true,
-          )
-            .map(_._1)
+          adsPtrs0
+            .loc
+            .dropChildrenUntilPath( keepNodePath )
             .toTree
         })
           .getOrElse {
