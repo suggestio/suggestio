@@ -2,6 +2,8 @@ package io.suggest.sc.ads
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MSzMult
+import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -16,7 +18,10 @@ object MSc3AdsResp {
 
   /** Поддержка play-json. */
   implicit def MSC3_ADS_TILE_RESP_FORMAT: OFormat[MSc3AdsResp] = (
-    (__ \ "a").formatNullable[Seq[MSc3AdData]]
+    (__ \ "a")
+      .formatNullable[Seq[MSc3AdData]] {
+        PlayJsonUtil.readsSeqNoErrorFormat[MSc3AdData]
+      }
       .inmap[Seq[MSc3AdData]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
         {ads => if (ads.isEmpty) None else Some(ads) }

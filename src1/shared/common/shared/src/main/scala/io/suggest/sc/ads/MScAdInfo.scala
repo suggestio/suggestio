@@ -7,6 +7,7 @@ import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -25,12 +26,30 @@ object MScAdInfo extends IEmpty {
 
   implicit def scAdInfoJson: OFormat[MScAdInfo] = (
     (__ \ "e").formatNullable[Boolean] and
-    (__ \ "f").formatNullable[Iterable[MEdgeFlagData]]
+    (__ \ "f")
+      .formatNullable[Iterable[MEdgeFlagData]] {
+        // Для reads используем безопасный десериализатор, который дропает неизвестные edge-флаги.
+        Format(
+          PlayJsonUtil
+            .readsSeqNoError[MEdgeFlagData]
+            .map(_.toIterable),
+          implicitly,
+        )
+      }
       .inmap[Iterable[MEdgeFlagData]](
         EmptyUtil.opt2ImplEmptyF( Nil ),
         { flags => if (flags.isEmpty) None else Some(flags) }
       ) and
-    (__ \ "o").formatNullable[Iterable[MScAdMatchInfo]]
+    (__ \ "o")
+      .formatNullable[Iterable[MScAdMatchInfo]] {
+        // Подавлять ошибки десериализации:
+        Format(
+          PlayJsonUtil
+            .readsSeqNoError[MScAdMatchInfo]
+            .map(_.toIterable),
+          implicitly,
+        )
+      }
       .inmap[Iterable[MScAdMatchInfo]](
         EmptyUtil.opt2ImplEmptyF( Nil ),
         { matchInfos => Option.when( matchInfos.nonEmpty )( matchInfos ) }

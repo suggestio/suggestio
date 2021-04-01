@@ -67,4 +67,10 @@ object PlayJsonSjsUtil {
       .toJSArray
   }
 
+
+  def init(): Unit = {
+    // Выставить ошибку, при необходимости.
+    PlayJsonUtil.THROW_ERRORS = scalajs.LinkingInfo.developmentMode
+  }
+
 }

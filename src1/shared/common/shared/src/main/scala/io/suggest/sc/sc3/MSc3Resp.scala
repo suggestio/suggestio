@@ -1,6 +1,7 @@
 package io.suggest.sc.sc3
 
 import io.suggest.text.StringUtil
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -19,7 +20,10 @@ object MSc3Resp {
 
   /** Поддержка play-json. */
   implicit def msc3RespFormat: OFormat[MSc3Resp] = {
-    (__ \ "ra").format[List[MSc3RespAction]]
+    (__ \ "ra")
+      .format[Seq[MSc3RespAction]] {
+        PlayJsonUtil.readsSeqNoErrorFormat[MSc3RespAction]
+      }
       .inmap[MSc3Resp]( apply, _.respActions )
   }
 
@@ -34,15 +38,8 @@ object MSc3Resp {
   *                    И List, и порядок имеют значение: экшены применяются выдачей в исходном порядке.
   */
 case class MSc3Resp(
-                     respActions: List[MSc3RespAction]
+                     respActions: Seq[MSc3RespAction],
                    ) {
-
-  def withRespActions(respActions: List[MSc3RespAction]) = copy(respActions = respActions)
-
-  /** Выкинуть первый экшен, вернув новый инстанс [[MSc3Resp]]. */
-  def tailActions: MSc3Resp = {
-    withRespActions( respActions.tail )
-  }
 
   /** Сравнить тип первого экшена с указанным значением. */
   def isNextActionType(expected: MScRespActionType): Boolean = {

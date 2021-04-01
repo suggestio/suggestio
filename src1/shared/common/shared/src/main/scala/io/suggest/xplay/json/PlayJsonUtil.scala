@@ -1,6 +1,6 @@
 package io.suggest.xplay.json
 
-import play.api.libs.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue}
+import play.api.libs.json.{Format, JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, Reads, Writes}
 
 /**
   * Suggest.io
@@ -9,6 +9,8 @@ import play.api.libs.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsStr
   * Description: Доп.утиль для play-json (кросс-платформенная).
   */
 object PlayJsonUtil {
+
+  var THROW_ERRORS = true
 
   /** Рекурсивная конвертация из play-json в нативный JSON.
     *
@@ -58,5 +60,29 @@ object PlayJsonUtil {
       .toSeq
   }
 
+
+  /** Чтение списка с молчаливым пропуском некорректных элементов. */
+  def readsSeqNoError[T: Reads]: Reads[Seq[T]] = {
+    if (THROW_ERRORS) {
+      implicitly[Reads[Seq[T]]]
+    } else {
+      Reads
+        .seq(
+          Reads
+            .optionNoError[T]
+          // TODO Добавить бы логгирование, чтобы быстрее замечать возможные проблемы. Но ошибка в optionNoError() пока не доступна.
+        )
+        .map(_.flatten)
+    }
+  }
+
+  def readsSeqNoErrorFormat[T: Reads: Writes]: Format[Seq[T]] = {
+    Format(
+      PlayJsonUtil
+        .readsSeqNoError[T]
+        .map(_.toIterable),
+      implicitly,
+    )
+  }
 
 }

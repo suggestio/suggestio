@@ -3,6 +3,7 @@ package io.suggest.sys
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.n2.edge.edit.EdgeEditInit
 import io.suggest.sys.mdr.SysMdrInit
+import io.suggest.xplay.json.PlayJsonSjsUtil
 
 /**
   * Suggest.io
@@ -13,6 +14,8 @@ import io.suggest.sys.mdr.SysMdrInit
 object SysMain {
 
   def main(args: Array[String]): Unit = {
+    PlayJsonSjsUtil.init()
+
     (new SysInit)
       .init()
   }

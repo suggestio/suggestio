@@ -26,6 +26,7 @@ import org.scalajs.dom
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+import io.suggest.xplay.json.PlayJsonSjsUtil
 
 import scala.util.Try
 
@@ -59,6 +60,8 @@ object Sc3Main extends Log {
   def main(args: Array[String]): Unit = {
     if (JsApiUtil.isDefinedSafe( LeafletGlobal.L ))
       Try( Leaflet.noConflict() )
+
+    PlayJsonSjsUtil.init()
 
     val modules = new Sc3Module
     if (scalajs.LinkingInfo.developmentMode)
@@ -223,7 +226,6 @@ object Sc3Main extends Log {
       }
     }
       .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
-
   }
 
 }

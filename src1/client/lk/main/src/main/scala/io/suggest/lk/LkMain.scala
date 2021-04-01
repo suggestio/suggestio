@@ -16,6 +16,7 @@ import io.suggest.sjs.leaflet.{Leaflet, LeafletGlobal}
 import io.suggest.sys.mdr.SysMdrInit
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.AdvExtRunnerInitRouter
+import io.suggest.xplay.json.PlayJsonSjsUtil
 
 import scala.scalajs.js
 import scala.util.Try
@@ -30,6 +31,8 @@ object LkMain extends Log {
 
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
   def main(args: Array[String]): Unit = {
+    PlayJsonSjsUtil.init()
+
     if ( JsApiUtil.isDefinedSafe(LeafletGlobal.L) )
       Try( Leaflet.noConflict() )
 

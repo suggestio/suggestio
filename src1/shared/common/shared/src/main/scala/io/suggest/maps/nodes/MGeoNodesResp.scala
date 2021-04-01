@@ -5,6 +5,7 @@ import io.suggest.geo.IGeoShape.JsonFormats.minimalFormat
 import io.suggest.primo.id.OptStrId
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.text.StringUtil
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 // НЕ УДАЛЯТЬ, используется для обоих UnivEq.derive
 import io.suggest.ueq.UnivEqUtil._
@@ -24,7 +25,10 @@ object MGeoNodesResp {
 
     /** Поддержка play-json для инстансов [[MGeoNodesResp]]. */
   implicit def msc3NodesSearchRespFormat: OFormat[MGeoNodesResp] = {
-    (__ \ "t").format[Seq[MGeoNodePropsShapes]]
+    (__ \ "t")
+      .format[Seq[MGeoNodePropsShapes]] {
+        PlayJsonUtil.readsSeqNoErrorFormat[MGeoNodePropsShapes]
+      }
       .inmap(apply, _.nodes)
   }
 
@@ -88,10 +92,11 @@ object MGeoNodePropsShapes {
 
   implicit def MGeoNodePropsShapesFormat: OFormat[MGeoNodePropsShapes] = (
     (__ \ "p").format[MSc3IndexResp] and
-    (__ \ "s").format[Seq[IGeoShape]]
+    (__ \ "s").format[Seq[IGeoShape]] {
+      PlayJsonUtil.readsSeqNoErrorFormat[IGeoShape]
+    }
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MGeoNodePropsShapes] = UnivEq.derive
 
 }
-
