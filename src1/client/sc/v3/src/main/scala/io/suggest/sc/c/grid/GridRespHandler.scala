@@ -141,10 +141,6 @@ final class GridRespHandler(
           // Главное - их сразу пропихивать и в focused, и в обычные блоки.
           val jdJs = MJdDataJs.fromJdData( sc3AdData.jd, sc3AdData.info )
           val jdDoc0 = sc3AdData.jd.doc
-          val hasSeveralGridItems = jdDoc0.template
-            .gridItemsIter
-            .take(2)
-            .length > 1
 
           MScAdData(
             data = Pot.empty.ready( jdJs ),
@@ -157,12 +153,10 @@ final class GridRespHandler(
                 idCounterNext += 1
                 MGridItem(
                   gridKey,
-                  jdDoc = if (hasSeveralGridItems) {
-                    jdDoc0.copy(
-                      template = itemSubTree.map(_._2),
-                      tagId    = jdTagId,
-                    )
-                  } else jdDoc0,
+                  jdDoc = jdDoc0.copy(
+                    template = itemSubTree.map(_._2),
+                    tagId    = jdTagId,
+                  ),
                 )
               })
                 .toSeq

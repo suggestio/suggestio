@@ -277,15 +277,22 @@ object GridAh extends Log {
         (for {
           // Не трогать фокусировку элемента дерева по указанному пути.
           // Должен начинаться с корневого 0-элемента, т.к. нижнее дерево
-          keepNodePath <- gridKeyOpt
-            // Nil NodePath_t подразумевает, что надо свернуть карточки вплость до root.subForest.
-            .fold [Option[NodePath_t]] (Some(Nil)) { gridKey =>
-              adsPtrs0
-                .loc
-                .findByGridKey( gridKey )
-                // Получить node path.
-                .map(_.toNodePath)
-            }
+          keepNodePath <- {
+            val r = gridKeyOpt
+              // Nil NodePath_t подразумевает, что надо свернуть карточки вплость до root.subForest.
+              .fold [Option[NodePath_t]] (Some(Nil)) { gridKey =>
+                adsPtrs0
+                  .loc
+                  .findByGridKey( gridKey )
+                  // Получить node path.
+                  .map(_.toNodePath)
+              }
+
+            if (r.isEmpty)
+              logger.warn( ErrorMsgs.NODE_NOT_FOUND, msg = gridKeyOpt )
+
+            r
+          }
           keepNodePathLen = keepNodePath.length
 
         } yield {

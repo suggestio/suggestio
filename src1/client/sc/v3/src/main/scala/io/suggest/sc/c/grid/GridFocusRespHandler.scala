@@ -338,13 +338,14 @@ final class GridFocusRespHandler
           logger.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, focAdGridItems) )
           idCounter2 - 1
         }(_.gridKey)
+      val focGridKeyPath = focAddedLoc.gridKeyPath
 
       // Сохранить новое дерево и счётчик в состояние:
       val gridCore1 = MGridCoreS.ads.set {
         gridAds0.copy(
           idCounter = idCounter2,
           adsTreePot = gridAds0.adsTreePot.ready( focAddedLoc.toTree ),
-          interactWith = Some((focAddedLoc.gridKeyPath, focGridKey)),
+          interactWith = Some((focGridKeyPath, focGridKey)),
         )
       }(g0.core)
 
