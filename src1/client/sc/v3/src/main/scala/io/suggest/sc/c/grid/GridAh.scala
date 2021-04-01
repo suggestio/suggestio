@@ -4,7 +4,6 @@ import com.github.fisshy.react.scroll.AnimateScroll
 import diode._
 import diode.data.{PendingBase, Pot}
 import io.suggest.ad.blk.BlockPaddings
-import io.suggest.common.coll.Lists
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult, MGridRenderInfo}
@@ -28,9 +27,8 @@ import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.v.styl.ScCss
-import io.suggest.scalaz.NodePath_t
 import io.suggest.scalaz.ScalazUtil.Implicits._
-import io.suggest.scalaz.ZTreeUtil.{TreeLocOps, ZTreeOps}
+import io.suggest.scalaz.ZTreeUtil.TreeLocOps
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import io.suggest.scalaz.ZTreeUtil._
@@ -264,11 +262,11 @@ object GridAh extends Log {
   /** Сброс фокуса у всех карточек, кроме указанной.
     * Указанная карточка - перезаписывается указанным инстансом.
     *
-    * @param gridKeyOpt Порядковый номер обновляемой карточки в плитке.
+    * @param gridKeyPathOpt Порядковый номер обновляемой карточки в плитке.
     * @param gridCore0 Исходное состояние плитки.
     * @return Обновлённое состояние плитки.
     */
-  def resetFocus(gridKeyOpt: Option[GridAdKey_t], gridCore0: MGridCoreS): MGridCoreS = {
+  def resetFocus(gridKeyPathOpt: Option[List[GridAdKey_t]], gridCore0: MGridCoreS): MGridCoreS = {
     // Т.к. фокусировка может быть вложенная, а дерево надо проходить по всем под-уровням, то сначала надо поискать
     // локацию указанной карточки в дереве, вычислить node path и сравнивать все проходимые элементы дерева
     // с целевым nodePath, чтобы не ломать линию фокуса.
@@ -278,18 +276,12 @@ object GridAh extends Log {
           // Не трогать фокусировку элемента дерева по указанному пути.
           // Должен начинаться с корневого 0-элемента, т.к. нижнее дерево
           keepNodePath <- {
-            val r = gridKeyOpt
-              // Nil NodePath_t подразумевает, что надо свернуть карточки вплость до root.subForest.
-              .fold [Option[NodePath_t]] (Some(Nil)) { gridKey =>
-                adsPtrs0
-                  .loc
-                  .findByGridKey( gridKey )
-                  // Получить node path.
-                  .map(_.toNodePath)
-              }
+            val r = gridKeyPathOpt
+              // Nil подразумевает, что надо свернуть карточки вплость до root.subForest.
+              .orElse( Some(Nil) )
 
             if (r.isEmpty)
-              logger.warn( ErrorMsgs.NODE_NOT_FOUND, msg = gridKeyOpt )
+              logger.warn( ErrorMsgs.NODE_NOT_FOUND, msg = gridKeyPathOpt )
 
             r
           }
@@ -302,7 +294,7 @@ object GridAh extends Log {
         })
           .getOrElse {
             // should never happen: узел с указанными gridKey не найден в дереве.
-            logger.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (ErrorMsgs.NODE_NOT_FOUND, gridKeyOpt) )
+            logger.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (ErrorMsgs.NODE_NOT_FOUND, gridKeyPathOpt) )
             adsPtrs0
           }
       }
@@ -526,10 +518,11 @@ class GridAh[M](
 
       // Поискать запрошенную карточку в состоянии.
       (for {
-        gridKey <- m.gridKey
         scAdLoc <- GridAh.findAd(m, gridAds0)
         scAdData = scAdLoc.getLabel
         adData <- scAdData.data.toOption
+        gridKey <- m.gridKey
+        gridKeyPath <- m.gridPath
       } yield {
         if (adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOpened)) {
           // Клик по всегда развёрнутой карточке должен приводить к скроллу к началу карточки без загрузки.
@@ -540,8 +533,8 @@ class GridAh[M](
               // Для индикации фокуса на карточке, используем Pot.focused.unavailable(), чтобы scAd.focused отличался от Pot.empty.
               val gridCore1 = MGridCoreS.ads
                 .composeLens( MGridAds.interactWith )
-                .set( Some((scAdLoc.gridKeyPath, gridKey)) )(gridCore0)
-              GridAh.resetFocus( m.gridKey, gridCore1)
+                .set( Some((gridKeyPath, gridKey)) )(gridCore0)
+              GridAh.resetFocus( m.gridPath, gridCore1)
             }
           )(v0)
           updatedSilent(v2, scrollFx)

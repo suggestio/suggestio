@@ -295,6 +295,7 @@ class ShowcaseUtil @Inject() (
       .map(_.id)
       .toSet
 
+    val edgeFlagsApiAllowed = qs.common.apiVsn.clientEdgeFlagsAllowed
     (for {
       e <- mad.edges.withPredicateIter( MPredicates.Receiver )
       if (e.nodeIds & rcvrIds).nonEmpty
@@ -304,7 +305,7 @@ class ShowcaseUtil @Inject() (
         .iterator
       if flagData.flag.isScClientSide &&
          // На версиях cordova app <= 4.2 любой неизвестный флаг приводил к краху.
-         qs.common.apiVsn.clientEdgeFlagsAllowed.fold(true)(_ contains flagData.flag)
+         edgeFlagsApiAllowed.fold(true)(_ contains flagData.flag)
     } yield {
       flagData.flag -> flagData
     })

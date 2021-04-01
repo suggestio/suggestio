@@ -3,7 +3,6 @@ package io.suggest.sc.c.grid
 import diode.{ActionResult, Effect}
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
-import io.suggest.jd.MJdTagId
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.jd.render.u.JdUtil
@@ -42,26 +41,28 @@ final class GridFocusRespHandler
     val gridAds = ctx.value0.grid.core.ads
 
     // reason может быть не только GridBlockClick, но и GetIndex, например:
-    Option( ctx.m.reason )
-      .collect { case m: GridBlockClick => m }
-      // Достать gridKey и поискать его в дереве.
-      .flatMap( _.gridKey )
-      .fold [Option[Pot[_]]] {
-        Some( gridAds.adsTreePot )
-
-      } { reasonGridKey =>
-        gridAds
-          .interactAdOpt
-          .filter( _.getLabel.gridItemWithKey( reasonGridKey ).nonEmpty )
-          .orElse {
-            for {
-              adPtrsTree <- gridAds.adsTreePot.toOption
-              loc <- adPtrsTree.loc.findByGridKey( reasonGridKey )
-            } yield {
-              loc
-            }
+    (for {
+      gbc <- Option( ctx.m.reason ).collect {
+        case m: GridBlockClick => m
+      }
+      gridKey <- gbc.gridKey
+    } yield {
+      gridAds
+        .interactAdOpt
+        .filter( _.getLabel.gridItemWithKey( gridKey ).nonEmpty )
+        .orElse {
+          for {
+            gridKeyPath <- gbc.gridPath
+            adPtrsTree <- gridAds.adsTreePot.toOption
+            loc <- adPtrsTree.loc.findByGridKeyPath( gridKeyPath )
+          } yield {
+            loc
           }
-          .map( _.getLabel.data )
+        }
+        .map( _.getLabel.data )
+    })
+      .getOrElse {
+        Some( gridAds.adsTreePot )
       }
   }
 
@@ -77,10 +78,10 @@ final class GridFocusRespHandler
           ctx.modelRW.zoom { mroot =>
             Pot
               .fromOption {
-                reason.gridKey.flatMap { gridKey =>
+                reason.gridPath.flatMap { gridKeyPath =>
                   mroot.grid.core.ads.adsTreePot
                     .toOption
-                    .flatMap( _.loc.findByGridKey(gridKey) )
+                    .flatMap( _.loc.findByGridKeyPath(gridKeyPath) )
                 }
               }
               .flatMap(_.getLabel.data)
@@ -350,7 +351,7 @@ final class GridFocusRespHandler
       }(g0.core)
 
       // Обновление фокусировки:
-      val gridCore2 = GridAh.resetFocus( Some(focGridKey), gridCore1 )
+      val gridCore2 = GridAh.resetFocus( Some(focGridKeyPath), gridCore1 )
 
       // Надо проскроллить выдачу на начало открытой карточки:
       val scrollFx = GridAh.scrollToAdFx( focAddedLoc.getLabel, gridCore2.gridBuild )

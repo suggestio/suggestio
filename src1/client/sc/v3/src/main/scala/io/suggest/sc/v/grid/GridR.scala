@@ -15,7 +15,6 @@ import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.grid.{GridAdKey_t, GridBlockClick, GridScroll, MGridCoreS, MGridS}
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
-import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import io.suggest.tv.SmartTvUtil
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
