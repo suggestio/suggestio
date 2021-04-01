@@ -18,7 +18,6 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.EsModel
 import io.suggest.jd.MJdConf
 import io.suggest.n2.edge.{MEdgeFlagData, MPredicates}
-import util.adn.NodesUtil
 
 import scala.concurrent.Future
 
@@ -33,7 +32,6 @@ class ShowcaseUtil @Inject() (
                                esModel      : EsModel,
                                advUtil      : AdvUtil,
                                n2NodesUtil  : N2NodesUtil,
-                               nodesUtil    : NodesUtil,
                                mNodes       : MNodes,
                                mCommonDi    : ICommonDi
                              )
@@ -304,7 +302,9 @@ class ShowcaseUtil @Inject() (
       flagData <- e.info
         .flags
         .iterator
-      if flagData.flag.isScClientSide
+      if flagData.flag.isScClientSide &&
+         // На версиях cordova app <= 4.2 любой неизвестный флаг приводил к краху.
+         qs.common.apiVsn.clientEdgeFlagsAllowed.fold(true)(_ contains flagData.flag)
     } yield {
       flagData.flag -> flagData
     })

@@ -67,7 +67,7 @@
           <application android:usesCleartextTraffic="true" />
         </edit-config>
 	-->
-	<preference name="Fullscreen" value="true" />
+	<!--<preference name="Fullscreen" value="true" />-->
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />

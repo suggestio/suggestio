@@ -2,6 +2,7 @@ package io.suggest.sc
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
+import io.suggest.n2.edge.{MEdgeFlag, MEdgeFlags}
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
@@ -27,13 +28,27 @@ import play.api.libs.json.Format
 
 object MScApiVsns extends IntEnum[MScApiVsn] {
 
-  /** Выдача на React.sjs (sc3). */
+  /** Выдача на React.sjs (sc3) на сайте.
+    * Фичи сами плавно появляются в этой версии, т.к. клиент и сервер обновляются совместно.
+    * TODO Надо разобраться с установленным pwa, когда js'ник живёт в установленном web-приложении.
+    */
   case object ReactSjs3 extends MScApiVsn( 4 )
 
-  /** react-выдача sc3 для cordova-приложений. */
-  case object ReactCordova extends MScApiVsn( 5 ) {
+
+  /** Общий трейт для cordova api vsn. */
+  sealed trait CordovaVsnCommon extends MScApiVsn {
     override def majorVsn = ReactSjs3.majorVsn
     override def forceAbsUrls = true
+
+  }
+
+  /** react-выдача sc3 для cordova-приложений. */
+  case object CordovaAppTill_4_2 extends MScApiVsn( 5 ) with CordovaVsnCommon {
+    override def clientEdgeFlagsAllowed: Option[Set[MEdgeFlag]] =
+      Some( Set.empty[MEdgeFlag] + MEdgeFlags.AlwaysOutlined )
+  }
+
+  case object ReactCordovaNext extends MScApiVsn( 6 ) with CordovaVsnCommon {
   }
 
 
@@ -58,6 +73,10 @@ sealed abstract class MScApiVsn(override val value: Int) extends IntEnumEntry {
     * На dyn-картинки, например.
     */
   def forceAbsUrls: Boolean = false
+
+  /** Какие edge-флаги допустимо отправлять на клиент?
+    * Cordova app <= 4.2 падало, когда встречен неизвестный флаг. */
+  def clientEdgeFlagsAllowed: Option[Set[MEdgeFlag]] = None
 
   override def toString: String = s"v$majorVsn($value)"
 
