@@ -125,7 +125,6 @@ final class GridFocusRespHandler
     }
 
     (for {
-      // Считаем, что при фокусировке в дереве всегда содержится хоть что-то.
       adsTree <- gridAds0
         .adsTreePot
         .toOption
@@ -133,13 +132,30 @@ final class GridFocusRespHandler
       // Собрать данные по main-блоку, который фокусируют:
       // reason.gridKey может быть пуст, например когда фокусировка по карточке, которая никак в плитке
       // не представлена в плитке (ad_id взят из URL qs).
-      parentLoc0 <- gblOpt
-        .fold [Option[TreeLoc[MScAdData]]] {
-          // Нет исходного gridKey, т.е. карточка запрошена напрямую по ad_id. Просто добавить карточку в конец текущий плитки.
-          Some( adsTreeRootLoc )
-        } {
+      parentLoc0 = gblOpt
+        .flatMap {
           // Задан ключ элемента плитки. Надо добавить туда:
           GridAh.findAd( _, gridAds0 )
+        }
+        .orElse {
+          // Нет исходного gridKey в исходном экшене. Т.е. карточка запрошена напрямую по ad_id.
+          // Поискать в плитке родительский элемент по ad_id.
+          for {
+            focQs <- ctx.m.qs.foc
+            adId = focQs.lookupAdId
+            mainLoc <- adsTreeRootLoc.find { scAdLoc =>
+              scAdLoc.getLabel.data.exists { scAdData =>
+                scAdData.doc.tagId.nodeId contains[String] adId
+              }
+            }
+          } yield {
+            // Найдена основа для focused карточки среди текущих карточек.
+            mainLoc
+          }
+        }
+        .getOrElse {
+          // Добавить текущую карточку в конец текущий плитки. Создание main-блока будет отработано ниже.
+          adsTreeRootLoc
         }
 
       // Найдена точка в дереве, куда надо добавить полученную карточку.
@@ -217,13 +233,13 @@ final class GridFocusRespHandler
       // Отработать возможные особые случаи, когда карточка добавляется в каких-то нетривиальных условиях.
       val focAddedLoc: TreeLoc[MScAdData] = (for {
         // Попытаться обнаружить ситуацию добавления карточки на верхний уровень, когда отсутствует main-блок для последующего сворачивания.
+        // В карточке -- более одно блока?
         focAdDocTail <- focAdResp.jd.doc.template
           .subForest
           .tailOption
-        // В карточке -- более одно блока?
         if !focAdDocTail.isEmpty &&
-          // Родительский элемент плитки - корневой в дереве?
-          (parentLevel <= 0) &&
+          // Родительский элемент плитки является корневым?
+          (parentLevel ==* 0) &&
           // нет флага AlwaysOpened?
           !focAdResp.info.flags
             .exists(_.flag ==* MEdgeFlags.AlwaysOpened)
