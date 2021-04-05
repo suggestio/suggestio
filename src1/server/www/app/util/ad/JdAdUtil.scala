@@ -153,10 +153,10 @@ class JdAdUtil @Inject()(
       val jdEdge = MJdEdge(
         // Тут раньше безусловно выставлялся предикат imgPredicate, но с adn-редактором понадобились и другие предикаты.
         predicate = medge.predicate,
+        nodeId    = Some( nodeId ),
         edgeDoc   = edgeDoc2,
         // url не ставим, потому что очень нужен около-оригинальная картинка, для кропа например.
         fileSrv   = Some(MSrvFileInfo(
-          nodeId    = nodeId,
           url       = Some {
             // TODO Вместо сырого оригинала вернуть нечто пересжатое с тем же w/h.
             mkDistMediaUrl(dynImgUtil.imgCall(mimg), mimg.dynImgId, mediaHosts, forceAbsUrls = false)
@@ -540,6 +540,7 @@ class JdAdUtil @Inject()(
           } yield {
             MJdEdge(
               predicate   = imgPred,
+              nodeId      = Some( imgMakeRes.sourceImg.dynImgId.origNodeId ),
               edgeDoc     = imgMakeRes.medge.doc,
               url         = {
                 val resImg = imgMakeRes.dynCallArgs
@@ -547,7 +548,6 @@ class JdAdUtil @Inject()(
                 Some(url)
               },
               fileSrv = Some( MSrvFileInfo(
-                nodeId = imgMakeRes.sourceImg.dynImgId.origNodeId,
                 pictureMeta = MPictureMeta(
                   whPx   = Some( imgMakeRes.imgSzReal ),
                 ),

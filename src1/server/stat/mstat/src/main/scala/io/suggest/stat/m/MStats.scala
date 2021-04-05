@@ -5,7 +5,6 @@ import java.time.{LocalDateTime, OffsetDateTime, ZoneId}
 
 import com.google.inject.assistedinject.Assisted
 import javax.inject.Inject
-import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
@@ -320,16 +319,10 @@ final case class MStat(
 /** Интерфейс JMX-модуля модели [[MStats]]. */
 trait MStatsJmxMBean extends EsModelJMXMBeanI {
 
-  @ManagedOperation(impact = Impact.ACTION)
-  @Description("Remove all occurencies BEFORE following timestamp in format: yyyy.MM.dd HH:mm:ss")
   def deleteBefore(dt: String): String
 
-  @ManagedOperation(impact = Impact.INFO)
-  @Description("Count all occurencies BEFORE following timestamp in format: yyyy.MM.dd HH:mm:ss")
   def countBefore(dt: String): String
 
-  @ManagedOperation(impact = Impact.INFO)
-  @Description("Find all occurenciec BEFORE following timestamp in format: yyyy.MM.dd HH:mm:ss. Second argument sets maxResults returned.")
   def findBefore(dt: String, maxResults: Int): String
 
 }

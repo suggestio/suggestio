@@ -2,7 +2,9 @@ package io.suggest.es.model
 
 import io.suggest.es.MappingDsl.Implicits._
 import io.suggest.util.logs.MacroLogsImplLazy
-import io.suggest.util.{JacksonWrapper, JmxBase}
+import io.suggest.util.JmxBase
+import io.suggest.xplay.json.PlayJsonUtil
+
 import javax.inject.{Inject, Singleton}
 import japgolly.univeq._
 
@@ -117,14 +119,14 @@ trait EsModelCommonJMXBase extends JmxBase with EsModelJMXMBeanCommonI with Macr
       val mappingText = companion
         .generateMapping()
         .toString()
-      JacksonWrapper.prettify(mappingText)
+      PlayJsonUtil.prettify(mappingText)
     }
   }
 
   override def readCurrentMapping(): String = {
     LOGGER.debug("readCurrentMapping()")
     val fut = for (res <- companion.getCurrentMapping()) yield {
-      res.fold("Mapping not found.") { JacksonWrapper.prettify }
+      res.fold("Mapping not found.") { PlayJsonUtil.prettify }
     }
     awaitString(fut)
   }
@@ -147,7 +149,7 @@ trait EsModelCommonJMXBase extends JmxBase with EsModelJMXMBeanCommonI with Macr
     val fut = companion.getAll(maxResults, withVsn = true)
       .map { r =>
         val resultNonPretty = companion.toEsJsonDocs(r)
-        JacksonWrapper.prettify(resultNonPretty)
+        PlayJsonUtil.prettify(resultNonPretty)
       }
     awaitString(fut)
   }

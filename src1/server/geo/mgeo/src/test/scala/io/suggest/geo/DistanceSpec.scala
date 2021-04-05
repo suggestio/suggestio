@@ -27,7 +27,7 @@ class DistanceSpec extends AnyFlatSpec {
   }
 
 
-  "Legacy jackson JSON" should "serialize/deserialize to/from JSON via inst -> String-> inst" in {
+  "JSON" should "serialize/deserialize to/from JSON via inst -> String-> inst" in {
     mkTest { d =>
       Distance.parseDistance( d.toString ) shouldBe d
     }

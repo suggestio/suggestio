@@ -18,9 +18,7 @@ JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
-libraryDependencies ++= {
- val tikaVsn       = "1.12"
- Seq(
+libraryDependencies ++= Seq(
   //jdbc exclude("com.h2database", "h2"),
   guice,
   caffeine,
@@ -74,18 +72,6 @@ libraryDependencies ++= {
 
   // Поддержка JsMessages для client-side локализации сообщений
   "org.julienrf" %% "play-jsmessages" % "5.0.0",
-  // Parsers
-  "org.apache.tika" % "tika-core" % tikaVsn,
-  "org.apache.tika" % "tika-parsers" % tikaVsn
-    exclude("xerces", "xercesImpl")
-    exclude("org.bouncycastle", "bcmail-jdk15") // не нужно нам вскрывать зашифрованные архивы и pdf'ки.
-    exclude("org.bouncycastle", "bcprov-jdk15")
-    exclude("org.ow2.asm", "asm-debug-all")
-    exclude("edu.ucar", "netcdf")
-    exclude("commons-logging", "commons-logging")
-    exclude("de.l3s.boilerpipe", "boilerpipe")
-  ,
-  "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
 
   // jsRevRouter используется специальный escaping:
   "org.apache.commons" % "commons-text" % Common.Vsn.COMMONS_TEXT,
@@ -94,7 +80,7 @@ libraryDependencies ++= {
   "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % Test
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
-)}
+)
 
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.
 resolvers ~= {

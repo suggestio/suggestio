@@ -41,11 +41,11 @@ final class N2VldUtil @Inject()(
     (for {
       e         <- edges.iterator
       if e.predicate ==>> MPredicates.JdContent.Image
-      fileSrv   <- e.fileSrv
+      nodeId    <- e.nodeId
       edgeUid   <- e.edgeDoc.id
     } yield {
       // Без img-формата, т.к. для оригинала он игнорируется, и будет перезаписан в imgsNeededMap()
-      edgeUid -> MDynImgId( fileSrv.nodeId )
+      edgeUid -> MDynImgId( origNodeId = nodeId )
     })
       .toMap
   }
@@ -54,12 +54,9 @@ final class N2VldUtil @Inject()(
   /** Собрать ноды, упомянутые в исходном списке эджей. */
   def edgedNodes(edges: IterableOnce[MJdEdge]): Future[Map[String, MNode]] = {
     // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
-    val edgeNodeIds = (for {
-      jdEdge  <- edges.iterator
-      fileSrv <- jdEdge.fileSrv
-    } yield {
-      fileSrv.nodeId
-    })
+    val edgeNodeIds = edges
+      .iterator
+      .flatMap(_.nodeId)
       .toSet
 
     // Поискать узлы, упомянутые в этих эджах.
@@ -162,8 +159,8 @@ final class N2VldUtil @Inject()(
       edgeUid <- jdEdge.edgeDoc.id
 
       fileNodeOpt = for {
-        fileSrv <- jdEdge.fileSrv
-        mnode <- nodesMap.get( fileSrv.nodeId )
+        nodeId <- jdEdge.nodeId
+        mnode <- nodesMap.get( nodeId )
       } yield mnode
 
       isJdImage = jdEdge.predicate ==>> MPredicates.JdContent.Image

@@ -18,8 +18,20 @@ libraryDependencies ++= {
     "org.apache.commons" % "commons-lang3" % Common.Vsn.COMMONS_LANG3,
     "org.im4java" % "im4java" % "1.+",
 
+    // Parsers
+    "org.apache.tika" % "tika-core" % Common.Vsn.TIKA,
+    "org.apache.tika" % "tika-parsers" % Common.Vsn.TIKA
+      exclude("xerces", "xercesImpl")
+      exclude("org.bouncycastle", "bcmail-jdk15") // не нужно нам вскрывать зашифрованные архивы и pdf'ки.
+      exclude("org.bouncycastle", "bcprov-jdk15")
+      exclude("org.ow2.asm", "asm-debug-all")
+      exclude("edu.ucar", "netcdf")
+      exclude("commons-logging", "commons-logging")
+      exclude("de.l3s.boilerpipe", "boilerpipe")
+    ,
+    "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
+
     // JSON
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.10.+",
     "com.typesafe.play"            %% "play-json"            % Common.Vsn.PLAY_JSON_VSN,
     ws,
     cacheApi,

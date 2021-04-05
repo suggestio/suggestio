@@ -3,8 +3,6 @@ package io.suggest.es.model
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.search.SearchHit
 
-import scala.jdk.CollectionConverters._
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -21,8 +19,6 @@ object IEsDoc {
       v.getId
     override def bodyAsString(v: SearchHit): String =
       v.getSourceAsString
-    override def bodyAsScalaMap(v: SearchHit): collection.Map[String, AnyRef] =
-      v.getSourceAsMap.asScala
   }
 
 
@@ -34,8 +30,6 @@ object IEsDoc {
       v.getId
     override def bodyAsString(v: GetResponse): String =
       v.getSourceAsString
-    override def bodyAsScalaMap(v: GetResponse): collection.Map[String, AnyRef] =
-      v.getSourceAsMap.asScala
   }
 
 }
@@ -58,8 +52,5 @@ trait IEsDoc[-T] {
 
   /** Тривиальное извлечение данных через строку. */
   def bodyAsString(v: T): String
-
-  /** legacy декодинг через jackson map. */
-  def bodyAsScalaMap(v: T): collection.Map[String, AnyRef]
 
 }

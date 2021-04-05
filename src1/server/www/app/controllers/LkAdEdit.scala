@@ -220,7 +220,7 @@ final class LkAdEdit @Inject() (
                   }
                   extRscNodeIdOpt
                     .orElse {
-                      jdEdge.fileSrv.map(_.nodeId)
+                      jdEdge.nodeId
                     }
                     .toSet
                 },

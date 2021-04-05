@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.util.JacksonWrapper
+import io.suggest.xplay.json.PlayJsonUtil
 
 /**
  * Suggest.io
@@ -99,7 +99,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     val id1 = id.trim
     LOGGER.debug(s"getRawById($id1)")
     val fut = for (res <- companion.getRawById(id1)) yield {
-      res.fold("not found")(JacksonWrapper.prettify)
+      res.fold("not found")(PlayJsonUtil.prettify)
     }
     awaitString(fut)
   }
@@ -110,7 +110,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     val fut = for (
       res <- companion.getRawContentById(id1)
     ) yield {
-      res.fold("not found")(JacksonWrapper.prettify)
+      res.fold("not found")(PlayJsonUtil.prettify)
     }
     awaitString(fut)
   }

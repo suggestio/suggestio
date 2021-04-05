@@ -632,8 +632,9 @@ class LkAdEditFormR(
           val selJdt = mroot.doc.jdDoc.jdArgs.selJdt
           for {
             bgEdge  <- selJdt.bgEdgeDataOpt
-            fileSrv <- bgEdge._2.jdEdge.fileSrv
-            hist    <- mroot.doc.editors.colorsState.histograms.get( fileSrv.nodeId )
+            jdEdge   = bgEdge._2.jdEdge
+            nodeId  <- jdEdge.nodeId
+            hist    <- mroot.doc.editors.colorsState.histograms.get( nodeId )
             // Определить colorpicker-маркер:
             selLoc  <- selJdt.treeLocOpt
             markerOpt = selLoc.getLabel.name match {

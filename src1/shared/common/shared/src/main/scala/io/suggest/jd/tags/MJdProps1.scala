@@ -25,7 +25,7 @@ object MJdProps1 extends IEmpty {
 
   override type T = MJdProps1
 
-  override def empty = apply()
+  override val empty = apply()
 
   /** Поддержка play-json. */
   implicit def jdtProps1Format: OFormat[MJdProps1] = {

@@ -1,8 +1,10 @@
 package io.suggest.file
 
-import java.nio.file.{Files, Path}
+import io.suggest.util.logs.MacroLogsImpl
+import org.apache.tika.Tika
 
-import scala.concurrent.blocking
+import java.nio.file.Path
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -12,9 +14,13 @@ import scala.concurrent.blocking
   *
   * Нужна как изолирующая прослойка между нижележащей системой определения mime-типов и sio2.
   * Раньше был JMagicMatch, который плохо отрабатывал svg, порождая костыли в коде.
-  * На смену ему пришёл java-7 Files.probeContentType(), а как оно будет в будущем -- покажет время.
+  *
+  * На смену ему пришёл java-7 Files.probeContentType(), но плоховато он работает после обновления до java 11.
+  * https://stackoverflow.com/q/65966437
+  *
+  * Далее, испытывается apache tika.
   */
-object MimeUtilJvm {
+object MimeUtilJvm extends MacroLogsImpl {
 
   /** Проверка content-type для файла.
     *
@@ -23,8 +29,22 @@ object MimeUtilJvm {
     *         None, если тип остался неизвестен по итогам определения.
     */
   def probeContentType(path: Path): Option[String] = {
-    val r = blocking( Files.probeContentType(path) )
-    Option(r)
+    lazy val logPrefix = s"probeContentType($path):"
+
+    val tryRes = Try {
+      val tika = new Tika()
+      tika.detect(path)
+    }
+
+    for (ex <- tryRes.failed)
+      LOGGER.error(s"$logPrefix Failed to probe content type", ex)
+
+    if (LOGGER.underlying.isDebugEnabled) {
+      for (ct <- tryRes)
+        LOGGER.debug(s"$logPrefix => $ct")
+    }
+
+    tryRes.toOption
   }
 
 }

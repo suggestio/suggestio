@@ -30,6 +30,7 @@ object MJdEdge {
   /** Названия полей модели для сериализации в JSON. */
   object Fields {
     val PREDICATE_FN    = "p"
+    val NODE_ID_FN      = "n"
     val EDGE_DOC_FN     = "d"
     val URL_FN          = "u"
     val SRV_FILE_FN     = "f"
@@ -40,6 +41,7 @@ object MJdEdge {
     val F = Fields
     (
       (__ \ F.PREDICATE_FN).format[MPredicate] and
+      (__ \ F.NODE_ID_FN).formatNullable[String] and
       (__ \ F.EDGE_DOC_FN).formatNullable[MEdgeDoc]
         .inmap[MEdgeDoc](
           EmptyUtil.opt2ImplMEmptyF( MEdgeDoc ),
@@ -97,6 +99,21 @@ object MJdEdge {
         )
       }
 
+      // Сейчас валидируется файл-эдж?
+      val isFile = e.predicate ==>> P.Image
+
+      def eNodeId = "e.nodeid."
+      val nodeIdVld = ScalazUtil.liftNelOptMust(
+        e.nodeId,
+        mustBeSome = isFile,
+        errMsg = errMsgF( eNodeId + ErrorConstants.Words.MISSING ),
+      ) { nodeId =>
+        Validation.liftNel(nodeId)(
+          !_.matches("^[a-z0-9A-Z_-]{10,50}$"),
+          eNodeId + ErrorConstants.Words.INVALID + ": " + e.nodeId
+        )
+      }
+
       val edgeDocVld = validateEdgeDoc(e.predicate, e.edgeDoc, errMsgF("doc"))
 
       val urlVld = {
@@ -118,14 +135,14 @@ object MJdEdge {
 
       val fileSrvVld = {
         val FILE = "file"
-        if (e.predicate ==>> P.Image) {
-          ScalazUtil.liftNelSome(e.fileSrv, errMsgF(FILE + `.` + ErrorConstants.Words.MISSING))( MSrvFileInfo.validateC2sForStore )
+        if (isFile) {
+          ScalazUtil.liftNelSome(e.fileSrv, errMsgF(FILE + `.` + ErrorConstants.Words.MISSING))( MSrvFileInfo.validateNodeIdOnly )
         } else {
           ScalazUtil.liftNelNone(e.fileSrv, errMsgF(FILE))
         }
       }
 
-      (predVld |@| edgeDocVld |@| urlVld |@| fileSrvVld)(apply)
+      (predVld |@| nodeIdVld |@| edgeDocVld |@| urlVld |@| fileSrvVld)(apply)
 
     } else {
       // Не jd-предикат, а что-то иное.
@@ -134,6 +151,7 @@ object MJdEdge {
   }
 
   def predicate = GenLens[MJdEdge](_.predicate)
+  def nodeId    = GenLens[MJdEdge](_.nodeId)
   def edgeDoc   = GenLens[MJdEdge](_.edgeDoc)
   def url       = GenLens[MJdEdge](_.url)
   def fileSrv   = GenLens[MJdEdge](_.fileSrv)
@@ -148,14 +166,16 @@ object MJdEdge {
 /** Данные по эджу для редактируемого документа.
   *
   * @param predicate Предикат.
+  * @param nodeId id связанного узла, обязателен для fileSrv.
   * @param url Ссылка на ресурс, на картинку, например.
   * @param fileSrv КроссПлатформенная инфа по файлу-узлу на стороне сервера.
   */
 final case class MJdEdge(
                           predicate           : MPredicate,
-                          edgeDoc             : MEdgeDoc,
-                          url                 : Option[String] = None,
-                          fileSrv             : Option[MSrvFileInfo]  = None
+                          nodeId              : Option[String]          = None,
+                          edgeDoc             : MEdgeDoc                = MEdgeDoc.empty,
+                          url                 : Option[String]          = None,
+                          fileSrv             : Option[MSrvFileInfo]    = None,
                         ) {
 
   def fileSrvUrl = fileSrv.flatMap(_.url)

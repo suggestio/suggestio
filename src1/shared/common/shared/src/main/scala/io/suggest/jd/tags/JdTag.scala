@@ -9,7 +9,7 @@ import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.msg.ErrorMsgs
+import io.suggest.jd.tags.event.MJdtEvents
 import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -33,6 +33,7 @@ object JdTag {
     val PROPS_FN = "p"
     /** Пропертисы для одной qd-операции, если есть. */
     val QD_PROPS_FN = "q"
+    val EVENTS_FN = "e"
   }
 
 
@@ -44,7 +45,12 @@ object JdTag {
         EmptyUtil.opt2ImplMEmptyF(MJdProps1),
         EmptyUtil.implEmpty2OptF
       ) and
-    (__ \ Fields.QD_PROPS_FN).formatNullable[MQdOp]
+    (__ \ Fields.QD_PROPS_FN).formatNullable[MQdOp] and
+    (__ \ Fields.EVENTS_FN).formatNullable[MJdtEvents]
+      .inmap[MJdtEvents](
+        EmptyUtil.opt2ImplMEmptyF(MJdtEvents),
+        jdtEvents => Option.when( jdtEvents.nonEmpty )( jdtEvents ),
+      )
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[JdTag] = UnivEq.derive
@@ -311,11 +317,13 @@ object JdTag {
   * поэтому всё оптимизировано по самые уши ценой невозможности сравнивания разных тегов между собой.
   *
   * @param qdProps Список qd-операций для постройки контента (quill-delta).
+  * @param events Контейнер данных по событиям.
   */
 final case class JdTag(
                         name      : MJdTagName,
-                        props1    : MJdProps1    = MJdProps1.empty,
-                        qdProps   : Option[MQdOp] = None
+                        props1    : MJdProps1     = MJdProps1.empty,
+                        qdProps   : Option[MQdOp] = None,
+                        events    : MJdtEvents    = MJdtEvents.empty,
                       )
   // lazy val hashCode: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
   // TODO После ввода MJdTagId становится не ясно, надо ли *val* hashCode. Может теперь def достаточно?

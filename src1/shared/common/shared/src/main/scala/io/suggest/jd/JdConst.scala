@@ -46,4 +46,14 @@ object JdConst {
     def MAX_PX = 4 * BlockWidths.NORMAL.value
   }
 
+
+  object Event {
+
+    /** Макс. кол-во обработчиков событий на один тег. */
+    def MAX_EVENT_LISTENERS_PER_TAG = 1
+
+    def MAX_ACTIONS_PER_LISTENER = 1
+
+  }
+
 }

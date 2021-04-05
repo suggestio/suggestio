@@ -2,7 +2,6 @@ package io.suggest.es.model
 
 import io.suggest.primo.TypeT
 import io.suggest.primo.id.OptStrId
-import io.suggest.util.JacksonWrapper
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.search.SearchRequestBuilder
@@ -78,8 +77,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
         v.versionOpt
       override def rawVersion(v: T): Long =
         v.versionOpt.getOrElse(-1)
-      override def bodyAsScalaMap(v: T): collection.Map[String, AnyRef] =
-        JacksonWrapper.convert[collection.Map[String, AnyRef]]( toJson(v) )
       override def bodyAsString(v: T): String =
         toJson(v)
       override def idOrNull(v: T): String =

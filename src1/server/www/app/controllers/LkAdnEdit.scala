@@ -18,6 +18,7 @@ import play.api.libs.json.Json
 import util.acl.{BruteForceProtect, IsNodeAdmin, SioControllerApi}
 import util.ad.JdAdUtil
 import util.cdn.CdnUtil
+import io.suggest.common.empty.OptionUtil.Implicits._
 import views.html.lk.adn.edit._
 import models.mup.{MUploadFileHandlers, MUploadInfoQs}
 import play.api.mvc.Result
@@ -284,9 +285,7 @@ final class LkAdnEdit @Inject() (
                   val addNodeEdges = for (jdEdge <- form.edges) yield {
                     MEdge(
                       predicate = jdEdge.predicate,
-                      nodeIds = jdEdge.fileSrv
-                        .map(_.nodeId)
-                        .toSet,
+                      nodeIds = jdEdge.nodeId.toSet1,
                       doc = jdEdge.edgeDoc,
                     )
                   }

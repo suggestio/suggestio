@@ -17,6 +17,7 @@ import io.suggest.file.MSrvFileInfo
 import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, MDsReadParams, WriteRequest}
 import io.suggest.i18n.MMessage
 import io.suggest.img.{MImgFormat, MImgFormats}
+import io.suggest.jd.MJdEdge
 import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MEdgeFlag, MEdgeFlagData, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
@@ -235,34 +236,41 @@ final class Upload @Inject()(
             // Собрать ответ с помощью награбленных цветов.
             val upRespFut = for (mediaColors <- mediaColorsFut) yield {
               MUploadResp(
-                fileExist = Some(MSrvFileInfo(
-                  nodeId  = foundFileNode.id.get,
-                  // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
-                  url = if (edgeMedia.file.imgFormatOpt.nonEmpty) {
-                    // TODO IMG_DIST: Вписать хост расположения картинки.
-                    // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
-                    Some( routes.Img.dynImg( foundFileImg ).url )
-                  } else {
-                    // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
-                    LOGGER.error(s"$logPrefix MIME ${edgeMedia.file.mime getOrElse ""} don't know how to build URL")
-                    None
-                  },
-                  // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
-                  fileMeta = edgeMedia.file,
-                  pictureMeta = MPictureMeta(
-                    // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
-                    histogram = OptionUtil.maybe( mediaColors.nonEmpty ) {
-                      MHistogram(
-                        colors = mediaColors
-                          .sortBy { p =>
-                            p.freqPc.fold(0)(-_)
+                fileExist = Some {
+                  MJdEdge(
+                    predicate = MPredicates.Blob.File,
+                    nodeId = foundFileNode.id,
+                    fileSrv = Some {
+                      MSrvFileInfo(
+                        // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
+                        url = if (edgeMedia.file.imgFormatOpt.nonEmpty) {
+                          // TODO IMG_DIST: Вписать хост расположения картинки.
+                          // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
+                          Some( routes.Img.dynImg( foundFileImg ).url )
+                        } else {
+                          // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
+                          LOGGER.error(s"$logPrefix MIME ${edgeMedia.file.mime getOrElse ""} don't know how to build URL")
+                          None
+                        },
+                        // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
+                        fileMeta = edgeMedia.file,
+                        pictureMeta = MPictureMeta(
+                          // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
+                          histogram = OptionUtil.maybe( mediaColors.nonEmpty ) {
+                            MHistogram(
+                              colors = mediaColors
+                                .sortBy { p =>
+                                  p.freqPc.fold(0)(-_)
+                                }
+                                .toList
+                            )
                           }
-                          .toList
+                        ),
+                        storage = OptionUtil.maybeOpt( upInfo.systemResp contains[Boolean] true )(edgeMedia.storage),
                       )
                     }
-                  ),
-                  storage = OptionUtil.maybeOpt( upInfo.systemResp contains true )(edgeMedia.storage),
-                )),
+                  )
+                },
               )
             }
             (Accepted, upRespFut)
@@ -568,7 +576,15 @@ final class Upload @Inject()(
         // Сборка Upload-контекста. Дальнейший сбор информации по загруженному файлу должен происходить в контексте.
         upCtx = uploadUtil.makeUploadCtx( filePart.ref.path, uploadArgs.info.fileHandler )
 
-        sizeB = uploadArgs.fileProps.sizeB.get
+        sizeB <- {
+          val r = uploadArgs.fileProps.sizeB
+          if (r.isEmpty) {
+            val msg = "FileSize is missing in metadata."
+            LOGGER.error(s"$logPrefix $msg. Should not happen. fileProps = ${uploadArgs.fileProps}")
+            __appendErr( msg )
+          }
+          r
+        }
         // Сверить размер файла с заявленным размером
         if {
           val srcLen = upCtx.fileLength
@@ -582,7 +598,14 @@ final class Upload @Inject()(
         declaredMime = uploadArgs.fileProps.mime.get
 
         // Определить MIME-тип принятого файла:
-        detectedMimeType <- upCtx.detectedMimeTypeOpt
+        detectedMimeType <- {
+          val r = upCtx.detectedMimeTypeOpt
+          if (r.isEmpty) {
+            LOGGER.error(s"$logPrefix File MIME type NOT detected at all. upCtx#$upCtx")
+            __appendErr(s"MIME type is unknown/not detected.")
+          }
+          r
+        }
         // Бывает, что MIME не совпадает. Решаем, что нужно делать согласно настройкам аплоада. Пример:
         // Detected file MIME type [application/zip] does not match to expected [application/vnd.android.package-archive]
         mimeType = {
@@ -953,17 +976,24 @@ final class Upload @Inject()(
           // Вернуть 200 Ok с данными по файлу
           val isSystemResp = uploadArgs.info.systemResp contains[Boolean] true
           val resp = MUploadResp(
-            fileExist = Some( MSrvFileInfo(
-              nodeId = mnodeId,
-              // TODO url: Надо бы вернуть ссылку. Для img - routes.Img.*, для других - по другим адресам.
-              // Нет необходимости слать это всё назад, поэтому во всех заведомо известных клиенту поля None или empty:
-              pictureMeta = MPictureMeta(
-                histogram = colorsOpt,
-              ),
-              storage = Option.when( isSystemResp )(storageInfo),
-              // На клиенте есть такой же fileMeta, но всё же возвращаем его в ответе. И это крайне желательно для аплоада через SysNodeEdges.
-              fileMeta = fileMeta,
-            )),
+            fileExist = Some(
+              MJdEdge(
+                predicate = MPredicates.Blob.File,
+                nodeId = mnode1.id,
+                fileSrv = Some {
+                  MSrvFileInfo(
+                    // TODO url: Надо бы вернуть ссылку. Для img - routes.Img.*, для других - по другим адресам.
+                    // Нет необходимости слать это всё назад, поэтому во всех заведомо известных клиенту поля None или empty:
+                    pictureMeta = MPictureMeta(
+                      histogram = colorsOpt,
+                    ),
+                    storage = Option.when( isSystemResp )(storageInfo),
+                    // На клиенте есть такой же fileMeta, но всё же возвращаем его в ответе. И это крайне желательно для аплоада через SysNodeEdges.
+                    fileMeta = fileMeta,
+                  )
+                },
+              )
+            ),
             extra = Option.when( isSystemResp ) {
               // Для sys-запросов: В extra-данных надо передать сериализованный обновлённый эдж и обновлённую координату эджа.
               val edgeExtra = MEdgeWithId(

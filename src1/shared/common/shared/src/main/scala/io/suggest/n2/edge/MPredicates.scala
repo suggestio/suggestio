@@ -129,6 +129,13 @@ object MPredicates extends StringEnum[MPredicate] {
       * До 2018-08-23 здесь было только видео, поэтому v. */
     case object Frame extends MPredicate("sv") with _Child
 
+    /** Эдж для отсылки к карточкам.
+      * MEdge в nodeIds содержит id подкарточек.
+      * jd-эдж содержит id карточки в nodeId.
+      */
+    case object Ad extends MPredicate("sa") with _Child
+
+
     override def children: LazyList[MPredicate] =
       Text #:: Image #:: Frame #:: super.children
 

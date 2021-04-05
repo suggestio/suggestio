@@ -197,7 +197,7 @@ object MEdge
   */
 case class MEdge(
                   predicate  : MPredicate,
-                  // Обычно nodeId задан, поэтому без default тут для защиты от возможных ошибок.
+                  // TODO Надо бы nodeIds Set заменить на nested-список объектов, чтобы можно было бы параметризовать узлы дополнительной информацией.
                   nodeIds    : Set[String]    = Set.empty,
                   order      : Option[Int]    = None,
                   info       : MEdgeInfo      = MEdgeInfo.empty,

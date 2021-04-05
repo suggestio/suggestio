@@ -22,6 +22,12 @@ object Common {
   /** Контейнер версий зависимостей. Вместо свалки полей в форме, записывать их надо в Vsn. */
   object Vsn {
 
+    /** Apache Tika.
+      * @see [[https://mvnrepository.com/artifact/org.apache.tika/tika-core]]
+      * tika 1.25+ - требуется play-2.8.8+, иначе конфликт версий jackson
+      */
+    val TIKA = "1.24"
+
     /** Версия moment.js. */
     def momentJs = "2.24.0"
 

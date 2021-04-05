@@ -1293,8 +1293,8 @@ class DocEditAh[M](
 
       val edgeUids4mod = (for {
         e <- v0.jdDoc.jdArgs.data.edges.valuesIterator
-        fileSrv <- e.jdEdge.fileSrv
-        if m.nodeId ==* fileSrv.nodeId
+        nodeId <- e.jdEdge.nodeId
+        if m.nodeId ==* nodeId
         edgeUid <- e.jdEdge.edgeDoc.id
       } yield {
         edgeUid

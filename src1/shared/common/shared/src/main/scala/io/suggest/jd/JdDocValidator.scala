@@ -9,6 +9,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.jd.tags.{JdTag, MJdOutLine, MJdProps1, MJdShadow, MJdTagNames}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.img.MImgFormat
+import io.suggest.jd.tags.event.MJdtEvents
 import io.suggest.jd.tags.qd._
 import io.suggest.math.MathConst
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
@@ -100,14 +101,16 @@ class JdDocValidator(
   /** Провалидировать doc-тег.
     * @return Провалидировнный пересобранный document-тег.
     */
-  private def validateDocTag(jdDoc: JdTag): ValidationNel[String, JdTag] = {
+  private def validateDocTag(jdt: JdTag): ValidationNel[String, JdTag] = {
     def eDocPfx(suf: String) = ErrorConstants.EMSG_CODE_PREFIX + "doc" + `.` + suf
     (
-      Validation.liftNel( jdDoc.name )( _ !=* MJdTagNames.DOCUMENT, eDocPfx( EXPECTED ) ) |@|
-      validateDocProps1( jdDoc.props1 )
+      Validation.liftNel( jdt.name )( _ !=* MJdTagNames.DOCUMENT, eDocPfx( EXPECTED ) ) |@|
+      validateDocProps1( jdt.props1 )
         .recoverTolerant( MJdProps1.empty ) |@|
-      ScalazUtil.liftNelNone( jdDoc.qdProps, eDocPfx(QD) )
-        .recoverToNoneTolerant
+      ScalazUtil.liftNelNone( jdt.qdProps, eDocPfx(QD) )
+        .recoverToNoneTolerant |@|
+      Validation.liftNel( jdt.events )(_.nonEmpty, eDocPfx(JdTag.Fields.EVENTS_FN))
+        .recoverTolerant( MJdtEvents.empty )
     )( JdTag.apply )
   }
 
@@ -178,7 +181,8 @@ class JdDocValidator(
       Validation.liftNel(stripJdt.name)( _ !=* MJdTagNames.STRIP, eStripPfx( EXPECTED ) ) |@|
       validateStripProps1(stripJdt.props1) |@|
       ScalazUtil.liftNelNone( stripJdt.qdProps, eStripPfx(QD + `.` + UNEXPECTED) )
-        .recoverToNoneTolerant
+        .recoverToNoneTolerant |@|
+      MJdtEvents.validate( stripJdt.events )
     )( JdTag.apply )
   }
 
@@ -277,7 +281,8 @@ class JdDocValidator(
     val validationRes = (
       Validation.liftNel(qdJdt.name)( _ !=* MJdTagNames.QD_CONTENT, errMsgF( EXPECTED ) ) |@|
       validateQdTagProps1( qdJdt.props1, contSz ) |@|
-      ScalazUtil.liftNelNone( qdJdt.qdProps, errMsgF(QD) )
+      ScalazUtil.liftNelNone( qdJdt.qdProps, errMsgF(QD) ) |@|
+      MJdtEvents.validate( qdJdt.events )
     )( JdTag.apply )
 
     // При ошибках -- возвращаем None.
@@ -441,8 +446,11 @@ class JdDocValidator(
       Validation.liftNel( qdOp.name )( _ !=* MJdTagNames.QD_OP, errMsgF( EXPECTED ) ) |@|
       ScalazUtil.liftNelEmpty( qdOp.props1, errMsgF(PROPS1 + `.` + UNEXPECTED) )
         .recoverTolerant( MJdProps1.empty ) |@|
-      ScalazUtil.liftNelSome( qdOp.qdProps, errMsgF( QD + `.` + EXPECTED) )( validateQdOpProps )
-    ) { JdTag.apply }
+      ScalazUtil.liftNelSome( qdOp.qdProps, errMsgF( QD + `.` + EXPECTED) )( validateQdOpProps ) |@|
+      // Пока запрещено, т.к. редактор сейчас пока не взаимодействует с конкретными qd-op.
+      Validation.liftNel( qdOp.events )(_.nonEmpty, errMsgF(JdTag.Fields.EVENTS_FN))
+        .recoverTolerant( MJdtEvents.empty )
+    )( JdTag.apply )
   }
 
 

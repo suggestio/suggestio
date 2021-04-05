@@ -86,12 +86,11 @@ class EdgeEditCircuit
         jdEdge = MJdEdge(
           predicate = mroot.edge.predicate,
           edgeDoc   = edgeDoc,
+          nodeId    = mroot.edge.nodeIds.headOption,
           fileSrv   = for {
             edgeMedia <- mroot.edge.media
-            nodeId    <- mroot.edge.nodeIds.headOption
           } yield {
             MSrvFileInfo(
-              nodeId      = nodeId,
               fileMeta    = edgeMedia.file,
               pictureMeta = edgeMedia.picture,
             )
@@ -135,7 +134,7 @@ class EdgeEditCircuit
               .set( edgeDataJs2.fileJs.fold(MFileUploadS.empty)(_.upload) )
           )
 
-          val nodeIdOpt2 = edgeDataJs2.jdEdge.fileSrv.map(_.nodeId)
+          val nodeIdOpt2 = edgeDataJs2.jdEdge.nodeId
 
           (nodeIdOpt2.fold {
             // Какая-то ошибка, должно быть.

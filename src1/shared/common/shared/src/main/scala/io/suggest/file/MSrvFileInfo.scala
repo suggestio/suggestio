@@ -5,14 +5,13 @@ import io.suggest.crypto.hash.HashesHex
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.err.ErrorConstants
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MPictureMeta}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.media.storage.MStorageInfo
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
-import scalaz.Validation
+import scalaz.syntax.validation._
 
 /**
   * Suggest.io
@@ -23,9 +22,10 @@ import scalaz.Validation
   */
 object MSrvFileInfo {
 
+  def default = apply()
+
   /** Поддержка play-json для связи между клиентом и сервером. */
   implicit def srvFileInfoJson: OFormat[MSrvFileInfo] = (
-    (__ \ "n").format[String] and
     (__ \ "u").formatNullable[String] and
     (__ \ "a").formatNullable[String] and
     (__ \ "f").format[MFileMeta] and
@@ -39,22 +39,13 @@ object MSrvFileInfo {
 
 
   /** Провалидировать инстанс [[MSrvFileInfo]] перед сохранением на сервер.
-    * По факту, все поля кроме nodeId не нужны.
+    * По факту, все поля не нужны, а обязательный nodeId живёт на другом уровне.
     *
     * @param fi Инстанс [[MSrvFileInfo]].
     * @return Результат валидации с почищенным инстансом [[MSrvFileInfo]].
     */
-  def validateC2sForStore(fi: MSrvFileInfo): StringValidationNel[MSrvFileInfo] = {
-    Validation
-      .liftNel(fi.nodeId)(
-        {nodeId =>
-          !nodeId.matches("^[a-z0-9A-Z_-]{10,50}$")
-        },
-        "e.nodeid." + ErrorConstants.Words.INVALID + ": " + fi.nodeId
-      )
-      .map { nodeId =>
-        MSrvFileInfo( nodeId = nodeId )
-      }
+  def validateNodeIdOnly(fi: MSrvFileInfo): StringValidationNel[MSrvFileInfo] = {
+    default.successNel
   }
 
   @inline implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
@@ -64,13 +55,11 @@ object MSrvFileInfo {
 
 /** Класс модели данных о файле, хранящемся на сервере.
   *
-  * @param nodeId Уникальный id узла, в т.ч. эфемерный.
   * @param url Ссылка для скачивания файла.
   * @param name Пользовательское название файла, если есть.
   * @param fileMeta Метаданные файла, которые могут быть нужны на клиенте.
   */
 case class MSrvFileInfo(
-                         nodeId         : String,
                          url            : Option[String]          = None,
                          name           : Option[String]          = None,
                          // TODO Всё, что ниже - это MEdgeMedia. Заменить на модель тут. Всё, что выше - это куски MEdge. Может вообще снести эту модель?
@@ -88,6 +77,8 @@ case class MSrvFileInfo(
     * Сервер может не утруждать себя сбором данных, которые есть на клиенте.
     * Поэтому с сервера могут приходить неполные данные, и их следует мержить.
     *
+    * Следует не забывать про nodeID, которого здесь нет.
+    *
     * @param newInfo Обновлённый инстанс [[MSrvFileInfo]], содержащий более актуальные данные.
     * @return Объединённый экземпляр [[MSrvFileInfo]].
     */
@@ -98,7 +89,6 @@ case class MSrvFileInfo(
     } else {
       // БЕЗ copy(), чтобы при добавлении новых полей тут сразу подсвечивалась ошибка.
       MSrvFileInfo(
-        nodeId = newInfo.nodeId,
         // Велосипед для фильтрации корректных ссылок.
         url = {
           val urls = (newInfo.url #:: url #:: LazyList.empty)

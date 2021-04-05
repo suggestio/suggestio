@@ -8,8 +8,3 @@ https://github.com/maxmind/GeoIP2-java
 
 Планируется, что mmdb-файлы будут приходить по крону:
 http://dev.maxmind.com/geoip/geoipupdate/
-
-Модуль зависит от jackson-2.8+, что вызывает проблемы с elasticsearch <= 2.4,
-который зависит от jackson-2.6 и падает совсем нагулхо.
-Поэтому пиление этого модуля было отложено до переезда на elasticsearch 5.x.
-

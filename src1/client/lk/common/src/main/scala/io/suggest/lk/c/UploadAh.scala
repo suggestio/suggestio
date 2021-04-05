@@ -7,7 +7,7 @@ import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.HashesHex
-import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
+import io.suggest.file.MJsFileInfo
 import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.crop.MCrop
@@ -574,53 +574,56 @@ final class UploadAh[V, M](
           },
           // Сервер ответил что-то внятное. Осталось понять, что именно:
           {resp =>
-            resp.fileExist
-              .map { fileExist =>
-                // Файл успешно залит на сервер. Сервер присылает только базовые данные по загруженному файлу, надо не забывать это.
-                // Сохранить это в состояние:
-                val edge2 = edge0.copy(
-                  jdEdge = UploadAh._srvFileIntoJdEdge(fileExist, edge0.jdEdge),
-                  fileJs = UploadAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
-                    upload0.copy(
-                      resultHolder = None,
-                      // TODO reqHolder/progress: если было Some(), то отписаться от onprogress эффектом.
-                      uploadReq = upload0.uploadReq.ready(resp),
-                      progress  = None,
+            (for {
+              fileExistEdge <- resp.fileExist
+              fileNodeId <- fileExistEdge.nodeId
+              fileSrv <- fileExistEdge.fileSrv
+            } yield {
+              // Файл успешно залит на сервер. Сервер присылает только базовые данные по загруженному файлу, надо не забывать это.
+              // Сохранить это в состояние:
+              val edge2 = edge0.copy(
+                jdEdge = UploadAh._srvFileIntoJdEdge( fileExistEdge, edge0.jdEdge ),
+                fileJs = UploadAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
+                  upload0.copy(
+                    resultHolder = None,
+                    // TODO reqHolder/progress: если было Some(), то отписаться от onprogress эффектом.
+                    uploadReq = upload0.uploadReq.ready(resp),
+                    progress  = None,
+                  )
+                }
+              )
+              var v2 = v0.withEdges(
+                v0.edges.updated( edgeUid, edge2 )
+              )
+              if (resp.extra !=* v0.uploadExtra)
+                v2 = v2.withUploadExtra( resp.extra )
+
+              // В ответе может быть гистограмма. Это важно проаналализировать и вынести решение:
+              fileSrv.pictureMeta.histogram.fold {
+                // Сервер не прислал гистограмму. Она придёт по websocket'у.
+                // В фоне: запустить открытие websocket'а для связи с сервером по поводу гистограммы.
+                if (ctxIdOptRO.value.isEmpty) {
+                  // Нет ctxId в аплоаде - не будет веб-сокета с палитрой.
+                  updated(v2)
+                } else {
+                  // Есть ctxId - нужен веб-сокет
+                  val wsEnsureFx = Effect.action {
+                    WsEnsureConn(
+                      target = MWsConnTg(
+                        host = m.hostUrl.host
+                      ),
+                      closeAfterSec = Some(120)
                     )
                   }
-                )
-                var v2 = v0.withEdges(
-                  v0.edges.updated( edgeUid, edge2 )
-                )
-                if (resp.extra !=* v0.uploadExtra)
-                  v2 = v2.withUploadExtra( resp.extra )
-
-                // В ответе может быть гистограмма. Это важно проаналализировать и вынести решение:
-                fileExist.pictureMeta.histogram.fold {
-                  // Сервер не прислал гистограмму. Она придёт по websocket'у.
-                  // В фоне: запустить открытие websocket'а для связи с сервером по поводу гистограммы.
-                  if (ctxIdOptRO.value.isEmpty) {
-                    // Нет ctxId в аплоаде - не будет веб-сокета с палитрой.
-                    updated(v2)
-                  } else {
-                    // Есть ctxId - нужен веб-сокет
-                    val wsEnsureFx = Effect.action {
-                      WsEnsureConn(
-                        target = MWsConnTg(
-                          host = m.hostUrl.host
-                        ),
-                        closeAfterSec = Some(120)
-                      )
-                    }
-                    updated(v2, wsEnsureFx)
-                  }
-
-                } { histogram =>
-                  // Гистограмма уже есть в комплекте с ответом сервера. Внести гистограмму в карту и запустить дальнейший процессинг дерева документа:
-                  val (v3, fx3) = _withHistogram( fileExist.nodeId, histogram, v2 )
-                  updated(v3, fx3)
+                  updated(v2, wsEnsureFx)
                 }
+
+              } { histogram =>
+                // Гистограмма уже есть в комплекте с ответом сервера. Внести гистограмму в карту и запустить дальнейший процессинг дерева документа:
+                val (v3, fx3) = _withHistogram( fileNodeId, histogram, v2 )
+                updated(v3, fx3)
               }
+            })
               // Возможно, что-то пошло на сервере не так. Нужно отрендерить .errors:
               .orElse {
                 for (_ <- resp.errors.headOption) yield {
@@ -868,15 +871,18 @@ final class UploadAh[V, M](
   }
 
 
-  private def _maybeWithHistogram(fe: MSrvFileInfo, v0: MUploadAh[V]): ActionResult[M] = {
-    fe.pictureMeta
-      .histogram
-      .filter(_.colors.nonEmpty)
-      .fold( updated(v0) ) { hist2 =>
-        _resPair2res(
-          _withHistogram(fe.nodeId, hist2, v0)
-        )
-      }
+  private def _maybeWithHistogram(fe: MJdEdge, v0: MUploadAh[V]): ActionResult[M] = {
+    (for {
+      nodeId <- fe.nodeId
+      fileSrv <- fe.fileSrv
+      hist2 <- fileSrv.pictureMeta.histogram
+      if hist2.colors.nonEmpty
+    } yield {
+      _resPair2res(
+        _withHistogram( nodeId, hist2, v0 )
+      )
+    })
+      .getOrElse( updated(v0) )
   }
 
   private def _withHistogram(nodeId: String, colors: MHistogram, v0: MUploadAh[V]): ResPair_t = {
@@ -929,15 +935,22 @@ object UploadAh {
 
 
   // Объединяем старый и новый набор данных по файлу на сервере.
-  private def _srvFileIntoJdEdge(fileInfo: MSrvFileInfo, jdEdge0: MJdEdge): MJdEdge = {
-    if (jdEdge0.fileSrv contains[MSrvFileInfo] fileInfo) {
+  private def _srvFileIntoJdEdge(fileNew: MJdEdge, jdEdge0: MJdEdge): MJdEdge = {
+    if (
+      (fileNew.nodeId ==* jdEdge0.nodeId) &&
+      (jdEdge0.fileSrv ==* fileNew.fileSrv)
+    ) {
       jdEdge0
+
     } else {
-      MJdEdge.fileSrv.modify { fileSrvOpt0 =>
-        val fileSrv2 = fileSrvOpt0
-          .fold( fileInfo )( _ updateFrom fileInfo )
-        Some( fileSrv2 )
-      }( jdEdge0 )
+      (
+        MJdEdge.nodeId.set( fileNew.nodeId ) andThen
+        MJdEdge.fileSrv.modify { fileSrvOpt0 =>
+          fileSrvOpt0.fold( fileNew.fileSrv ) { fileSrv0 =>
+            Some(fileSrv0 updateFrom fileNew.fileSrv.get)
+          }
+        }
+      )( jdEdge0 )
     }
   }
 

@@ -119,10 +119,11 @@ class LkAdEditCircuit(
             colorsState = MColorsState(
               histograms = (for {
                 jdEdge    <- mFormInit.adData.edges.iterator
+                nodeId    <- jdEdge.nodeId
                 srvFile   <- jdEdge.fileSrv
                 colorHist <- srvFile.pictureMeta.histogram
               } yield {
-                srvFile.nodeId -> colorHist
+                nodeId -> colorHist
               })
                 .toMap,
             ),

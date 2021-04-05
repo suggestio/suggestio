@@ -1,6 +1,6 @@
 package io.suggest.xplay.json
 
-import play.api.libs.json.{Format, JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, Reads, Writes}
+import play.api.libs.json.{Format, JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, Json, Reads, Writes}
 
 /**
   * Suggest.io
@@ -84,6 +84,12 @@ object PlayJsonUtil {
         .map(_.toIterable),
       implicitly,
     )
+  }
+
+
+  def prettify(jsonStr: String): String = {
+    val parsed = Json.parse(jsonStr)
+    Json.prettyPrint( parsed )
   }
 
 }
