@@ -11,7 +11,6 @@ import util.acl.{CanDynImg, IsFileNotModified, SioControllerApi}
 import util.img.DynImgUtil
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 /**
  * Suggest.io
@@ -34,6 +33,7 @@ final class Img @Inject() (
 
   private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
   private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private def mimeUtilJvm = injector.instanceOf[MimeUtilJvm]
   private def uploadCtl = injector.instanceOf[Upload]
   private def errorHandler = injector.instanceOf[ErrorHandler]
   implicit private def ec = injector.instanceOf[ExecutionContext]
@@ -75,14 +75,16 @@ final class Img @Inject() (
               status0.sendFile(
                 content   = imgFile,
                 inline    = true,
-                fileName  = { _ => Some(mimg.dynImgId.fileName) }
+                fileName  = {
+                  val nameOpt = Some( mimg.dynImgId.fileName )
+                  _ => nameOpt
+                },
               )
             } else status0
             )
             .as {
-              Try( MimeUtilJvm.probeContentType(imgFile.toPath) )
-                .toOption
-                .flatten
+              mimeUtilJvm
+                .probeContentType(imgFile.toPath)
                 .get
             }
             .withHeaders(

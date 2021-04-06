@@ -46,6 +46,7 @@ object MScApiVsns extends IntEnum[MScApiVsn] {
   case object CordovaAppTill_4_2 extends MScApiVsn( 5 ) with CordovaVsnCommon {
     override def clientEdgeFlagsAllowed: Option[Set[MEdgeFlag]] =
       Some( Set.empty[MEdgeFlag] + MEdgeFlags.AlwaysOutlined )
+    override def jdEdgeSrvFileNodeIdMustBe = true
   }
 
   case object ReactCordovaNext extends MScApiVsn( 6 ) with CordovaVsnCommon {
@@ -77,6 +78,7 @@ sealed abstract class MScApiVsn(override val value: Int) extends IntEnumEntry {
   /** Какие edge-флаги допустимо отправлять на клиент?
     * Cordova app <= 4.2 падало, когда встречен неизвестный флаг. */
   def clientEdgeFlagsAllowed: Option[Set[MEdgeFlag]] = None
+  def jdEdgeSrvFileNodeIdMustBe: Boolean = false
 
   override def toString: String = s"v$majorVsn($value)"
 

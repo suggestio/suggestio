@@ -1,10 +1,10 @@
 package util.up.ctx
 
 import java.nio.file.Path
-
 import com.google.inject.assistedinject.Assisted
-import javax.inject.Inject
+import play.api.inject.Injector
 
+import javax.inject.Inject
 import scala.concurrent.Future
 
 /**
@@ -14,7 +14,8 @@ import scala.concurrent.Future
   * Description: Контекст, разрешающий любой файл.
   */
 final case class AnyFileUploadCtx @Inject() (
-                                              @Assisted override val path: Path,
+                                              @Assisted override val path   : Path,
+                                              override val injector         : Injector,
                                             )
   extends IUploadCtx
 {

@@ -2,7 +2,6 @@ package util.up.ctx
 
 import java.awt.image.BufferedImage
 import java.nio.file.Path
-
 import com.google.inject.assistedinject.Assisted
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
@@ -10,6 +9,7 @@ import io.suggest.img.MImgFormats
 import io.suggest.svg.SvgUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
+
 import javax.inject.Inject
 import org.apache.batik.gvt.GraphicsNode
 import org.w3c.dom.Document
@@ -34,7 +34,7 @@ trait IImgUploadCtxFactory {
 /** Реализация upload-контекста на базе lazy vals. */
 final class ImgUploadCtx @Inject()(
                                     @Assisted override val path             : Path,
-                                    injector                                : Injector,
+                                    override val injector                   : Injector,
                                   )
   extends IUploadCtx
   with MacroLogsImplLazy

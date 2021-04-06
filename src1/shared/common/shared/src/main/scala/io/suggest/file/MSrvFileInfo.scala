@@ -34,7 +34,8 @@ object MSrvFileInfo {
         EmptyUtil.opt2ImplMEmptyF( MPictureMeta ),
         EmptyUtil.implEmpty2Opt
       ) and
-    (__ \ "s").formatNullable[MStorageInfo]
+    (__ \ "s").formatNullable[MStorageInfo] and
+    (__ \ "n").formatNullable[String]
   )(apply, unlift(unapply))
 
 
@@ -66,6 +67,8 @@ case class MSrvFileInfo(
                          fileMeta       : MFileMeta               = MFileMeta.empty,
                          pictureMeta    : MPictureMeta            = MPictureMeta.empty,
                          storage        : Option[MStorageInfo]    = None,
+                         // Для совместимости с версиями приложений <=4.2.0, здесь располагается nodeId, на новых - на уровень выше.
+                         nodeId_legacy42: Option[String]          = None,
                        ) {
 
   /** Карта хэшей генерится на основе всех имеющихся в исходнике хэшей. */

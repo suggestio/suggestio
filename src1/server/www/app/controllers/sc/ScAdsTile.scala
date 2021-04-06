@@ -498,12 +498,12 @@ trait ScAdsTile
             tpl           = tpl2,
             jdConf        = tileArgs,
             allowWide     = isDisplayOpened,
-            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls,
             selPathRev    = selPathRev,
             // Рендерить заголовки карточек в ответе только когда запрошено с клиента. А запрашивается это обычно для нотификаций.
             nodeTitle     = OptionUtil.maybeOpt( _qs.grid.exists(_.withTitle) )(
               adInfo.mnode.meta.basic.nameOpt
             ),
+            scApiVsn      = Some( _qs.common.apiVsn ),
           )(ctx)
           .execute()
 

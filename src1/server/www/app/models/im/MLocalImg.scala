@@ -48,6 +48,7 @@ class MLocalImgs @Inject() (
 
   import mCommonDi._
 
+  def mimeUtilJvm = current.injector.instanceOf[MimeUtilJvm]
 
   /** Сколько модель должна кешировать в голове результат вызова identify? */
   private def IDENTIFY_CACHE_TTL_SECONDS = 120
@@ -199,7 +200,7 @@ class MLocalImgs @Inject() (
   def getMimeOptSync(mimg: MLocalImg): Option[String] = {
     val file = fileOf(mimg)
     val tryRes = Try(
-      MimeUtilJvm.probeContentType( file.toPath )
+      mimeUtilJvm.probeContentType( file.toPath )
     )
     if (tryRes.isFailure)
       LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", tryRes.failed.get)

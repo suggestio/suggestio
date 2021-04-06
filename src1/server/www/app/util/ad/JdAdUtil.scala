@@ -10,10 +10,11 @@ import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
 import io.suggest.grid.GridCalc
 import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
-import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdProps1}
+import io.suggest.jd.tags.{JdTag, MJdProps1, MJdTagNames}
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MNodeEdges, MPredicates}
 import io.suggest.n2.media.MPictureMeta
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.sc.MScApiVsn
 import io.suggest.scalaz.NodePath_t
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
@@ -489,11 +490,14 @@ class JdAdUtil @Inject()(
                     override val tpl        : Tree[JdTag],
                     jdConf                  : MJdConf,
                     allowWide               : Boolean,
-                    forceAbsUrls            : Boolean,
                     override val selPathRev : NodePath_t,
                     override val nodeTitle  : Option[String],
+                    scApiVsn                : Option[MScApiVsn] = None,
                    )(implicit ctx: Context)
       extends JdAdDataMakerBase {
+
+      def forceAbsUrls: Boolean =
+        scApiVsn.exists(_.forceAbsUrls)
 
       /** Для выдачи не требуется  */
       override def imgEdgesNeedNodes = Nil
@@ -538,9 +542,10 @@ class JdAdUtil @Inject()(
           (for {
             imgMakeRes <- imgsRendered.iterator
           } yield {
+            val nodeIdSome = Some( imgMakeRes.sourceImg.dynImgId.origNodeId )
             MJdEdge(
               predicate   = imgPred,
-              nodeId      = Some( imgMakeRes.sourceImg.dynImgId.origNodeId ),
+              nodeId      = nodeIdSome,
               edgeDoc     = imgMakeRes.medge.doc,
               url         = {
                 val resImg = imgMakeRes.dynCallArgs
@@ -551,6 +556,10 @@ class JdAdUtil @Inject()(
                 pictureMeta = MPictureMeta(
                   whPx   = Some( imgMakeRes.imgSzReal ),
                 ),
+                // Дополнительно, возвращать клиенту nodeId внутри jd-эджа для приложений <= 4.2:
+                nodeId_legacy42 = scApiVsn
+                  .filter(_.jdEdgeSrvFileNodeIdMustBe)
+                  .flatMap(_ => nodeIdSome),
               )),
             )
           })

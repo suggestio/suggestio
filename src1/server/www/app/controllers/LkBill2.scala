@@ -661,7 +661,6 @@ final class LkBill2 @Inject() (
               // Тут по идее надо четверть или половину, но с учётом плотности пикселей можно округлить до 1.0. Это и нагрузку снизит.
               jdConf        = jdConf,
               allowWide     = false,
-              forceAbsUrls  = false,
               selPathRev    = mainBlkIndex :: List.empty,
               nodeTitle     = None,
             )(ctx)

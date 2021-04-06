@@ -620,10 +620,10 @@ trait ScFocusedAds
             tpl           = tpl,
             jdConf        = tileArgs,
             allowWide     = true,
-            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls,
             selPathRev    = List.empty,
             // Возвращать явно-заданный заголовок карточки, чтобы выводить в заголовке браузера.
             nodeTitle     = mad.meta.basic.nameOpt,
+            scApiVsn      = Some( _qs.common.apiVsn ),
           )(ctx)
           .execute()
 

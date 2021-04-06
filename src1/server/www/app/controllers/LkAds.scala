@@ -238,7 +238,6 @@ final class LkAds @Inject() (
             // Тут по идее надо четверть или половину, но с учётом плотности пикселей можно округлить до 1.0. Это и нагрузку снизит.
             jdConf        = jdConf,
             allowWide     = false,
-            forceAbsUrls  = false,
             selPathRev    = mainBlkIndex :: List.empty,
             // title: сейчас в форме названия нигде не рендерятся. Поэтому и на клиент их не отправляем.
             nodeTitle     = None,

@@ -320,7 +320,6 @@ final class SysMdr @Inject() (
             tpl           = tpl,
             jdConf        = SysMdrConst.JD_CONF,
             allowWide     = true,
-            forceAbsUrls  = false,
             selPathRev    = List.empty,
             nodeTitle     = mad.meta.basic.nameOpt,
           )(ctx)

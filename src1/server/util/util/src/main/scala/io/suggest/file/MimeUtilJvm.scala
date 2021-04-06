@@ -20,7 +20,7 @@ import scala.util.Try
   *
   * Далее, испытывается apache tika.
   */
-object MimeUtilJvm extends MacroLogsImpl {
+final class MimeUtilJvm extends MacroLogsImpl {
 
   /** Проверка content-type для файла.
     *
@@ -36,13 +36,15 @@ object MimeUtilJvm extends MacroLogsImpl {
       tika.detect(path)
     }
 
-    for (ex <- tryRes.failed)
-      LOGGER.error(s"$logPrefix Failed to probe content type", ex)
-
-    if (LOGGER.underlying.isDebugEnabled) {
-      for (ct <- tryRes)
-        LOGGER.debug(s"$logPrefix => $ct")
-    }
+    // Логгируем результат работы:
+    tryRes.fold[Unit](
+      {ex =>
+        LOGGER.warn(s"$logPrefix Failed to probe content type", ex)
+      },
+      {ct =>
+        LOGGER.trace(s"$logPrefix => $ct")
+      }
+    )
 
     tryRes.toOption
   }

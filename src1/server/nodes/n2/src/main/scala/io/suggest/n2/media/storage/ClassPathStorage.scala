@@ -16,7 +16,6 @@ import play.api.Environment
 import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -34,6 +33,7 @@ class ClassPathStorage @Inject()(
 
   private lazy val env = injector.instanceOf[Environment]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private def mimeUtilJvm = injector.instanceOf[MimeUtilJvm]
 
   // TODO Желательно реализовать это, т.к. ассет-контроллер умеет обрабатывать range-реквесты.
   override def canReadRanges = false
@@ -106,21 +106,12 @@ class ClassPathStorage @Inject()(
         new IDataSource {
           override lazy val contentType: String = {
             // TODO Opt определять MIME-тип на основе имени запрошенного файла оригинала? По идее, в CLASSPATH ошибочного мусора быть не должно.
-            Try {
-              MimeUtilJvm.probeContentType( path )
-            }
-              .fold(
-                {ex =>
-                  LOGGER.error(s"$logPrefix Failed to detect MIME for resource $resCpPath", ex)
-                  MimeConst.APPLICATION_OCTET_STREAM
-                },
-                {mimeOpt =>
-                  mimeOpt getOrElse {
-                    LOGGER.warn(s"$logPrefix Cannot detect content type for classpath path: $path")
-                    MimeConst.APPLICATION_OCTET_STREAM
-                  }
-                }
-              )
+            mimeUtilJvm
+              .probeContentType( path )
+              .getOrElse {
+                LOGGER.warn(s"$logPrefix Cannot detect content type for classpath path: $path")
+                MimeConst.APPLICATION_OCTET_STREAM
+              }
           }
 
           override def data: Source[ByteString, _] = {
