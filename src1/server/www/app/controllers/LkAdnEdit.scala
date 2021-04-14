@@ -153,7 +153,7 @@ final class LkAdnEdit @Inject() (
         val imgsEdges = jdAdUtil.collectImgEdges( imgEdges, imgEdgeUids )
 
         // Запустить сбор данных по интересующим картинкам:
-        val mediaNodesMapFut = jdAdUtil.prepareMediaNodes( imgsEdges, videoEdges = Nil )
+        val mediaNodesMapFut = jdAdUtil.prepareMediaNodes( imgsEdges )
 
         val mediaHostsMapFut = for {
           imgMedias  <- mediaNodesMapFut

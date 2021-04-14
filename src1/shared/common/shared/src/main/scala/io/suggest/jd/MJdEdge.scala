@@ -105,7 +105,7 @@ object MJdEdge {
       def eNodeId = "e.nodeid."
       val nodeIdVld = ScalazUtil.liftNelOptMust(
         e.nodeId,
-        mustBeSome = isFile,
+        mustBeSome = isFile || (e.predicate ==>> P.Ad),
         errMsg = errMsgF( eNodeId + ErrorConstants.Words.MISSING ),
       ) { nodeId =>
         Validation.liftNel(nodeId)(

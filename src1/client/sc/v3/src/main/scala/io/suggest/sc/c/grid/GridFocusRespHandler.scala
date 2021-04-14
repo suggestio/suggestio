@@ -15,6 +15,7 @@ import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.log.Log
 import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.sc.ads.MSc3AdData
+import io.suggest.scalaz.ScalazUtil.Implicits.SciListExt
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -119,7 +120,7 @@ final class GridFocusRespHandler
     val focQs = ctx.m.qs.foc.get
     val g0 = ctx.value0.grid
     val gridAds0 = g0.core.ads
-    val gblOpt = ctx.m.reason match {
+    val gbcOpt = ctx.m.reason match {
       case gbl: GridBlockClick => Some( gbl )
       case _ => None
     }
@@ -132,10 +133,10 @@ final class GridFocusRespHandler
       // Собрать данные по main-блоку, который фокусируют:
       // reason.gridKey может быть пуст, например когда фокусировка по карточке, которая никак в плитке
       // не представлена в плитке (ad_id взят из URL qs).
-      parentLoc0 = gblOpt
-        .flatMap {
+      parentLoc0 = gbcOpt
+        .flatMap { gbc =>
           // Задан ключ элемента плитки. Надо добавить туда:
-          GridAh.findAd( _, gridAds0 )
+          GridAh.findAd( gbc, gridAds0 )
         }
         .orElse {
           // Нет исходного gridKey в исходном экшене. Т.е. карточка запрошена напрямую по ad_id.
@@ -167,7 +168,7 @@ final class GridFocusRespHandler
       focAdIndexed = JdUtil.mkTreeIndexed( focAdJdDoc )
 
       // Поиск main-блока в focused-ответе:
-      (mainBlockJdId, mainBlockIndex) <- {
+      (mainBlockJdLoc, mainBlockIndex) <- {
         val r = focAdIndexed.getMainBlockOrFirst()
         if (r.isEmpty)
           logger.error( ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, msg = (focAdIndexed, r) )
@@ -188,6 +189,9 @@ final class GridFocusRespHandler
       // Следующий id для сохранения в состоянии:
       var idCounter2 = gridAds0.idCounter
 
+      val mainBlockNodeId = mainBlockJdLoc.rootLabel._1.nodeId
+      val isSameNodeIdAsParent = parent.data.exists(_.doc.tagId.nodeId ==* mainBlockNodeId)
+
       val focAdGridItems = focAdIndexed
         .gridItemsIter
         .map { itemSubTree =>
@@ -197,7 +201,10 @@ final class GridFocusRespHandler
             gridKey = {
               // Если родительский элемент того же id (например, main-блок),
               // то нужно сделать так, чтобы grid_key совпадали с родительскими.
-              OptionUtil.maybeOpt( jdTagId.selPathRev.headOption contains mainBlockIndex) {
+              OptionUtil.maybeOpt(
+                isSameNodeIdAsParent &&
+                (jdTagId.selPathRev.headOption contains mainBlockIndex)
+              ) {
                 // Берём gridKey из main-блока родительской карточки:
                 parent
                   .gridItems
@@ -266,8 +273,8 @@ final class GridFocusRespHandler
               val unFocAd = (
                 MSc3AdData.jd.modify { jdData0 =>
                   val jdDoc2 = jdData0.doc.copy(
-                    template = mainBlockJdId.map(_._2),
-                    tagId    = mainBlockJdId.rootLabel._1,
+                    template = mainBlockJdLoc.map(_._2),
+                    tagId    = mainBlockJdLoc.rootLabel._1,
                   )
                   val mainBlockEdgeUidsMap = jdDoc2.template.edgesUidsMap
                   jdData0.copy(
@@ -297,16 +304,14 @@ final class GridFocusRespHandler
         // Отработать возможное раскрытие новой под-карточки внутри другой (раскрытой) карточки:
         .orElse {
           for {
-            gbl <- gblOpt
+            gbl <- gbcOpt
             reasonGridKey <- gbl.gridKey
             // Если добавление на под-уровни (не на верхний ряд карточек),
             if parentLevel >= 1
             parent = parentLoc.getLabel
-            if {
-              // есди id родительской карточки отличается от полученной focused-карточки
-              parent.data.exists { parentJdDataJs =>
-                parentJdDataJs.doc.tagId.nodeId !=* focAdJdDoc.tagId.nodeId
-              }
+            // если id родительской карточки отличается от полученной focused-карточки
+            if parent.data.exists { parentJdDataJs =>
+              parentJdDataJs.doc.tagId.nodeId !=* focAdJdDoc.tagId.nodeId
             }
           } yield {
             // то надо в поддереве продублировать родительскую карточку вокруг полученной focused-карточки.
@@ -316,15 +321,17 @@ final class GridFocusRespHandler
             }
             val scAdData_gridItems_LENS = MScAdData.gridItems
 
-            // Теперь, организовать полный parentLoc subForest, с несколькими поддеревьями:
-            var subForestAcc = EphemeralStream.emptyEphemeralStream[Tree[MScAdData]]
+            // Теперь, организовать полный parentLoc subForest, с несколькими поддеревьями.
+            // Используется List acc, т.к. EphemeralStream/LazyList не совместимы с переменными внутри ##::= -выражений.
+            var subForestAcc = List.empty[Tree[MScAdData]]
             if (afterGridItems.nonEmpty)
-              subForestAcc ##::= Tree.Leaf {
+              subForestAcc ::= Tree.Leaf {
                 (scAdData_gridItems_LENS set afterGridItems)( parent )
               }
-            subForestAcc ##::= focAdSubTree
-            if (beforeGridItems.nonEmpty)
-              subForestAcc ##::= Tree.Leaf {
+            subForestAcc ::= focAdSubTree
+            val hasBefore = beforeGridItems.nonEmpty
+            if (hasBefore)
+              subForestAcc ::= Tree.Leaf {
                 (scAdData_gridItems_LENS set beforeGridItems)( parent )
               }
 
@@ -333,13 +340,13 @@ final class GridFocusRespHandler
               .setTree(
                 Tree.Node(
                   parent,
-                  subForestAcc
+                  subForestAcc.toEphemeralStream
                 )
               )
               // Выставить локацию на добавленную focused-карточку, как и в остальных ветвях:
               .getChild(
-                if (beforeGridItems.nonEmpty) 1
-                else 0
+                if (hasBefore) 2
+                else 1
               )
               .get
           }
@@ -356,12 +363,13 @@ final class GridFocusRespHandler
           idCounter2 - 1
         }(_.gridKey)
       val focGridKeyPath = focAddedLoc.gridKeyPath
+      val focAddedTree = focAddedLoc.toTree
 
       // Сохранить новое дерево и счётчик в состояние:
       val gridCore1 = MGridCoreS.ads.set {
         gridAds0.copy(
           idCounter = idCounter2,
-          adsTreePot = gridAds0.adsTreePot.ready( focAddedLoc.toTree ),
+          adsTreePot = gridAds0.adsTreePot.ready( focAddedTree ),
           interactWith = Some((focGridKeyPath, focGridKey)),
         )
       }(g0.core)

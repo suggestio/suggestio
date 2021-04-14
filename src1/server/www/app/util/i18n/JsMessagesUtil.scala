@@ -1,6 +1,7 @@
 package util.i18n
 
 import io.suggest.ad.blk.MBlockExpandModes
+
 import javax.inject.{Inject, Singleton}
 import io.suggest.bill.MCurrencies
 import io.suggest.bill.price.dsl.MReasonTypes
@@ -11,6 +12,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
 import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
 import io.suggest.ext.svc.MExtServices
+import io.suggest.jd.tags.event.MJdActionTypes
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.n2.edge.MPredicates
@@ -339,7 +341,7 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения для react-редактора карточек. */
   private def LK_AD_EDIT_MSGS: IterableOnce[String] = {
-    MC.`Width` ::
+    val codes1 = MC.`Width` ::
       MC.`Height` ::
       MC.`Delete.block` ::
       MC.`Description` ::
@@ -382,7 +384,19 @@ class JsMessagesUtil @Inject() (
       MC.`Line.height` ::
       MC.`Title` ::
       MC.`Outline` :: MC.`Transparent` :: MC.`Define.manually` ::
-      MBlockExpandModes.values.iterator.map(_.msgCode).toList
+      MC.`Events` ::
+      MC.`Choose...` ::
+      MC.`Action` ::
+      Nil
+
+    (
+      codes1 ::
+      MBlockExpandModes.values.iterator.map(_.msgCode) ::
+      MJdActionTypes.values.iterator.map(_.i18nCode) ::
+      Nil
+    )
+      .iterator
+      .flatten
   }
 
 

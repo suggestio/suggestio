@@ -108,6 +108,7 @@ Clear=Очистить
 Reload=Перезагрузить
 Geolocation=Геолокация
 Distance=Расстояние
+Action=Действие
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -762,12 +763,15 @@ edge.predicate.s=jd-контент
 edge.predicate.st=Текстовый контент
 edge.predicate.si=Картинка-контент
 edge.predicate.sv=Видео-контент
+edge.predicate.sa=Под-карточка
 edge.predicate.q=Идент
 edge.predicate.qe=Электронная почта
 edge.predicate.qp=Номер телефона
 edge.predicate.qi=Идентификатор
 edge.predicate.qw=Пароль
 edge.predicate.u=Короткая ссылка
+
+jd.action.type.a=Добавить карточку
 
 Your.name=Ваше имя
 First.name=Имя

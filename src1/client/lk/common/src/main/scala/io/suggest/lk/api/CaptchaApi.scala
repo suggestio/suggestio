@@ -1,4 +1,4 @@
-package io.suggest.lk.c
+package io.suggest.lk.api
 
 import io.suggest.captcha.CaptchaConstants
 import io.suggest.lk.m.captcha.MCaptchaData

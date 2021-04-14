@@ -9,14 +9,17 @@ import io.suggest.err.ErrorConstants
 import io.suggest.jd.tags.{JdTag, MJdOutLine, MJdProps1, MJdShadow, MJdTagNames}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.img.MImgFormat
-import io.suggest.jd.tags.event.MJdtEvents
+import io.suggest.jd.tags.event.{MJdtAction, MJdtEventActions, MJdtEventInfo, MJdtEvents}
 import io.suggest.jd.tags.qd._
 import io.suggest.math.MathConst
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.scalaz.ScalazUtil
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
+import scalaz.syntax.validation._
+import scalaz.std.list._
 import scalaz._
+import scalaz.std.iterable._
 import scalaz.syntax.apply._
 
 /**
@@ -52,10 +55,10 @@ object JdDocValidator {
 }
 
 
-class JdDocValidator(
-                      tolerant      : Boolean,
-                      edges         : Map[EdgeUid_t, MJdEdgeVldInfo],
-                    ) {
+final class JdDocValidator(
+                            tolerant      : Boolean,
+                            edges         : Map[EdgeUid_t, MJdEdgeVldInfo],
+                          ) {
 
   import JdDocValidator._
   import ErrorConstants.Words._
@@ -133,7 +136,8 @@ class JdDocValidator(
     // На втором уровне могут быть только стрипы, хотя бы один должен там быть.
     def eStripsPfx(suf: String) = ErrorConstants.EMSG_CODE_PREFIX + STRIPS + `.` + suf
 
-    Validation.liftNel(jdts.isEmpty)( identity, eStripsPfx( MISSING ))
+    Validation
+      .liftNel(jdts.isEmpty)( identity, eStripsPfx( MISSING ))
       .andThen { _ =>
         val maxBlkCount = JdConst.MAX_STRIPS_COUNT
         Validation
@@ -182,7 +186,7 @@ class JdDocValidator(
       validateStripProps1(stripJdt.props1) |@|
       ScalazUtil.liftNelNone( stripJdt.qdProps, eStripPfx(QD + `.` + UNEXPECTED) )
         .recoverToNoneTolerant |@|
-      MJdtEvents.validate( stripJdt.events )
+      validateJdtEvents( stripJdt.events )
     )( JdTag.apply )
   }
 
@@ -198,7 +202,7 @@ class JdDocValidator(
       ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly )
         .recoverToNoneTolerant |@|
       ScalazUtil.liftNelOpt(props1.bgImg) { jdId =>
-        MJdEdgeId.validate(jdId, edges,
+        MJdEdgeId.validateImgId(jdId, edges,
           // TODO imgContSz=70x70 - Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
           imgContSzOpt = OptionUtil.maybe(props1.widthPx.nonEmpty && props1.heightPx.nonEmpty)(MSize2di(70, 70))
         )
@@ -282,7 +286,7 @@ class JdDocValidator(
       Validation.liftNel(qdJdt.name)( _ !=* MJdTagNames.QD_CONTENT, errMsgF( EXPECTED ) ) |@|
       validateQdTagProps1( qdJdt.props1, contSz ) |@|
       ScalazUtil.liftNelNone( qdJdt.qdProps, errMsgF(QD) ) |@|
-      MJdtEvents.validate( qdJdt.events )
+      validateJdtEvents( qdJdt.events )
     )( JdTag.apply )
 
     // При ошибках -- возвращаем None.
@@ -485,7 +489,7 @@ class JdDocValidator(
   private def validateQdEdgeId(ei: MJdEdgeId, edgeOpt: Option[MJdEdgeVldInfo]): ValidationNel[String, MJdEdgeId] = {
     val errMsgF = ErrorConstants.emsgF( "edge" )
     (
-      Validation.liftNel(ei.edgeUid)({ _ => edgeOpt.isEmpty }, errMsgF("id" + `.` + INVALID)) |@|
+      Validation.liftNel(ei.edgeUid)({ _ => edgeOpt.isEmpty }, errMsgF("id." + ei + `.` + INVALID)) |@|
       // Перенести данные формата из эджа.
       // TODO Это наверное не правильно - управлять форматом на уровне валидации. Надо унести это куда?
       ScalazUtil.liftNelOpt[String, MImgFormat](
@@ -569,5 +573,72 @@ class JdDocValidator(
           .recoverToNoneTolerant
       }
   }
+
+
+  /** Валидация содержимого JdTag().events
+    *
+    * @param jdEvents Контейнер данных по событиям в теге.
+    * @return Результат валидации.
+    */
+  def validateJdtEvents(jdEvents: MJdtEvents): StringValidationNel[MJdtEvents] = {
+    ScalazUtil
+      .validateAll( jdEvents.events )(
+        validateJdtEventActions(_)
+          .map(_ :: Nil)
+      )
+      .andThen {
+        Validation.liftNel(_)( _.lengthIs > JdConst.Event.MAX_EVENT_LISTENERS_PER_TAG, MJdtEvents.Fields.EVENTS )
+      }
+      .map( MJdtEvents.apply )
+  }
+
+
+  /** Валидация одного event actions.
+    *
+    * @param e Описание события и действий по нему.
+    * @return Результат валидации.
+    */
+  def validateJdtEventActions(e: MJdtEventActions): StringValidationNel[MJdtEventActions] = {
+    (
+      validateJdtEventInfo( e.event ) |@|
+      ScalazUtil
+        .validateAll( e.actions )(
+          validateJdtAction(_)
+            .map(_ :: Nil)
+        )
+        .andThen {
+          Validation.liftNel(_)(_.lengthIs > JdConst.Event.MAX_ACTIONS_PER_LISTENER, MJdtEventActions.Fields.ACTIONS)
+        }
+    )(MJdtEventActions.apply)
+  }
+
+
+  def validateJdtEventInfo(v: MJdtEventInfo): StringValidationNel[MJdtEventInfo] = {
+    // Пока нечего проверять: вернуть исходный инстанс целиком.
+    v.successNel
+  }
+
+
+
+  def validateJdtAction(a: MJdtAction): StringValidationNel[MJdtAction] = {
+    // Пока всё минимально: одно действие, максимум одна карточка.
+    val isAdsChoose = a.action.isAdsChoose
+    (
+      a.action.successNel[String] |@|
+      Validation
+        .liftNel( a.jdEdgeIds )({ jdEdgeIds =>
+          val lenExpected = if (isAdsChoose) 1 else 0
+          jdEdgeIds.lengthIs != lenExpected
+        }, MJdtAction.Fields.EDGE_UIDS )
+        .andThen { jdEdgeIds =>
+          ScalazUtil.validateAll( jdEdgeIds ) { jdEdgeId =>
+            MJdEdgeId
+              .validateAdId( isAdsChoose, jdEdgeId, edges )
+              .map(_ :: Nil)
+          }
+        }
+    )( MJdtAction.apply )
+  }
+
 
 }

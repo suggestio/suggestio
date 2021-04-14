@@ -80,7 +80,7 @@ object IJdEdgeIdViewAdp {
           .pathToNode( nodePath )
         jdt = jdtLoc.getLabel
         // Само-контроль: убедится, что данные тега содержат или НЕ содержат эдж, указанный в resKey:
-        if _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids)
+        if _cmpEdgeUid(resKey.edgeUid, jdt.imgEdgeUids)
         // Извлечь или собрать инстанс MImgEdgeWithOps.
         imgEdgeWithOps <- jdt.props1
           .bgImg
@@ -105,7 +105,7 @@ object IJdEdgeIdViewAdp {
         .pathToNode(nodePath)
         .get
       val jdt = jdtLoc.getLabel
-      ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids), s"edgeUID#${resKey.edgeUid}? ![${jdt.edgeUids.mkString(",")}]" )
+      ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.imgEdgeUids), s"edgeUID#${resKey.edgeUid}? ![${jdt.imgEdgeUids.mkString(",")}]" )
 
       jdtLoc
         .setLabel {

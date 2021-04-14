@@ -504,4 +504,7 @@ object MsgCodes {
   val `Transparent` = "Transparent"
   val `Define.manually` = "Define.manually"
 
+  val `Events` = "Events"
+  val `Action` = "Action"
+
 }

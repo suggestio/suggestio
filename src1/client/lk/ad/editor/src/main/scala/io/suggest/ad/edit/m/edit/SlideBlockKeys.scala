@@ -18,4 +18,6 @@ object SlideBlockKeys {
 
   final def ADD      = MsgCodes.`Create`
 
+  final def EVENTS   = MsgCodes.`Events`
+
 }

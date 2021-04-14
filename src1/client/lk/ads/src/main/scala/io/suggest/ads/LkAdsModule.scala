@@ -1,8 +1,8 @@
 package io.suggest.ads
 
 import com.softwaremill.macwire._
-import io.suggest.ads.a.LkAdsApiHttp
 import io.suggest.ads.v.{AdItemR, LkAdsFormR}
+import io.suggest.lk.api.LkAdsApiHttp
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.proto.http.model.IMHttpClientConfig

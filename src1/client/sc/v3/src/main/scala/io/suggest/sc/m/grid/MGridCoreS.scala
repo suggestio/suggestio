@@ -4,6 +4,7 @@ import io.suggest.common.empty.EmptyProductPot
 import io.suggest.grid.build.MGridBuildResult
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdRuntime
+import io.suggest.jd.render.v.JdEventListener
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -39,7 +40,6 @@ case class MGridCoreS(
                        jdConf         : MJdConf,
                        jdRuntime      : MJdRuntime,
                        ads            : MGridAds                      = MGridAds.empty,
-                       // Pot[Vector[MScAdData]]        = Pot.empty,
                        gridBuild      : MGridBuildResult              = MGridBuildResult.empty,
                      )
   extends EmptyProductPot

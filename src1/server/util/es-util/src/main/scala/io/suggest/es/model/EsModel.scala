@@ -1,7 +1,6 @@
 package io.suggest.es.model
 
 import java.util.concurrent.atomic.AtomicInteger
-
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
@@ -14,6 +13,7 @@ import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.MappingDsl
+
 import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
@@ -40,6 +40,7 @@ import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
 import play.api.libs.json.{JsObject, Json}
 
+import scala.collection.immutable.HashMap
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
@@ -989,7 +990,7 @@ final class EsModel @Inject()(
         * @return Фьючерс с картой результатов.
         */
       def multiGetMap(ids: Iterable[String],
-                      options: GetOpts = model._getArgsDflt): Future[Map[String, T1]] = {
+                      options: GetOpts = model._getArgsDflt): Future[HashMap[String, T1]] = {
         multiGet(ids, options = options)
           // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
           .map( resultsToMap )
@@ -1267,7 +1268,7 @@ final class EsModel @Inject()(
       }
 
 
-      def multiGetMapCache(ids: Set[String])(implicit classTag: ClassTag[T1]): Future[Map[String, T1]] = {
+      def multiGetMapCache(ids: Set[String])(implicit classTag: ClassTag[T1]): Future[HashMap[String, T1]] = {
         multiGetCache(ids)
           .map { resultsToMap }
       }
@@ -1576,10 +1577,10 @@ final class EsModel @Inject()(
   import api._
 
   /** Сконвертить распарсенные результаты в карту. */
-  private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): Map[String, T] = {
+  private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): HashMap[String, T] = {
     results
       .zipWithIdIter[String]
-      .to( Map )
+      .to( HashMap )
   }
 
   /** Список результатов в список id. */

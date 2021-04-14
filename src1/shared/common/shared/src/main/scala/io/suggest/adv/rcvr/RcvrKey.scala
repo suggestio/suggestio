@@ -22,6 +22,9 @@ object RcvrKey {
 
   def PATH_DELIM = HtmlConstants.SLASH
 
+  def fromNodeId(nodeId: String): RcvrKey =
+    nodeId :: Nil
+
   def isPath(str: String): Boolean =
     str contains PATH_DELIM
 

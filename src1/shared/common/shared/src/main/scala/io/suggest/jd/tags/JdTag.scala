@@ -10,7 +10,7 @@ import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.jd.tags.event.MJdtEvents
-import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
+import io.suggest.scalaz.ScalazUtil.Implicits.{EphStreamExt, SciLazyListExt}
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -138,12 +138,20 @@ object JdTag {
             .props1
             .bgImg
             .to(LazyList)
+            .appendedAll(
+              tree.rootLabel.events.events
+                .iterator
+                .flatMap(_.actions)
+                .flatMap(_.jdEdgeIds)
+            )
         )
         .map(_.edgeUid)
-      ) #::: EphemeralStream.toIterable( tree.subForest )
-        .iterator
-        .flatMap(_.deepEdgesUids)
-        .to(LazyList)
+      ) #::: {
+        EphemeralStream.toIterable( tree.subForest )
+          .iterator
+          .flatMap(_.deepEdgesUids)
+          .to(LazyList)
+      }
     }
 
 
@@ -225,7 +233,7 @@ object JdTag {
       EphemeralStream.toIterable(
         tree
           .flatten
-          .flatMap { c => EphemeralStream(c.edgeUids: _*) }
+          .flatMap( _.imgEdgeUids.toEphemeralStream )
       )
         .iterator
         .zipWithIdIter[EdgeUid_t]
@@ -305,6 +313,7 @@ object JdTag {
   def name = GenLens[JdTag](_.name)
   def props1 = GenLens[JdTag](_.props1)
   def qdProps = GenLens[JdTag](_.qdProps)
+  def events = GenLens[JdTag](_.events)
 
 }
 
@@ -331,11 +340,12 @@ final case class JdTag(
   with IEqualsEq
 {
 
-  def edgeUids: LazyList[MJdEdgeId] = {
+  /** Все эджи картинок, упомянутых в этом теге. */
+  def imgEdgeUids: LazyList[MJdEdgeId] = {
     (props1.bgImg #::
       qdProps.flatMap(_.edgeInfo) #::
       LazyList.empty
-    )
+      )
       .flatten
   }
 

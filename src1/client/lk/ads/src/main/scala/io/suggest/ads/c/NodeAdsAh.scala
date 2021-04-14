@@ -4,10 +4,10 @@ import diode._
 import diode.data.Pot
 import io.suggest.ads.{LkAdsFormConst, MLkAdsConf, MLkAdsOneAdResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.m._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.jd.render.u.JdUtil
+import io.suggest.lk.api.ILkAdsApi
 import io.suggest.lk.nodes.{MLknModifyQs, MLknOpKeys, MLknOpValue}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.ErrorMsgs

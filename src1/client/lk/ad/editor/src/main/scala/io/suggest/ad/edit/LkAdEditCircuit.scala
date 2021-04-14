@@ -21,6 +21,7 @@ import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.kv.MKvStorage
+import io.suggest.lk.api.LkAdsApiHttp
 import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
@@ -441,11 +442,17 @@ class LkAdEditCircuit(
     modelRW = isTouchDevRW,
   )
 
+  private val eventsEditorAh = new EventsEditorAh(
+    modelRW = mDocSRw,
+    api     = new LkAdsApiHttp,
+    confRO  = confRW,
+  )
 
   private val _ahsAcc0 = List[HandlerFunction](
     // В голове -- обработчик всех основных операций на документом.
     docAh,
     jdAh,
+    eventsEditorAh,
     // Управление интерфейсом -- ближе к голове.
     layoutAh,
     // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
@@ -455,7 +462,7 @@ class LkAdEditCircuit(
     saveAh,
     deleteAh,
     touchSwitchAh,
-    tailAh
+    tailAh,
   )
   // Начальный аккамулятор параллельного связывания контроллеров параллельной обработки:
   private val _ahsParAcc0 = {

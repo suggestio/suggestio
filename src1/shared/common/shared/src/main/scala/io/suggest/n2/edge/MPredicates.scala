@@ -137,7 +137,7 @@ object MPredicates extends StringEnum[MPredicate] {
 
 
     override def children: LazyList[MPredicate] =
-      Text #:: Image #:: Frame #:: super.children
+      Text #:: Image #:: Frame #:: Ad #:: super.children
 
   }
 

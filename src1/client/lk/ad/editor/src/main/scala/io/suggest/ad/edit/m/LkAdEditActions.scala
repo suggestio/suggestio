@@ -1,11 +1,15 @@
 package io.suggest.ad.edit.m
 
+import diode.data.Pot
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes, MBlockExpandMode}
+import io.suggest.ad.edit.m.edit.MEventEditPtr
+import io.suggest.ads.MLkAdsOneAdResp
 import io.suggest.color.MColorData
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
 import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.event.MJdtEventType
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.spa.DAction
 import io.suggest.text.StringUtil
@@ -28,7 +32,6 @@ trait IBlockAction extends ILkEditAction
 /** Клик по какой-то кнопке управления размером блока.
   *
   * @param model Модель, указывающая на ширину или высоту блока?
-  * @param direction Направление: увеличить или уменьшить.
   */
 case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], value: Int) extends IBlockAction
 
@@ -124,3 +127,12 @@ case class OutlineColorSet(color: MColorData ) extends ILkEditAction
 case class OutlineColorModeSet( haveColor: Boolean ) extends ILkEditAction
 
 case class OutlineShowHide( isVisible: Boolean ) extends ILkEditAction
+
+
+sealed trait IEventAction extends ILkEditAction
+/** Галочка Click или другая. */
+case class EventOnOff( eventType: MJdtEventType, checked: Boolean ) extends IEventAction
+/** Замена связанного nodeId в action-поле обработки событий. */
+case class EventNodeIdSet( eventPtr: MEventEditPtr, nodeId: String ) extends IEventAction
+/** Работа с реквестами списка карточек. */
+case class EventAskMoreAds( resp: Pot[Seq[MLkAdsOneAdResp]] = Pot.empty ) extends IEventAction

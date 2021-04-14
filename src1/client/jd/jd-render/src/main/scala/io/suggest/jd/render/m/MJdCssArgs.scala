@@ -22,7 +22,8 @@ object MJdCssArgs {
     override def eqv(a: MJdCssArgs, b: MJdCssArgs): Boolean = {
       (a.conf ===* b.conf) &&
       (a.data ===* b.data) &&
-      (a.tplsIndexed ===* b.tplsIndexed)
+      (a.tplsIndexed ===* b.tplsIndexed) &&
+      (a.nameGen eq b.nameGen)
     }
   }
 
@@ -30,19 +31,24 @@ object MJdCssArgs {
 
   def data = GenLens[MJdCssArgs](_.data)
 
+  def ABS_BLOCKS_DFLT = true
+
 }
 
 
 /** Класс контейнера данных для рендера CSS-шаблона [[io.suggest.jd.render.v.JdCss]].
   *
   * @param conf Конфигурация рендеринга.
-  * @param quirks Разрешить использовать костыли, которые могут нарушить рендер за пределами плитки.
-  *               Появилось, чтобы убрать position.absolute из root-контейнера.
+  * @param absBlocks Разрешить использовать костыли, которые могут нарушить рендер за пределами плитки.
+  *                  Появилось, чтобы убрать position.absolute из root-контейнера.
   * @param data Общие рантаймовые (с JdCss) данными.
+  * @param nameGen Чтобы разделять идентификаторы css-классов между разными JdCss на странице,
+  *                можно задействовать эту функция для заворачивания названий css-классов.
   */
 final case class MJdCssArgs(
                              conf             : MJdConf,
                              data             : MJdRuntimeData,
                              tplsIndexed      : Seq[Tree[(MJdTagId, JdTag)]],
-                             quirks           : Boolean = true,
+                             absBlocks        : Boolean = MJdCssArgs.ABS_BLOCKS_DFLT,
+                             nameGen          : Option[String => String] = None,
                            )

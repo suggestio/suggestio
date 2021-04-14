@@ -12,7 +12,7 @@ import io.suggest.img.MImgFormat
   */
 case class MJdEdgeVldInfo(
                            jdEdge : MJdEdge,
-                           file   : Option[MJdEdgeFileVldInfo]
+                           file   : Option[MJdEdgeFileVldInfo],
                          )
 
 

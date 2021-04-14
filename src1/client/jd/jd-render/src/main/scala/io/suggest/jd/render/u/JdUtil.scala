@@ -167,20 +167,28 @@ object JdUtil {
 
   object prepareJdRuntime {
 
-    val jdDocs      = GenLens[prepareJdRuntime](_.jdDocs)
-    val prevOpt     = GenLens[prepareJdRuntime](_.prevOpt)
+    def jdDocs            = GenLens[prepareJdRuntime](_._jdDocs)
+    def prevOpt           = GenLens[prepareJdRuntime](_._prevOpt)
+    def cssAbsBlocks      = GenLens[prepareJdRuntime](_._cssAbsBlocks)
+    def cssNameGen        = GenLens[prepareJdRuntime](_._cssNameGen)
 
     implicit class OpsExt( val args: prepareJdRuntime ) extends AnyVal {
 
       def docs[D: JdDocsGetter](from: D): prepareJdRuntime =
-        jdDocs.set( implicitly[JdDocsGetter[D]].apply(from) )(args)
+        (jdDocs set implicitly[JdDocsGetter[D]].apply(from) )(args)
 
       def prev[P: JdRuntimeGetter](from: P): prepareJdRuntime =
-        prevOpt.set( implicitly[JdRuntimeGetter[P]].apply(from) )(args)
+        (prevOpt set implicitly[JdRuntimeGetter[P]].apply(from) )(args)
+
+      def cssRelBlocks: prepareJdRuntime =
+        (cssAbsBlocks set false)(args)
+
+      def cssNameGen(f: String => String): prepareJdRuntime =
+        (prepareJdRuntime.cssNameGen set Option(f))(args)
 
       /** Финальная сборка состояния рантайма. Сравнительно ресурсоёмкая операция. */
       def make: MJdRuntime = {
-        val tplsIndexed = args.jdDocs
+        val tplsIndexed = args._jdDocs
           .map( mkTreeIndexed )
 
         val jdtsIndexed = tplsIndexed.flatMap { treeIdx =>
@@ -188,20 +196,22 @@ object JdUtil {
         }
 
         val jdRtData = MJdRuntimeData(
-          jdtWideSzMults  = GridCalc.wideSzMults(tplsIndexed, args.jdConf),
+          jdtWideSzMults  = GridCalc.wideSzMults(tplsIndexed, args._jdConf),
           jdTagsById      = MJdTagId.mkTreeIndex( jdtsIndexed ),
           qdBlockLess     = mkQdBlockLessData(
             tpls    = tplsIndexed,
-            prevOpt = args.prevOpt,
+            prevOpt = args._prevOpt,
           ),
         )
 
         MJdRuntime(
           jdCss   = JdCss(
             MJdCssArgs(
-              conf        = args.jdConf,
+              conf        = args._jdConf,
               data        = jdRtData,
               tplsIndexed = tplsIndexed,
+              absBlocks   = args._cssAbsBlocks,
+              nameGen     = args._cssNameGen,
             )
           ),
           data    = jdRtData,
@@ -212,17 +222,19 @@ object JdUtil {
   }
   /** Генерация инстанса [[MJdRuntime]] из исходных данных.
     *
-    * @param jdDocs Данные документов (шаблоны, id и тд).
-    * @param jdConf Конфиг рендера.
-    * @param prevOpt Предыдущее состояние, если было.
+    * @param _jdDocs Данные документов (шаблоны, id и тд).
+    * @param _jdConf Конфиг рендера.
+    * @param _prevOpt Предыдущее состояние, если было.
     *                Некоторые данные переносятся с предшествующего состояния.
     * @return Инстанс [[MJdRuntime]].
     */
   case class prepareJdRuntime(
-                        jdConf        : MJdConf,
-                        jdDocs        : LazyList[MJdDoc]      = LazyList.empty,
-                        prevOpt       : Option[MJdRuntime]    = None,
-                      )
+                               _jdConf        : MJdConf,
+                               _jdDocs        : LazyList[MJdDoc]      = LazyList.empty,
+                               _prevOpt       : Option[MJdRuntime]    = None,
+                               _cssAbsBlocks  : Boolean               = MJdCssArgs.ABS_BLOCKS_DFLT,
+                               _cssNameGen    : Option[String => String] = None,
+                             )
 
 
   /** typeclass-извлекалка значения Stream[MJdDoc] из произвольного типа. */

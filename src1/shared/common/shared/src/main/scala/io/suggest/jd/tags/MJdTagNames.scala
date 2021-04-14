@@ -67,8 +67,16 @@ object MJdTagName {
   implicit class MJdTagNameOpsExt(val jdtn: MJdTagName) extends AnyVal {
 
     /** Допустимо ли использовать фоновое изображение для указанного тега? */
-    def isBgImgAllowed = {
+    def isBgImgAllowed: Boolean = {
       jdtn ==* MJdTagNames.STRIP
+    }
+
+    def isEventsAllowed: Boolean = {
+      // TODO Добавить поддержку qd_op
+      jdtn match {
+        case MJdTagNames.STRIP | MJdTagNames.QD_CONTENT => true
+        case _ => false
+      }
     }
 
   }

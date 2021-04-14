@@ -120,7 +120,11 @@ object MScAdData extends Log {
       _pathToNodeLoc( adsTreeLoc, pathIter.iterator )
 
 
-
+    /** Отбросить лишние дочерние, кроме локации в дереве по указанному пути.
+      *
+      * @param keepPath Сохранить данные по указанному пути.
+      * @return Локация в дереве.
+      */
     def dropChildrenUntilPath(keepPath: List[GridAdKey_t]): TreeLoc[MScAdData] = {
       val keepPathLen = keepPath.length
 
@@ -134,54 +138,57 @@ object MScAdData extends Log {
         * @return Обновлённая локация для сборки обновлённого дерева.
         */
       @tailrec
-      def __dropChildrenExceptNodeWalker(parentNodePathRev: List[GridAdKey_t],
-                                         loc: TreeLoc[MScAdData],
-                                         canDropChildren: Boolean,
-                                         isRootNode: Boolean = false,
-                                         canWalkDown: Boolean = true,
-                                        ): TreeLoc[MScAdData] = {
+      def __walker(parentNodePathRev: List[GridAdKey_t],
+                   loc: TreeLoc[MScAdData],
+                   canDropChildren: Boolean,
+                   isRootNode: Boolean = false,
+                   canWalkDown: Boolean = true,
+                  ): TreeLoc[MScAdData] = {
+        // В первом if-else могут использоваться эти переменные в условии и в самом теле:
+        lazy val (currNodePathRev, currNodePath, commonKeepPrefixLen, isOnTheTargetPathNow) = {
+          // Текущий путь до узла:
+          val _currNodePathRev = loc.getLabel
+            .firstGridKey
+            .filter( _ => !isRootNode )
+            .fold( parentNodePathRev )( _ :: parentNodePathRev )
+          val _currNodePath = _currNodePathRev.reverse
+          val _commonKeepPrefix = Lists.largestCommonPrefix( _currNodePath, keepPath )
+          val _commonKeepPrefixLen = _commonKeepPrefix.length
+          val _isOnTheTargetPathNow = (_commonKeepPrefixLen ==* keepPathLen)
+
+          (_currNodePathRev, _currNodePath, _commonKeepPrefixLen, _isOnTheTargetPathNow)
+        }
 
         // Есть дочерние элементы и возможен спуск на уровень ниже. Нужно решить, дропаем ли children на текущем уровне?
-        // Текущий путь до узла:
-        lazy val currNodePathRev = loc.getLabel
-          .firstGridKey
-          .filter( _ => !isRootNode )
-          .fold( parentNodePathRev )( _ :: parentNodePathRev )
-
         if (
           canWalkDown &&
           loc.hasChildren && {
-            val currNodePath = currNodePathRev.reverse
-            val commonKeepPrefix = Lists.largestCommonPrefix( currNodePath, keepPath )
-            val commonKeepPrefixLen = commonKeepPrefix.length
-
-            (commonKeepPrefixLen ==* keepPathLen) ||           // Мы на обоначенной цели
+            isOnTheTargetPathNow ||                          // Мы на обоначенной цели
             (commonKeepPrefixLen ==* currNodePath.length)    // Либо, идём по пути к цели, на каком-то промежуточном шаге. Продолжаем погружение вглубь.
           }
         ) {
           // Этот узел оставляем вместе с под-элементами. Но под-под-элементы надо зачищать:
           val firstChildLoc = loc.firstChild.get
-          __dropChildrenExceptNodeWalker( currNodePathRev, firstChildLoc, canWalkDown = false, canDropChildren = true )
+          __walker( currNodePathRev, firstChildLoc, canWalkDown = !isOnTheTargetPathNow, canDropChildren = true )
 
         } else if ( canDropChildren && loc.hasChildren ) {
           // Мы или достигли цели и гуляем по подуровням цели, или какой-либо не-keepPath-элемент. Дропаем все элементы ниже:
-          //
           val loc2 = loc.setTree(
             Tree.Leaf( loc.getLabel )
           )
-          __dropChildrenExceptNodeWalker( parentNodePathRev, loc2, canWalkDown = false, canDropChildren = false )
+          __walker( parentNodePathRev, loc2, canWalkDown = false, canDropChildren = false )
 
         } else if (!loc.rights.isEmpty) {
-          // Есть элемент справа, хотя нет children'ов.
+          // Есть элемент справа, хотя нет children'ов. Один шаг вправо...
           val rightLoc = loc.right.get
-          __dropChildrenExceptNodeWalker( parentNodePathRev, rightLoc, canWalkDown = true, canDropChildren = true )
+          __walker( parentNodePathRev, rightLoc, canWalkDown = true, canDropChildren = true )
 
         } else if (!loc.parents.isEmpty) {
           // Нет ни справа, ни внизу. Подняться на шаг вверх:
           val parentLoc = loc.parent.get
           val isRootNode2 = parentNodePathRev.isEmpty
           val parentPathRev2 = if (isRootNode2) parentNodePathRev else parentNodePathRev.tail
-          __dropChildrenExceptNodeWalker( parentPathRev2, parentLoc, canWalkDown = false, canDropChildren = false, isRootNode = isRootNode2 )
+          __walker( parentPathRev2, parentLoc, canWalkDown = false, canDropChildren = false, isRootNode = isRootNode2 )
 
         } else {
           // Нет родительских элементов и !canWalkDown. Вы прошли дерево и вернулись на самый верх. Вернуть текущую локацию в дереве.
@@ -189,7 +196,7 @@ object MScAdData extends Log {
         }
       }
 
-      __dropChildrenExceptNodeWalker(
+      __walker(
         parentNodePathRev = Nil,
         loc               = adsTreeLoc,
         isRootNode        = true,

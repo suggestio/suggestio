@@ -2,17 +2,20 @@ package util.n2u
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModel
-import io.suggest.jd.{MJdEdgeFileVldInfo, MJdEdge, MJdEdgeVldInfo}
+import io.suggest.jd.{MJdEdge, MJdEdgeFileVldInfo, MJdEdgeVldInfo}
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.Inject
 import models.im.{MDynImgId, MImg3}
 import scalaz.std.iterable._
 import scalaz.std.list._
 import japgolly.univeq._
+import play.api.inject.Injector
+import util.acl.IsNodeAdmin
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -23,14 +26,15 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Утиль для валидации данных форм, содержащих edge-линковку.
   */
 final class N2VldUtil @Inject()(
-                                 esModel                    : EsModel,
-                                 mNodes                     : MNodes,
-                                 implicit private val ec    : ExecutionContext
+                                 injector                   : Injector,
                                )
   extends MacroLogsImpl
 {
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
 
   /** Извлечь данные по картинкам из карты эджей.
     *
@@ -78,6 +82,8 @@ final class N2VldUtil @Inject()(
 
 
   private def _findEdgeNodes(nodeIds: Set[String], ofNodeTypes: Seq[MNodeType] = Nil): Future[Map[String, MNode]] = {
+    import esModel.api._
+
     val _count = nodeIds.size
     def logPrefix = s"_findEdgeNodes(${_count}, [${ofNodeTypes.mkString(" ")}]):"
 
@@ -88,7 +94,7 @@ final class N2VldUtil @Inject()(
           // Собрать id запрашиваемых media-оригиналов:
           override val withIds = nodeIds.toSeq
           // Интересуют только enabled-узлы:
-          override val isEnabled = Some(true)
+          override val isEnabled = OptionUtil.SomeBool.someTrue
           override def limit = _count
         }
       )
@@ -145,20 +151,31 @@ final class N2VldUtil @Inject()(
     * @param imgsNeededMap Выхлоп imgsNeededMap()
     * @param nodesMap Выхлоп edgedNodes()
     * @param mediasMap Выхлоп imgsMedias()
+    * @param producerOpt Владелец проверяемого узла.
+    *                    Пока что, прямой.
     * @return Карта эджей с доп.данными для проверки.
     */
   def validateEdges( jdEdges        : Iterable[MJdEdge],
                      imgsNeededMap  : Map[EdgeUid_t, MImg3],
                      nodesMap       : Map[String, MNode],
-                     mediasMap      : Map[String, MNode]
+                     mediasMap      : Map[String, MNode],
+                     producerOpt    : Option[MNode],
                    ): Map[EdgeUid_t, MJdEdgeVldInfo] = {
     lazy val logPrefix = s"validateEdges()[${System.currentTimeMillis()}]:"
 
+    lazy val producerIds = producerOpt
+      .flatMap(_.id)
+      .fold( Set.empty[String] )(Set.empty + _)
+
     (for {
       jdEdge <- jdEdges.iterator
-      edgeUid <- jdEdge.edgeDoc.id
+      edgeUid <- {
+        val r = jdEdge.edgeDoc.id
+        if (r.isEmpty) LOGGER.warn(s"$logPrefix JdEdge uid missing: $jdEdge")
+        r
+      }
 
-      fileNodeOpt = for {
+      edgeNodeOpt = for {
         nodeId <- jdEdge.nodeId
         mnode <- nodesMap.get( nodeId )
       } yield mnode
@@ -171,12 +188,24 @@ final class N2VldUtil @Inject()(
       // а должен быть общий None - эдж невалиден, отсылки к нему из шаблона не валидны автоматически.
       if {
         if (isJdImage) {
-          val r = fileNodeOpt
+          val r = edgeNodeOpt
             .exists( _.common.ntype ==* MNodeTypes.Media.Image )
-          if (!r) LOGGER.warn(s"$logPrefix Image edge $jdEdge invalid: Edge related to missing/invalid/unexpected node#${fileNodeOpt.flatMap(_.id).orNull} or type#${fileNodeOpt.map(_.common.ntype).orNull}")
+          if (!r) LOGGER.warn(s"$logPrefix Image edge $jdEdge invalid: Edge related to missing/invalid/unexpected node#${edgeNodeOpt.flatMap(_.id).orNull} or type#${edgeNodeOpt.map(_.common.ntype).orNull}")
           r
+
+        } else if (jdEdge.predicate ==>> MPredicates.JdContent.Ad) {
+          // Запрошена карточка. Убедится, что связанный узел имеет ad-тип
+          val r = edgeNodeOpt
+            .exists { edgeNode =>
+              (edgeNode.common.ntype ==* MNodeTypes.Ad) &&
+              isNodeAdmin.isNodeAdminCheckStrict( edgeNode, producerIds )
+            }
+          if (!r) LOGGER.warn(s"$logPrefix Ad-jdEdge $jdEdge invalid: Related node#${edgeNodeOpt.flatMap(_.id)} ntype=${edgeNodeOpt.map(_.common.ntype).orNull}")
+          r
+
         } else {
-          // Не image - связанный файл не обязателен.
+          // TODO Разобраться с Frame/Video -эджами. Там есть node или только ссылка?
+          // Не image - связанный узел не обязателен.
           true
         }
       }
@@ -209,26 +238,32 @@ final class N2VldUtil @Inject()(
           }
 
           MJdEdgeFileVldInfo(
-            isImg = fileNodeOpt
+            isImg = edgeNodeOpt
               .nonEmpty,
             imgWh = edgeMediaOpt
               .flatMap( _.picture.whPx ),
             dynFmt = edgeMediaOpt
               .flatMap( _.file.imgFormatOpt ),
           )
-        }
+        },
       )
 
-      LOGGER.trace(s"$logPrefix Edge#${jdEdge.edgeDoc.id.orNull}, nodeId#${fileNodeOpt.orNull} img=>${vldEdge.file}")
+      LOGGER.trace(s"$logPrefix Edge#${jdEdge.edgeDoc.id.orNull}, nodeId#${edgeNodeOpt.orNull} img=>${vldEdge.file}")
       edgeUid -> vldEdge
     })
       .toMap
   }
 
 
-
-  /** Логика работы валидатора эджей, пригодная для повторного использования. */
-  case class EdgesValidator( edges    : Iterable[MJdEdge] ) {
+  /** Логика работы валидатора эджей, пригодная для повторного использования.
+    *
+    * @param edges jd-эджи для валидации.
+    * @param producerOpt Прямой владелец узла (для валидации ad-эджей).
+    */
+  case class EdgesValidator(
+                             edges              : Iterable[MJdEdge],
+                             producerOpt        : Option[MNode]                 = None,
+                           ) {
 
     // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
     val edgedNodesMapFut = edgedNodes( edges )
@@ -256,7 +291,8 @@ final class N2VldUtil @Inject()(
         jdEdges       = edges,
         imgsNeededMap = imgsNeededMap,
         nodesMap      = edgedNodesMap,
-        mediasMap     = imgsMediasMap
+        mediasMap     = imgsMediasMap,
+        producerOpt   = producerOpt,
       )
     }
 

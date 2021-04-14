@@ -1,12 +1,12 @@
 package io.suggest.ads
 
 import diode.react.ReactConnector
-import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.c.NodeAdsAh
 import io.suggest.ads.m.{GetMoreAds, MAdsS, MLkAdsRoot}
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.u.JdUtil
+import io.suggest.lk.api.ILkAdsApi
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.log.CircuitLog

@@ -725,8 +725,8 @@ object MuiSvgIcons {
   object CommunicationVoicemail extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/communication/vpn-key", JSImport.Default)
   object CommunicationVpnKey extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/add-box", JSImport.Default)
-  object ContentAddBox extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AddBox", JSImport.Default)
+  object AddBox extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/add-circle-outline", JSImport.Default)
   object ContentAddCircleOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/add-circle", JSImport.Default)

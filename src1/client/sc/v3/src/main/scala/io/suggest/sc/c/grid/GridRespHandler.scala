@@ -5,7 +5,6 @@ import diode.data.Pot
 import diode.{ActionResult, Effect, ModelRO}
 import io.suggest.grid.GridScrollUtil
 import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
-import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.msg.ErrorMsgs

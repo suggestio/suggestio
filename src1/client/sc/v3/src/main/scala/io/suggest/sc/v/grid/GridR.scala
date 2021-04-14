@@ -14,7 +14,9 @@ import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.grid.{GridAdKey_t, GridBlockClick, GridScroll, MGridCoreS, MGridS}
+import io.suggest.sc.u.ScGridItemEventListener
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.tv.SmartTvUtil
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
@@ -78,8 +80,8 @@ class GridR(
 
     def render(p: Props, s: State): VdomElement = {
       // Рендер jd-css:
-      val jdCssStatic1 = p.wrap(_ => jdCssStatic)( CssR.compProxied.apply )
-      val jdCss1 = s.jdCssC { CssR.compProxied.apply }
+      val jdCssStatic1 = CssR.compProxied( p.resetZoom( jdCssStatic ) )
+      val jdCss1 = s.jdCssC( CssR.compProxied.apply )
 
       // Непосредственный рендер плитки - коннекшен в отдельный компонент, снаружи от рендера connect-зависимого контейнера плитки.
       val gridCore = s.gridCoreC { mgridProxy =>
@@ -107,25 +109,33 @@ class GridR(
             adData <- scAdData.data.iterator
 
             // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
-            jdRenderArgs = (for {
+            groupOutlinedColorOpt = for {
               adDataForJdRenderArgs <- Option.when(
                 adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOutlined) ||
                 adData.isOpened
               )(adData)
-              bgColorOpt = adDataForJdRenderArgs.doc.template.getMainBgColor
-              if bgColorOpt.nonEmpty
+              bgColor <- adDataForJdRenderArgs.doc.template.getMainBgColor
             } yield {
-              MJdRenderArgs(
-                groupOutLined = bgColorOpt,
-              )
-            })
-              .getOrElse( MJdRenderArgs.empty )
+              bgColor
+            }
 
             // Получить стабильный путь до карточки в дереве:
             scAdDataPath = scAdDataLoc.gridKeyPath
 
             // Пройтись по шаблонам карточки
             gridItem <- scAdData.gridItems.iterator
+
+            jdRenderArgs = MJdRenderArgs(
+              groupOutLined = groupOutlinedColorOpt,
+              eventListener = Some {
+                new ScGridItemEventListener(
+                  propsProxy  = p,
+                  gridItem    = gridItem,
+                  gridPath    = scAdDataPath,
+                  jdDataJs    = adData,
+                )
+              },
+            )
 
           } yield {
             // Для скроллинга требуется повесить scroll.Element вокруг первого блока.

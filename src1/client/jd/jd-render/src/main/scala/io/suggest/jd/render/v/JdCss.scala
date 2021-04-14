@@ -244,19 +244,32 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 
-
   /** Мультипликация стороны на указанные пиксели. */
   import jdCssArgs.conf.{szMultF => _szMulted}
 
+  /** Сборка имён нефункциональных стилей: */
+  private val nameGen: String => String = {
+    jdCssArgs.nameGen
+      .getOrElse[String => String]( identity _ )
+  }
+
+  /** Сборка css-суффиксов имён из jd-id */
+  private val _jdIdToStringF: (MJdTagId, Int) => String = {
+    val f0 = JdCss._jdIdToStringF
+    jdCssArgs.nameGen.fold( f0 ) { nameGen =>
+      (jdId, i) => nameGen( f0(jdId, i) )
+    }
+  }
+
 
   /** Стиль выделения группы блоков. */
-  val blockGroupOutline = style(
+  val blockGroupOutline = style( nameGen("blockGroupOutline") )(
     outlineStyle.solid,
     outlineWidth( _szMulted( BlockPaddings.default.outlinePx ).px ),
   )
 
   /** Стили контейнера контента: блок или qd-blockless. */
-  val contentOuter = style(
+  val contentOuter = style( nameGen("contentOuter") )(
     // Дефолтовые настройки шрифтов внутри блока:
     fontSize( _szMulted(MFontSizes.default.value).px ),
   )
@@ -264,17 +277,17 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Для qd-blockless нужны поля, чтобы текст не упирался в край экрана/карточки. */
   val qdBlOuter = {
     val sidePx = _szMulted( jdCssArgs.conf.blockPadding.outlinePx ).px
-    style(
+    style( nameGen("qdBlOuter") )(
       paddingLeft( sidePx ),
       paddingRight( sidePx ),
     )
   }
 
   /** Все блоки помечаются этим классом. */
-  val smBlock = style(
+  val smBlock = style( nameGen("smBlock") )(
     // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
     // TODO Возможно, position.relative (или др.) сможет это пофиксить. Заодно можно будет удалить props-флаг quirks.
-    if (jdCssArgs.quirks) position.absolute
+    if (jdCssArgs.absBlocks) position.absolute
     else position.relative,
   )
 
@@ -358,7 +371,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         // Скомпилировать акк стилей:
         styleS( accS: _* )
       },
-      JdCss._jdIdToStringF,
+      _jdIdToStringF,
     )
   }
 
@@ -411,7 +424,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Объеденить все стили:
       styleS( accS: _* )
     },
-    JdCss._jdIdToStringF,
+    _jdIdToStringF,
   )
 
 
@@ -492,7 +505,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       }
       styleS( acc: _* )
     },
-    JdCss._jdIdToStringF,
+    _jdIdToStringF,
   )
 
 
@@ -575,7 +588,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       styleS( acc: _* )
     },
     {(r, i) =>
-      JdCss._jdIdToStringF( r._1, i )
+      _jdIdToStringF( r._1, i )
     }
   )
 
@@ -599,7 +612,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       })
         .whenDefinedStyleS(identity)
     },
-    JdCss._jdIdToStringF,
+    _jdIdToStringF,
   )
 
 
@@ -630,7 +643,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         textShadow := acc.mkString( HtmlConstants.SPACE )
       )
     },
-    JdCss._jdIdToStringF,
+    _jdIdToStringF,
   )
 
 
@@ -683,9 +696,11 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         )
       },
       {case ((lineHeight, jdIdOpt), _) =>
-        jdIdOpt
-          .getOrElse( lineHeight )
-          .toString
+        nameGen(
+          jdIdOpt
+            .getOrElse( lineHeight )
+            .toString
+        )
       }
     )
   }
@@ -750,7 +765,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         // Вернуть скомпонованный стиль.
         styleS( acc: _* )
       },
-      JdCss._jdIdToStringF,
+      _jdIdToStringF,
     )
   }
 
@@ -804,7 +819,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
         styleS( acc: _* )
       },
-      JdCss._jdIdToStringF,
+      _jdIdToStringF,
     )
   }
 
@@ -842,7 +857,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           transform := ("rotate(" + rotateDeg + "deg)" )
         )
       },
-      DslMacros.defaultStyleFClassNameSuffixI
+      {(rotateDeg, i) =>
+        nameGen( DslMacros.defaultStyleFClassNameSuffixI(rotateDeg, i) )
+      }
     )
   }
 
@@ -852,7 +869,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     */
   val video = {
     val whDflt = HtmlConstants.Iframes.whCsspxDflt
-    style(
+    style( nameGen("video") )(
       width ( _szMulted(whDflt.width).px ),
       height( _szMulted(whDflt.height).px )
     )

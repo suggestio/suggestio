@@ -61,7 +61,6 @@ final class JdRrr(
     }
   }
 
-
   /** Для разделения edit и read-only режима используется этот трейт,
     * реализующий только базовый рендер с возможностью внутреннего расширения.
     */
@@ -173,7 +172,7 @@ final class JdRrr(
         val state = propsProxy.value
         val tag0 = _renderQdContentTag( state, children :: Nil )
 
-        if (
+        val tag1 = if (
           state.parents
             .exists(_.name ==* MJdTagNames.STRIP)
         ) {
@@ -268,6 +267,13 @@ final class JdRrr(
             */
           )
         }
+
+        tag1(
+
+          // Поддержка пользовательского перехвата событий:
+          JdEventListener.renderEventListener( state ),
+
+        )
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
@@ -455,6 +461,10 @@ final class JdRrr(
             .whenDefined,
 
           _smBlockAddons(state),
+
+          // Поддержка пользовательского перехвата событий:
+          JdEventListener.renderEventListener( state ),
+
         )
       }
 

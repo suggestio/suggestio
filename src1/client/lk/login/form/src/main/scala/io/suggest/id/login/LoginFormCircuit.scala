@@ -14,7 +14,8 @@ import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
 import io.suggest.id.login.m.reg.step4.MReg4SetPassword
-import io.suggest.lk.c.{CaptchaAh, CaptchaApiHttp, ICaptchaApi, SmsCodeFormAh}
+import io.suggest.lk.api.{CaptchaApiHttp, ICaptchaApi}
+import io.suggest.lk.c.{CaptchaAh, SmsCodeFormAh}
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.msg.ErrorMsgs

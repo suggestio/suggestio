@@ -1,4 +1,4 @@
-package io.suggest.ads.a
+package io.suggest.lk.api
 
 import io.suggest.ads.MLkAdsOneAdResp
 import io.suggest.adv.rcvr.RcvrKey

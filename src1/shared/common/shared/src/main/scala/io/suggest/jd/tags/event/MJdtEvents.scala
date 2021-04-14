@@ -3,18 +3,11 @@ package io.suggest.jd.tags.event
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.enum2.EnumeratumUtil
-import io.suggest.jd.JdConst
-import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
+import io.suggest.jd.MJdEdgeId
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import scalaz.Validation
-import scalaz.syntax.validation._
-import scalaz.syntax.apply._
-import scalaz.std.list._
-import scalaz.std.iterable._
 
 /**
   * Suggest.io
@@ -25,6 +18,7 @@ import scalaz.std.iterable._
 object MJdtEvents extends IEmpty {
 
   override type T = MJdtEvents
+  // val empty: val часто нужен в jd-дереве (событий нет) и в редакторе при референсном сравнивании.
   override val empty = apply()
 
   object Fields {
@@ -44,15 +38,6 @@ object MJdtEvents extends IEmpty {
         events => Option.when(events.nonEmpty)(events)
       )
       .inmap(apply, _.events)
-  }
-
-  implicit def validate(jdEvents: MJdtEvents): StringValidationNel[MJdtEvents] = {
-    ScalazUtil
-      .validateAll( jdEvents.events )( MJdtEventActions.validate(_).map(_ :: Nil) )
-      .andThen {
-        Validation.liftNel(_)( _.lengthIs > JdConst.Event.MAX_EVENT_LISTENERS_PER_TAG, Fields.EVENTS )
-      }
-      .map( apply )
   }
 
 }
@@ -102,17 +87,6 @@ object MJdtEventActions {
     )(apply, unlift(unapply))
   }
 
-  def validate(e: MJdtEventActions): StringValidationNel[MJdtEventActions] = {
-    (
-      MJdtEventInfo.validate( e.event ) |@|
-      ScalazUtil
-        .validateAll( e.actions )( MJdtAction.validate(_).map(_ :: Nil) )
-        .andThen {
-          Validation.liftNel(_)(_.lengthIs > JdConst.Event.MAX_ACTIONS_PER_LISTENER, Fields.ACTIONS)
-        }
-    )(apply)
-  }
-
 }
 
 /** Критерии события, на которое подписка.
@@ -139,22 +113,17 @@ object MJdtEventInfo {
       .inmap( apply, _.eventType )
   }
 
-  def validate(v: MJdtEventInfo): StringValidationNel[MJdtEventInfo] = {
-    // Пока нечего проверять: вернуть исходный инстанс целиком.
-    v.successNel
-  }
-
 }
 
 
 /** Описание действия при событии.
   *
   * @param action Тип действия, которое требуется совершить.
-  * @param edgeUids Эджи, связанные с совершаемым действием.
+  * @param jdEdgeIds Эджи, связанные с совершаемым действием.
   */
 final case class MJdtAction(
                              action        : MJdActionType,
-                             edgeUids      : List[EdgeUid_t] = Nil,
+                             jdEdgeIds     : List[MJdEdgeId] = Nil,
                            )
 object MJdtAction {
 
@@ -164,23 +133,15 @@ object MJdtAction {
   }
 
   def action = GenLens[MJdtAction](_.action)
-  def edgeUids = GenLens[MJdtAction](_.edgeUids)
+  def edgeUids = GenLens[MJdtAction](_.jdEdgeIds)
 
   @inline implicit def univEq: UnivEq[MJdtAction] = UnivEq.derive
   implicit def jdtActionJson: Format[MJdtAction] = {
     val F = Fields
     (
       (__ \ F.ACTION_FN).format[MJdActionType] and
-      (__ \ F.EDGE_UIDS).format[List[EdgeUid_t]]
+      (__ \ F.EDGE_UIDS).format[List[MJdEdgeId]]
     )(apply, unlift(unapply))
-  }
-
-  def validate(a: MJdtAction): StringValidationNel[MJdtAction] = {
-    // Пока всё минимально: одно действие, максимум одна карточка.
-    (
-      a.action.successNel[String] |@|
-      Validation.liftNel( a.edgeUids )( _.lengthIs <= 1, Fields.EDGE_UIDS )
-    )( apply )
   }
 
 }
@@ -197,7 +158,26 @@ object MJdActionTypes extends StringEnum[MJdActionType] {
 sealed abstract class MJdActionType(override val value: String) extends StringEnumEntry
 
 object MJdActionType {
+
   @inline implicit def univEq: UnivEq[MJdActionType] = UnivEq.derive
+
   implicit def jdActionTypeJson: Format[MJdActionType] =
     EnumeratumUtil.valueEnumEntryFormat( MJdActionTypes )
+
+  implicit final class AcTypeExt(private val acType: MJdActionType) extends AnyVal {
+
+    /** Требуется ли выбор карточки/карточек для указанного экшена? */
+    def isAdsChoose: Boolean = {
+      acType match {
+        case MJdActionTypes.InsertAds => true
+        case _ => false
+      }
+    }
+
+    /** Код для локализации через Messages(). */
+    def i18nCode: String =
+      "jd.action.type." + acType.value
+
+  }
+
 }

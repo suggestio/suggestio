@@ -12,6 +12,7 @@ import io.suggest.ad.edit.m.edit.{MStripEdS, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayersR}
+import io.suggest.ad.edit.v.edit.events.EventsR
 import io.suggest.color.{IColorPickerMarker, MHistogram}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -34,6 +35,7 @@ import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.up.MFileUploadS
 import japgolly.scalajs.react.vdom.VdomElement
@@ -78,6 +80,7 @@ class LkAdEditFormR(
                      val quillEditorR           : QuillEditorR,
                      val contentEditCssR        : ContentEditCssR,
                      val contentLayersR         : ContentLayersR,
+                     eventsR                    : EventsR,
                      titleR                     : TitleR,
                      textShadowR                : TextShadowR,
                      val touchSwitchR           : TouchSwitchR,
@@ -115,7 +118,8 @@ class LkAdEditFormR(
                                block    : ReactConnectProxy[Option[slideBlockR.PropsVal]],
                                blockBg  : ReactConnectProxy[Option[slideBlockR.PropsVal]],
                                content  : ReactConnectProxy[Option[slideBlockR.PropsVal]],
-                               create   : ReactConnectProxy[Option[slideBlockR.PropsVal]]
+                               events   : ReactConnectProxy[Option[slideBlockR.PropsVal]],
+                               create   : ReactConnectProxy[Option[slideBlockR.PropsVal]],
                              )
 
   case class ColorsState(
@@ -146,11 +150,17 @@ class LkAdEditFormR(
         CssR.component( quillCssFactory ),
 
         // Отрендерить стили редактора:
-        p.wrap(_ => lkCss)( CssR.compProxied.apply ),
-        p.wrap(_ => lkAdEditCss)( CssR.compProxied.apply ),
+        CssR.compProxied(
+          p.resetZoom( lkCss ),
+        ),
+        CssR.compProxied(
+          p.resetZoom( lkAdEditCss ),
+        ),
 
         // Рендер jd-css
-        p.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
+        CssR.compProxied(
+          p.resetZoom( jdCssStatic ),
+        ),
         s.jdCssArgsC { CssR.compProxied.apply },
 
         // Редактирование заголовка.
@@ -330,6 +340,14 @@ class LkAdEditFormR(
               slideBlockR(propsOpt)( contentBodyDiv )
             }
 
+            // Управление событиями.
+            val eventsBodyDiv = <.div(
+              p.wrap(_.doc)( eventsR.component.apply ),
+            )
+            val eventsSlideBlock = s.slideBlocks.events { propsOpt =>
+              slideBlockR(propsOpt)( eventsBodyDiv )
+            }
+
             // Форма создания новых объектов.
             val createSlideBody = addR(p)
             val createSlideBlock = s.slideBlocks.create { propsOpt =>
@@ -347,6 +365,7 @@ class LkAdEditFormR(
               slideBlockVdom,
               blockBgSlide,
               contentSlideBlock,
+              eventsSlideBlock,
               createSlideBlock,
               saveBtn,
             )
@@ -452,6 +471,8 @@ class LkAdEditFormR(
 
       val intFastEq = FastEqUtil.AnyValueEq[Int]
 
+      val slideBlockPropsOptFeq = OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq )
+
       State(
         jdPreviewArgsC = p.connect(_.doc.jdDoc.toRrrProps)( MJdRrrProps.MJdRrrPropsFastEq ),
 
@@ -527,7 +548,7 @@ class LkAdEditFormR(
                   key = Some(k)
                 )
               }
-            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
+            }( slideBlockPropsOptFeq )
           },
           blockBg = {
             val title = Messages( MsgCodes.`Background` )
@@ -542,7 +563,7 @@ class LkAdEditFormR(
                   key       = Some(k)
                 )
               }
-            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
+            }( slideBlockPropsOptFeq )
           },
           content = {
             val title = Messages( MsgCodes.`Content` )
@@ -557,7 +578,7 @@ class LkAdEditFormR(
                   key      = Some(k)
                 )
               }
-            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
+            }( slideBlockPropsOptFeq )
           },
           create = {
             val k = SlideBlockKeys.ADD
@@ -570,7 +591,24 @@ class LkAdEditFormR(
                   key       = Some(k)
                 )
               ): Option[slideBlockR.PropsVal]
-            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
+            }( slideBlockPropsOptFeq )
+          },
+          events = {
+            val k = SlideBlockKeys.EVENTS
+            val title = Messages( MsgCodes.`Events` )
+            p.connect { mroot =>
+              for {
+                treeLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
+                jdt = treeLoc.getLabel
+                if jdt.name.isEventsAllowed
+              } yield {
+                slideBlockR.PropsVal(
+                  title     = title,
+                  expanded  = mroot.doc.editors.slideBlocks.expanded contains k,
+                  key       = Some(k),
+                )
+              }
+            }( slideBlockPropsOptFeq )
           }
         ),
 

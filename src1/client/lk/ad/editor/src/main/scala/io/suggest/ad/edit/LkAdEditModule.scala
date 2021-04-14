@@ -7,6 +7,7 @@ import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.m.edit.MDocS
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayerBtnR, ContentLayersR}
+import io.suggest.ad.edit.v.edit.events.EventsR
 import io.suggest.ad.edit.v.edit.strip._
 import io.suggest.ad.edit.v.pop.LaePopupsR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
@@ -85,6 +86,8 @@ class LkAdEditModule
   lazy val deleteConfirmPopupR = wire[DeleteConfirmPopupR]
 
   lazy val outLineR = wire[OutLineR]
+
+  lazy val eventsR = wire[EventsR]
 
 
   // circuit deps

@@ -12,7 +12,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.Validation
 import scalaz.syntax.apply._
-import scalaz.std.stream._
+import scalaz.std.list._
 import scalaz.std.iterable._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -60,7 +60,7 @@ object MAdnResView extends IEmpty {
     def __vldJdId(jdIdOpt: Option[MJdEdgeId], name: String) = {
       ScalazUtil.liftNelOpt(jdIdOpt) { jdId =>
         (
-          MJdEdgeId.validate(jdId, edgesMap, None) |@|
+          MJdEdgeId.validateImgId(jdId, edgesMap, None) |@|
           ScalazUtil.liftNelSome( edgesMap.get(jdId.edgeUid), name + `.` + ErrorConstants.Words.MISSING ) { vldEdge =>
             Validation.liftNel(vldEdge.jdEdge.predicate)(_ !=* MPredicates.JdContent.Image, name + `.` + ErrorConstants.Words.INVALID)
               .map { _ => vldEdge }
@@ -73,8 +73,8 @@ object MAdnResView extends IEmpty {
       __vldJdId(rv.logo, "logo") |@|
       __vldJdId(rv.wcFg, "wc") |@|
       ScalazUtil.validateAll(rv.galImgs) { galImg =>
-        MJdEdgeId.validate(galImg, edgesMap, Some(NodeEditConstants.Gallery.WH_PX))
-          .map(Stream(_))
+        MJdEdgeId.validateImgId(galImg, edgesMap, Some(NodeEditConstants.Gallery.WH_PX))
+          .map(_ :: Nil)
       }
     )(apply _)
   }

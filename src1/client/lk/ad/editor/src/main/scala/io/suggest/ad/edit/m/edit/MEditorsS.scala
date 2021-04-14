@@ -19,7 +19,8 @@ object MEditorsS {
       (a.qdEdit ===* b.qdEdit) &&
       (a.stripEd ===* b.stripEd) &&
       (a.colorsState ===* b.colorsState) &&
-      (a.slideBlocks ===* b.slideBlocks)
+      (a.slideBlocks ===* b.slideBlocks) &&
+      (a.events ===* b.events)
     }
   }
 
@@ -41,6 +42,7 @@ object MEditorsS {
   def stripEd = GenLens[MEditorsS](_.stripEd)
   val slideBlocks = GenLens[MEditorsS](_.slideBlocks)
   def colorsState = GenLens[MEditorsS](_.colorsState)
+  def events = GenLens[MEditorsS](_.events)
 
   @inline implicit def univEq: UnivEq[MEditorsS] = UnivEq.derive
 
@@ -59,4 +61,5 @@ case class MEditorsS(
                       stripEd       : Option[MStripEdS]             = None,
                       slideBlocks   : MSlideBlocks                  = MSlideBlocks.empty,
                       colorsState   : MColorsState                  = MColorsState.empty,
+                      events        : MEventsEdit                   = MEventsEdit.empty,
                     )

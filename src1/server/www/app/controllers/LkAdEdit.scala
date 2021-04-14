@@ -151,7 +151,12 @@ final class LkAdEdit @Inject() (
           }
 
           // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
-          vldEdgesMap <- n2VldUtil.EdgesValidator( jdData1.edges ).vldEdgesMapFut
+          vldEdgesMap <- n2VldUtil
+            .EdgesValidator(
+              edges           = jdData1.edges,
+              producerOpt     = Option( request.producer ),
+            )
+            .vldEdgesMapFut
 
           tpl2 = lkAdEdFormUtil
             .validateTpl(
@@ -177,10 +182,8 @@ final class LkAdEdit @Inject() (
           // Т.к. JdDocValidator теперь может удалять из шаблона невалидные куски, то тут требуется дополнительная зачистка эджей:
           edges2Map = JdTag.purgeUnusedEdges[MJdEdge](
             tpl2,
-            jdData1
-              .edges
-              .zipWithIdIter[EdgeUid_t]
-              .to( Map )
+            vldEdgesMap
+              .map { case (k,v) => (k, v.jdEdge) }
           )
 
           framePred = MPredicates.JdContent.Frame

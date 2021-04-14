@@ -2,6 +2,7 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.color.MColorData
+import io.suggest.jd.render.v.JdEventListener
 import io.suggest.scalaz.NodePath_t
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.univeq._
@@ -38,6 +39,7 @@ object MJdRenderArgs {
   def hideNonMainStrips = GenLens[MJdRenderArgs](_.hideNonMainStrips)
   def groupOutLined = GenLens[MJdRenderArgs](_.groupOutLined)
   def dnd = GenLens[MJdRenderArgs](_.dnd)
+  def eventListener = GenLens[MJdRenderArgs](_.eventListener)
 
 }
 
@@ -51,6 +53,7 @@ object MJdRenderArgs {
   * @param groupOutLined Использовать group-выделение указанного цвета.
   *                      Выделение группы ориентировано на визуально-непрерываное выделение близко-находящихся карточек.
   * @param dnd Состояние драг-н-дропа, который может прийти сюда из неизвестности.
+  * @param eventListener Поддержка реакции на события.
   */
 case class MJdRenderArgs(
                           selPath             : Option[NodePath_t]          = None,
@@ -58,6 +61,7 @@ case class MJdRenderArgs(
                           hideNonMainStrips   : Boolean                     = false,
                           groupOutLined       : Option[MColorData]          = None,
                           dnd                 : MJdDndS                     = MJdDndS.empty,
+                          eventListener       : Option[JdEventListener]    = None,
                         ) {
 
   lazy val selPathRev: Option[NodePath_t] =

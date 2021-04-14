@@ -578,7 +578,7 @@ final class DynImgUtil @Inject() (
             for {
               doc <- mnode.extras.doc.iterator
               jdTag <- EphemeralStream.toIterable( doc.template.flatten ).iterator
-              imgEdge <- jdTag.edgeUids
+              imgEdge <- jdTag.imgEdgeUids
             } yield {
               imgEdge
             }

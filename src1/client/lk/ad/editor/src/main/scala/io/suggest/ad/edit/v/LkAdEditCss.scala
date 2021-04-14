@@ -148,6 +148,11 @@ class LkAdEditCss
   }
 
 
+  val inlineFlex = style(
+    display.inlineFlex
+  )
+
+
   initInnerObjects(
     Title.titleInp,
     WhControls.marginRight40,

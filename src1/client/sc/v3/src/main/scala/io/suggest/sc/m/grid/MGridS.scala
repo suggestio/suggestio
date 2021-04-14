@@ -34,6 +34,4 @@ case class MGridS(
                    hasMoreAds       : Boolean               = true,
                    afterUpdate      : List[Effect]          = List.empty,
                    gNotify          : MGridNotifyS          = MGridNotifyS.empty,
-                 ) {
-
-}
+                 )

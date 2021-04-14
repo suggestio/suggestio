@@ -13,7 +13,7 @@ import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdProps1, MJdTagNames}
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MNodeEdges, MPredicates}
 import io.suggest.n2.media.MPictureMeta
-import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.sc.MScApiVsn
 import io.suggest.scalaz.NodePath_t
 import io.suggest.url.MHostInfo
@@ -68,34 +68,50 @@ class JdAdUtil @Inject()(
     */
   def prepareVideoEdges(edges: MNodeEdges): Seq[MEdge] = {
     edges
-      .withPredicateIter( framePredicate )
-      .toSeq
+      .withPredicate( framePredicate )
+      .out
   }
 
+  def prepareAdEdges(edges: MNodeEdges): Seq[MEdge] = {
+    edges
+      .withPredicate( MPredicates.JdContent.Ad )
+      .out
+  }
 
   /** Собрать узлы для необходимых медиа-вещей: картинок, видео.
     * Изначально, это нужно только в редакторе.
     * Возможно, если будет проверка доступа к картинкам, но понадобится и при обычном рендере.
     *
     * @param imgsEdges Подготовленные img-эджи, полученные из prepareImgEdges().
-    * @param videoEdges Подготовленные video-эджи, полученные из prepareVideoEdges().
+    * @param otherEdges Подготовленные video-эджи (или иные типы), полученные из prepareVideoEdges() или других источников.
     */
-  def prepareMediaNodes(imgsEdges: IterableOnce[(MEdge, MImg3)], videoEdges: Seq[MEdge]): Future[Map[String, MNode]] = {
-    // Перечисляем все интересующие img-ноды:
-    val imgNodeIdsIter = imgsEdges
-      .iterator
-      .flatMap(_._2.dynImgId.mediaIdAndOrigMediaId)
+  def prepareMediaNodes(imgsEdges: IterableOnce[(MEdge, MImg3)],
+                        otherEdges: (MNodeType, Seq[MEdge])*
+                       ): Future[Map[String, MNode]] = {
 
-    // Присунуть сюда же video-ноды:
-    val videoNodeIdsIter = videoEdges
+    val allNodeIds = (
+      // Перечисляем все интересующие img-ноды:
+      ( imgsEdges
+       .iterator
+       .flatMap(_._2.dynImgId.mediaIdAndOrigMediaId)
+      ) #:: (
+        // Присунуть сюда же video и другие ноды:
+        otherEdges
+          .flatMap(_._2)
+          .flatMap(_.nodeIds)
+      ) #::
+        LazyList.empty
+    )
       .iterator
-      .flatMap(_.nodeIds)
-
-    // Всё объеденить и дедублицировать.
-    val mediaNodeIds = (imgNodeIdsIter ++ videoNodeIdsIter)
+      .flatten
       .toSet
 
-    mNodes.multiGetMapCache( mediaNodeIds )
+    //for {
+    //  allNodesMap <-
+    mNodes.multiGetMapCache( allNodeIds )
+    //} yield {
+      // TODO Нужно сверить ожидаемые типы узлов:
+    //}
   }
 
 
@@ -186,13 +202,24 @@ class JdAdUtil @Inject()(
     * @return Список jd-эджей.
     */
   def mkJdVideoEdges(videoEdges: Seq[MEdge], videoNodes: Map[String, MNode]): List[MJdEdge] = {
+    lazy val logPrefix = s"mkJdVideoEdges():"
     (for {
       medge       <- videoEdges.iterator
-      if medge.doc.id.nonEmpty
+      if {
+        val r = medge.doc.id.nonEmpty
+        if (!r) LOGGER.warn(s"$logPrefix Missing edge uid for edge: $medge")
+        r
+      }
       nodeId      <- medge.nodeIds.iterator
       mnode       <- videoNodes.get( nodeId )
+      if {
+        val expectedNtype = MNodeTypes.ExternalRsc
+        val r = mnode.common.ntype eqOrHasParent expectedNtype
+        if (!r) LOGGER.warn(s"$logPrefix Node $nodeId exist with type ${mnode.common.ntype}, but only $expectedNtype allowed: $medge")
+        r
+      }
       extUrl      <- {
-        mnode.extras
+        val r = mnode.extras
           .extVideo
           .map( extRscUtil.toIframeUrl )
           .orElse {
@@ -200,6 +227,8 @@ class JdAdUtil @Inject()(
               rsc.url
             }
           }
+        if (r.isEmpty) LOGGER.warn(s"$logPrefix Can't constuct video URL for video-node#$nodeId, extVideo=${mnode.extras.extVideo} extRsc=${mnode.extras.resource}")
+        r
       }
     } yield {
       MJdEdge(
@@ -209,7 +238,41 @@ class JdAdUtil @Inject()(
       )
     })
       // Явная подготовка без ленивости, т.к. эджей обычно мало, и всё это в отдельном потоке генерится.
-      .toList
+      .to( List )
+  }
+
+
+  /** Отрендерить ad-jd-эджи.
+    *
+    * @param adEdges Исходные N2-эджи.
+    * @param nodesMap Карта узлов.
+    * @return Список результирующих эджей.
+    */
+  def mkJdAdEdges(adEdges: Seq[MEdge], nodesMap: Map[String, MNode]): List[MJdEdge] = {
+    lazy val logPrefix = "mkJdAdEdges():"
+    (for {
+      adEdge <- adEdges.iterator
+      if {
+        val r = adEdge.doc.id.nonEmpty
+        if (!r) LOGGER.warn(s"$logPrefix Missing edge uid for: $adEdge")
+        r
+      }
+      adNodeId <- adEdge.nodeIds
+      mnode <- nodesMap.get( adNodeId )
+      if {
+        val ntypeOk = MNodeTypes.Ad
+        val r = mnode.common.ntype ==* ntypeOk
+        if (!r) LOGGER.warn(s"$logPrefix Node#$adNodeId has unexpected ntype#${mnode.common.ntype}, allowed ntype=$ntypeOk")
+        r
+      }
+    } yield {
+      MJdEdge(
+        predicate = adEdge.predicate,
+        edgeDoc   = adEdge.doc,
+        nodeId    = Some( adNodeId ),
+      )
+    })
+      .to( List )
   }
 
 
@@ -330,20 +393,32 @@ class JdAdUtil @Inject()(
     }
 
     // Собрать связанные инстансы MMedia. Т.к. эджи всегда указывают на оригинал, то тут тоже оригиналы.
-    lazy val origImgMediasMapFut = prepareMediaNodes( origImgsEdges, videoEdges = Nil )
+    lazy val origImgMediasMapFut = prepareMediaNodes( origImgsEdges )
 
     // Собрать video-эджи. Для них надо получить инстансы MNode, чтобы достучаться до ссылок.
     lazy val videoEdges = {
       val ve = prepareVideoEdges( nodeEdges )
-      LOGGER.trace(s"$logPrefix Found ${ve.size} video edges: ${ve.mkString(", ")}")
+      if (ve.nonEmpty)
+        LOGGER.trace(s"$logPrefix Found ${ve.size} video edges: ${ve.mkString(", ")}")
       ve
+    }
+
+    lazy val adEdges = {
+      val adEdges = prepareAdEdges( nodeEdges )
+      if (adEdges.nonEmpty)
+        LOGGER.trace(s"$logPrefix Found ${adEdges.size} ad edges.")
+      adEdges
     }
 
     /** Для каких img-узлов требуется прочитать ноды? */
     def imgEdgesNeedNodes: Seq[(MEdge, MImg3)]
 
     // Для имён файлов нужно собрать сами узлы.
-    lazy val mediaNodesMapFut = prepareMediaNodes( imgEdgesNeedNodes, videoEdges )
+    lazy val mediaNodesMapFut = prepareMediaNodes(
+      imgEdgesNeedNodes,
+      MNodeTypes.ExternalRsc.VideoExt -> videoEdges,
+      MNodeTypes.Ad -> adEdges,
+    )
 
     // Скомпилить jd-эджи картинок.
     // TODO Нужно lazy val тут. Можно сделать через def + lazy val.
@@ -369,6 +444,12 @@ class JdAdUtil @Inject()(
       )
     }
 
+    def adJdEdgesFut = for {
+      mediaNodesMap   <- mediaNodesMapFut
+    } yield {
+      mkJdAdEdges( adEdges, mediaNodesMap )
+    }
+
     // Собрать тексты из эджей
     def textJdEdges = mkTextEdges( nodeEdges )
 
@@ -376,15 +457,19 @@ class JdAdUtil @Inject()(
     def edEdgesFut: Future[Seq[MJdEdge]] = {
       val _imgJdEdgesFut = imgJdEdgesFut
       val _videoJdEdgesFut = videoJdEdgesFut
+      val _adJdEdgesFut = adJdEdgesFut
+
       val _textJdEdges = textJdEdges
+
       for {
         videoJdEdges  <- _videoJdEdgesFut
-        // Промежуточное объединение c video-эджами. text-эджи справа, так быстрее: text-эджей всегда много, а video-эджей - единицы.
-        textAndVideoJdEdges = videoJdEdges reverse_::: _textJdEdges
+        // Промежуточное объединение c video/ad-эджами. text-эджи справа, так быстрее: text-эджей всегда много, а video-эджей - единицы.
+        adJdEdges     <- _adJdEdgesFut
+        nonImgJdEdges = adJdEdges reverse_::: videoJdEdges reverse_::: _textJdEdges
         imgJdEdges    <- _imgJdEdgesFut
       } yield {
-        val r = imgJdEdges reverse_::: textAndVideoJdEdges
-        LOGGER.trace(s"$logPrefix Compiled ${r.size} jd edges: text=${_textJdEdges.size} img=${imgJdEdges.size} video=${videoJdEdges.size}")
+        val r = imgJdEdges reverse_::: nonImgJdEdges
+        LOGGER.trace(s"$logPrefix Compiled ${r.size} jd edges: text=${_textJdEdges.size} img=${imgJdEdges.size} video=${videoJdEdges.size} ad=${adJdEdges.size}")
         r
       }
     }
@@ -631,7 +716,7 @@ class JdAdUtil @Inject()(
             .find { jdTagTree =>
               jdTagTree
                 .getLabel
-                .edgeUids
+                .imgEdgeUids
                 .exists(_.edgeUid ==* edgeUid)
             }
         } yield {

@@ -194,7 +194,7 @@ class DocEditAh[M](
             edgeDoc = MEdgeDoc(
               id        = Some( nextEdgeUid ),
               text      = Some( textL10ed ),
-            )
+            ),
           )
         )
         val edgesMap1 = edgesMap0 + (nextEdgeUid -> e)
@@ -665,9 +665,16 @@ class DocEditAh[M](
           }(v2)
         }
 
+        var fxAcc = List.empty[Effect]
+
         // Если состояние dnd непустое, то значит была ошибка перетакивания, и надо принудительно сбросить dnd-состояние.
         // Если этого не сделать, то рамочка вокруг текущего тега не будет рендерится.
-        val fxOpt = OptionUtil.maybe(!m.silent && v2.jdDoc.jdArgs.renderArgs.dnd.nonEmpty)( JdTagDragEnd.toEffectPure )
+        if (!m.silent && v2.jdDoc.jdArgs.renderArgs.dnd.nonEmpty)
+          fxAcc ::= JdTagDragEnd.toEffectPure
+
+        // Если в новом теге есть события, то попытаться инициализировать карточки:
+        if (m.jdTag.events.events.nonEmpty && v2.editors.events.isAdsNeedsInit)
+          fxAcc ::= EventAskMoreAds().toEffectPure
 
         // Обновить список color-preset'ов.
         val bgColorsAppend = (for {
@@ -705,7 +712,7 @@ class DocEditAh[M](
         }
 
         // Всё готово, можно вернуть результаты:
-        ah.updatedMaybeEffect( v2, fxOpt )
+        ah.updatedMaybeEffect( v2, fxAcc.mergeEffects )
       }
 
 
@@ -1331,7 +1338,7 @@ class DocEditAh[M](
             el1 <- v0.jdDoc.jdArgs.data.doc.template
           } yield {
             el1
-              .edgeUids
+              .imgEdgeUids
               .map(_.edgeUid)
               .find(edgeUids4mod.contains)
               .fold(el1) { _ =>

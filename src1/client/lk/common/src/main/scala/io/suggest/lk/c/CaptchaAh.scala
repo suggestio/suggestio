@@ -1,6 +1,7 @@
 package io.suggest.lk.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
+import io.suggest.lk.api.ICaptchaApi
 import io.suggest.lk.m._
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.input.MTextFieldS

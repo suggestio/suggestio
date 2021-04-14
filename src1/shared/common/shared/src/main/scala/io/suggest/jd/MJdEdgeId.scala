@@ -1,14 +1,15 @@
 package io.suggest.jd
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
 import io.suggest.img.MImgFormat
 import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
-import io.suggest.scalaz.ScalazUtil
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.StringUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -49,11 +50,11 @@ object MJdEdgeId {
     * @param imgContSzOpt Размер контейнера изображения (для проверки кропа).
     * @return Результат валидации.
     */
-  def validate(
-                m             : MJdEdgeId,
-                edges         : Map[EdgeUid_t, MJdEdgeVldInfo],
-                imgContSzOpt  : Option[ISize2di]
-              ): ValidationNel[String, MJdEdgeId] = {
+  def validateImgId(
+                     m             : MJdEdgeId,
+                     edges         : Map[EdgeUid_t, MJdEdgeVldInfo],
+                     imgContSzOpt  : Option[ISize2di]
+                   ): ValidationNel[String, MJdEdgeId] = {
     val edgeInfoOpt = edges.get( m.edgeUid )
 
     Validation
@@ -84,6 +85,25 @@ object MJdEdgeId {
           )( Validation.success ) |@|
           ScalazUtil.optValidationOrNone( cropAndWhVldOpt )
         )(apply _)
+      }
+  }
+
+  def validateAdId(isAdsChoose: Boolean,
+                   m: MJdEdgeId,
+                   edges: Map[EdgeUid_t, MJdEdgeVldInfo]
+                  ): StringValidationNel[MJdEdgeId] = {
+    val edgeInfoOpt = OptionUtil.maybeOpt(isAdsChoose)( edges.get( m.edgeUid ) )
+    Validation
+      .liftNel( edgeInfoOpt )(
+        {edgeInfoOpt =>
+          isAdsChoose !=* edgeInfoOpt.nonEmpty
+        },
+        s"edge ${m.edgeUid} missing/unexpected"
+      )
+      .map { _ =>
+        MJdEdgeId(
+          edgeUid = m.edgeUid,
+        )
       }
   }
 

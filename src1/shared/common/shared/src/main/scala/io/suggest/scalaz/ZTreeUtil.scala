@@ -247,42 +247,61 @@ object ZTreeUtil {
       }
     }
 
-    def onlyLowest: List[TreeLoc[A]] = {
 
+    /** Пройтись только по самым нижним этажам.
+      *
+      * @return EphemeralStream по нижним уровням.
+      */
+    def onlyLowest: EphemeralStream[TreeLoc[A]] = {
       // Сборка сразу в прямом порядке:
-      val accBuilder = List.newBuilder[TreeLoc[A]]
-
-      // Рекурсивный обход вглубь и вправо.
-      @tailrec def __walk(loc: TreeLoc[A], canAcc: Boolean, canGoDown: Boolean = true): Unit = {
-        if (canGoDown && loc.hasChildren) {
-          // Спускаемся на самый нижний уровень везде и всегда:
-          val chLoc = loc.firstChild.get
-          __walk(chLoc, canAcc = true)
-
-        } else if (!loc.rights.isEmpty) {
-          // Нет дочерних элементов, но есть элементы справа.
-          if (canAcc)
-            accBuilder += loc
-
-          __walk( loc.right.get, canAcc = true )
-
-        } else if (!loc.parents.isEmpty) {
-          // Нет ни дочерних, ни правых элементов. Подняться на уровень вверх.
-          if (canAcc)
-            accBuilder += loc
-
-          __walk( loc.parent.get, canAcc = false, canGoDown = false )
-
-        } else {
-          // do nothing: выход из рекурсии на root-элементе дерева. Игнорируем canAcc, т.к. root-элемент обычно бесполезен.
-        }
-      }
-
-      __walk( treeLoc, canAcc = false )
-
-      accBuilder.result()
+      EphemeralStream.unfold( OnlyLowestState(treeLoc, canAcc = false) )( __oneStep )
     }
 
+  }
+
+
+  /** Модель состояния фунции обхода. */
+  private case class OnlyLowestState[A](
+                                         loc       : TreeLoc[A],
+                                         canAcc    : Boolean,
+                                         canGoDown : Boolean = true
+                                       )
+
+  /** Рекурсивная для unfold(), возвращающая один следующий элемент.
+    * Функция может вызываться несколько раз, т.к. бывают многоходовочки в дереве. */
+  @tailrec private def __oneStep[A](s: OnlyLowestState[A]): Option[(TreeLoc[A], OnlyLowestState[A])] = {
+    if (s.canGoDown && s.loc.hasChildren) {
+      // Спускаемся на самый нижний уровень везде и всегда:
+      val chLoc = s.loc.firstChild.get
+      val s2 = s.copy(
+        loc = chLoc,
+        canAcc = true,
+      )
+      __oneStep( s2 )
+
+    } else if (!s.loc.rights.isEmpty) {
+      // Нет дочерних элементов, но есть элементы справа.
+      val s2 = s.copy(
+        loc = s.loc.right.get,
+        canAcc = true,
+      )
+      if (s.canAcc) Some((s.loc, s2))
+      else __oneStep( s2 )
+
+    } else if (!s.loc.parents.isEmpty) {
+      // Нет ни дочерних, ни правых элементов. Подняться на уровень вверх.
+      val s2 = s.copy(
+        loc = s.loc.parent.get,
+        canAcc = false,
+        canGoDown = false,
+      )
+      if (s.canAcc) Some((s.loc, s2))
+      else __oneStep( s2 )
+
+    } else {
+      // do nothing: выход из рекурсии на root-элементе дерева. Игнорируем canAcc, т.к. root-элемент обычно бесполезен.
+      None
+    }
   }
 
 

@@ -518,6 +518,8 @@ class GridAh[M](
 
       // Поискать запрошенную карточку в состоянии.
       (for {
+        // Отработать открытие кастомной карточки по adId и пути в дереве:
+        _ <- Option.when( m.adId.isEmpty )(())
         scAdLoc <- GridAh.findAd(m, gridAds0)
         scAdData = scAdLoc.getLabel
         adData <- scAdData.data.toOption
@@ -656,35 +658,13 @@ class GridAh[M](
               .find(_.getLabel.data.exists(_.isOpened))
               .fold {
                 // Если нет в наличии сфокусированной карточки, то поискать хоть какую-нибудь, но запросить с сервера opened-вариант.
-                var fxAcc = List.empty[Effect]
                 var gridAdsMods = List.empty[MGridAds => MGridAds]
 
-                // Ищем возможный main-блок карточки:
-                adsKnown
-                  .minByOption { loc =>
-                    // Выбрать наиболее верхний элемент, присутствующий в плитке:
-                    loc.getLabel.gridItems
-                      .headOption
-                      .map(_.gridKey)
-                  }
-                  .fold [Unit] {
-                    // Добавлять в дерево карточек не надо (Вдруг, запрос обломится?..
-                    // На рендер плитки пустая дырка под карточку не влияет, пока что.
-                    if (!gridAds0.adsTreePot.isPending)
-                      gridAdsMods ::= MGridAds.adsTreePot.modify(_.pending())
+                // Дублирующийся main-блок в плитке не ищем: пусть он будет сгенерирован потом, иначе слишком много подводных камней и возможных ошибок.
 
-                  } { loc =>
-                    // Выставить pending для найденной карточки.
-                    val scAd = loc.getLabel
-                    fxAcc ::= GridAh.scrollToAdFx( scAd, v0.core.gridBuild )
-                    gridAdsMods ::= MGridAds.adsTreePot.modify { adPtrsPot0 =>
-                      for (_ <- adPtrsPot0) yield {
-                        loc
-                          .modifyLabel( MScAdData.data.modify( _.pending() ) )
-                          .toTree
-                      }
-                    }
-                  }
+                // Выставить pending для плитки, если ещё не выставлено:
+                if (!gridAds0.adsTreePot.isPending)
+                  gridAdsMods ::= MGridAds.adsTreePot.modify(_.pending())
 
                 val v2Opt = gridAdsMods
                   .reduceLeftOption(_ andThen _)
@@ -694,9 +674,9 @@ class GridAh[M](
                       .modify(modF)( v0 )
                   }
 
-                fxAcc ::= gridFocusReqFx( adId, m )
+                val focusReqFx = gridFocusReqFx( adId, m )
 
-                ah.optionalResult( v2Opt, fxAcc.mergeEffects, silent = false )
+                ah.optionalResult( v2Opt, Some(focusReqFx), silent = false )
 
               } { openedAdLoc =>
                 // Нужно просто прокрутить к уже раскрытой карточке.
