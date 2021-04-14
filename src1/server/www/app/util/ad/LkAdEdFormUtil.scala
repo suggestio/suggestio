@@ -1,6 +1,6 @@
 package util.ad
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil

@@ -25,6 +25,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import japgolly.univeq._
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -56,8 +57,23 @@ class GridR(
 
     /** Скроллинг плитки. */
     private def onGridScroll(e: ReactEventFromHtml): Callback = {
+      // Надо тут оценить необходимость подгрузки карточек, проводить сравнение, и прямо тут порешать - нужно ли диспатчить GridScroll или нет.
       val scrollTop = e.target.scrollTop
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll(scrollTop))
+      $.props >>= { propsProxy: Props =>
+        Callback.when {
+          val props = propsProxy.value
+          props.hasMoreAds &&
+          !props.core.ads.adsTreePot.isPending && {
+            // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
+            val contentHeight = props.core.gridBuild.gridWh.height + GridConst.CONTAINER_OFFSET_TOP
+            val screenHeight = dom.window.innerHeight  // screenRO.value.wh.height
+            val scrollPxToGo = contentHeight - screenHeight - scrollTop
+            scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
+          }
+        } {
+          ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll)
+        }
+      }
     }
 
     /** Клик по карточке в плитке.

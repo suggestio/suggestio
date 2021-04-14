@@ -333,31 +333,29 @@ class GridAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Реакция на событие скроллинга плитки: разобраться, стоит ли подгружать ещё карточки с сервера.
-    case m: GridScroll =>
+    // Логика проверок события живёт в шаблоне (компоненте), чтобы существенно снизить нагрузку на circuit, поэтому GridScroll - событие нечастое.
+    case GridScroll =>
       val v0 = value
 
+      val lens = MGridS.core
+        .composeLens( MGridCoreS.ads )
+        .composeLens( MGridAds.adsTreePot )
+
       if (
-        !v0.core.ads.adsTreePot.isPending &&
-        v0.hasMoreAds && {
-          // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
-          val contentHeight = v0.core.gridBuild.gridWh.height + GridConst.CONTAINER_OFFSET_TOP
-          val screenHeight = screenRO.value.wh.height
-          val scrollPxToGo = contentHeight - screenHeight - m.scrollTop
-          scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
-        }
+        !lens.get(v0).isPending &&
+        v0.hasMoreAds
       ) {
         // В фоне надо будет запустить подгрузку новых карточек.
         val fx = GridLoadAds(clean = false, ignorePending = true)
           .toEffectPure
+
         // Выставить pending в состояние, чтобы повторные события скролла игнорились.
-        val v2 = MGridS.core
-          .composeLens( MGridCoreS.ads )
-          .composeLens( MGridAds.adsTreePot )
-          .modify(_.pending())(v0)
+        val v2 = lens.modify(_.pending())(v0)
+
         updatedSilent(v2, fx)
 
       } else {
-        // Больше нет карточек, или запрос карточек уже в процессе, или скроллинг не требует подгрузки карточек.
+        // По идее, noChange должны были быть отсеяны уже на уровне GridR component, но всякое возможно...
         noChange
       }
 

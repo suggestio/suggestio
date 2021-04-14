@@ -52,7 +52,7 @@ case class GridBlockClick(
   with IScApiRespReason
 
 /** Экшен скроллинга плитки. */
-case class GridScroll(scrollTop: Double) extends IGridAction
+case object GridScroll extends IGridAction
 
 /** Экшен отправки в очередь экшена, который будет запущен после ближайшего обновления плитки.
   * Используется, когда во время обновления плитки/индекса возникла необходимость снова её дообновить.
