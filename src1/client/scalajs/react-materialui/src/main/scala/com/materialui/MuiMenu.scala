@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.VdomNode
 import org.scalajs.dom
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 import scala.scalajs.js.|
 
 /**
@@ -29,23 +30,25 @@ object MuiMenu {
 }
 
 
-trait MuiMenuProps
-  extends MuiPropsBase
+trait MuiMenuPropsBase
+  extends MuiPopOverPropsBase
   with MuiPropsBaseClasses[MuiMenuClasses]
 {
-  val anchorEl: js.UndefOr[js.Object | js.Function] = js.undefined
   val autoFocus: js.UndefOr[Boolean] = js.undefined
   val disableAutoFocusItem: js.UndefOr[Boolean] = js.undefined
-  val MenuListProps: js.UndefOr[js.Object] = js.undefined
-  val open: Boolean
-  val onClose: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
+  val MenuListProps: js.UndefOr[MuiMenuListProps] = js.undefined
+  @JSName("onClose")
+  val onClose2: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
   val PopoverClasses: js.UndefOr[js.Object/*TODO заменить Object на MuiPopoverClasses */] = js.undefined
-  val transitionDuration: js.UndefOr[MuiTransitionDuration] = js.undefined
   val variant: js.UndefOr[MuiMenu.Variant] = js.undefined
 }
 
 
-trait MuiMenuClasses extends MuiClassesBase {
-  val paper: js.UndefOr[String] = js.undefined
+trait MuiMenuProps
+  extends MuiPopOverPropsBaseOpen
+  with MuiMenuPropsBase
+
+
+trait MuiMenuClasses extends MuiPopOverClasses {
   val list: js.UndefOr[String] = js.undefined
 }

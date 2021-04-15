@@ -217,7 +217,6 @@ final class EventsEditorAh[M](
               .composeLens( MEditorsS.events )
               .modify( modF )(v0)
 
-            println("OK")
             updated(v2)
           }
         }

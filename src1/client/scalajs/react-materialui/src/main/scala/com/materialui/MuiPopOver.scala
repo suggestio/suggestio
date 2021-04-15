@@ -13,7 +13,7 @@ import scala.scalajs.js.|
   * Created: 11.06.2020 18:20
   * Description: Sjs API for Mui Popover.
   * @see [[https://material-ui.com/api/popover/]] JS API.
-  * @see [[]https://material-ui.com/components/popover/] Demos.
+  * @see [[https://material-ui.com/components/popover/]] Demos.
   */
 object MuiPopOver {
 
@@ -25,11 +25,9 @@ object MuiPopOver {
 }
 
 
-trait MuiPopOverProps
+trait MuiPopOverPropsBase
   extends MuiPropsBase
-  with MuiPropsBaseClasses[MuiPopOverClasses]
 {
-
   val action: js.UndefOr[raw.React.Ref] = js.undefined
   val anchorEl: js.UndefOr[js.Function | dom.html.Element] = js.undefined
   val anchorOrigin: js.UndefOr[MuiAnchorOrigin] = js.undefined
@@ -41,15 +39,25 @@ trait MuiPopOverProps
   val marginThreshold: js.UndefOr[Int] = js.undefined
 
   val onClose: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-  val open: Boolean
 
   val PaperProps: js.UndefOr[MuiPaperProps] = js.undefined
   val transformOrigin: js.UndefOr[MuiAnchorOrigin] = js.undefined
   val TransitionComponent: js.UndefOr[js.Object] = js.undefined
-  val transitionDuration: js.UndefOr[MuiTransitionDuration.TransitionDurationString_t] = js.undefined
+  val transitionDuration: js.UndefOr[MuiTransitionDuration.TransitionDuration_t] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
-
 }
+
+trait MuiPopOverPropsBaseOpen
+  extends MuiPopOverPropsBase
+{
+  val open: Boolean
+}
+
+
+trait MuiPopOverProps
+  extends MuiPopOverPropsBaseOpen
+  with MuiPropsBaseClasses[MuiPopOverClasses]
+
 
 
 trait MuiPopOverClasses extends MuiClassesBase {

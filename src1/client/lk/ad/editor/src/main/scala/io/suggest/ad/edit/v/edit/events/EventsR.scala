@@ -1,10 +1,10 @@
 package io.suggest.ad.edit.v.edit.events
 
-import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiSelectClasses, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy}
+import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiMenuPropsBase, MuiPaperProps, MuiSelectClasses, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy}
 import diode.AnyAction.aType
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.{EventNodeIdSet, EventOnOff}
+import io.suggest.ad.edit.m.{EventAskMoreAds, EventNodeIdSet, EventOnOff}
 import io.suggest.ad.edit.m.edit.{MDocS, MEventEditPtr, MEventsEdit}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.css.CssR
@@ -16,8 +16,8 @@ import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.{EdgeUid_t, MEdgeDataJs}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.react.ReactCommonUtil.Implicits.VdomElOptionExt
-import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -76,16 +76,52 @@ final class EventsR(
         ReactDiodeUtil.dispatchOnProxyScopeCB( $, EventNodeIdSet(eventPtr, nodeId) )
     }
 
+    /** Событие реакции на скролл. */
+    private lazy val _onAdsSelectScroll = ReactCommonUtil.cbFun1ToJsCb {
+      (e: ReactUIEventFromHtml) =>
+        // скролл  | e.target.scrollTop | e.target.scrollHeight
+        //         |                    | (полная высота контента: всех миниатюр карточек)
+        // --------+--------------------+-----------------------
+        // наверху | 0                  | 1968
+        // внизу   | 1545               | 1968
+        val scrollTop = e.target.scrollTop
+        val scrollHeight = e.target.scrollHeight
+        Callback.when( scrollTop / scrollHeight.toDouble > 0.7 ) {
+          $.props >>= { propsProxy: Props =>
+            val eventsEd = propsProxy.value.editors.events
+            Callback.when(
+              eventsEd.hasMoreAds &&
+              !eventsEd.adsAvail.isPending
+            ) {
+              propsProxy.dispatchCB( EventAskMoreAds() )
+            }
+          }
+        }
+    }
+
+    /** Mui Select props для селекта действий. */
+    private lazy val _actionSelectProps = new MuiSelectProps {
+      override val native = false
+      override val classes = new MuiSelectClasses {
+        // Требуется inlineFlex для action-селекотображались тобы картинка и текст оотображались жались в одну строку.
+        override val select = lkAdEditCss.inlineFlex.htmlClass
+      }
+    }
+
+    /** Mui Select props для селекта со списком карточек. */
+    private lazy val _actionAdSelectProps = new MuiSelectProps {
+      override val native = false
+      override val MenuProps = new MuiMenuPropsBase {
+        override val PaperProps = new MuiPaperProps {
+          override val onScroll = _onAdsSelectScroll
+        }
+      }
+    }
+
 
     def render(p: Props, s: State): VdomElement = {
       crCtxP.consume { crCtx =>
         lazy val _chooseMsg = crCtx.messages( MsgCodes.`Choose...` )
-        lazy val _nonNativeSelectProps = new MuiSelectProps {
-          override val native = false
-          override val classes = new MuiSelectClasses {
-            override val select = lkAdEditCss.inlineFlex.htmlClass
-          }
-        }
 
         // Элементы селекта для выбора типа экшена MJdActionType:
         lazy val jdActionTypesItems = MJdActionTypes
@@ -126,8 +162,9 @@ final class EventsR(
 
             <.div(
               (for {
-                eventType <- MJdtEventTypes.values
-                eventsForType = evData.jdtEvents.events.filter(_.event.eventType ==* eventType)
+                eventType <- MJdtEventTypes.values.iterator
+                eventsForType = evData.jdtEvents.events
+                  .filter( _.event.eventType ==* eventType )
               } yield {
                 <.div(
                   ^.key := eventType.value,
@@ -166,7 +203,7 @@ final class EventsR(
                               //override val disabled = true
                               override val value = action.action.value
                               override val select = true
-                              override val SelectProps = _nonNativeSelectProps
+                              override val SelectProps = _actionSelectProps
                               override val label = crCtx.messages( MsgCodes.`Action` )
                             }
                           )(
@@ -174,23 +211,22 @@ final class EventsR(
                           ),
 
                           (for {
-                            (jdEdgeId, i) <- action.jdEdgeIds.zipWithIndex
+                            (jdEdgeId, i) <- action.jdEdgeIds.iterator.zipWithIndex
                             evEditPtr = MEventEditPtr( evActions.event, action, Some(jdEdgeId) )
                             jdEdgeJs <- {
                               val r = evData.edges.get( jdEdgeId.edgeUid )
                               if (r.isEmpty) logger.warn( ErrorMsgs.EDGE_NOT_EXISTS, msg = jdEdgeId )
-                              r
+                              r.iterator
                             }
-                            nodeId <- jdEdgeJs.jdEdge.nodeId
+                            nodeId <- jdEdgeJs.jdEdge.nodeId.iterator
                           } yield {
                             MuiTextField.component.withKey( i )(
                               new MuiTextFieldProps {
-                                // TODO value: Нужен эдж - найти в карте эджей, прочитать nodeId.
                                 override val value        = nodeId
                                 override val onChange     = _onChangeNodeId( evEditPtr )
                                 override val label        = _chooseMsg.rawNode
                                 override val select       = true
-                                override val SelectProps  = _nonNativeSelectProps
+                                override val SelectProps  = _actionAdSelectProps
                               }
                             )(
                               // Отрендерить карточки на выбор.

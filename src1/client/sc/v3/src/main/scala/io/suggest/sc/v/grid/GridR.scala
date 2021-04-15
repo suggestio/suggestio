@@ -72,7 +72,7 @@ class GridR(
             scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
           }
         } {
-          ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll)
+          propsProxy.dispatchCB( GridScroll )
         }
       }
     }
