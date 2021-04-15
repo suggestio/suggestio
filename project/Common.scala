@@ -315,7 +315,7 @@ object Common {
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
    */
-  def sjsDomVsn         = "1.0.0"
+  def sjsDomVsn         = "1.+"
 
   /** Версия Apache commons-io. */
   def apacheCommonsIoVsn = "2.6"
@@ -327,8 +327,7 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  //val reactJsVsn         = "16.13.1"
-  val reactJsVsn         = "17.0.1"
+  val reactJsVsn         = "17.0.2"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
@@ -358,7 +357,7 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.13"
+  val diodeVsn = "1.1.+"
   val diodeReactVsn = diodeVsn //+ "." + reactSjsVsn.replaceAllLiterally(".", "")
 
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.

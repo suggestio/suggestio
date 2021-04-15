@@ -58,6 +58,7 @@ class GridR(
     /** Скроллинг плитки. */
     private def onGridScroll(e: ReactEventFromHtml): Callback = {
       // Надо тут оценить необходимость подгрузки карточек, проводить сравнение, и прямо тут порешать - нужно ли диспатчить GridScroll или нет.
+      // Эта функция вызывается при скролле десятки раз, поэтому нужно минимизировать нагрузку от неё. А желательно вообще загнать в passive event listener.
       val scrollTop = e.target.scrollTop
       $.props >>= { propsProxy: Props =>
         Callback.when {
@@ -66,7 +67,7 @@ class GridR(
           !props.core.ads.adsTreePot.isPending && {
             // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
             val contentHeight = props.core.gridBuild.gridWh.height + GridConst.CONTAINER_OFFSET_TOP
-            val screenHeight = dom.window.innerHeight  // screenRO.value.wh.height
+            val screenHeight = dom.window.innerHeight
             val scrollPxToGo = contentHeight - screenHeight - scrollTop
             scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
           }
