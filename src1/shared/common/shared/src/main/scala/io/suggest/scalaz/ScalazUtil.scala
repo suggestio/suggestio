@@ -6,9 +6,11 @@ import io.suggest.err.ErrorConstants
 
 import scala.collection.{AbstractIterable, AbstractIterator}
 import scala.collection.immutable.AbstractSeq
-import scalaz.{EphemeralStream, Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
+import scalaz.{EphemeralStream, Foldable, ICons, IList, Monoid, NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.foldable._
 import japgolly.univeq._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.language.higherKinds
 import scala.util.parsing.combinator.Parsers
@@ -20,7 +22,6 @@ import scala.util.parsing.combinator.Parsers
   * Description: Утиль для упрощения работы с scalaz на ранних этапах.
   */
 object ScalazUtil {
-
 
   /** generic validation function to accept anything that can be folded over along with
     * a function for transforming the data inside the containers
@@ -134,9 +135,50 @@ object ScalazUtil {
   }
 
 
+  /** Помимо индексированного NonEmptyList[A], если длина == 1, вернуть [де]сериализовать единственное значение. */
+  def nelOrSingleValueJson[A: Format]: Format[NonEmptyList[A]] = {
+    val nelFmt = Implicits.nelJson[A]
+
+    val writes2 = nelFmt.transform {
+      case JsArray(arr) if arr.lengthIs == 1 =>
+        arr.head
+      case other => other
+    }
+    val reads2 = nelFmt.orElse {
+      implicitly[Reads[A]]
+        .map( NonEmptyList(_) )
+    }
+
+    Format(reads2, writes2)
+  }
+
+
   object Implicits {
 
     @inline implicit def ephemeralStreamUe[T: UnivEq]: UnivEq[EphemeralStream[T]] = UnivEq.force
+
+    /** Поддержка play-json для Scalaz IList. */
+    implicit def ilistJson[A: Format]: Format[IList[A]] = {
+      implicitly[Format[List[A]]]
+        .inmap [IList[A]] ( IList.fromList, _.toList )
+    }
+
+
+    /** Поддержка play-json для NonEmptyList. */
+    implicit def nelJson[A: Format]: Format[NonEmptyList[A]] = {
+      val ilistFmt = ilistJson[A]
+
+      val readsNel = ilistFmt.flatMap [NonEmptyList[A]] {
+        case ICons(h, t) =>
+          Reads.pure( NonEmptyList.nel(h, t) )
+        case _ =>
+          Reads.failed( ErrorConstants.Words.MISSING )
+      }
+
+      val writesNel = ilistFmt.contramap[NonEmptyList[A]]( _.list )
+      Format( readsNel, writesNel )
+    }
+
 
     /** Доп.утиль для валидации. */
     implicit final class RichValidationOpt[E, T]( private val vldOpt: Option[ValidationNel[E, Option[T]]] ) extends AnyVal {

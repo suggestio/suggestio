@@ -10,6 +10,7 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.{MLookupMode, MLookupModes, MSc3AdData, MSc3AdsResp, MScAdInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
+import io.suggest.scalaz.ScalazUtil.Implicits.RichNel
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.blk
@@ -281,7 +282,9 @@ trait ScFocusedAds
         if (lookupModeOpt contains MLookupModes.Around) {
           for {
             qsFoc <- _qs.foc
-            mad0  <- _mads.find(_.id.contains( qsFoc.lookupAdId) )
+            mad0  <- _mads.find(_.id.exists { madId =>
+              qsFoc.adIds.iterator contains madId
+            })
           } {
             saAcc ::= MAction(
               actions   = MActionTypes.ScAdsFocusingOnAd :: Nil,
@@ -352,7 +355,7 @@ trait ScFocusedAds
       }
     }
 
-    protected[this] case class AdsLookupRes(ids: Seq[NodeIdIndexed], total: Int)
+    protected[this] case class AdsLookupRes( ids: Seq[NodeIdIndexed] )
 
     /** Интерфейс результата анализа узлов и направления lookup'а внутри _doAdIdsLookup(). */
     private trait ILookupRes {
@@ -363,7 +366,8 @@ trait ScFocusedAds
     /** Число-отметка текущей логики обработки запроса. */
     private val _currTimeMs = System.currentTimeMillis()
 
-    lazy val lookupAdIdOpt = _qs.foc.map(_.lookupAdId)
+    /** id карточек в прямом порядке. */
+    def lookupAdIds = _qs.foc.get.adIds
 
     /** Асинхронный результат поиска сегмента карточек. */
     lazy val adIdsLookupResFut: Future[AdsLookupRes] = {
@@ -371,33 +375,31 @@ trait ScFocusedAds
         .filter { _ =>
           _qs.hasAnySearchCriterias
         }
-        .flatMap { lm =>
-          for (lookupAdId <- lookupAdIdOpt) yield {
-            // v2-выдача ищет focused-карточки в выдаче.
-            LOGGER.trace(s"$logPrefix v2 focusing: ${lookupAdIdOpt.orNull} ${lm.toVisualString}")
-            mAdsSearchFut.flatMap { mNodeSearch =>
-              _doAdIdsLookup(adId = lookupAdId, neededCount = mNodeSearch.limit, lm = lm)
-            }
-          }
-        }
-        .orElse {
-          for {
-            lookupAdId <- lookupAdIdOpt
-            if lookupModeOpt.isEmpty
-          } yield {
-            // v3-выдача пытается прочитать ровно одну карточку.
-            LOGGER.trace(s"$logPrefix v3: single ad GET: ${lookupAdIdOpt} without lookup.")
-            val r = AdsLookupRes(
-              ids   = NodeIdIndexed(lookupAdId, 1) :: Nil,
-              total = 1
-            )
-            Future.successful( r )
+        .map { lookupMode =>
+          // v2: Тут v2-легаси, которое не используется. Пока осталось, но
+          // TODO надо удалить всё вместе с _doAdIdsLookup() и всеми сопутствующими lookupMode.
+          val lookupAdId = lookupAdIds.head
+          LOGGER.trace(s"$logPrefix v2 focusing: ad#$lookupAdId ${lookupMode.toVisualString}")
+          mAdsSearchFut.flatMap { mNodeSearch =>
+            _doAdIdsLookup(adId = lookupAdId, neededCount = mNodeSearch.limit, lm = lookupMode)
           }
         }
         .getOrElse {
-          // Хз, что запрашивается.
-          LOGGER.warn(s"$logPrefix v2: not ad-search criterias found, skipping ids lookup.")
-          Future.successful( AdsLookupRes(Nil, total = 0) )
+          // lookupModeOpt.isEmpty
+          // v3: выдача пытается прочитать полные версии карточек по их id.
+          LOGGER.trace(s"$logPrefix ad GET [${lookupAdIds}] without lookup.")
+          val r = AdsLookupRes(
+            ids = lookupAdIds
+              .iterator
+              .distinct
+              // TODO zipWithIndex удалить вместе с поддержкой adIdsLookup и ненужным NodeIdIndexed.
+              .zipWithIndex
+              .map {
+                (NodeIdIndexed.apply _).tupled
+              }
+              .to( List ),
+          )
+          Future.successful( r )
         }
     }
 
@@ -412,7 +414,7 @@ trait ScFocusedAds
         limit  = Some(limit1),
         offset = Some(offset1)
       )
-      val qs2 = MScQs.search.set(fadsIdsSearchQs)( _qs )
+      val qs2 = (MScQs.search set fadsIdsSearchQs)( _qs )
 
       // TODO Далее какой-то быдлокод с реализацией нетривиальной выборки сегмента последовательности foc-карточек.
       val msearch = scAdSearchUtil.qsArgs2nodeSearch(qs2)
@@ -522,7 +524,7 @@ trait ScFocusedAds
 
           // Дедубликация кода возврата результата без дальнейшего погружения в рекурсию.
           def resFut = Future.successful {
-            AdsLookupRes(fadIds2, fadIds.total.toInt)
+            AdsLookupRes(fadIds2)
           }
 
           if (foundCount < neededCount) {

@@ -24,29 +24,32 @@ final class ScGridItemEventListener(
 {
 
   override def handleEvent(eventAction: MJdtEventActions)(e: ReactEvent): Callback = {
-    (for {
-      action <- eventAction.actions.iterator
-      cb <- action.action match {
+    if (eventAction.actions.isEmpty) {
+      Callback.empty
+
+    } else {
+      ReactCommonUtil.stopPropagationCB(e) >>
+      Callback.traverse( eventAction.actions ) { action =>
         // Добавить новую карточку в плитку
-        case MJdActionTypes.InsertAds =>
-          for {
-            jdEdgeId <- action.jdEdgeIds.iterator
-            edge    <- jdDataJs.edges.get( jdEdgeId.edgeUid ).iterator
-            nodeId  <- edge.jdEdge.nodeId.iterator
-          } yield {
-            val gbc = GridBlockClick(
-              gridPath  = Some( gridPath ),
-              gridKey   = Some( gridItem.gridKey ),
-              adId      = Some( nodeId ),
+        action.action match {
+          case MJdActionTypes.InsertAds =>
+            Callback.sequence(
+              for {
+                jdEdgeId  <- action.jdEdgeIds.iterator
+                edge      <- jdDataJs.edges.get( jdEdgeId.edgeUid ).iterator
+                nodeId    <- edge.jdEdge.nodeId.iterator
+              } yield {
+                val gbc = GridBlockClick(
+                  gridPath  = Some( gridPath ),
+                  gridKey   = Some( gridItem.gridKey ),
+                  adId      = Some( nodeId ),
+                )
+                propsProxy.dispatchCB( gbc )
+              }
             )
-            propsProxy.dispatchCB( gbc )
-          }
+        }
       }
-    } yield {
-      cb
-    })
-      .reduceLeftOption( _ >> _ )
-      .fold( Callback.empty )( ReactCommonUtil.stopPropagationCB(e) >> _ )
+    }
   }
 
 }

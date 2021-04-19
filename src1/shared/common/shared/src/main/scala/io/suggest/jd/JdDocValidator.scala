@@ -627,8 +627,8 @@ final class JdDocValidator(
       a.action.successNel[String] |@|
       Validation
         .liftNel( a.jdEdgeIds )({ jdEdgeIds =>
-          val lenExpected = if (isAdsChoose) 1 else 0
-          jdEdgeIds.lengthIs != lenExpected
+          val lenExpected = if (isAdsChoose) JdConst.Event.MAX_ADS_PER_ACTION else 0
+          jdEdgeIds.lengthIs > lenExpected
         }, MJdtAction.Fields.EDGE_UIDS )
         .andThen { jdEdgeIds =>
           ScalazUtil.validateAll( jdEdgeIds ) { jdEdgeId =>

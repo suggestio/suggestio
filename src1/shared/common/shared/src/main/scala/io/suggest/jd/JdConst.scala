@@ -54,6 +54,9 @@ object JdConst {
 
     def MAX_ACTIONS_PER_LISTENER = 1
 
+    /** Макс.число карточек в одном экшене. */
+    def MAX_ADS_PER_ACTION = 10
+
   }
 
 }

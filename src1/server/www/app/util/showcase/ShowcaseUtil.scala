@@ -18,6 +18,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.EsModel
 import io.suggest.jd.MJdConf
 import io.suggest.n2.edge.{MEdgeFlagData, MPredicates}
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 import scala.concurrent.Future
 
@@ -229,11 +230,13 @@ class ShowcaseUtil @Inject() (
 
     val toProducerFutOpt = for {
       focQs <- qs.foc
-      if focQs.indexAdOpen.nonEmpty
+      if focQs.indexAdOpen.nonEmpty &&
+         (focQs.adIds.asSeq.lengthIs == 1)
+      adId = focQs.adIds.head
     } yield {
       for {
         // Прочитать из хранилища указанную карточку.
-        madOpt <- mNodes.getByIdCache( focQs.lookupAdId )
+        madOpt <- mNodes.getByIdCache( adId )
 
         // .get приведёт к NSEE, это нормально.
         producerId = {
@@ -265,7 +268,7 @@ class ShowcaseUtil @Inject() (
 
       } yield {
         // Да, вернуть продьюсера.
-        LOGGER.trace(s"$logPrefix Foc ad#${focQs.lookupAdId} go-to index producer#$producerId")
+        LOGGER.trace(s"$logPrefix Foc ad#${focQs.adIds} go-to index producer#$producerId")
         Some( producer )
       }
     }

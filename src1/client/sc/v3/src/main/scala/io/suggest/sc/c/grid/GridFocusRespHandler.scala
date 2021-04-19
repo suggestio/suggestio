@@ -15,7 +15,7 @@ import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.log.Log
 import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.sc.ads.MSc3AdData
-import io.suggest.scalaz.ScalazUtil.Implicits.SciListExt
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -143,10 +143,12 @@ final class GridFocusRespHandler
           // Поискать в плитке родительский элемент по ad_id.
           for {
             focQs <- ctx.m.qs.foc
-            adId = focQs.lookupAdId
+
             mainLoc <- adsTreeRootLoc.find { scAdLoc =>
               scAdLoc.getLabel.data.exists { scAdData =>
-                scAdData.doc.tagId.nodeId contains[String] adId
+                scAdData.doc.tagId.nodeId.exists { tagNodeId =>
+                  focQs.adIds.iterator contains tagNodeId
+                }
               }
             }
           } yield {
@@ -161,6 +163,7 @@ final class GridFocusRespHandler
 
       // Найдена точка в дереве, куда надо добавить полученную карточку.
       focResp <- ra.ads
+      // TODO focResp.ads.headOption - надо отрабатывать все принятые карточки.
       focAdResp <- focResp.ads.headOption
 
       // Отрендерить все gridItems для принятой карточки:

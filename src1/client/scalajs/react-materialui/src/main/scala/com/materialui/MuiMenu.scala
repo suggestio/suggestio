@@ -39,7 +39,7 @@ trait MuiMenuPropsBase
   val MenuListProps: js.UndefOr[MuiMenuListProps] = js.undefined
   @JSName("onClose")
   val onClose2: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
-  val PopoverClasses: js.UndefOr[js.Object/*TODO заменить Object на MuiPopoverClasses */] = js.undefined
+  val PopoverClasses: js.UndefOr[MuiPopOverClasses] = js.undefined
   val variant: js.UndefOr[MuiMenu.Variant] = js.undefined
 }
 

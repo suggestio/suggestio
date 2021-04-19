@@ -1,10 +1,10 @@
 package io.suggest.ad.edit.v.edit.events
 
-import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiMenuPropsBase, MuiPaperProps, MuiSelectClasses, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy}
+import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps, MuiIconButton, MuiIconButtonProps, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiMenuPropsBase, MuiPaperProps, MuiSelectClasses, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy}
 import diode.AnyAction.aType
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.{EventAskMoreAds, EventNodeIdSet, EventOnOff}
+import io.suggest.ad.edit.m.{EventActionAdAddRemove, EventAskMoreAds, EventNodeIdSet, EventOnOff}
 import io.suggest.ad.edit.m.edit.{MDocS, MEventEditPtr, MEventsEdit}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.css.CssR
@@ -25,6 +25,7 @@ import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -103,7 +104,7 @@ final class EventsR(
     private lazy val _actionSelectProps = new MuiSelectProps {
       override val native = false
       override val classes = new MuiSelectClasses {
-        // Требуется inlineFlex для action-селекотображались тобы картинка и текст оотображались жались в одну строку.
+        // Требуется inlineFlex для action-селекота, чтобы картинка и текст отображались в одну строку:
         override val select = lkAdEditCss.inlineFlex.htmlClass
       }
     }
@@ -116,6 +117,11 @@ final class EventsR(
           override val onScroll = _onAdsSelectScroll
         }
       }
+    }
+
+    private def _onAdAddRemoveBtnClick(ptr: MEventEditPtr, isAdd: Boolean) = ReactCommonUtil.cbFun1ToJsCb {
+      (e: ReactEvent) =>
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, EventActionAdAddRemove(ptr, isAdd) )
     }
 
 
@@ -194,6 +200,7 @@ final class EventsR(
 
                       (for {
                         (action, aI) <- evActions.actions.iterator.zipWithIndex
+                        evEditPtrNoEdge = MEventEditPtr( evActions.event, action, None )
                       } yield {
                         <.div(
                           ^.key := aI,
@@ -210,54 +217,85 @@ final class EventsR(
                             jdActionTypesItems: _*
                           ),
 
-                          (for {
-                            (jdEdgeId, i) <- action.jdEdgeIds.iterator.zipWithIndex
-                            evEditPtr = MEventEditPtr( evActions.event, action, Some(jdEdgeId) )
-                            jdEdgeJs <- {
-                              val r = evData.edges.get( jdEdgeId.edgeUid )
-                              if (r.isEmpty) logger.warn( ErrorMsgs.EDGE_NOT_EXISTS, msg = jdEdgeId )
-                              r.iterator
-                            }
-                            nodeId <- jdEdgeJs.jdEdge.nodeId.iterator
-                          } yield {
-                            MuiTextField.component.withKey( i )(
-                              new MuiTextFieldProps {
-                                override val value        = nodeId
-                                override val onChange     = _onChangeNodeId( evEditPtr )
-                                override val label        = _chooseMsg.rawNode
-                                override val select       = true
-                                override val SelectProps  = _actionAdSelectProps
-                              }
-                            )(
-                              // Отрендерить карточки на выбор.
+                          ReactCommonUtil.maybeNode( action.action.isAdsChoose )(
+                            React.Fragment(
                               (for {
-                                adsAvail      <- evData.editor.adsAvail.iterator
-                                jdRuntime     <- evData.editor.jdRuntime.iterator
-                                adJdDataJs    <- adsAvail.iterator
-                                nodeId        <- adJdDataJs.doc.tagId.nodeId.iterator
-                              } yield {
-                                MuiMenuItem.component.withKey( nodeId )(
-                                  new MuiMenuItemProps {
-                                    override val value = nodeId
-                                  }
-                                )(
-                                  // Отрендерить маленькую карточку. Где-то выше уже должен быть отрендерен JdCss.
-                                  jdR {
-                                    p.resetZoom {
-                                      MJdArgs(
-                                        data      = adJdDataJs,
-                                        jdRuntime = jdRuntime,
-                                        conf      = MEventsEdit.ADS_JD_CONF,
-                                      )
-                                    }
-                                  }
+                                (jdEdgeId, i) <- action.jdEdgeIds.iterator.zipWithIndex
+                                evEditPtr = evEditPtrNoEdge.copy(
+                                  jdEdgeId = Some(jdEdgeId),
                                 )
-                                  .vdomElement
+                                jdEdgeJs <- {
+                                  val r = evData.edges.get( jdEdgeId.edgeUid )
+                                  if (r.isEmpty) logger.warn( ErrorMsgs.EDGE_NOT_EXISTS, msg = jdEdgeId )
+                                  r.iterator
+                                }
+                                nodeId <- jdEdgeJs.jdEdge.nodeId.iterator
+                              } yield {
+                                React.Fragment(
+                                  MuiTextField.component.withKey( i )(
+                                    new MuiTextFieldProps {
+                                      override val value        = nodeId
+                                      override val onChange     = _onChangeNodeId( evEditPtr )
+                                      override val label        = _chooseMsg.rawNode
+                                      override val select       = true
+                                      override val SelectProps  = _actionAdSelectProps
+                                    }
+                                  )(
+                                    // Отрендерить карточки на выбор.
+                                    (for {
+                                      adsAvail      <- evData.editor.adsAvail.iterator
+                                      jdRuntime     <- evData.editor.jdRuntime.iterator
+                                      adJdDataJs    <- adsAvail.iterator
+                                      nodeId        <- adJdDataJs.doc.tagId.nodeId.iterator
+                                    } yield {
+                                      MuiMenuItem.component.withKey( nodeId )(
+                                        new MuiMenuItemProps {
+                                          override val value = nodeId
+                                        }
+                                      )(
+                                        // Отрендерить маленькую карточку. Где-то выше уже должен быть отрендерен JdCss.
+                                        jdR {
+                                          p.resetZoom {
+                                            MJdArgs(
+                                              data      = adJdDataJs,
+                                              jdRuntime = jdRuntime,
+                                              conf      = MEventsEdit.ADS_JD_CONF,
+                                            )
+                                          }
+                                        }
+                                      )
+                                        .vdomElement
+                                    })
+                                      .toSeq: _*
+                                  ),
+
+                                  // TODO После последней карточки отрендерить минус или крестик для удаления её.
+                                  MuiIconButton(
+                                    // TODO Tooltip с подсказкой по этой кнопке?
+                                    new MuiIconButtonProps {
+                                      // TODO disabled, если лимит превышается.
+                                      override val onClick = _onAdAddRemoveBtnClick( evEditPtr, false )
+                                    }
+                                  )(
+                                    Mui.SvgIcons.Close()(),
+                                  ),
+                                )
                               })
-                                .toSeq: _*
+                                .toVdomArray,
+
+                              MuiIconButton(
+                                // TODO Tooltip с подсказкой по этой кнопке?
+                                new MuiIconButtonProps {
+                                  // TODO disabled, если лимит превышается.
+                                  override val onClick = _onAdAddRemoveBtnClick( evEditPtrNoEdge, true )
+                                }
+                              )(
+                                Mui.SvgIcons.Add()(),
+                              ),
+
                             )
-                          })
-                            .toVdomArray,
+                          ),
+
                         )
                       })
                         .toVdomArray,

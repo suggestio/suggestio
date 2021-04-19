@@ -564,8 +564,7 @@ class IndexAh[M](
               withBleBeaconAds = false,
             )
           ),
-          lookupMode      = None,
-          lookupAdId      = focAdId
+          adIds           = NonEmptyList( focAdId ),
         )
       },
       search = MAdsSearchReq(

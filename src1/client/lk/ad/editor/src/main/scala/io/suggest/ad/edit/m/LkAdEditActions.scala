@@ -136,3 +136,5 @@ case class EventOnOff( eventType: MJdtEventType, checked: Boolean ) extends IEve
 case class EventNodeIdSet( eventPtr: MEventEditPtr, nodeId: String ) extends IEventAction
 /** Работа с реквестами списка карточек. */
 case class EventAskMoreAds( resp: Pot[Seq[MLkAdsOneAdResp]] = Pot.empty ) extends IEventAction
+/** Добавить или удалить карточку из действия. */
+case class EventActionAdAddRemove( eventPtr: MEventEditPtr, isAdd: Boolean ) extends IEventAction

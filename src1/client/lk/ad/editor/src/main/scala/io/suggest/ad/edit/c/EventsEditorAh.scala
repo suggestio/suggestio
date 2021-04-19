@@ -2,7 +2,7 @@ package io.suggest.ad.edit.c
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
-import io.suggest.ad.edit.m.{EventAskMoreAds, EventNodeIdSet, EventOnOff, MAdEditFormConf}
+import io.suggest.ad.edit.m.{EventActionAdAddRemove, EventAskMoreAds, EventNodeIdSet, EventOnOff, MAdEditFormConf}
 import io.suggest.ad.edit.m.edit.{MDocS, MEditorsS, MEventsEdit, MJdDocEditS}
 import io.suggest.ads.{LkAdsFormConst, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
@@ -14,12 +14,13 @@ import io.suggest.jd.tags.event.{MJdActionTypes, MJdtAction, MJdtEventActions, M
 import io.suggest.lk.api.ILkAdsApi
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.n2.edge.{EdgesUtil, MEdgeDataJs, MEdgeDoc, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
+import scalaz.Tree
 
 import scala.util.Success
 
@@ -83,13 +84,7 @@ final class EventsEditorAh[M](
             )
             .toTree
 
-          val jdEdge = MEdgeDataJs(MJdEdge(
-            predicate = MPredicates.JdContent.Ad,
-            nodeId    = Some(""),
-            edgeDoc   = MEdgeDoc(
-              id = Some( nextEdgeUid ),
-            ),
-          ))
+          val jdEdge = _emptyAdEdge( nextEdgeUid )
 
           var vModF =  _mdoc_jdDoc_jdArgs_data.modify(
             (_doc_tpl_LENS set jdTree2) andThen
@@ -236,6 +231,81 @@ final class EventsEditorAh[M](
           noChange
         }
 
+
+    // Работа с кнопками добавления/удаления карточки в списке карточек одного действия.
+    case m: EventActionAdAddRemove =>
+      val v0 = value
+
+      // Найти указанную карточку.
+      (for {
+        loc0 <- v0.jdDoc.jdArgs.selJdt.treeLocOpt
+      } yield {
+
+        // Обновить дерево.
+        def __mkTreeUpdated(modActionF: MJdtAction => MJdtAction): Tree[JdTag] = {
+          loc0
+            .modifyLabel(
+              JdTag.events
+                .composeLens( MJdtEvents.events )
+                .modify { jdtEvents0 =>
+                  for (evData <- jdtEvents0) yield {
+                    if (evData.event ===* m.eventPtr.eventInfo) {
+                      // Найти действие внутри текущего события:
+                      MJdtEventActions.actions.modify { jdtActions0 =>
+                        for (actionData <- jdtActions0) yield {
+                          if (m.eventPtr.action ===* actionData) {
+                            // Обновить данное действие с карточкой:
+                            modActionF( actionData )
+                          } else {
+                            // Не этот экшен, другой...
+                            actionData
+                          }
+                        }
+                      }(evData)
+                    } else {
+                      // Не это событие, текущее событие пропускаем.
+                      evData
+                    }
+                  }
+                }
+            )
+            .toTree
+        }
+
+        val v2 = _mdoc_jdDoc_jdArgs_data.modify(
+          if (m.isAdd) {
+            val nextEdgeUid = EdgesUtil.nextEdgeUidFromMap( v0.jdDoc.jdArgs.data.edges )
+            val jdEdge = _emptyAdEdge( nextEdgeUid )
+
+            val tree2 = __mkTreeUpdated {
+              MJdtAction.edgeUids
+                .modify( _ :+ MJdEdgeId(nextEdgeUid) )
+            }
+
+            (_doc_tpl_LENS set tree2) andThen
+            MJdDataJs.edges.modify(_ + (nextEdgeUid -> jdEdge))
+
+          } else {
+            val tree2 = __mkTreeUpdated {
+              MJdtAction.edgeUids.modify { jdEdgeIds0 =>
+                // Удалить указанную карточку:
+                m.eventPtr.jdEdgeId.fold( List.empty[MJdEdgeId] ) { jdEdgeIdsToDel =>
+                  jdEdgeIds0.filter(_ !===* jdEdgeIdsToDel)
+                }
+              }
+            }
+            (_doc_tpl_LENS set tree2) andThen
+            MJdDataJs.edges.modify( JdTag.purgeUnusedEdges( tree2, _ ) )
+          }
+        )(v0)
+
+        updated(v2)
+      })
+        .getOrElse {
+          logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+          noChange
+        }
+
   }
 
 
@@ -275,6 +345,17 @@ final class EventsEditorAh[M](
           Success( EventAskMoreAds( pot0.withTry(tryRes) ) )
         }
     }
+  }
+
+
+  private def _emptyAdEdge(nextEdgeUid: EdgeUid_t): MEdgeDataJs = {
+    MEdgeDataJs(MJdEdge(
+      predicate = MPredicates.JdContent.Ad,
+      nodeId    = Some(""),
+      edgeDoc   = MEdgeDoc(
+        id = Some( nextEdgeUid ),
+      ),
+    ))
   }
 
 }

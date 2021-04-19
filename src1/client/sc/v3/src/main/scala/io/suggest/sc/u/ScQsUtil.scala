@@ -7,6 +7,7 @@ import io.suggest.sc.m.MScRoot
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.es.model.MEsUuId.Implicits._
 import io.suggest.geo.MLocEnv
+import scalaz.NonEmptyList
 
 /**
   * Suggest.io
@@ -123,8 +124,7 @@ object ScQsUtil {
               withBleBeaconAds = false,
             )
           ),
-          lookupMode       = None,
-          lookupAdId       = adId,
+          adIds            = NonEmptyList( adId ),
         )
       ),
     )

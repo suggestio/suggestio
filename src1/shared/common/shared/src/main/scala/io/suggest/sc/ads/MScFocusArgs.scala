@@ -1,10 +1,13 @@
 package io.suggest.sc.ads
 
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import scalaz.NonEmptyList
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -29,7 +32,8 @@ object MScFocusArgs {
         OFormat( inxAdOpenFallbackReads, inxOpenFmt0 )
       }) and
       (__ \ AD_LOOKUP_MODE_FN).formatNullable[MLookupMode] and
-      (__ \ LOOKUP_AD_ID_FN).format[String]
+      // 2020-04-16 lookupAdId Стал допускать несколько карточек, ранее -- допускалась ровно одна карточка.
+      (__ \ AD_IDS_FN).format( ScalazUtil.nelOrSingleValueJson[String] )
     )(apply, unlift(unapply))
   }
 
@@ -37,7 +41,7 @@ object MScFocusArgs {
 
   def indexAdOpen     = GenLens[MScFocusArgs](_.indexAdOpen)
   def lookupMode      = GenLens[MScFocusArgs](_.lookupMode)
-  def lookupAdId      = GenLens[MScFocusArgs](_.lookupAdId)
+  def adIds           = GenLens[MScFocusArgs](_.adIds)
 
 }
 
@@ -47,11 +51,11 @@ object MScFocusArgs {
   * @param indexAdOpen Разрешён переход в выдачу узла вместо открытия карточки?
   * @param lookupMode Режим перехода между focused-карточками.
   *                   Неактуально для sc3. Будет удалён, если не понадобится.
-  * @param lookupAdId id узла фокусируемой карточки.
+  * @param adIds id узла фокусируемой карточки.
   */
 case class MScFocusArgs(
                          // !!! Обязательно хотя бы одно обязательное непустое поле !!!
                          indexAdOpen            : Option[MIndexAdOpenQs],
-                         lookupMode             : Option[MLookupMode],
-                         lookupAdId             : String,
+                         lookupMode             : Option[MLookupMode] = None,
+                         adIds                  : NonEmptyList[String],
                        )
