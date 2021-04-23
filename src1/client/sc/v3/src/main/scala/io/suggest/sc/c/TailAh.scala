@@ -679,7 +679,7 @@ class TailAh(
           if (focusedAdIdOpt.nonEmpty) {
             // Для GridBlockClick надо вычислить gridKey, поискав карточку с таким nodeId в текущей плитке:
             fxsAcc ::= GridBlockClick(
-              adId = focusedAdIdOpt,
+              adIds = focusedAdIdOpt.toList,
               gridPath = None,
               gridKey = None,
             ).toEffectPure

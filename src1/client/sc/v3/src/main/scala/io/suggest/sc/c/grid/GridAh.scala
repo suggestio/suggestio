@@ -35,7 +35,7 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom
-import scalaz.{Tree, TreeLoc}
+import scalaz.{NonEmptyList, Tree, TreeLoc}
 
 import scala.util.Success
 
@@ -517,7 +517,7 @@ class GridAh[M](
       // Поискать запрошенную карточку в состоянии.
       (for {
         // Отработать открытие кастомной карточки по adId и пути в дереве:
-        _ <- Option.when( m.adId.isEmpty )(())
+        _ <- Option.when( m.adIds.isEmpty )(())
         scAdLoc <- GridAh.findAd(m, gridAds0)
         scAdData = scAdLoc.getLabel
         adData <- scAdData.data.toOption
@@ -587,8 +587,8 @@ class GridAh[M](
         } else {
           // Запуск запроса за данными карточки на сервер.
           val fx = gridFocusReqFx(
-            adId = adData.doc.tagId.nodeId.get,
-            m
+            adIds = NonEmptyList( adData.doc.tagId.nodeId.get ),
+            m = m,
           )
 
           var adPtrsModAcc = List.empty[Pot[Tree[MScAdData]] => Pot[Tree[MScAdData]]]
@@ -630,13 +630,13 @@ class GridAh[M](
         }
       })
         .orElse {
-          // Если задан adId вместо карточки в плитке, надо поискать карточку с таким id или загрузить её с сервера.
+          // Если задан adIds, надо поискать карточку с таким id или загрузить её с сервера.
           for {
-            adId <- m.adId
+            adIdFirst <- m.adIds.headOption
           } yield {
             // Поискать карточку среди имеющихся. Карточка может отсутствовать в состоянии, может быть в карте,
             // может быть в карте и дереве, может быть открытой и в виде main-блока.
-            val adsKnown = gridAds0
+            gridAds0
               .adsTreePot
               .iterator
               .flatMap { tree =>
@@ -644,15 +644,13 @@ class GridAh[M](
                   .cobind(_.loc)
                   .flatten
                   .filter { loc =>
-                    loc.getLabel.data
-                      .exists(_.doc.tagId.nodeId contains[String] adId)
+                    loc.getLabel.data.exists(
+                      _.doc.tagId.nodeId.exists(
+                        m.adIds.contains[String]))
                   }
                   .iterator
               }
-              .to( LazyList )
-
-            // Нужно разобраться, есть ли открытая карточка на руках.
-            adsKnown
+              // Нужно разобраться, есть ли открытая карточка на руках?
               .find(_.getLabel.data.exists(_.isOpened))
               .fold {
                 // Если нет в наличии сфокусированной карточки, то поискать хоть какую-нибудь, но запросить с сервера opened-вариант.
@@ -672,7 +670,10 @@ class GridAh[M](
                       .modify(modF)( v0 )
                   }
 
-                val focusReqFx = gridFocusReqFx( adId, m )
+                val focusReqFx = gridFocusReqFx(
+                  adIds = NonEmptyList.fromSeq( adIdFirst, m.adIds.tail ),
+                  m     = m,
+                )
 
                 ah.optionalResult( v2Opt, Some(focusReqFx), silent = false )
 
@@ -756,11 +757,11 @@ class GridAh[M](
 
 
   /** Эффект запроса к серверу на фокусировку карточки. */
-  def gridFocusReqFx(adId: String, m: GridBlockClick): Effect = {
+  def gridFocusReqFx(adIds: NonEmptyList[String], m: GridBlockClick): Effect = {
     Effect {
       val qs = ScQsUtil.focAdsQs(
         scRootRO.value,
-        adId = adId,
+        adIds = adIds,
       )
 
       api

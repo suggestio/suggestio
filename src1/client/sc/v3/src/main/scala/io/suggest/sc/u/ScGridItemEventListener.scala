@@ -24,30 +24,49 @@ final class ScGridItemEventListener(
 {
 
   override def handleEvent(eventAction: MJdtEventActions)(e: ReactEvent): Callback = {
-    if (eventAction.actions.isEmpty) {
-      Callback.empty
+    Callback.when( eventAction.actions.nonEmpty ) {
 
-    } else {
-      ReactCommonUtil.stopPropagationCB(e) >>
-      Callback.traverse( eventAction.actions ) { action =>
+      // Собрать итератор, который будет дожидаться результатов
+      val dispatchActionsIter = for {
+        jdAction <- eventAction.actions.iterator
+
         // Добавить новую карточку в плитку
-        action.action match {
+        circuitAction <- jdAction.action match {
+
+          // Вставка карточек вместо текущей. Произвести фокусировку на указанные id.
           case MJdActionTypes.InsertAds =>
-            Callback.sequence(
-              for {
-                jdEdgeId  <- action.jdEdgeIds.iterator
-                edge      <- jdDataJs.edges.get( jdEdgeId.edgeUid ).iterator
-                nodeId    <- edge.jdEdge.nodeId.iterator
-              } yield {
+            val adIdsIter = for {
+              jdEdgeId  <- jdAction.jdEdgeIds.iterator
+              // TODO edge, nodeId: Нужно передавать всё одном GBC(adId=[...]), чтобы не делать кучи запросов.
+              edge      <- jdDataJs.edges.get( jdEdgeId.edgeUid )
+              nodeId    <- edge.jdEdge.nodeId
+            } yield {
+              nodeId
+            }
+
+            // Option: возможно тут надо Iterable или что-то такое.
+            // В будущем, по мере реализации MJdActionTypes это будет видно.
+            Option.when( adIdsIter.nonEmpty ) {
+              Callback.lazily {
                 val gbc = GridBlockClick(
                   gridPath  = Some( gridPath ),
                   gridKey   = Some( gridItem.gridKey ),
-                  adId      = Some( nodeId ),
+                  adIds     = adIdsIter.toList,
                 )
                 propsProxy.dispatchCB( gbc )
               }
-            )
+            }
+
         }
+
+      } yield {
+        circuitAction
+      }
+
+      // Если есть хотя бы один экшен, то нужен e.stopPropagation()
+      Callback.when( dispatchActionsIter.nonEmpty ) {
+        ReactCommonUtil.stopPropagationCB(e) >>
+        Callback.sequence( dispatchActionsIter )
       }
     }
   }

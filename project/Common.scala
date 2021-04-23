@@ -91,12 +91,13 @@ object Common {
     /** Версия scalaCSS.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    val SCALACSS = "0.7.+"
+    val SCALACSS = "0.7.0"
 
     /** Улучшенное жестко-типизированное сравнение.
+      * 1.3.x требует scalacss 0.7.0
       * @see [[https://github.com/japgolly/univeq#scalaz]]
       */
-    val UNIVEQ = "1.+"
+    val UNIVEQ = "1.3.+"
 
     /** Apache commons lang3
       * @see [[https://commons.apache.org/proper/commons-lang/]]

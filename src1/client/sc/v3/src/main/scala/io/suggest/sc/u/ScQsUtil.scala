@@ -103,7 +103,7 @@ object ScQsUtil {
 
 
   /** qs для фокусировки на карточке. */
-  def focAdsQs(mroot: MScRoot, adId: String): MScQs = {
+  def focAdsQs(mroot: MScRoot, adIds: NonEmptyList[String]): MScQs = {
     MScQs(
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
@@ -124,7 +124,7 @@ object ScQsUtil {
               withBleBeaconAds = false,
             )
           ),
-          adIds            = NonEmptyList( adId ),
+          adIds            = adIds,
         )
       ),
     )

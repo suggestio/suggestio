@@ -116,6 +116,9 @@ final class GridFocusRespHandler
     raType ==* MScRespActionTypes.AdsFoc
   }
 
+  /** Внутри applyRespAction() для аргументов foldF-функций используется этот тип. */
+  private type Acc_t = (TreeLoc[MScAdData], Boolean)
+
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
     val focQs = ctx.m.qs.foc.get
     val g0 = ctx.value0.grid
@@ -129,236 +132,258 @@ final class GridFocusRespHandler
       adsTree <- gridAds0
         .adsTreePot
         .toOption
-      adsTreeRootLoc = adsTree.loc
-      // Собрать данные по main-блоку, который фокусируют:
-      // reason.gridKey может быть пуст, например когда фокусировка по карточке, которая никак в плитке
-      // не представлена в плитке (ad_id взят из URL qs).
-      parentLoc0 = gbcOpt
-        .flatMap { gbc =>
-          // Задан ключ элемента плитки. Надо добавить туда:
-          GridAh.findAd( gbc, gridAds0 )
-        }
-        .orElse {
-          // Нет исходного gridKey в исходном экшене. Т.е. карточка запрошена напрямую по ad_id.
-          // Поискать в плитке родительский элемент по ad_id.
-          for {
-            focQs <- ctx.m.qs.foc
-
-            mainLoc <- adsTreeRootLoc.find { scAdLoc =>
-              scAdLoc.getLabel.data.exists { scAdData =>
-                scAdData.doc.tagId.nodeId.exists { tagNodeId =>
-                  focQs.adIds.iterator contains tagNodeId
-                }
-              }
-            }
-          } yield {
-            // Найдена основа для focused карточки среди текущих карточек.
-            mainLoc
-          }
-        }
-        .getOrElse {
-          // Добавить текущую карточку в конец текущий плитки. Создание main-блока будет отработано ниже.
-          adsTreeRootLoc
-        }
 
       // Найдена точка в дереве, куда надо добавить полученную карточку.
       focResp <- ra.ads
-      // TODO focResp.ads.headOption - надо отрабатывать все принятые карточки.
-      focAdResp <- focResp.ads.headOption
+      if focResp.ads.nonEmpty
 
-      // Отрендерить все gridItems для принятой карточки:
-      focAdJdDoc = focAdResp.jd.doc
-      focAdIndexed = JdUtil.mkTreeIndexed( focAdJdDoc )
+      adsTreeRootLoc = adsTree.loc
 
-      // Поиск main-блока в focused-ответе:
-      (mainBlockJdLoc, mainBlockIndex) <- {
-        val r = focAdIndexed.getMainBlockOrFirst()
-        if (r.isEmpty)
-          logger.error( ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, msg = (focAdIndexed, r) )
-        r
+      // Собрать данные по main-блоку, который фокусируют:
+      // reason.gridKey может быть пуст, например когда фокусировка по карточке, которая никак в плитке
+      // не представлена в плитке (ad_id взят из URL qs).
+      parentLoc = {
+        val pLoc0 = gbcOpt
+          .flatMap { gbc =>
+            // Задан ключ элемента плитки. Надо добавить туда:
+            GridAh.findAd( gbc, gridAds0 )
+          }
+          .orElse {
+            // Нет исходного gridKey в исходном экшене. Т.е. карточка запрошена напрямую по ad_id.
+            // Поискать в плитке родительский элемент по ad_id.
+            for {
+              focQs <- ctx.m.qs.foc
+
+              mainLoc <- adsTreeRootLoc.find { scAdLoc =>
+                scAdLoc.getLabel.data.exists { scAdData =>
+                  scAdData.doc.tagId.nodeId.exists { tagNodeId =>
+                    focQs.adIds.iterator contains tagNodeId
+                  }
+                }
+              }
+            } yield {
+              // Найдена основа для focused карточки среди текущих карточек.
+              mainLoc
+            }
+          }
+          .getOrElse {
+            // Добавить текущую карточку в конец текущий плитки. Создание main-блока будет отработано ниже.
+            adsTreeRootLoc
+          }
+
+        // Убрать возможный pending на родительской карточке:
+        if (pLoc0.getLabel.data.isPending) {
+          pLoc0.modifyLabel( MScAdData.data.modify(_.unPending) )
+        } else {
+          pLoc0
+        }
       }
 
+      parent = parentLoc.getLabel
+      parentLevel = parentLoc.parents.length
     } yield {
-      // Убрать возможный pending на родительской карточке:
-      val parent = parentLoc0.getLabel
-      val parentLoc = if (parent.data.isPending) {
-        parentLoc0.modifyLabel( MScAdData.data.modify(_.unPending) )
-      } else {
-        parentLoc0
-      }
-
-      val parentLevel = parentLoc.parents.length
-
       // Следующий id для сохранения в состоянии:
       var idCounter2 = gridAds0.idCounter
 
-      val mainBlockNodeId = mainBlockJdLoc.rootLabel._1.nodeId
-      val isSameNodeIdAsParent = parent.data.exists(_.doc.tagId.nodeId ==* mainBlockNodeId)
+      // Далее, может быть несколько карточек в ответе. Надо в цикле обновить дерево.
+      // Для возможности отброса некоторых focResp в ответе, генерим функцию свёрстки для foldLeft во внешнем for-yield.
+      val (focAddedLoc, _) = (for {
+        focAdResp <- focResp.ads.iterator
+        // Отрендерить все gridItems для принятой карточки:
+        focAdJdDoc = focAdResp.jd.doc
+        focAdIndexed = JdUtil.mkTreeIndexed( focAdJdDoc )
 
-      val focAdGridItems = focAdIndexed
-        .gridItemsIter
-        .map { itemSubTree =>
-          val (jdTagId, _) = itemSubTree.rootLabel
-
-          MGridItem(
-            gridKey = {
-              // Если родительский элемент того же id (например, main-блок),
-              // то нужно сделать так, чтобы grid_key совпадали с родительскими.
-              OptionUtil.maybeOpt(
-                isSameNodeIdAsParent &&
-                (jdTagId.selPathRev.headOption contains mainBlockIndex)
-              ) {
-                // Берём gridKey из main-блока родительской карточки:
-                parent
-                  .gridItems
-                  .find(_.jdDoc.tagId.selPathRev.headOption contains[Int] mainBlockIndex)
-                  .map(_.gridKey)
-              }
-                .getOrElse {
-                  val nextId = idCounter2
-                  idCounter2 += 1
-                  nextId
-                }
-            },
-            jdDoc = focAdJdDoc.copy(
-              // TODO Opt разиндексация дерева после индексации (mkTreeIndexed) - это неоптимально. Нельзя ли как-то по-экономнее?
-              template  = itemSubTree.map(_._2),
-              tagId     = jdTagId,
-            ),
-          )
+        // Поиск main-блока в focused-ответе:
+        (mainBlockJdLoc, mainBlockIndex) <- {
+          val r = focAdIndexed.getMainBlockOrFirst()
+          if (r.isEmpty)
+            logger.error( ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, msg = (focAdIndexed, r) )
+          r
         }
-        // Ленивость НЕЛЬЗЯ, т.к. функция имеет side-эффекты.
-        .to( List )
-
-      // Сборка начального под-дереве для последующего добавления в общее дерево карточек:
-      var focAdSubTree = Tree.Leaf {
-        val focJdDataJs = MJdDataJs.fromJdData( focAdResp.jd, focAdResp.info )
-        MScAdData(
-          data      = Pot.empty.ready( focJdDataJs ),
-          gridItems = focAdGridItems,
-          partialItems = false,
-        )
-      }
-
-      // Отработать возможные особые случаи, когда карточка добавляется в каких-то нетривиальных условиях.
-      val focAddedLoc: TreeLoc[MScAdData] = (for {
-        // Попытаться обнаружить ситуацию добавления карточки на верхний уровень, когда отсутствует main-блок для последующего сворачивания.
-        // В карточке -- более одно блока?
-        focAdDocTail <- focAdResp.jd.doc.template
-          .subForest
-          .tailOption
-        if !focAdDocTail.isEmpty &&
-          // Родительский элемент плитки является корневым?
-          (parentLevel ==* 0) &&
-          // нет флага AlwaysOpened?
-          !focAdResp.info.flags
-            .exists(_.flag ==* MEdgeFlags.AlwaysOpened)
       } yield {
-        // Поискать main среди подготовленных gridItems, попытаться продублировать его grid key на main-блок:
-        val unFocAdGridKey: GridAdKey_t = focAdGridItems
-          .iterator
-          .zipWithIndex
-          .find(_._2 ==* mainBlockIndex)
-          // Когда добавление раскрытой карточки на верхний уровень, и карточку можно свернуть потом,
-          // нужно добавить main-блок над текущей развёрнутой карточкой (для возможности сворачивания потом).
-          .fold[GridAdKey_t] {
-            // Почему-то не найден main-блок среди ранее подготовленных focAd gridItems:
-            logger.warn( ErrorMsgs.NODE_NOT_FOUND, msg = (focAdJdDoc.tagId, mainBlockIndex) )
-            val nextGridKey = idCounter2
-            idCounter2 += 1
-            nextGridKey
-          } (_._1.gridKey)
+        val foldF: Acc_t => Acc_t = { case (parentLoc, isParentLoc) =>
+          val mainBlockNodeId = mainBlockJdLoc.rootLabel._1.nodeId
+          val isSameNodeIdAsParent = parent.data.exists(_.doc.tagId.nodeId ==* mainBlockNodeId)
 
-        parentLoc.insertDownLast(
-          Tree.Node(
-            root = {
-              // Производим ленивую расфокусорвку карточки в main-блок, чистим эджи, обновляем jdId:
-              val unFocAd = (
-                MSc3AdData.jd.modify { jdData0 =>
-                  val jdDoc2 = jdData0.doc.copy(
-                    template = mainBlockJdLoc.map(_._2),
-                    tagId    = mainBlockJdLoc.rootLabel._1,
-                  )
-                  val mainBlockEdgeUidsMap = jdDoc2.template.edgesUidsMap
-                  jdData0.copy(
-                    doc   = jdDoc2,
-                    edges = jdData0.edges
-                      .filter { jdEdge =>
-                        jdEdge.edgeDoc.id
-                          .exists( mainBlockEdgeUidsMap.contains )
-                      },
-                  )
-                }
-              )( focAdResp )
-              val unFocJdDataJs = MJdDataJs.fromJdData( unFocAd.jd, unFocAd.info )
-              MScAdData(
-                Pot.empty.ready( unFocJdDataJs ),
-                gridItems = MGridItem(
-                  gridKey = unFocAdGridKey,
-                  jdDoc   = unFocAd.jd.doc,
-                ) :: Nil,
-                partialItems = false,
+          val focAdGridItems = focAdIndexed
+            .gridItemsIter
+            .map { itemSubTree =>
+              val (jdTagId, _) = itemSubTree.rootLabel
+
+              MGridItem(
+                gridKey = {
+                  // Если родительский элемент того же id (например, main-блок),
+                  // то нужно сделать так, чтобы grid_key совпадали с родительскими.
+                  OptionUtil.maybeOpt(
+                    isSameNodeIdAsParent &&
+                      (jdTagId.selPathRev.headOption contains mainBlockIndex)
+                  ) {
+                    // Берём gridKey из main-блока родительской карточки:
+                    parent
+                      .gridItems
+                      .find(_.jdDoc.tagId.selPathRev.headOption contains[Int] mainBlockIndex)
+                      .map(_.gridKey)
+                  }
+                    .getOrElse {
+                      val nextId = idCounter2
+                      idCounter2 += 1
+                      nextId
+                    }
+                },
+                jdDoc = focAdJdDoc.copy(
+                  // TODO Opt разиндексация дерева после индексации (mkTreeIndexed) - это неоптимально. Нельзя ли как-то по-экономнее?
+                  template  = itemSubTree.map(_._2),
+                  tagId     = jdTagId,
+                ),
               )
-            },
-            forest = EphemeralStream( focAdSubTree ),
-          )
-        )
-      })
-        // Отработать возможное раскрытие новой под-карточки внутри другой (раскрытой) карточки:
-        .orElse {
-          for {
-            gbl <- gbcOpt
-            reasonGridKey <- gbl.gridKey
-            // Если добавление на под-уровни (не на верхний ряд карточек),
-            if parentLevel >= 1
-            parent = parentLoc.getLabel
-            // если id родительской карточки отличается от полученной focused-карточки
-            if parent.data.exists { parentJdDataJs =>
-              parentJdDataJs.doc.tagId.nodeId !=* focAdJdDoc.tagId.nodeId
             }
-          } yield {
-            // то надо в поддереве продублировать родительскую карточку вокруг полученной focused-карточки.
-            // Разбиваем родительскую карточку надвое, врезав новую focused-карточку после кликнутого блока:
-            val (beforeGridItems, afterGridItems) = parent.gridItems.span { gridItem =>
-              gridItem.gridKey <= reasonGridKey
-            }
-            val scAdData_gridItems_LENS = MScAdData.gridItems
+            // Ленивость НЕЛЬЗЯ, т.к. функция имеет side-эффекты.
+            .to( List )
 
-            // Теперь, организовать полный parentLoc subForest, с несколькими поддеревьями.
-            // Используется List acc, т.к. EphemeralStream/LazyList не совместимы с переменными внутри ##::= -выражений.
-            var subForestAcc = List.empty[Tree[MScAdData]]
-            if (afterGridItems.nonEmpty)
-              subForestAcc ::= Tree.Leaf {
-                (scAdData_gridItems_LENS set afterGridItems)( parent )
-              }
-            subForestAcc ::= focAdSubTree
-            val hasBefore = beforeGridItems.nonEmpty
-            if (hasBefore)
-              subForestAcc ::= Tree.Leaf {
-                (scAdData_gridItems_LENS set beforeGridItems)( parent )
-              }
-
-            // Сохранить обновлённый subForest в дерево:
-            parentLoc
-              .setTree(
-                Tree.Node(
-                  parent,
-                  subForestAcc.toEphemeralStream
-                )
-              )
-              // Выставить локацию на добавленную focused-карточку, как и в остальных ветвях:
-              .getChild(
-                if (hasBefore) 2
-                else 1
-              )
-              .get
+          // Сборка начального под-дереве для последующего добавления в общее дерево карточек:
+          var focAdSubTree = Tree.Leaf {
+            val focJdDataJs = MJdDataJs.fromJdData( focAdResp.jd, focAdResp.info )
+            MScAdData(
+              data      = Pot.empty.ready( focJdDataJs ),
+              gridItems = focAdGridItems,
+              partialItems = false,
+            )
           }
-        }
-        // Никакой специальной отработки ситуаций не требуется. Просто добавить под-карточку в дерево.
-        .getOrElse {
-          parentLoc.insertDownLast( focAdSubTree )
+
+          // Отработать возможные особые случаи, когда карточка добавляется в каких-то нетривиальных условиях.
+          val focAddedLoc1: TreeLoc[MScAdData] = Option
+            .when( !isParentLoc ) {
+              // Если уже не первая карточка ответа добавляется, то любые доп.манипуляции с parent-узлов уже были выполнены на первом шаге.
+              parentLoc.insertRight( focAdSubTree )
+            }
+            .orElse {
+              // Попытаться обнаружить ситуацию добавления карточки на верхний уровень, когда отсутствует main-блок для последующего сворачивания.
+              // В карточке -- более одно блока?
+              (for {
+                focAdDocTail <- focAdResp.jd.doc.template
+                  .subForest
+                  .tailOption
+                if !focAdDocTail.isEmpty &&
+                  // Родительский элемент плитки является корневым?
+                  (parentLevel ==* 0) &&
+                  // нет флага AlwaysOpened?
+                  !focAdResp.info.flags
+                    .exists(_.flag ==* MEdgeFlags.AlwaysOpened)
+              } yield {
+                // Поискать main среди подготовленных gridItems, попытаться продублировать его grid key на main-блок:
+                val unFocAdGridKey: GridAdKey_t = focAdGridItems
+                  .iterator
+                  .zipWithIndex
+                  .find(_._2 ==* mainBlockIndex)
+                  // Когда добавление раскрытой карточки на верхний уровень, и карточку можно свернуть потом,
+                  // нужно добавить main-блок над текущей развёрнутой карточкой (для возможности сворачивания потом).
+                  .fold[GridAdKey_t] {
+                    // Почему-то не найден main-блок среди ранее подготовленных focAd gridItems:
+                    logger.warn( ErrorMsgs.NODE_NOT_FOUND, msg = (focAdJdDoc.tagId, mainBlockIndex) )
+                    val nextGridKey = idCounter2
+                    idCounter2 += 1
+                    nextGridKey
+                  } (_._1.gridKey)
+
+                parentLoc.insertDownLast(
+                  Tree.Node(
+                    root = {
+                      // Производим ленивую расфокусорвку карточки в main-блок, чистим эджи, обновляем jdId:
+                      val unFocAd = (
+                        MSc3AdData.jd.modify { jdData0 =>
+                          val jdDoc2 = jdData0.doc.copy(
+                            template = mainBlockJdLoc.map(_._2),
+                            tagId    = mainBlockJdLoc.rootLabel._1,
+                          )
+                          val mainBlockEdgeUidsMap = jdDoc2.template.edgesUidsMap
+                          jdData0.copy(
+                            doc   = jdDoc2,
+                            edges = jdData0.edges
+                              .filter { jdEdge =>
+                                jdEdge.edgeDoc.id
+                                  .exists( mainBlockEdgeUidsMap.contains )
+                              },
+                          )
+                        }
+                        )( focAdResp )
+                      val unFocJdDataJs = MJdDataJs.fromJdData( unFocAd.jd, unFocAd.info )
+                      MScAdData(
+                        Pot.empty.ready( unFocJdDataJs ),
+                        gridItems = MGridItem(
+                          gridKey = unFocAdGridKey,
+                          jdDoc   = unFocAd.jd.doc,
+                        ) :: Nil,
+                        partialItems = false,
+                      )
+                    },
+                    forest = EphemeralStream( focAdSubTree ),
+                  )
+                )
+              })
+            }
+            .orElse {
+              // Отработать возможное раскрытие новой под-карточки внутри другой (раскрытой) карточки:
+              for {
+                gbc <- gbcOpt
+                reasonGridKey <- gbc.gridKey
+                // Если добавление на под-уровни (не на верхний ряд карточек),
+                if parentLevel >= 1
+                parent = parentLoc.getLabel
+                // если id родительской карточки отличается от полученной focused-карточки
+                if parent.data.exists { parentJdDataJs =>
+                  parentJdDataJs.doc.tagId.nodeId !=* focAdJdDoc.tagId.nodeId
+                }
+              } yield {
+                // то надо в поддереве продублировать родительскую карточку вокруг полученной focused-карточки.
+                // Разбиваем родительскую карточку надвое, врезав новую focused-карточку после кликнутого блока:
+                val (beforeGridItems, afterGridItems) = parent.gridItems.span { gridItem =>
+                  gridItem.gridKey <= reasonGridKey
+                }
+                val scAdData_gridItems_LENS = MScAdData.gridItems
+
+                // Теперь, организовать полный parentLoc subForest, с несколькими поддеревьями.
+                // Используется List acc, т.к. EphemeralStream/LazyList не совместимы с переменными внутри ##::= -выражений.
+                var subForestAcc = List.empty[Tree[MScAdData]]
+                if (afterGridItems.nonEmpty)
+                  subForestAcc ::= Tree.Leaf {
+                    (scAdData_gridItems_LENS set afterGridItems)( parent )
+                  }
+                subForestAcc ::= focAdSubTree
+                val hasBefore = beforeGridItems.nonEmpty
+                if (hasBefore)
+                  subForestAcc ::= Tree.Leaf {
+                    (scAdData_gridItems_LENS set beforeGridItems)( parent )
+                  }
+
+                // Сохранить обновлённый subForest в дерево:
+                parentLoc
+                  .setTree(
+                    Tree.Node(
+                      parent,
+                      subForestAcc.toEphemeralStream
+                    )
+                  )
+                  // Выставить локацию на добавленную focused-карточку, как и в остальных ветвях:
+                  .getChild(
+                    if (hasBefore) 2
+                    else 1
+                  )
+                  .get
+              }
+            }
+            // Никакой специальной отработки ситуаций не требуется. Просто добавить под-карточку в дерево.
+            .getOrElse {
+              parentLoc.insertDownLast( focAdSubTree )
+            }
+
+          focAddedLoc1 -> false
         }
 
+        foldF
+      })
+        .foldLeft( parentLoc -> true ) { case (acc0, f) => f(acc0) }
+
+      val focAdGridItems = focAddedLoc.getLabel.gridItems
       val focGridKey = focAdGridItems
         .headOption
         .fold {

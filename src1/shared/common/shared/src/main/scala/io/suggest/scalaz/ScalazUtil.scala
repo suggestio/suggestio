@@ -125,7 +125,7 @@ object ScalazUtil {
     * @return Результат валидации с ошибками или прочищенным текстом.
     */
   def validateTextOpt(textOpt: Option[String], maxLen: Int, errMsgF: => String): ValidationNel[String, Option[String]] = {
-    ScalazUtil.liftNelOpt(
+    liftNelOpt(
       textOpt
         .map(_.trim)
         .filter(_.length > 0)
