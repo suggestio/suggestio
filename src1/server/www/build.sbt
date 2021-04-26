@@ -65,8 +65,7 @@ libraryDependencies ++= Seq(
 
   // Для будущей работы с файлами добавлено вот это:
   //"com.github.pathikrit" %% "better-files"       % Common.Vsn.BETTER_FILES,
-  //"com.typesafe.akka"    %% "akka-contrib-extra" % Common.Vsn.AKKA_CONTRIB_EXTRA,
-  
+
   // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
   //"com.wix"      %% "accord-core"     % Common.wixAccordVsn,
 

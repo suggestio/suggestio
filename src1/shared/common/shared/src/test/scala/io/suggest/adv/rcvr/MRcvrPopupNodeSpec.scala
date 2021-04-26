@@ -12,10 +12,10 @@ import io.suggest.dt.interval.MRangeYmdOpt
   */
 object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
 
-  override type Node_t = IRcvrPopupNode
+  override type Node_t = MRcvrPopupNode
 
-  override type Nodes_t = IRcvrPopupNode.type
-  override val Nodes_t = IRcvrPopupNode
+  override type Nodes_t = MRcvrPopupNode.type
+  override val Nodes_t = MRcvrPopupNode
 
   override val m1 = MRcvrPopupNode(
     id = "asdadasdsa",

@@ -39,7 +39,7 @@ object Common {
     /** Версия slick-pg.
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
-    val SLICK_PG     = "0.18.+"
+    val SLICK_PG     = "0.19.+"
 
     /** Версия play-slick прослойки. */
     val PLAY_SLICK   = "5.+"
@@ -47,7 +47,7 @@ object Common {
     /** Версия play-json. Он выведен из под основного проекта. */
     val PLAY_JSON_VSN = "2.9.+"
 
-    val PLAY_GEOJSON = "1.6.+"
+    val PLAY_GEOJSON = "1.7.+"
 
 
     /** Версия elasticsearch. */
@@ -197,12 +197,7 @@ object Common {
     //val BETTER_FILES = "3.8.0"
 
     /** Используемая в проекте версия akka. */
-    val AKKA = "2.6.10"
-
-    /** Версия akka-contrib-extra. Вероятно, будет нужна для реактивного i/o из шелла.
-      * @see [[https://github.com/typesafehub/akka-contrib-extra]]
-      */
-    val AKKA_CONTRIB_EXTRA = "4.+"
+    val AKKA = "2.6.14"
 
     /** Версия jBrotli-биндингов.
       * @see [[https://github.com/MeteoGroup/jbrotli]]
@@ -302,10 +297,10 @@ object Common {
   def bcVsn           = "1.65"
 
   /** Версия scalatest+play. */
-  def scalaTestPlusPlayVsn = "5.0.0"
+  def scalaTestPlusPlayVsn = "5.+"
 
   /** Версия используемого плагина play-mailer. */
-  def playMailerVsn     = "8.0.0"
+  def playMailerVsn     = "8.+"
 
 
   /** Версия jquery-фасада для scalajs.
@@ -322,7 +317,7 @@ object Common {
   def apacheCommonsIoVsn = "2.6"
 
   /** Версия scalatest. */
-  def scalaTestVsn       = "3.1.1"
+  def scalaTestVsn       = "3.2.+"
 
   /** 
    *  Версия react.js, используемая в проекте. 
@@ -369,7 +364,7 @@ object Common {
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]
     */
-  val minitestVsn  = "2.8.+"
+  val minitestVsn  = "2.+"
 
 
   object Repo {

@@ -261,15 +261,15 @@ object ScalazUtil {
         */
       def fromLazyList[A](s: LazyList[A]): EphemeralStream[A] = {
         s match {
-          case LazyList()   => ephSt.emptyEphemeralStream
           case h #:: t      => ephSt.cons(h, fromLazyList(t))
+          case _            => ephSt.emptyEphemeralStream
         }
       }
 
       def fromList[A](s: List[A]): EphemeralStream[A] = {
         s match {
-          case Nil          => ephSt.emptyEphemeralStream
           case h :: t       => ephSt.cons(h, fromList(t))
+          case Nil          => ephSt.emptyEphemeralStream
         }
       }
 
