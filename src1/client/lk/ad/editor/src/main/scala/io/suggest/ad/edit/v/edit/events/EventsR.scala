@@ -25,7 +25,6 @@ import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -107,6 +106,7 @@ final class EventsR(
         // Требуется inlineFlex для action-селекота, чтобы картинка и текст отображались в одну строку:
         override val select = lkAdEditCss.inlineFlex.htmlClass
       }
+      override val variant = MuiTextField.Variants.standard
     }
 
     /** Mui Select props для селекта со списком карточек. */
@@ -117,6 +117,7 @@ final class EventsR(
           override val onScroll = _onAdsSelectScroll
         }
       }
+      override val variant = MuiTextField.Variants.standard
     }
 
     private def _onAdAddRemoveBtnClick(ptr: MEventEditPtr, isAdd: Boolean) = ReactCommonUtil.cbFun1ToJsCb {

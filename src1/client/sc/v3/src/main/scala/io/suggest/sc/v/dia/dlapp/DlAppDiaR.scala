@@ -110,6 +110,7 @@ class DlAppDiaR(
         override val classes = new MuiSelectClasses {
           override val selectMenu = ScCssStatic.flexCenter.htmlClass
         }
+        override val variant = MuiTextField.Variants.standard
       }
 
       // Содержимое диалога
