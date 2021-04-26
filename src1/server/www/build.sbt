@@ -130,7 +130,6 @@ routesImport ++= Seq(
 
   "io.suggest.n2.node.MNodeTypesJvm._",
   "io.suggest.url.MHostInfoJvm._",
-  "io.suggest.sc.ads.MLookupModesJvm._",
   "io.suggest.img.MImgFmtJvm._",
   "io.suggest.compress.MCompressAlgosJvm._",
   "models.msc.MPwaManifestQsJvm._",

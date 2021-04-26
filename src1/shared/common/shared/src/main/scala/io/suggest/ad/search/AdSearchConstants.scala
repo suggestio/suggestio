@@ -28,9 +28,6 @@ object AdSearchConstants {
     * ответ index ad open вместо focused ads. */
   def FOC_INDEX_AD_OPEN_FN   = "n"
 
-  /** @return Имя поля с кодом используемого режима lookup'а карточки. */
-  def AD_LOOKUP_MODE_FN    = "k"
-
   /** Имя поля, содержащее id карточек, которые нужно поискать в размещениях на указанном/текущем местоположении. */
   def AD_IDS_FN      = "j"
 

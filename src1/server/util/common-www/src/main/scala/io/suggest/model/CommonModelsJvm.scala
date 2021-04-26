@@ -17,7 +17,7 @@ import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknModifyQs, MLknOpKey, MLknOpK
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
-import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MLookupMode, MScFocusArgs, MScGridArgs, MScNodesArgs}
+import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
@@ -1196,7 +1196,6 @@ object CommonModelsJvm extends MacroLogsDyn {
   /** Поддержка QSB для MScFocusArgs. */
   implicit def mScFocusArgsQsb(implicit
                                indexAdOpenQs    : QueryStringBindable[Option[MIndexAdOpenQs]],
-                               lookupModeOptB   : QueryStringBindable[Option[MLookupMode]],
                               ): QueryStringBindable[MScFocusArgs] = {
     new QueryStringBindableImpl[MScFocusArgs] {
       private def boolB = implicitly[QueryStringBindable[Boolean]]
@@ -1217,18 +1216,15 @@ object CommonModelsJvm extends MacroLogsDyn {
                   .map( _.map(MIndexAdOpenQs.fromFocIndexAdOpenEnabled) )
               }
           }
-          lookupModeOptE          <- lookupModeOptB.bind    ( k(AD_LOOKUP_MODE_FN),       params )
           lookupAdIdE             <- zNelOrSingleStrB.bind  ( k(AD_IDS_FN),               params )
         } yield {
           for {
             indexAdOpenOpt        <- indexAdOpenOptE
-            lookupModeOpt         <- lookupModeOptE
             lookupAdId            <- lookupAdIdE
           } yield {
             MScFocusArgs(
               indexAdOpen         = indexAdOpenOpt,
-              lookupMode          = lookupModeOpt,
-              adIds               = lookupAdId
+              adIds               = lookupAdId,
             )
           }
         }
@@ -1238,7 +1234,6 @@ object CommonModelsJvm extends MacroLogsDyn {
         val k = key1F(key)
         _mergeUnbinded1(
           indexAdOpenQs.unbind  ( k(FOC_INDEX_AD_OPEN_FN),    value.indexAdOpen ),
-          lookupModeOptB.unbind ( k(AD_LOOKUP_MODE_FN),       value.lookupMode ),
           zNelOrSingleStrB.unbind( k(AD_IDS_FN),              value.adIds ),
         )
       }

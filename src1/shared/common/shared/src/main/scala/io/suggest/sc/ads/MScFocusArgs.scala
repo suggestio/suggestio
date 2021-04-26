@@ -31,7 +31,6 @@ object MScFocusArgs {
         }
         OFormat( inxAdOpenFallbackReads, inxOpenFmt0 )
       }) and
-      (__ \ AD_LOOKUP_MODE_FN).formatNullable[MLookupMode] and
       // 2020-04-16 lookupAdId Стал допускать несколько карточек, ранее -- допускалась ровно одна карточка.
       (__ \ AD_IDS_FN).format( ScalazUtil.nelOrSingleValueJson[String] )
     )(apply, unlift(unapply))
@@ -40,7 +39,6 @@ object MScFocusArgs {
   @inline implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
 
   def indexAdOpen     = GenLens[MScFocusArgs](_.indexAdOpen)
-  def lookupMode      = GenLens[MScFocusArgs](_.lookupMode)
   def adIds           = GenLens[MScFocusArgs](_.adIds)
 
 }
@@ -49,13 +47,10 @@ object MScFocusArgs {
 /** Контейнер параметров фокусировки карточки.
   *
   * @param indexAdOpen Разрешён переход в выдачу узла вместо открытия карточки?
-  * @param lookupMode Режим перехода между focused-карточками.
-  *                   Неактуально для sc3. Будет удалён, если не понадобится.
-  * @param adIds id узла фокусируемой карточки.
+  * @param adIds id фокусируемых карточек.
   */
 case class MScFocusArgs(
                          // !!! Обязательно хотя бы одно обязательное непустое поле !!!
                          indexAdOpen            : Option[MIndexAdOpenQs],
-                         lookupMode             : Option[MLookupMode] = None,
                          adIds                  : NonEmptyList[String],
                        )
