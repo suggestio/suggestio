@@ -113,7 +113,7 @@ final class SysBilling @Inject() (
     *
     * @return 200 Ok со страницей инфы по биллингу.
     */
-  def overview = csrf.AddToken {
+  def overview() = csrf.AddToken {
     isSu().async { implicit request =>
       // Поиск последних финансовых транзакций для отображения таблицы оных.
       val txnsBalancesFut = slick.db.run {

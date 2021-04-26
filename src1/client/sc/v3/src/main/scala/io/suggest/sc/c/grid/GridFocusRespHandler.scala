@@ -259,7 +259,7 @@ final class GridFocusRespHandler
             .orElse {
               // Попытаться обнаружить ситуацию добавления карточки на верхний уровень, когда отсутствует main-блок для последующего сворачивания.
               // В карточке -- более одно блока?
-              (for {
+              for {
                 focAdDocTail <- focAdResp.jd.doc.template
                   .subForest
                   .tailOption
@@ -319,7 +319,7 @@ final class GridFocusRespHandler
                     forest = EphemeralStream( focAdSubTree ),
                   )
                 )
-              })
+              }
             }
             .orElse {
               // Отработать возможное раскрытие новой под-карточки внутри другой (раскрытой) карточки:

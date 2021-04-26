@@ -71,7 +71,7 @@ final class SysMarket @Inject() (
    * Изначально оно жило в ctl.Sys, который был замёржен в ctl.Application,
    * который тоже был упразднён 2015.dec.17.
    */
-  def sysIndex = csrf.AddToken {
+  def sysIndex() = csrf.AddToken {
     isSuOr404() { implicit request =>
       Ok( views.html.sys1.indexTpl() )
     }
@@ -79,7 +79,7 @@ final class SysMarket @Inject() (
 
 
   /** Корень /sys/marker/. Тут ссылки на дальнейшие страницы в рамках market. */
-  def index = csrf.AddToken {
+  def index() = csrf.AddToken {
     isSu() { implicit request =>
       Ok(marketIndexTpl())
     }

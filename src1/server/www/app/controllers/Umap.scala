@@ -60,7 +60,7 @@ final class Umap @Inject() (
   }
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
-  def getAdnNodesMap = csrf.AddToken {
+  def getAdnNodesMap() = csrf.AddToken {
     isSu().apply { implicit request =>
       // TODO Нужно задействовать reverse-роутер
       val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
@@ -211,7 +211,7 @@ final class Umap @Inject() (
   /** Обработка запроса сохранения сеттингов карты.
     * Само сохранение не реализовано, поэтому тут просто ответ 200 OK.
     */
-  def saveMapSettingsSubmit = csrf.Check {
+  def saveMapSettingsSubmit() = csrf.Check {
     isSu()(parse.multipartFormData) { implicit request =>
       val msgs = implicitly[Messages]
       val resp = MapSettingsSaved(
@@ -353,7 +353,7 @@ final class Umap @Inject() (
   }
 
 
-  def createMapDataLayer = csrf.Check {
+  def createMapDataLayer() = csrf.Check {
     isSu()(parse.multipartFormData) { implicit request =>
       Ok("asdasd")
     }

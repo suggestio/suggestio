@@ -1352,7 +1352,7 @@ final class Upload @Inject()(
   /** Экшен, возвращающий upload-конфигурацию текущего узла.
     * Служебный, для отладки всяких проблем с балансировкой и маршрутизации.
     */
-  def getConfig = ignoreAuth() { implicit request =>
+  def getConfig() = ignoreAuth() { implicit request =>
     val sb = new StringBuilder(128)
     val NL = '\n'
 

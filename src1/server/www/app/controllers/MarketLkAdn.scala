@@ -345,7 +345,7 @@ final class MarketLkAdn @Inject() (
   }
 
   /** Рендер страницы с формой создания нового узла (магазина). */
-  def createNode = csrf.AddToken {
+  def createNode() = csrf.AddToken {
     isAuth() { implicit request =>
       val form = createNodeFormM
       Ok(createTpl(form))
@@ -354,7 +354,7 @@ final class MarketLkAdn @Inject() (
 
 
   /** Сабмит формы создания нового узла для юзера. */
-  def createNodeSubmit = csrf.Check {
+  def createNodeSubmit() = csrf.Check {
     isAuth().async { implicit request =>
       createNodeFormM.bindFromRequest().fold(
         {formWithErrors =>

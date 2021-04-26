@@ -260,8 +260,8 @@ final class PayYaka @Inject() (
   }
 
 
-  def check     = _check( yakaUtil.PRODUCTION )
-  def demoCheck = _check( yakaUtil.DEMO )
+  def check()     = _check( yakaUtil.PRODUCTION )
+  def demoCheck() = _check( yakaUtil.DEMO )
 
   /**
     * Экшен проверки платежа яндекс-кассой.
@@ -409,8 +409,8 @@ final class PayYaka @Inject() (
   }
 
 
-  def payment = _payment( yakaUtil.PRODUCTION )
-  def demoPayment = _payment( yakaUtil.DEMO )
+  def payment() = _payment( yakaUtil.PRODUCTION )
+  def demoPayment() = _payment( yakaUtil.DEMO )
 
   /** Уведомление о прошедшем платеже.
     *
@@ -736,7 +736,7 @@ final class PayYaka @Inject() (
     * Такое бывает, когда у юзера слетела/истекла сессия в платежной системе.
     * @return Редирект куда-нибудь.
     */
-  def failUnknown = maybeAuth().async { implicit request =>
+  def failUnknown() = maybeAuth().async { implicit request =>
     LOGGER.warn(s"failUnknown(): Unknown error, user[${request.user.personIdOpt}] ip=${request.remoteClientAddress} qs: ${request.rawQueryString}")
     val callFut = request.user.personIdOpt.fold [Future[Call]] {
       Future.successful( controllers.routes.Ident.loginFormPage() )
@@ -752,7 +752,7 @@ final class PayYaka @Inject() (
     }
   }
 
-  def demoFailUnknown = failUnknown
+  def demoFailUnknown() = failUnknown()
 
 
   /** Яндекс.касса вернула юзера сюда из-за ошибки оплаты.

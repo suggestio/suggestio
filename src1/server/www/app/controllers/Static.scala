@@ -86,13 +86,13 @@ final class Static @Inject() (
    * Страница с политикой приватности.
    * @return 200 Ok и много букв.
    */
-  def privacyPolicy = maybeAuth() { implicit request =>
+  def privacyPolicy() = maybeAuth() { implicit request =>
     Ok( privacyPolicyTpl() )
       .withHeaders( CACHE_CONTROL -> "public, max-age=600" )
   }
 
   /** Содержимое проверочного попап-окна. */
-  def popupCheckContent = maybeAuth() { implicit request =>
+  def popupCheckContent() = maybeAuth() { implicit request =>
     Ok( popups.popupCheckTpl() )
       .withHeaders( CACHE_CONTROL -> "public, max-age=86400" )
   }
@@ -121,7 +121,7 @@ final class Static @Inject() (
    * @return 204 No Content - всё ок.
    *         Другой код - сессия истекла.
    */
-  def keepAliveSession = isAuth() { implicit request =>
+  def keepAliveSession() = isAuth() { implicit request =>
     NoContent
   }
 
@@ -180,7 +180,7 @@ final class Static @Inject() (
     * Данная ошибка возникла из-за stylish, который подмешивает стили через data:
     *
     */
-  def handleCspReport = {
+  def handleCspReport() = {
     lazy val logPrefix = s"cspReportHandler[${System.currentTimeMillis()}]:"
     if (_IGNORE_CSP_REPORTS) {
       maybeAuth() (_cspJsonBp) { implicit request =>
@@ -566,7 +566,7 @@ final class Static @Inject() (
     * Раздача сайт-мапы.
     * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
     */
-  def siteMapXml = ignoreAuth() { implicit request =>
+  def siteMapXml() = ignoreAuth() { implicit request =>
     import views.xml.static.sitemap._
 
     // Собираем асинхронный неупорядоченный источник sitemap-ссылок:
@@ -604,7 +604,7 @@ final class Static @Inject() (
     if (isDev) 5 else 120
 
   /** Раздача содержимого robots.txt. */
-  def robotsTxt = ignoreAuth() { implicit request =>
+  def robotsTxt() = ignoreAuth() { implicit request =>
     Ok( robotsTxtTpl() )
       .withHeaders(
         //CONTENT_TYPE  -> "text/plain; charset=utf-8",
@@ -614,7 +614,7 @@ final class Static @Inject() (
 
 
   /** Свободная раздача CSRF-токена для нужд некоторых js-форм. */
-  def csrfToken = csrf.AddToken {
+  def csrfToken() = csrf.AddToken {
     Action { implicit request =>
       val playTok = CSRF.getToken.get
       val sioTok = MCsrfToken(

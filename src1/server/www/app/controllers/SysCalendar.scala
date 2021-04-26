@@ -104,7 +104,7 @@ final class SysCalendar @Inject() (
 
 
   /** Отобразить список всех сохранённых календарей. */
-  def showCalendars = csrf.AddToken {
+  def showCalendars() = csrf.AddToken {
     isSu().async { implicit request =>
       val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
       mCalendars.getAll(maxResults = 500).map { cals =>
@@ -115,7 +115,7 @@ final class SysCalendar @Inject() (
 
   /** Рендер страницы с заполненной формой нового календаря на основе шаблона. На странице можно выбрать шаблон.
     * Ничего никуда не сохраняется. */
-  def newCalendarFromTemplateSubmit = csrf.AddToken {
+  def newCalendarFromTemplateSubmit() = csrf.AddToken {
     isSu().async { implicit request =>
       newCalTplFormM.bindFromRequest().fold(
         {formWithErrors =>
@@ -153,7 +153,7 @@ final class SysCalendar @Inject() (
 
 
   /** Сохранять в базу новый календарь. */
-  def createCalendarSubmit = csrf.Check {
+  def createCalendarSubmit() = csrf.Check {
     isSu().async { implicit request =>
       calFormM.bindFromRequest().fold(
         {formWithErrors =>

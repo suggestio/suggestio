@@ -31,14 +31,14 @@ final class SysDebug @Inject() (
   private lazy val env = current.injector.instanceOf[Environment]
 
   /** Экшен для отображения индексной страницы. */
-  def index = csrf.AddToken {
+  def index() = csrf.AddToken {
     isSu() { implicit request =>
       Ok( indexTpl() )
     }
   }
 
   /** Запуск поиска и ремонта неправильных ресиверов в карточках. */
-  def resetAllRcvrs = csrf.Check {
+  def resetAllRcvrs() = csrf.Check {
     isSu().async { implicit request =>
       for (count <- advRcvrsUtil.resetAllReceivers()) yield {
         Ok(s"$count ads updated.")
@@ -48,7 +48,7 @@ final class SysDebug @Inject() (
 
 
   /** Запуск сброса значений полей MJdEdgeId.dynFormat для картинок на orig-значения. */
-  def resetImgsToOrig = csrf.Check {
+  def resetImgsToOrig() = csrf.Check {
     isSu().async { implicit request =>
       for {
         nodesCompleted <- dynImgUtil.resetJdImgDynFormatsToOrigOnNodes()
@@ -60,7 +60,7 @@ final class SysDebug @Inject() (
 
 
   /** Запуск удаления всех img-деривативов. */
-  def deleteAllDynImgDerivatives = csrf.Check {
+  def deleteAllDynImgDerivatives() = csrf.Check {
     isSu().async { implicit request =>
       for {
         res <- dynImgUtil.deleteAllDerivatives( deleteEvenStorageMissing = false )
@@ -83,7 +83,7 @@ final class SysDebug @Inject() (
 
 
   /** Рендер формы запроса ресурса из classpath. */
-  def getClassPathResourceInfoGet = csrf.AddToken {
+  def getClassPathResourceInfoGet() = csrf.AddToken {
     isSu() { implicit request =>
       val form = _cpPathForm
       Ok( CpResFormTpl(form) )
@@ -91,7 +91,7 @@ final class SysDebug @Inject() (
   }
 
   /** Сабмит формы запроса ресурса из classpath. */
-  def getClassPathResourceInfoPost = csrf.Check {
+  def getClassPathResourceInfoPost() = csrf.Check {
     isSu() { implicit request =>
       _cpPathForm.bindFromRequest().fold(
         {errors =>

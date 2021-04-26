@@ -108,7 +108,7 @@ final class Ident @Inject() (
    * Юзер разлогинивается. Выпилить из сессии данные о его логине.
    * @return Редирект на главную, ибо анонимусу идти больше некуда.
    */
-  def logout = csrf.Check {
+  def logout() = csrf.Check {
     // TODO Добавить поддержку помечания истёкших сессий через ottID внутри сессии.
     Action { implicit request =>
       val toPage = models.MAIN_PAGE_CALL
@@ -129,7 +129,7 @@ final class Ident @Inject() (
 
 
   /** Отредиректить юзера куда-нибудь. */
-  def rdrUserSomewhere = isAuth().async { implicit request =>
+  def rdrUserSomewhere() = isAuth().async { implicit request =>
     identUtil.redirectUserSomewhere(request.user.personIdOpt.get)
   }
 
@@ -300,7 +300,7 @@ final class Ident @Inject() (
     *
     * @return Ответ в виде токена, с помощью которого можно организовать шаг капчи.
     */
-  def regStep0Submit = csrf.Check {
+  def regStep0Submit() = csrf.Check {
     bruteForceProtect {
       val now = Instant.now()
       lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
@@ -728,7 +728,7 @@ final class Ident @Inject() (
     *
     * @return Экшен, возвращающий редирект.
     */
-  def regFinalSubmit = csrf.Check {
+  def regFinalSubmit() = csrf.Check {
     bruteForceProtect {
       isAnon().async {
         _parseCodeFormReq( Validators.isPasswordValid )
@@ -1132,7 +1132,7 @@ final class Ident @Inject() (
     *
     * @return 200, когда всё ок.
     */
-  def pwChangeSubmit = csrf.Check {
+  def pwChangeSubmit() = csrf.Check {
     bruteForceProtect {
       isAuth().async(
         parse
@@ -1509,7 +1509,7 @@ final class Ident @Inject() (
     * Юзер, залогинившийся через провайдера, хочет создать ноду.
     * @return Страницу с колонкой подтверждения реги.
     */
-  def idpConfirm = {
+  def idpConfirm() = {
     canConfirmIdpReg().async { implicit request =>
       // Развернуть узел для юзера, отобразить страницу успехоты.
       implicit val ctx = implicitly[Context]

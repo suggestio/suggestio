@@ -46,7 +46,7 @@ final class SysImg @Inject() (
 
 
   /** Маппинг для поисковой формы, который пытается распарсить ссылку с img qs или просто img qs. */
-  def imgFormM: Form[MImgT] = Form(
+  private def imgFormM: Form[MImgT] = Form(
     "qstr" -> text(maxLength = 512)
       .transform [String] (FormUtil.strTrimSanitizeUnescapeF, FormUtil.strIdentityF)
       .verifying("error.required", !_.isEmpty)
@@ -99,7 +99,7 @@ final class SysImg @Inject() (
    *
    * @return Редирект на urlFormSubmitGet(), если есть подходящая картинка. Или какую-то иную инфу.
    */
-  def searchFormSubmit = csrf.Check {
+  def searchFormSubmit() = csrf.Check {
     isSu() { implicit request =>
       imgFormM.bindFromRequest().fold(
         {formWithErrors =>

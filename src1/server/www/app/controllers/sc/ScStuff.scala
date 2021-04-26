@@ -46,7 +46,7 @@ final class ScStuff @Inject()(
     *
     * @return 200 OK chunked + заполненный спискок узлов в случайном порядке.
     */
-  def fillNodesList = bruteForceProtect {
+  def fillNodesList() = bruteForceProtect {
     csrf.Check {
       maybeAuth().async( parse.json[MScIndexes] ) { implicit request =>
         if (request.body.indexes.lengthIs >= 15) {

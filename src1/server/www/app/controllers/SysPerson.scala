@@ -45,7 +45,7 @@ final class SysPerson @Inject() (
     email = "admin@suggest.io"
   )
 
-  def index = csrf.AddToken {
+  def index() = csrf.AddToken {
     isSu().async { implicit request =>
       import esModel.api._
 
@@ -86,7 +86,7 @@ final class SysPerson @Inject() (
 
 
   /** Отрендерить на экран email-сообщение регистрации юзера. */
-  def showRegEmail = csrf.AddToken {
+  def showRegEmail() = csrf.AddToken {
     isSu() { implicit request =>
       Ok(emailRegMsgTpl(dummyEa))
     }

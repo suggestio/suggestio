@@ -134,7 +134,7 @@ final class LkLang @Inject() (
             LOGGER.error("Failed to save lang for mperson", ex)
 
           // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
-          RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
+          RdrBackOr(r)( routes.Ident.rdrUserSomewhere() )
             .withLang(newLang)
         }
       )

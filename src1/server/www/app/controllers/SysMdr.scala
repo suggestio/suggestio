@@ -63,7 +63,7 @@ final class SysMdr @Inject() (
     *
     * @return Страница под react-форму.
     */
-  def sysPage = csrf.AddToken {
+  def sysPage() = csrf.AddToken {
     isSu().async { implicit request =>
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.SysMdrForm :: Nil
