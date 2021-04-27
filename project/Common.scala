@@ -116,16 +116,19 @@ object Common {
     val MACWIRE = "2.3.+"
 
     /** Версия wysiwyg-редактора quill, который будем пытаться использовать заместо tinymce.
+      * @see [[https://www.npmjs.com/package/quill?activeTab=versions]]
       * @see [[https://github.com/quilljs/quill]]
       */
     // TODO Кажется, эти значения ни на что не влияют. react-quill тащит свою версию quill с собой.
-    val QUILL = "1.3.7"
+    //val QUILL = "1.3.7"
+    val QUILL = "2.0.0-dev.4"
     val QUILL_DELTA = "4.2.2"
 
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]
       */
-    val REACT_QUILL = "1.3.5"
+    //val REACT_QUILL = "1.3.5"
+    val REACT_QUILL = "2.0.0-beta.2"
 
     /** @see [[https://github.com/PaulLeCam/react-leaflet]]
       * @see [[https://www.npmjs.com/package/react-leaflet]]

@@ -61,4 +61,7 @@ trait DeltaOpAttrs extends js.Object {
 
   var height: UndefOr[String | Int] = js.undefined
 
+  /** quill-2.0 поддержка таблицы. Значение -- это id ряда. */
+  var table: UndefOr[String] = js.undefined
+
 }

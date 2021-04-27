@@ -188,81 +188,84 @@ class QuillInit {
     )
 
     // Собрать и вернуть итоговый конфиг.
-    new QuillModules {
-      override val toolbar = js.defined {
-        val qtm = js.Object().asInstanceOf[QuillToolbarModule]
-        qtm.container = toolbarOptions
-        qtm.handlers = {
-          // Неправильные mime-типы в accept-аттрибуте у image. Надо выставлять правильные тут:
-          val imageHandler = { (quillToolbar) =>
-            // Порт из themes/base.js https://github.com/quilljs/quill/blob/develop/themes/base.js#L121
-            var fileInput = quillToolbar.container
-              .querySelector("input.ql-image[type=file]")
-              .asInstanceOf[HTMLInputElement]
-            if (fileInput == null) {
-              fileInput = dom.document
-                .createElement( HtmlConstants.Input.input )
-                .asInstanceOf[HTMLInputElement]
-              fileInput.setAttribute("type", "file")
-              fileInput.setAttribute("accept", MImgFormats.allMimesIter.mkString(", "))
-              fileInput.classList.add( QuillCssConst.QL_IMAGE )
+    val _toolbarHandlers = {
+      // Неправильные mime-типы в accept-аттрибуте у image. Надо выставлять правильные тут:
+      val imageHandler = { (quillToolbar) =>
+        // Порт из themes/base.js https://github.com/quilljs/quill/blob/develop/themes/base.js#L121
+        var fileInput = quillToolbar.container
+          .querySelector("input.ql-image[type=file]")
+          .asInstanceOf[HTMLInputElement]
+        if (fileInput == null) {
+          fileInput = dom.document
+            .createElement( HtmlConstants.Input.input )
+            .asInstanceOf[HTMLInputElement]
+          fileInput.setAttribute("type", "file")
+          fileInput.setAttribute("accept", MImgFormats.allMimesIter.mkString(", "))
+          fileInput.classList.add( QuillCssConst.QL_IMAGE )
 
-              fileInput.addEventListener( DomEvents.CHANGE, {(_: Event) =>
-                if (fileInput.files != null) {
-                  val fList = DomListIterator( fileInput.files )
-                  for {
-                    fileMaybe <- fList.nextOption()
-                    file <- Option(fileMaybe)
-                  } {
-                    def __haveFileUrl(fileUrl: String): Unit = {
-                      // Уведомить редактор о полученном файле и сгенеренной ссылке на него.
-                      for (f <- onFileEmbed)
-                        f(fileUrl, file)
+          fileInput.addEventListener( DomEvents.CHANGE, {(_: Event) =>
+            if (fileInput.files != null) {
+              val fList = DomListIterator( fileInput.files )
+              for {
+                fileMaybe <- fList.nextOption()
+                file <- Option(fileMaybe)
+              } {
+                def __haveFileUrl(fileUrl: String): Unit = {
+                  // Уведомить редактор о полученном файле и сгенеренной ссылке на него.
+                  for (f <- onFileEmbed)
+                    f(fileUrl, file)
 
-                      val range = quillToolbar.quill.getSelection(true)
-                      quillToolbar.quill.updateContents(
-                        new Delta()
-                          .retain( range.index )
-                          .delete( range.length )
-                          .insert {
-                            val obj = js.Object.apply().asInstanceOf[DeltaEmbed]
-                            obj.image = fileUrl
-                            obj
-                          },
-                        Emitter.sources.USER
-                      )
-                      quillToolbar.quill.setSelection(range.index + 1, Emitter.sources.SILENT)
-                      fileInput.value = ""
-                    }
-                    // TODO отправить связку из blob+file наверх, чтобы за ней присмотрел редактор.
-                    if (useBlobUrls) {
-                      // Используем blob URL, это мгновенно, но требует внимания со стороны редактора.
-                      val blobUrl = dom.URL.createObjectURL( file )
-                      __haveFileUrl( blobUrl )
-                    } else {
-                      // Стандартный метод quill 1.x - сконвертить файл в base64 и заинлайнить в ссылку quill delta.
-                      val reader = new FileReader()
-                      reader.onload = { e: UIEvent =>
-                        val b64Url = reader.result.asInstanceOf[String]
-                        __haveFileUrl( b64Url )
-                      }
-                      reader.readAsDataURL( file )
-                    }
-                  }
+                  val range = quillToolbar.quill.getSelection(true)
+                  quillToolbar.quill.updateContents(
+                    new Delta()
+                      .retain( range.index )
+                      .delete( range.length )
+                      .insert {
+                        val obj = js.Object.apply().asInstanceOf[DeltaEmbed]
+                        obj.image = fileUrl
+                        obj
+                      },
+                    Emitter.sources.USER
+                  )
+                  quillToolbar.quill.setSelection(range.index + 1, Emitter.sources.SILENT)
+                  fileInput.value = ""
                 }
-              })
-              quillToolbar.container.appendChild( fileInput )
+                // TODO отправить связку из blob+file наверх, чтобы за ней присмотрел редактор.
+                if (useBlobUrls) {
+                  // Используем blob URL, это мгновенно, но требует внимания со стороны редактора.
+                  val blobUrl = dom.URL.createObjectURL( file )
+                  __haveFileUrl( blobUrl )
+                } else {
+                  // Стандартный метод quill 1.x - сконвертить файл в base64 и заинлайнить в ссылку quill delta.
+                  val reader = new FileReader()
+                  reader.onload = { e: UIEvent =>
+                    val b64Url = reader.result.asInstanceOf[String]
+                    __haveFileUrl( b64Url )
+                  }
+                  reader.readAsDataURL( file )
+                }
+              }
             }
-            fileInput.click()
-          }: js.ThisFunction0[QuillToolbar, _]
-
-          js.Dictionary[js.Any](
-            QuillModulesNames.Formats.IMAGE -> imageHandler
-          )
+          })
+          quillToolbar.container.appendChild( fileInput )
         }
+        fileInput.click()
+      }: js.ThisFunction0[QuillToolbar, _]
 
-        qtm
-      }
+      js.Dictionary[js.Any](
+        QuillModulesNames.Formats.IMAGE -> imageHandler
+      )
+    }
+
+    // quill падает, если встречает всякие sjs$$_1$ скрытые поля в конфиге.
+    // В scala.js 1.0 это вроде уже пофиксили, но нужны гарантии, поэтому рендерим весь JSON максимально безопасно:
+    val _toolbarModule = new QuillToolbarModule {
+      override val container = toolbarOptions
+      override val handlers = _toolbarHandlers
+    }
+
+    new QuillModules {
+      override val toolbar = _toolbarModule
     }
   }
 

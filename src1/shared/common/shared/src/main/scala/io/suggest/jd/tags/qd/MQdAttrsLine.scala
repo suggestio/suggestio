@@ -26,6 +26,7 @@ object MQdAttrsLine {
     val CODE_BLOCK_FN   = "c"
     val BLOCK_QUOTE_FN  = "b"
     val ALIGN_FN        = "a"
+    val TABLE_ROW_FN    = "r"
   }
 
   /** Поддержка play-json. */
@@ -37,7 +38,8 @@ object MQdAttrsLine {
       (__ \ F.INDENT_FN).formatNullable[ISetUnset[Int]] and
       (__ \ F.CODE_BLOCK_FN).formatNullable[ISetUnset[Boolean]] and
       (__ \ F.BLOCK_QUOTE_FN).formatNullable[ISetUnset[Boolean]] and
-      (__ \ F.ALIGN_FN).formatNullable[ISetUnset[MTextAlign]]
+      (__ \ F.ALIGN_FN).formatNullable[ISetUnset[MTextAlign]] and
+      (__ \ F.TABLE_ROW_FN).formatNullable[ISetUnset[String]]
     )(apply, unlift(unapply))
   }
 
@@ -61,7 +63,8 @@ object MQdAttrsLine {
       vldInt1(attrsLine.indent, 8, F.INDENT_FN) |@|
       ISetUnset.validateSetOptDflt(attrsLine.codeBlock,  errMsgF(F.CODE_BLOCK_FN)) |@|
       ISetUnset.validateSetOptDflt(attrsLine.blockQuote, errMsgF(F.BLOCK_QUOTE_FN)) |@|
-      ISetUnset.validateSetOptDflt(attrsLine.align,      errMsgF(F.ALIGN_FN))
+      ISetUnset.validateSetOptDflt(attrsLine.align,      errMsgF(F.ALIGN_FN)) |@|
+      ISetUnset.validateSetOptDflt(attrsLine.tableRow,   errMsgF(F.TABLE_ROW_FN))
     )(apply)
   }
 
@@ -74,14 +77,14 @@ case class MQdAttrsLine(
                          indent      : Option[ISetUnset[Int]]           = None,
                          codeBlock   : Option[ISetUnset[Boolean]]       = None,
                          blockQuote  : Option[ISetUnset[Boolean]]       = None,
-                         align       : Option[ISetUnset[MTextAlign]]    = None
+                         align       : Option[ISetUnset[MTextAlign]]    = None,
+                         tableRow    : Option[ISetUnset[String]]        = None,
                        )
   extends EmptyProduct
 {
 
   /** Бывают line-аттрибуты, требующие группировки строк в кучу.
     * Например: list.
-    * Если сгруппировать
     *
     * @param other line-аттрибуты какой-то другой группы.
     * @return true, когда надо сгруппировать две сущности вместе.
@@ -111,6 +114,7 @@ case class MQdAttrsLine(
       codeBlock foreach renderF( F.CODE_BLOCK_FN )
       blockQuote foreach renderF( F.BLOCK_QUOTE_FN )
       align foreach renderF("")
+      tableRow foreach renderF( F.TABLE_ROW_FN )
     }
   }
 

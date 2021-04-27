@@ -169,7 +169,8 @@ class QuillDeltaJsUtil extends Log {
       blockQuote  = _val2s( attrs.blockquote ),
       align       = for ( quillAlignSU <- _string2s( attrs.align )) yield {
         quillAlignSU.map( MTextAligns.withQuillName(_).get )
-      }
+      },
+      tableRow    = _string2s(attrs.table),
     )
     qdAttrs.optional
   }
@@ -273,6 +274,8 @@ class QuillDeltaJsUtil extends Log {
       attrs0.blockquote = setUnsetOrNullVal( blockQuoteSU )
     for (alignSU <- qdAttrsLine.align; align <- alignSU; quillAlignName <- align.quillName)
       attrs0.align = quillAlignName
+    for (tableRowSU <- qdAttrsLine.tableRow; tableRow <- tableRowSU)
+      attrs0.table = tableRow
   }
 
 

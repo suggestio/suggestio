@@ -517,12 +517,12 @@ class QdRrrHtml(
       val acc9 = _linesAccRev
         .iterator
         .zipWithIndex
-        .foldLeft( LinesRrrAcc() ) { case (acc0, ((attrsOpt, line), iRev)) =>
+        .foldLeft( LinesRrrAcc() ) { case (acc0, ((lineAttrsOpt, line), iRev)) =>
           val i = linesAccLen - iRev
           val iStr = i.toString
 
           // Отработать аттрибуты строки, если они есть.
-          attrsOpt.filter(_.nonEmpty).fold {
+          lineAttrsOpt.filter(_.nonEmpty).fold {
             // Нет строковых аттрибутов у текущей строки. Надо отрендерить предшествующую группу, если она есть.
             val renderAcc1 = __renderPrevLinesGrp(acc0, iStr)
 
@@ -540,10 +540,10 @@ class QdRrrHtml(
               currLineGrpAcc    = Nil
             )
 
-          } { attrs =>
+          } { lineAttrs =>
             // Есть какие-то аттрибуты строки. Надо понять, совпадает ли это с текущей группой.
             // TODO Тут вызывается isGroupsWith=>true|false, но случаев намного больше двух. См.комменты в .isGroupsWith().
-            if (acc0.currLineGrpAttrs.exists(_ isGroupsWith attrs)) {
+            if (acc0.currLineGrpAttrs.exists(_ isGroupsWith lineAttrs)) {
               // Аттрибуты такие же, как и у предыдущих строк. Запихиваем в акк группы.
               acc0.copy(
                 currLineGrpAcc = line :: acc0.currLineGrpAcc
@@ -557,7 +557,7 @@ class QdRrrHtml(
                 // Старая группа теперь отрендерена:
                 renderAcc = renderAcc1,
                 // Начать новую группу с аттрибутами текущей строки:
-                currLineGrpAttrs = attrsOpt,
+                currLineGrpAttrs = lineAttrsOpt,
                 currLineGrpAcc = line :: Nil
               )
             }
@@ -731,7 +731,7 @@ final case class MQdOpCont(
                           )
 object MQdOpCont {
   @inline implicit def univEq: UnivEq[MQdOpCont] = UnivEq.derive
-  implicit val QdOpConfFeq = FastEqUtil[MQdOpCont] { (a, b) =>
+  implicit lazy val QdOpConfFeq = FastEqUtil[MQdOpCont] { (a, b) =>
     (a.qdOp ===* b.qdOp) &&
     (a.jdTag ===* b.jdTag) &&
     (a.jdTagId ===* b.jdTagId)
@@ -755,7 +755,7 @@ object MQdEmbedProps {
 
   @inline implicit def univEq: UnivEq[MQdEmbedProps] = UnivEq.derive
 
-  implicit val Feq = FastEqUtil[MQdEmbedProps] { (a, b) =>
+  implicit lazy val Feq = FastEqUtil[MQdEmbedProps] { (a, b) =>
     (a.edge ===* b.edge) &&
     MQdOpCont.QdOpConfFeq.eqv(a.jdtQdOp, b.jdtQdOp)
     // jdCss не сверяем, т.к. названия классов стабильны, а рендер обновляеться вместе с qd-тегом.
