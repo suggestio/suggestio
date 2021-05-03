@@ -1,6 +1,5 @@
 package io.suggest.jd
 
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
@@ -14,7 +13,7 @@ import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.syntax.apply._
-import scalaz.{Validation, ValidationNel}
+import scalaz.Validation
 
 /**
   * Suggest.io
@@ -54,7 +53,7 @@ object MJdEdgeId {
                      m             : MJdEdgeId,
                      edges         : Map[EdgeUid_t, MJdEdgeVldInfo],
                      imgContSzOpt  : Option[ISize2di]
-                   ): ValidationNel[String, MJdEdgeId] = {
+                   ): StringValidationNel[MJdEdgeId] = {
     val edgeInfoOpt = edges.get( m.edgeUid )
 
     Validation
@@ -88,23 +87,44 @@ object MJdEdgeId {
       }
   }
 
-  def validateAdId(isAdsChoose: Boolean,
-                   m: MJdEdgeId,
-                   edges: Map[EdgeUid_t, MJdEdgeVldInfo]
-                  ): StringValidationNel[MJdEdgeId] = {
-    val edgeInfoOpt = OptionUtil.maybeOpt(isAdsChoose)( edges.get( m.edgeUid ) )
-    Validation
-      .liftNel( edgeInfoOpt )(
-        {edgeInfoOpt =>
-          isAdsChoose !=* edgeInfoOpt.nonEmpty
-        },
-        s"edge ${m.edgeUid} missing/unexpected"
-      )
+  private def _pureEdgeIdVld( m: MJdEdgeId,
+                              edges: Map[EdgeUid_t, MJdEdgeVldInfo],
+                            )(using: MJdEdgeVldInfo => StringValidationNel[MJdEdgeVldInfo]) = {
+    ScalazUtil
+      .liftNelSome(
+        edges.get( m.edgeUid ),
+        "edge#" + m.edgeUid + " " + ErrorConstants.Words.MISSING
+      )( using )
       .map { _ =>
         MJdEdgeId(
           edgeUid = m.edgeUid,
         )
       }
+  }
+
+  /** Валидация edgeId для adId-нужд.
+    *
+    * @param m Контейнер edgeId.
+    * @param edges Карта эджей.
+    * @return Результат валидации указателя на эдж.
+    */
+  def validateAdId(m: MJdEdgeId,
+                   edges: Map[EdgeUid_t, MJdEdgeVldInfo],
+                  ): StringValidationNel[MJdEdgeId] = {
+    _pureEdgeIdVld( m, edges )( MJdEdgeVldInfo.validateForAd )
+  }
+
+
+  /** Валидация для указателя на текстовый эдж.
+    *
+    * @param m id эджа.
+    * @param edges Карта эджей.
+    * @return Результат валидации указателя на текстовый эдж.
+    */
+  def validateText(m: MJdEdgeId,
+                   edges: Map[EdgeUid_t, MJdEdgeVldInfo]
+                  ): StringValidationNel[MJdEdgeId] = {
+    _pureEdgeIdVld( m, edges )( MJdEdgeVldInfo.validateText )
   }
 
   def edgeUid       = GenLens[MJdEdgeId](_.edgeUid)
@@ -124,7 +144,7 @@ object MJdEdgeId {
 final case class MJdEdgeId(
                             edgeUid       : EdgeUid_t,
                             outImgFormat  : Option[MImgFormat]   = None,
-                            crop          : Option[MCrop]     = None,
+                            crop          : Option[MCrop]        = None,
                           )
   extends IId[EdgeUid_t]
 {

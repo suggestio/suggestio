@@ -37,6 +37,7 @@ object MJdTagNames extends StringEnum[MJdTagName] {
     */
   case object QD_OP extends MJdTagName("o")
 
+  // TODO HTML, когда поддержка реализуется.
 
   // ------------------------------------------------------------------------------
 

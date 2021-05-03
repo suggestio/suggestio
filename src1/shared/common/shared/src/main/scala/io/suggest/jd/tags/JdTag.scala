@@ -10,6 +10,7 @@ import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.jd.tags.event.MJdtEvents
+import io.suggest.jd.tags.html.MJdHtmlTag
 import io.suggest.scalaz.ScalazUtil.Implicits.{EphStreamExt, SciLazyListExt}
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -31,9 +32,9 @@ object JdTag {
   object Fields {
     val TYPE_FN = "t"
     val PROPS_FN = "p"
-    /** Пропертисы для одной qd-операции, если есть. */
     val QD_PROPS_FN = "q"
     val EVENTS_FN = "e"
+    val HTML_FN = "h"
   }
 
 
@@ -50,7 +51,8 @@ object JdTag {
       .inmap[MJdtEvents](
         EmptyUtil.opt2ImplMEmptyF(MJdtEvents),
         jdtEvents => Option.when( jdtEvents.nonEmpty )( jdtEvents ),
-      )
+      ) and
+    (__ \ Fields.HTML_FN).formatNullable[MJdHtmlTag]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[JdTag] = UnivEq.derive
@@ -115,7 +117,7 @@ object JdTag {
 
 
   /** Утиль для поддержки z.Tree с jd-тегами. */
-  implicit class JdTagTreeOps[From: IJdTagGetter](private val tree: Tree[From]) {
+  implicit final class JdTagTreeOps[From: IJdTagGetter](private val tree: Tree[From]) {
 
     def qdOps: LazyList[MQdOp] = {
       tree
@@ -233,7 +235,11 @@ object JdTag {
       EphemeralStream.toIterable(
         tree
           .flatten
-          .flatMap( _.imgEdgeUids.toEphemeralStream )
+          .flatMap { m =>
+            (m: JdTag)
+              .imgEdgeUids
+              .toEphemeralStream
+          }
       )
         .iterator
         .zipWithIdIter[EdgeUid_t]
@@ -253,7 +259,7 @@ object JdTag {
 
 
   /** Дополнительная утиль для TreeLoc[IDocTag]. */
-  implicit class JdTagTreeLocOps[From: IJdTagGetter](private val treeLoc: TreeLoc[From]) {
+  implicit final class JdTagTreeLocOps[From: IJdTagGetter](private val treeLoc: TreeLoc[From]) {
 
     def findUpByType(types: MJdTagName*): Option[TreeLoc[From]] = {
       treeLoc.findUp( treeLocByTypeFilterF(types) )
@@ -314,6 +320,34 @@ object JdTag {
   def props1 = GenLens[JdTag](_.props1)
   def qdProps = GenLens[JdTag](_.qdProps)
   def events = GenLens[JdTag](_.events)
+  def html = GenLens[JdTag](_.html)
+
+
+  implicit final class JdTagExt( private val jdt: JdTag ) extends AnyVal {
+
+    /** Все эджи картинок, упомянутых в этом теге. */
+    def imgEdgeUids: LazyList[MJdEdgeId] = {
+      (
+        // Ищем в фоновой картинке jd-тега:
+        jdt.props1.bgImg #::
+        // Ищем в html-теге:
+        (for {
+          htmlTag <- jdt.html
+          // Ищем в аттрибуте <img.src> инфу по edgeUid. Возможно, есть какие-либо ещё варианты тегом-аттрибутов?
+          if htmlTag.tagName ==* "img"
+          imgSrcAV <- htmlTag.attrs.get( "src" )
+          ei <- imgSrcAV.edgeUid
+        } yield {
+          ei
+        }) #::
+        // Ищем в quill-delta:
+        jdt.qdProps.flatMap(_.edgeInfo) #::
+        LazyList.empty
+      )
+        .flatten
+    }
+
+  }
 
 }
 
@@ -327,27 +361,21 @@ object JdTag {
   *
   * @param qdProps Список qd-операций для постройки контента (quill-delta).
   * @param events Контейнер данных по событиям.
+  * @param html HTML-tag description.
+  *             If defined, current JdTag must have name=HTML, and will be rendered into described HTML tag.
   */
 final case class JdTag(
                         name      : MJdTagName,
                         props1    : MJdProps1     = MJdProps1.empty,
                         qdProps   : Option[MQdOp] = None,
                         events    : MJdtEvents    = MJdtEvents.empty,
+                        html      : Option[MJdHtmlTag] = None,
                       )
   // lazy val hashCode: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
   // TODO После ввода MJdTagId становится не ясно, надо ли *val* hashCode. Может теперь def достаточно?
   extends IHashCodeLazyVal
   with IEqualsEq
 {
-
-  /** Все эджи картинок, упомянутых в этом теге. */
-  def imgEdgeUids: LazyList[MJdEdgeId] = {
-    (props1.bgImg #::
-      qdProps.flatMap(_.edgeInfo) #::
-      LazyList.empty
-      )
-      .flatten
-  }
 
   override def toString: String = {
     StringUtil.toStringHelper(this, 256) { renderF =>
@@ -356,6 +384,7 @@ final case class JdTag(
       render0(name)
       if (props1.nonEmpty) render0(props1)
       qdProps foreach renderF( F.QD_PROPS_FN )
+      html foreach renderF( F.HTML_FN )
     }
   }
 

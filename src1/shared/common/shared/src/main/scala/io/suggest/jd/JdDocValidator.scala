@@ -32,6 +32,7 @@ import scalaz.syntax.apply._
   */
 object JdDocValidator {
 
+  private def HTML    = "html"
   private def QD      = "qd"
   private def BM      = "bm"
   private def PROPS1  = "props1"
@@ -113,7 +114,9 @@ final class JdDocValidator(
       ScalazUtil.liftNelNone( jdt.qdProps, eDocPfx(QD) )
         .recoverToNoneTolerant |@|
       Validation.liftNel( jdt.events )(_.nonEmpty, eDocPfx(JdTag.Fields.EVENTS_FN))
-        .recoverTolerant( MJdtEvents.empty )
+        .recoverTolerant( MJdtEvents.empty ) |@|
+      ScalazUtil.liftNelNone( jdt.html, eDocPfx(HTML) )
+        .recoverToNoneTolerant
     )( JdTag.apply )
   }
 
@@ -186,7 +189,9 @@ final class JdDocValidator(
       validateStripProps1(stripJdt.props1) |@|
       ScalazUtil.liftNelNone( stripJdt.qdProps, eStripPfx(QD + `.` + UNEXPECTED) )
         .recoverToNoneTolerant |@|
-      validateJdtEvents( stripJdt.events )
+      validateJdtEvents( stripJdt.events ) |@|
+      ScalazUtil.liftNelNone( stripJdt.html, eStripPfx(HTML) )
+        .recoverToNoneTolerant
     )( JdTag.apply )
   }
 
@@ -286,7 +291,9 @@ final class JdDocValidator(
       Validation.liftNel(qdJdt.name)( _ !=* MJdTagNames.QD_CONTENT, errMsgF( EXPECTED ) ) |@|
       validateQdTagProps1( qdJdt.props1, contSz ) |@|
       ScalazUtil.liftNelNone( qdJdt.qdProps, errMsgF(QD) ) |@|
-      validateJdtEvents( qdJdt.events )
+      validateJdtEvents( qdJdt.events ) |@|
+      ScalazUtil.liftNelNone( qdJdt.html, errMsgF(HTML) )
+        .recoverToNoneTolerant
     )( JdTag.apply )
 
     // При ошибках -- возвращаем None.
@@ -453,7 +460,9 @@ final class JdDocValidator(
       ScalazUtil.liftNelSome( qdOp.qdProps, errMsgF( QD + `.` + EXPECTED) )( validateQdOpProps ) |@|
       // Пока запрещено, т.к. редактор сейчас пока не взаимодействует с конкретными qd-op.
       Validation.liftNel( qdOp.events )(_.nonEmpty, errMsgF(JdTag.Fields.EVENTS_FN))
-        .recoverTolerant( MJdtEvents.empty )
+        .recoverTolerant( MJdtEvents.empty ) |@|
+      ScalazUtil.liftNelNone( qdOp.html, errMsgF(HTML) )
+        .recoverToNoneTolerant
     )( JdTag.apply )
   }
 
@@ -489,7 +498,13 @@ final class JdDocValidator(
   private def validateQdEdgeId(ei: MJdEdgeId, edgeOpt: Option[MJdEdgeVldInfo]): ValidationNel[String, MJdEdgeId] = {
     val errMsgF = ErrorConstants.emsgF( "edge" )
     (
-      Validation.liftNel(ei.edgeUid)({ _ => edgeOpt.isEmpty }, errMsgF("id." + ei + `.` + INVALID)) |@|
+      Validation
+        .liftNel(edgeOpt)(
+          // TODO Тут нужно выверять содержимое MJdEdgeVldInfo. Но т.к. от qd-формата происходит отказ, то пилить это уже не надо.
+          _.isEmpty,
+          errMsgF("id." + ei + `.` + INVALID)
+        )
+        .map(_ => ei.edgeUid) |@|
       // Перенести данные формата из эджа.
       // TODO Это наверное не правильно - управлять форматом на уровне валидации. Надо унести это куда?
       ScalazUtil.liftNelOpt[String, MImgFormat](
@@ -621,19 +636,21 @@ final class JdDocValidator(
 
 
   def validateJdtAction(a: MJdtAction): StringValidationNel[MJdtAction] = {
-    // Пока всё минимально: одно действие, максимум одна карточка.
     val isAdsChoose = a.action.isAdsChoose
     (
       a.action.successNel[String] |@|
       Validation
-        .liftNel( a.jdEdgeIds )({ jdEdgeIds =>
-          val lenExpected = if (isAdsChoose) JdConst.Event.MAX_ADS_PER_ACTION else 0
-          jdEdgeIds.lengthIs > lenExpected
-        }, MJdtAction.Fields.EDGE_UIDS )
+        .liftNel( a.jdEdgeIds )(
+          {jdEdgeIds =>
+            val lenExpected = if (isAdsChoose) JdConst.Event.MAX_ADS_PER_ACTION else 0
+            jdEdgeIds.lengthIs > lenExpected
+          },
+          MJdtAction.Fields.EDGE_UIDS
+        )
         .andThen { jdEdgeIds =>
           ScalazUtil.validateAll( jdEdgeIds ) { jdEdgeId =>
             MJdEdgeId
-              .validateAdId( isAdsChoose, jdEdgeId, edges )
+              .validateAdId( jdEdgeId, edges )
               .map(_ :: Nil)
           }
         }

@@ -12,6 +12,14 @@ object QuillModulesNames {
 
   private final def DELIM = "/"
 
+  object Modules {
+    final def MODULES_ = "modules" + DELIM
+
+    final def TABLE = "table"
+    final def TOOLBAR = "toolbar"
+
+  }
+
   object Formats {
 
     /** path prefix for all formats. */
@@ -41,6 +49,8 @@ object QuillModulesNames {
     final def IMAGE = "image"
     final def IMAGE_PATH = FORMATS_ + IMAGE
     final def VIDEO = "video"
+
+    final def FORMULA = "formula"
 
     final def CLEAN = "clean"
 

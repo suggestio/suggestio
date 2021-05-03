@@ -11,6 +11,7 @@ import scalaz.syntax.foldable._
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.syntax.validation._
 
 import scala.language.higherKinds
 import scala.util.parsing.combinator.Parsers
@@ -31,8 +32,8 @@ object ScalazUtil {
     * @tparam F Collection type.
     * @tparam A Data element type.
     * @tparam B Outer result
-    * @see Пародия на код, взятый отсюда [[https://www.47deg.com/blog/fp-for-the-average-joe-part-1-scalaz-validation/]]
-    * @return Результат валидации.
+    * @see Sourced from [[https://www.47deg.com/blog/fp-for-the-average-joe-part-1-scalaz-validation/]]
+    * @return Collection elements validation result.
     */
   // TODO Map[_,_] перестал работать в scala-2.13 с scalaz-7.2.29.
   def validateAll[F[_] : Foldable, A, B: Monoid, E]
@@ -53,15 +54,15 @@ object ScalazUtil {
     * None на входе всегда даёт success(None) на выходе.
     */
   def liftNelOpt[E, T](opt: Option[T])(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
-    _liftNelOpt(opt, Validation.success[NonEmptyList[E], Option[T]](opt))(f)
+    _liftNelOpt( opt, opt.successNel[E] )(f)
   }
   /** Аналог liftNelOpt, но None приводит к ошибке. */
-  def liftNelSome[E, T](opt: Option[T], errIfNone: => E)(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
-    _liftNelOpt(opt, Validation.failureNel[E, Option[T]]( errIfNone ))(f)
+  def liftNelSome[E, T1, T2](opt: Option[T1], errIfNone: => E)(f: T1 => ValidationNel[E, T2]): ValidationNel[E, Option[T2]] = {
+    _liftNelOpt( opt, errIfNone.failureNel[Option[T2]] )(f)
   }
 
-  private def _liftNelOpt[E, T](opt: Option[T], empty: => ValidationNel[E, Option[T]])
-                               (f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
+  private def _liftNelOpt[E, T1, T2](opt: Option[T1], empty: => ValidationNel[E, Option[T2]])
+                                    (f: T1 => ValidationNel[E, T2]): ValidationNel[E, Option[T2]] = {
     // TODO Скорее всего, в scalaz есть более элегантное разруливание этого момента.
     opt.fold(empty) { v =>
       f(v)
@@ -71,9 +72,8 @@ object ScalazUtil {
 
   /** Валидация чего-то опционального, которое должно быть None. */
   def liftNelNone[E, T](opt: Option[T], nonEmptyError: => E): ValidationNel[E, Option[T]] = {
-    opt.fold [ValidationNel[E, Option[T]]] ( Validation.success[NonEmptyList[E], Option[T]](opt) ) { _ =>
-      Validation.failureNel(nonEmptyError)
-    }
+    if (opt.isEmpty) opt.successNel
+    else nonEmptyError.failureNel
   }
 
   /** Неявно-пустая модель должна быть пустой.
@@ -83,34 +83,31 @@ object ScalazUtil {
     * @return Результат валидации.
     */
   def liftNelEmpty[E, T <: IIsEmpty](v: T, nonEmptyError: => E): ValidationNel[E, T] = {
-    if (v.isEmpty) {
-      Validation.success[NonEmptyList[E], T]( v )
-    } else {
-      Validation.failureNel(nonEmptyError)
-    }
+    if (v.isEmpty) v.successNel
+    else nonEmptyError.failureNel
   }
 
   /** Аналог  */
   def someValidationOrFail[E, T](e: => E)(validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, T] = {
-    validationOpt.getOrElse( Validation.failureNel(e) )
+    validationOpt.getOrElse( e.failureNel )
   }
   def validationOptOrNone[E, T](validationOpt: Option[ValidationNel[E, Option[T]]]): ValidationNel[E, Option[T]] = {
     validationOpt.getOrElse {
-      Validation.success(None)
+      Option.empty[T].successNel
     }
   }
   def optValidationOrNone[E, T](validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, Option[T]] = {
     validationOpt
-      .fold[ValidationNel[E, Option[T]]] (Validation.success[NonEmptyList[E], Option[T]](None)) ( _.map(Some.apply) )
+      .fold( Option.empty[T].successNel[E] ) ( _.map(Some.apply) )
   }
 
 
   def liftParseResult[E, T](pr: Parsers#ParseResult[T])(errorF: Parsers#NoSuccess => E): ValidationNel[E, T] = {
     pr match {
       case success: Parsers#Success[T] =>
-        Validation.success[NonEmptyList[E], T]( success.result )
+        success.result.successNel
       case noSuccess: Parsers#NoSuccess =>
-        Validation.failureNel( errorF(noSuccess) )
+        errorF(noSuccess).failureNel
     }
   }
 
@@ -186,7 +183,7 @@ object ScalazUtil {
       /** Быстрый костылёк для валидации. */
       def getOrElseNone: ValidationNel[E, Option[T]] = {
         vldOpt.getOrElse {
-          Validation.success(None)
+          Option.empty[T].successNel
         }
       }
 
