@@ -149,7 +149,8 @@ object JdTag {
         )
         .map(_.edgeUid)
       ) #::: {
-        EphemeralStream.toIterable( tree.subForest )
+        EphemeralStream
+          .toIterable( tree.subForest )
           .iterator
           .flatMap(_.deepEdgesUids)
           .to(LazyList)

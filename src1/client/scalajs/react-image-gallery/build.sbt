@@ -24,6 +24,4 @@ npmDependencies in Compile ++= Seq(
   "react-image-gallery"    -> VSN
 )
 
-//requiresDOM in Test := true
-
 useYarn := true

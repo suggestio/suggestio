@@ -20,6 +20,4 @@ npmDependencies in Compile ++= Seq(
   "react-quill"   -> Common.Vsn.REACT_QUILL
 )
 
-//requiresDOM in Test := true
-
 useYarn := true

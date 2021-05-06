@@ -120,15 +120,18 @@ object Common {
       * @see [[https://github.com/quilljs/quill]]
       */
     // TODO Кажется, эти значения ни на что не влияют. react-quill тащит свою версию quill с собой.
-    //val QUILL = "1.3.7"
     val QUILL = "2.0.0-dev.4"
     val QUILL_DELTA = "4.2.2"
 
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]
       */
-    //val REACT_QUILL = "1.3.5"
     val REACT_QUILL = "2.0.0-beta.2"
+
+    /** @see [[https://www.npmjs.com/package/jodit-react]] */
+    val JODIT_REACT = "1.0.83"
+    /** @see [[https://www.npmjs.com/package/jodit]] */
+    val JODIT = "3.6.11"
 
     /** @see [[https://github.com/PaulLeCam/react-leaflet]]
       * @see [[https://www.npmjs.com/package/react-leaflet]]

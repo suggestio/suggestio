@@ -19,6 +19,4 @@ npmDependencies in Compile ++= Seq(
   "quill-delta" -> Common.Vsn.QUILL_DELTA
 )
 
-//requiresDOM in Test := true
-
 useYarn := true

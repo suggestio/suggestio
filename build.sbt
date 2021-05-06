@@ -210,6 +210,18 @@ lazy val reactColorSjs = {
     .dependsOn(commonReactSjs)
 }
 
+/** Jodit - Scala.js API. */
+lazy val joditSjs = {
+  Project(id = "scalajs-jodit", base = file(DIR0 + "client/scalajs/jodit/jodit"))
+}
+
+/** Jodit-react Scala.js API. */
+lazy val joditReactSjs = {
+  Project(id = "scalajs-jodit-react", base = file(DIR0 + "client/scalajs/jodit/jodit-react"))
+    .settings( libDepsReactTest )
+    .dependsOn( commonReactSjs, joditSjs )
+}
+
 /** Scala.js API для react-image-crop. */
 lazy val reactImageCropSjs = {
   Project(id = "scalajs-react-image-crop", base = file(DIR0 + "client/scalajs/react-image-crop"))
@@ -691,7 +703,7 @@ lazy val client = project
     reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
     reactGridLayoutSjs, reactStoneCutterSjs,
     reactScroll, reactMeasureSjs, reactDndSjs,
-    quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
+    quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs, joditReactSjs, joditSjs,
     lkAdEditorSjs, lkAdnEditSjs,
     lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,
     asmCryptoJsSjs, asmCryptoSioSjs,
