@@ -10,7 +10,7 @@ import io.suggest.jd.render.JdRenderModule
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.09.18 18:21
-  * Description: Модули для компонентов.
+  * Description: DI-linking for Cart modules.
   */
 class CartModules {
 

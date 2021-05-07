@@ -13,7 +13,7 @@ import io.suggest.ueq.UnivEqUtil._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.08.2019 15:06
-  * Description: Обёртка над MOrderContent, чтобы дополнить данные заказа js-only данными.
+  * Description: MOrderContent wrapper for additional js-side runtime data.
   */
 object MOrderContentJs {
 
@@ -32,23 +32,23 @@ case class MOrderContentJs(
                             content: MOrderContent,
                           ) {
 
-  /** Сборка инстанса карты ресиверов. Происходит на клиенте, когда наступает необходимость. */
+  /** Receiver nodes map by node-id. */
   val adnNodesMap: Map[String, MSc3IndexResp] = {
     content.adnNodes
       .zipWithIdIter[String]
       .to( Map )
   }
 
-  /** Карта item'ов, сгруппированных по id карточки. */
+  /** Ad node id to items data map (Order items grouped by ad id). */
   val adId2itemsMap: Map[String, Seq[MItem]] =
     content.items.groupBy( _.nodeId )
 
-  /** Рендерить ли чекбокс для управления item'ами? */
+  /** Item selection checkbox can to be rendered? */
   val isItemsEditable: Boolean =
     content.order.isEmpty || content.order.exists( _.status ==* MOrderStatuses.Draft )
 
 
-  /** Карта данных карточек. */
+  /** Ads jd-render data by ad node id Map. */
   val adId2jdDataMap: Map[String, MJdDataJs] = {
     content.adsJdDatas
       .iterator

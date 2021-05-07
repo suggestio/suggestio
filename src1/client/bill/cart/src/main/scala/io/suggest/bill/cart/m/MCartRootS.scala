@@ -10,7 +10,7 @@ import monocle.macros.GenLens
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.09.18 16:05
-  * Description: Корневая модель состояния компонента полноценной корзины.
+  * Description: Cart Form's root state model - statics.
   */
 object MCartRootS {
 
@@ -30,10 +30,10 @@ object MCartRootS {
 
 
 /**
-  * Корневая модель состояния корзины товаров и услуг.
+  * Cart Form's root state model class.
   *
-  * @param order Текущие данные заказа, полученные с сервера.
-  * @param conf Данные конфигурации компонента, необходимые для запросов к серверу.
+  * @param order Current order data/state. Mostly received from server.
+  * @param conf Form configuration.
   */
 case class MCartRootS(
                        conf        : MCartConf,

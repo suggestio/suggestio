@@ -16,12 +16,12 @@ import scala.concurrent.Future
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.09.18 10:57
-  * Description: Ядро компонента react-корзины биллинга.
+  * Description: Cart form circuit.
   */
 object CartCircuit {
 
-  /** Получение модели из инпута на странице.
-    * @return Инстанс MCartRootS.
+  /** Read & deserialize initial Form state from html input.
+    * @return MCartRootS() instance.
     */
   def mkInitialModelFromInput(): MCartRootS = {
     val stateInp = StateInp.find().get
@@ -30,7 +30,6 @@ object CartCircuit {
       .parse(json)
       .as[MCartInit]
 
-    // Сборка root-модели, готовой к работе.
     MCartRootS(
       conf = minit.conf,
       order = MOrderItemsS(
@@ -42,30 +41,25 @@ object CartCircuit {
 }
 
 
-/** Абстрактный Circuit под разные варианты использования.
-  * Например, на лк-странице корзины надо initialModel брать из страницы,
-  * а в выдаче - брать конфиг откуда-то сверху.
-  */
+/** Mostly-implemented cart form circuit for different implementations. */
 abstract class CartCircuitBase
   extends CircuitLog[MCartRootS]
   with ReactConnector[MCartRootS]
 {
 
-
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.CART_CIRCUIT_ERROR
 
 
-  // Модели
-  //private lazy val rootRO = zoom(identity)
+  // Models
   private val orderRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.order)( MOrderItemsS.MOrderItemsSFastEq )
   private val confRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.conf)
 
 
-  // server-API для контроллеров.
+  // APIs for controllers
   val lkCartApi: ILkCartApi = new LkCartApiXhrImpl
 
 
-  // Контроллеры
+  // Controllers
   private val orderItemsAh = new OrderItemsAh(
     lkCartApi   = lkCartApi,
     modelRW     = orderRW
@@ -83,7 +77,7 @@ abstract class CartCircuitBase
   }
 
 
-  // В конце инициализации - запустить к серверу запрос о текущем ордере.
+  // constructor(): After, execute HTTP-request about current Cart's Order.
   Future {
     dispatch( LoadCurrentOrder )
   }
@@ -91,8 +85,8 @@ abstract class CartCircuitBase
 }
 
 
-/** Circuit для html-страницы-ресурса с корзиной. */
-class CartPageCircuit extends CartCircuitBase {
+/** Circuit implementation for LK (private cabinet)'s HTML Cart-page with inlined initial Form state. */
+final class CartPageCircuit extends CartCircuitBase {
 
   override protected def initialModel: MCartRootS =
     CartCircuit.mkInitialModelFromInput()

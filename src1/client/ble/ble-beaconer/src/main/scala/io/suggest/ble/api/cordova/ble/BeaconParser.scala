@@ -7,49 +7,52 @@ import io.suggest.primo.{IApply1, TypeT}
 import io.suggest.log.Log
 
 import scala.scalajs.js.JSON
+import scala.util.Try
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 13.10.16 11:20
-  * Description: Абстрактный парсер cordova-ble-данных маячка.
+  * Description: BLE Beacon Parsing interface.
   */
 trait BeaconParser extends TypeT with Log {
 
+  /** Beacon parsing success result type. */
   override type T <: IBeaconSignal
 
-  /** Алиас для типа возвращаемого результата парсинга. */
+  /** Beacon parsing result type. */
   type ParseRes_t = Option[Either[Any, T]]
 
 
-  /** Инстанс в cordova-ble device info. */
+  /** Incoming cordova-ble device info. */
   def dev: BtDevice
 
-  /** Пропарсить dev в опциональный инстанс маячка.
-    * @return None если это не маячок.
-    *         Some() если это маячок T.
-    *         exception, если это какой-то кривой маячок или ошибка где-то в логике метода.
+  /** To parse dev into optional beacon instance.
+    * @return None - not a beacon dev.
+    *         Some() - found beacon, parsed as T.
+    * @throws Exception if something gone wrong. Invalid beacon or some internal program error.
     */
   def parse(): ParseRes_t
 
-  /** Какой код сообщения об ошибке логгировать при исключении, возникшем при парсинге. */
+  /** If parse() throwed, this message will be used as error message. */
   def parserFailMsg: ErrorMsg_t
 
-  /** Безопасный вызов parse(), никогда не возвращает exception. */
+  /** Safe wrapper around parse(), to log exceptions, return None on errors. */
   def tryParse(): ParseRes_t = {
-    try {
-      parse()
-    } catch {
-      case ex: Throwable =>
-        logger.error( parserFailMsg, ex, JSON.stringify(dev) )
-        None
-    }
+    Try( parse() )
+      .fold[ParseRes_t](
+        {ex =>
+          logger.error( parserFailMsg, ex, JSON.stringify(dev) )
+          None
+        },
+        identity
+      )
   }
 
 }
 
 
-/** Интерфейс для компаньонов, собирающих конкретные реализации [[BeaconParser]]. */
+/** Interface for companion objects, produces beacon parsers [[BeaconParser]]-implementations. */
 trait BeaconParserFactory extends IApply1 {
   override type ApplyArg_t = BtDevice
   override type T <: BeaconParser

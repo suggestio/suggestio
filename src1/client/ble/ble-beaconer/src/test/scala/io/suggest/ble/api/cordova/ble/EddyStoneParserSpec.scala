@@ -13,12 +13,12 @@ import scala.scalajs.js.{Dictionary, UndefOr, |}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 13.10.16 21:40
-  * Description: Тесты для beacon-парсера [[EddyStoneParser]].
+  * Description: Tests for EddyStone beacon-parser [[EddyStoneParser]].
   */
 object EddyStoneParserSpec extends SimpleTestSuite {
 
   test("Parse some real 1st-gen MagicSystems EddyStone-UID beacon on Android") {
-    // Имитируем bt-выхлоп андройда:
+    // Android-like bluetooth scanning result:
     val dev = new BtDevice {
       override val id = "EF:3B:62:6A:2E:9B"
       override val rssi: UndefOr[Rssi_t] = -60
@@ -38,7 +38,6 @@ object EddyStoneParserSpec extends SimpleTestSuite {
       .getOrElse( throw new NoSuchElementException )
 
     assertEquals(r.rssi, -60)
-    //assertEquals(r.rssi0, -61)
 
     assertEquals( r.beaconUid, Some("aa112233445566778899-000000000456") )
   }

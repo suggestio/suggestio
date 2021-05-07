@@ -10,29 +10,33 @@ import scala.util.Try
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.09.18 11:13
-  * Description: Экшены компонента корзины.
+  * Description: Cart form actions.
   */
 
 sealed trait ICartAction extends DAction
 
 
-/** Управление состояния галочки для элементов заказа.
-  * @param itemId id элемента. Или None, если окучиваем сразу все.
-  * @param checked Новое состояние галочки.
+/** Item's selection checkbox change state.
+  * @param itemId item id .
+  *               None - all items.
+  * @param checked New checkbox state.
   */
 case class CartSelectItem(itemId: Option[Gid_t], checked: Boolean) extends ICartAction
 
-/** Клик по кнопке удаления выделенных элементов. */
+/** Delete selected items action. */
 case object CartDeleteBtnClick extends ICartAction
 
 
-/** Экшен запуска запроса данных ордера на сервер. */
+/** Get current order contents from server.
+  * @param orderId order id.
+  *                None - Cart order.
+  */
 case class GetOrderContent(orderId: Option[Gid_t]) extends ICartAction
 
-/** Сигнал загрузки ордера согласно текущей конфигурации. */
+/** Load current order. Current, means, according to Cart Form configuration. */
 case object LoadCurrentOrder extends ICartAction
 
-/** Экшен обработки ответа сервера с данными одного ордера. */
+/** GetOrderContent resulting action. */
 case class HandleOrderContentResp(
                                    tryResp      : Try[MOrderContent],
                                    timestampMs  : Long

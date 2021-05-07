@@ -32,16 +32,16 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.09.18 13:32
-  * Description: Компонент ряда одного item'а.
+  * Description: Single item row react-component.
   */
 class ItemRowR(
                 orderCss: OrderCss
               ) {
 
-  /** Пропертисы для рендера одного ряда.
+  /** Single row properties.
     *
-    * @param mitem Что рендерим.
-    * @param isItemEditable Можно ли управлять item'ом?
+    * @param mitem Current item.
+    * @param isItemEditable Is item editable?
     */
   case class PropsVal(
                        mitem          : MItem,
@@ -56,7 +56,6 @@ class ItemRowR(
       (a.mitem ===* b.mitem) &&
       (a.isItemEditable ==* b.isItemEditable) &&
       (a.isSelected ==* b.isSelected) &&
-      // Инстанс Option может быть нестабильным.
       OptFastEq.Plain.eqv(a.rcvrNode, b.rcvrNode) &&
       (a.isPendingReq ==* b.isPendingReq) &&
       OptFastEq.OptValueEq.eqv(a.previewRowSpan, b.previewRowSpan)
@@ -82,17 +81,16 @@ class ItemRowR(
     def render(propsProxy: Props, children: PropsChildren): VdomElement = {
       val props = propsProxy.value
 
-      // Ключ ряда задаётся на уровне вызова компонента, не здесь.
       MuiTableRow()(
 
-        // Рендер ячейки для миниатюры карточки, если задана.
+        // Ad preview miniature table-cell, if any.
         props.previewRowSpan.whenDefinedNode { previewRowSpan =>
           MuiTableCell {
             val previewCssClasses = new MuiTableCellClasses {
               override val root = orderCss.ItemsTable.NodePreviewColumn.body.htmlClass
             }
             new MuiTableCellProps {
-              // Передаём rowspan напрямую в атрибуты td:
+              // td.rowspan directly passed into HTML tag attrs.
               val rowSpan = previewRowSpan.toString
               override val classes = previewCssClasses
             }
@@ -101,12 +99,12 @@ class ItemRowR(
           )
         },
 
-        // Определение товара/услуги:
+        // Cell with order item definition:
         MuiTableCell()(
 
           {
             val (avaIconComponent, iconHintCodeOpt) = if (props.mitem.rcvrIdOpt.isDefined) {
-              // Размещение в узле. Отдельная иконка для ble-маячка
+              // Advertising inside node.
               val ntypeOpt = props.rcvrNode
                 .flatMap(_.ntype)
 
@@ -118,6 +116,7 @@ class ItemRowR(
               })
                 .getOrElse( MsgCodes.`Node` )
 
+              // Separate icon for BLE-beacon.
               val nodeIcon = (for {
                 ntype <- ntypeOpt
                 if ntype eqOrHasParent MNodeTypes.BleBeacon
@@ -128,17 +127,17 @@ class ItemRowR(
 
               nodeIcon -> Some(nodeTypeHint)
             } else if (props.mitem.geoShape.isDefined) {
-              // На карте
+              // On the map
               Mui.SvgIcons.MyLocation -> Some(MsgCodes.`Adv.on.map`)
             } else {
-              // Непонятный тип локации. Не должно такого происходить.
+              // Unknown location type. Should not happen.
               Mui.SvgIcons.NotListedLocation -> None
             }
 
             var chip: VdomElement = MuiChip {
-              // Текст с описанием того, где размещение
+              // Description about where is advertise placement occurs.
               new MuiChipProps {
-                // Завернуть в avatar, как требует чип:
+                // Wrap into avatar, as needed by MuiChip:
                 override val avatar = {
                   MuiAvatar()(
                     avaIconComponent()()
@@ -146,25 +145,25 @@ class ItemRowR(
                 }
                 override val label: js.UndefOr[React.Node] = {
                   <.span(
-                    // Название узла-ресивера, если задан
+                    // Name of receiver (target) node, if any.
                     props.rcvrNode
                       .flatMap(_.name)
                       .whenDefined,
 
-                    // Описание гео-шейпа, если он задан:
+                    // Geo-shape description, if defined.
                     props.mitem.geoShape.whenDefined {
-                      // TODO + ссылка для окошка с картой и шейпом.
+                      // TODO + link to window with geo-map and shape.
                       case circleGs: CircleGs =>
                         PriceReasonI18n.i18nPayloadCircle( circleGs )
-                      // PointGs здесь - Это скорее запасной костыль и для совместимости, нежели какое-то нужное обоснованное логичное решение.
+                      // PointGs here. Possibly, for compatibility reasons or something like.
                       case point: PointGs =>
                         point.coord.toHumanFriendlyString
                       case other =>
-                        // TODO Нужен какой-то нормальный рендер, не?
+                        // TODO Provide any normal render here for other geo-shapes.
                         other.toString()
                     },
 
-                    // Если это тег, то рендерить тег:
+                    // If #tag is here...
                     props.mitem.tagFaceOpt.whenDefinedNode { tagFace =>
                       VdomArray(
                         HtmlConstants.NBSP_STR,
@@ -174,7 +173,6 @@ class ItemRowR(
                           }
                         )(
                           MuiChip {
-                            // Иконка тега: решётка + подсказка поверх при наведении/нажатии.
                             val ava = MuiAvatar()(
                               HtmlConstants.DIEZ
                             )
@@ -192,7 +190,7 @@ class ItemRowR(
               }
             }
 
-            // Если задана подсказка, то завернуть иконку аватара в tooltip.
+            // If some icon hint defined, make a tooltip:
             for (hintMsgCode <- iconHintCodeOpt) {
               chip = MuiToolTip(
                 new MuiToolTipProps {
@@ -204,7 +202,7 @@ class ItemRowR(
             chip
           },
 
-          // Если есть даты end/start, то вторая строка:
+          // Render start/end dates as secondary string, if any.
           ReactCommonUtil.maybeNode( props.mitem.dateStartOpt.isDefined || props.mitem.dateEndOpt.isDefined )(
             VdomArray(
               <.br(
@@ -221,16 +219,15 @@ class ItemRowR(
 
         ),
 
-        // Колонка с ценником на изделие:
+        // Column with item price:
         MuiTableCell()(
           JsFormatUtil
             .formatPrice( props.mitem.price )
             .spacingToVdomNbspStrings
         ),
 
-        // Колонка со статусом обработки item'а:
         if (props.isItemEditable) {
-          // Колонка с галочкой, если требуется
+          // Selection checkbox, if item editing allowed:
           MuiTableCell()(
             MuiCheckBox(
               new MuiCheckBoxProps {
@@ -242,9 +239,8 @@ class ItemRowR(
             )
           )
         } else {
-          // Колонка со статусом:
+          // Column with current item status (see MItemStatuses):
           MuiTableCell()(
-            // TODO Рендерить иконку статуса
             MuiToolTip(
               new MuiToolTipProps {
                 override val title: React.Node = {
@@ -279,7 +275,8 @@ class ItemRowR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackendWithChildren[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )

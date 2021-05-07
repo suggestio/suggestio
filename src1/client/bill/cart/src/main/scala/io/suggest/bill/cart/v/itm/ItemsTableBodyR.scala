@@ -24,12 +24,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.09.18 13:11
-  * Description: Компонент наполнения списка-таблицы заказа.
+  * Description: Order items table display component.
   */
 class ItemsTableBodyR(
                        orderCss               : OrderCss,
@@ -51,32 +50,31 @@ class ItemsTableBodyR(
   }
 
 
+  /** How many columns total? Not always it make sense. */
+  private final def TOTAL_COLUMNS_COUNT = 4
+
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
 
-  /** Тело компонента, занимающегося рендером тела списка item'ов. */
   class Backend($: BackendScope[Props, Unit]) {
 
-    private def _onRefreshBtnClick(e: ReactEvent): Callback =
+    lazy val _onRefreshBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb { (e: ReactEvent) =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, LoadCurrentOrder)
-    lazy val _onRefreshBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onRefreshBtnClick )
+    }
 
 
     def render(propsProxy: Props): VdomElement = {
       val props = propsProxy.value
 
-      // Сколько колонок всего? Не всегда это важно.
-      val columnsCount = 4
-
-      // Пропертисы для fullRowCell:
+      // fullRowCell properties
       lazy val fullRowCellProps = {
         val css = new MuiTableCellClasses {
           override val root = orderCss.ItemsTable.TBody.fullRowCell.htmlClass
         }
         new MuiTableCellProps {
           override val classes = css
-          val colSpan = columnsCount
+          val colSpan = TOTAL_COLUMNS_COUNT
         }
       }
 
@@ -89,12 +87,11 @@ class ItemsTableBodyR(
 
       MuiTableBody()(
 
-        // TODO renderEmpty - что рендерить? По идее, это не нужно, т.к. никогда не должно быть видимо Pot.empty.
+        // TODO renderEmpty - what to render? Well, theoretically, it is not needed, because Pot.empty must NOT be here.
 
-        // Какие-то проблемы со список item'ов - ошибка и предложение перезагрузки.
+        // Render errors for items list. And retry/reload button.
         props.orderContents.renderFailed { ex =>
           fullRowCell(
-            // Уведомление о проблеме.
             Mui.SvgIcons.Warning()(),
             MuiToolTip(
               new MuiToolTipProps {
@@ -112,7 +109,7 @@ class ItemsTableBodyR(
               )
             ),
 
-            // Кнопка перезагрузки...
+            // Reload button
             MuiToolTip(
               new MuiToolTipProps {
                 override val title: React.Node = Messages( MsgCodes.`Reload` )
@@ -129,25 +126,25 @@ class ItemsTableBodyR(
           )
         },
 
-        // Рендерить ряды, навешивая key на каждый.
+        // Render keyed rows:
         props.orderContents.render { orderContentJs =>
           val orderContent = orderContentJs.content
           if ( orderContent.items.isEmpty ) {
-            // Пустая корзина.
+            // Cart is empty:
             fullRowCell(
               Messages( MsgCodes.`Your.cart.is.empty` )
             )
 
           } else {
-            // Есть что рендерить: рендерим элементы.
+            // Cart non-empty. Render items table:
             var iter = for {
-              // Проходим группы item'ов в рамках каждой карточки:
+              // For each ad, walk item groups (group per ad):
               (nodeId, nodeItems) <- orderContentJs.adId2itemsMap.iterator
               nodeItemsCount = nodeItems.length
 
-              // Собрать ячейку с jd-рендером.
+              // Cell with jd-rendered ad or something visually related:
               previewOpt = {
-                // Пытаемся отрендерить как jd-карточку:
+                // Try to render ad:
                 orderContentJs
                   .adId2jdDataMap
                   .get( nodeId )
@@ -161,12 +158,12 @@ class ItemsTableBodyR(
                     jdR( propsProxy2 )
                   }
                   .orElse {
-                    // Поискать в adn node logos
+                    // No ad. Looking for ADN Node logo:
                     orderContentJs
                       .adnNodesMap
                       .get( nodeId )
                       .map[VdomElement] { nodeProps =>
-                        // Рендерим видимую часть: иконка или что-то ещё.
+                        // Render visible part: icon or something else.
                         val nodeName = nodeProps.nameOrIdOrEmpty
                         MuiToolTip {
                           new MuiToolTipProps {
@@ -178,13 +175,14 @@ class ItemsTableBodyR(
                               <.img(
                                 orderCss.ItemsTable.NodePreviewColumn.adnLogo,
                                 ^.src := icon.url,
-                                // Это нужно для logo, и вообще не нужно для wcAsLogo, TODO отработать как-то эту ситуацию?
+                                // Bg color need for logo, but not needed for wcAsLogo, TODO Resolve bg color? Need to resolve?
                                 //nodeProps.colors.bg.whenDefined { mcd =>
                                 //  ^.backgroundColor := mcd.hexCode
                                 //}
                               )
                             }
                             .getOrElse[VdomElement] {
+                              // No ad, no logo. Just render node name:
                               MuiTypoGraphy(
                                 new MuiTypoGraphyProps {
                                   override val variant = MuiTypoGraphyVariants.subtitle1
@@ -196,7 +194,7 @@ class ItemsTableBodyR(
                   }
               }
 
-              // Пройти item'ы, наконец:
+              // Walk all node items:
               (mitem, i) <- nodeItems.iterator.zipWithIndex
 
             } yield {
@@ -213,14 +211,14 @@ class ItemsTableBodyR(
               } { itemPropsValProxy =>
                 itemRowR.component
                   .withKey(nodeId + HtmlConstants.UNDERSCORE + mitem.id.get)( itemPropsValProxy )(
-                    // Рендерить первую ячейку с превьюшкой надо только в первом ряду, остальные ряды - rowspan'ятся
+                    // Render first cell with preview only in first row. Other rows in column are ROWSPANned.
                     ReactCommonUtil.maybeNode( isWithPreview )( previewOpt )
                   )
               }
             }
             val resAcc = iter.toVdomArray
 
-            // Если заданы order-prices, то надо ещё отрендерить ряд ИТОГО
+            // If order-prices is defined, when render PRICE TOTAL.
             if (orderContent.orderPrices.nonEmpty) {
               val emptyCell = MuiTableCell()()
               val typoProps = new MuiTypoGraphyProps {
@@ -231,11 +229,11 @@ class ItemsTableBodyR(
                 MuiTableRow.component.withKey("s")( MuiPropsBaseStatic.empty[MuiTableRowProps] )(
                   MuiTableCell(
                     new MuiTableCellProps {
-                      val colSpan = columnsCount
+                      val colSpan = TOTAL_COLUMNS_COUNT
                     }
                   )()
                 ),
-                // Итого-ряд:
+                // TOTAL-row:
                 MuiTableRow.component.withKey("t")( MuiPropsBaseStatic.empty[MuiTableRowProps] )(
                   emptyCell,
                   MuiTableCell()(
@@ -253,8 +251,8 @@ class ItemsTableBodyR(
                       )
                     }
                   ),
-                  // В ячейке чек-бокса или статуса - пока ничего.
-                  MuiTableCell()()
+                  // No checkbox/status here:
+                  MuiTableCell()(),
                 )
               )
             }
@@ -263,12 +261,12 @@ class ItemsTableBodyR(
 
         },
 
-        // Если идёт запрос, то рендерить "ожидалку".
+        // HTTP request in progress, render progress animation:
         props.orderContents.renderPending { _ =>
           fullRowCell(
             MuiLinearProgress()
           )
-        }
+        },
 
       )
     }
@@ -276,11 +274,10 @@ class ItemsTableBodyR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsProxy: Props) = component( propsProxy )
 
 }

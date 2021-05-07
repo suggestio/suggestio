@@ -8,7 +8,7 @@ import monocle.macros.GenLens
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 21.04.2020 10:27
-  * Description: Модель настроек beaconer'а.
+  * Description: Beaconer start/run options model.
   */
 object MBeaconerOpts {
 
@@ -22,13 +22,13 @@ object MBeaconerOpts {
 }
 
 
-/** Контейнер настроек запуска/остановки bluetooth.
+/** BLE Beaconer options container class.
   *
-  * @param askEnableBt Разрешить запрашивать включение bluetooth у юзера.
-  *                    true - Если bluetooth выключен в ОС, будет открыт системный диалог.
-  *                    false - Если bt выключен на уровне ОС, то beaconer будет деактивирован следом.
-  * @param oneShot Одноразовое сканирование радиоэфира, и выключение после окончания сканирования.
-  * @param scanMode Насколько агрессивно можно тратить энергию на сканирование?
+  * @param askEnableBt Is it allowed to request bluetooth powering-on from user?
+  *                    true - If bluetooth disabled in OS settings, system dialog will be opened to user.
+  *                    false - Beaconer will be deactivated, if bluetooth disabled in OS settings.
+  * @param oneShot One time radio scanning. Beaconer will be deactivated after scan.
+  * @param scanMode Control how much energy can be spent for scanning.
   */
 case class MBeaconerOpts(
                           askEnableBt       : Boolean           = true,

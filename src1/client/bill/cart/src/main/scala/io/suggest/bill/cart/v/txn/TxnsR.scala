@@ -20,7 +20,7 @@ import io.suggest.sjs.dom2.DomQuick
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 28.09.18 15:46
-  * Description: React-компонент для рендера списка транзакций.
+  * Description: Transactions list react-component.
   */
 class TxnsR {
 
@@ -37,7 +37,7 @@ class TxnsR {
       propsOptProxy.value.whenDefinedEl { mtxns =>
         <.div(
 
-          // Заголовок:
+          // Header:
           MuiTypoGraphy(
             new MuiTypoGraphyProps {
               override val variant = MuiTypoGraphyVariants.h5
@@ -48,7 +48,7 @@ class TxnsR {
 
           MuiTable()(
 
-            // Заголовок таблицы
+            // Table header
             MuiTableHead()(
               MuiTableRow()(
 
@@ -72,10 +72,10 @@ class TxnsR {
             ),
 
 
-            // Наполнение таблицы транзаций:
+            // Transactions list body:
             MuiTableBody()(
 
-              // Нет транзакций.
+              // If no transactions...
               ReactCommonUtil.maybeNode( mtxns.isEmpty ) {
                 MuiTableRow()(
                   materialui.MuiTableCell(
@@ -88,7 +88,7 @@ class TxnsR {
                 )
               },
 
-              // Есть транзакции
+              // Have at least one transaction:
               mtxns.toVdomArray { mtxnPriced =>
                 val mtxn = mtxnPriced.txn
                 MuiTableRow.component
@@ -113,10 +113,10 @@ class TxnsR {
                         YmdR(
                           dtOff.toLocalDate.toYmd
                         )(),
-                        // Рендер времени, пока всырую. TZ неявно вкалькулирована в текущее время браузера.
+                        // Render time, raw time by now. Timezone implicitly "inlined" into browser's current time.
                         {
                           val time = dtOff.toLocalTime
-                          // Можно приплюсовать сдвиг из js.Date, и будет локальное время.
+                          // It is possible to increment offset from js.Date, and local time will be here.
                           VdomArray(
                             time.getHour,
                             HtmlConstants.COLON,
@@ -130,7 +130,7 @@ class TxnsR {
 
                     MuiTableCell()(
                       JsFormatUtil.formatPrice( mtxnPriced.price )
-                    )
+                    ),
 
                   )
               }
@@ -145,11 +145,10 @@ class TxnsR {
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply( propsOptProxy: Props ) = component( propsOptProxy )
 
 }

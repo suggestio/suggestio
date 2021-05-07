@@ -10,34 +10,33 @@ import scala.util.Try
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.10.16 16:09
-  * Description: Сигналы для подписки на мониторинг маячков.
+  * Description: Actions foc controlling BeaconerAh.
   */
 
-/** Управление работой системой мониторинга маячков.
+/** Start/stop or alter options of bluetooth BeaconerAh.
   *
-  * @param isEnabled Новое состояние (вкл/выкл)
-  *                  None значит, что остаться в текущем состоянии, возможно совершив какие-то несущественные действия.
-  * @param opts Опции, сохраняемые в состоянии beaconer'а.
+  * @param isEnabled New state (on/off)
+  *                  None means stay in current state, possibly altering beaconer options.
+  * @param opts Options of beaconer.
   */
 case class BtOnOff(isEnabled: Option[Boolean],
                    opts: MBeaconerOpts = MBeaconerOpts.default) extends IBleBeaconAction
 
-/** Экшен Результат подписки на события API. */
+/** Result of subscription for IBleBeaconsApi events. */
 private[beaconer] case class HandleListenRes( listenTryRes: Try[IBleBeaconsApi] ) extends IBleBeaconAction
 
-/** Сработал таймер ожидания для возможного уведомления всех страждущих. */
+/** Notify timer produced timeout. */
 private[beaconer] case class MaybeNotifyAll(timestamp: Long) extends IBleBeaconAction
 
 
-/** Экшен запуска сборки неактуальных маячков в состоянии. */
+/** Action for garbage-collection inside beacons data. */
 private[beaconer] case object DoGc extends IBleBeaconAction
 
-/** Экшен, уведомляющий о завершении инициализации или деинициализации.
-  *
-  * @param tryEnabled Итоговое состояние, к которому пришла система.
+/** Action to cleanup internal state after beaconer (de)initialization finished.
+  * @param tryEnabled New isEnabled state.
   */
 private[beaconer] case class BtOnOffFinish(tryEnabled: Try[Boolean] ) extends IBleBeaconAction
 
 
-/** Результат отдельного тестирования наличия bluetooth. */
+/** Result for testing about bluetooth abilities presence. */
 private[beaconer] case class HasBleRes( hasBle: Pot[Boolean] ) extends IBleBeaconAction

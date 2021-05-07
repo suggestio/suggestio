@@ -6,7 +6,6 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 13.06.18 15:37
-  * Description:
   */
 package object central {
 

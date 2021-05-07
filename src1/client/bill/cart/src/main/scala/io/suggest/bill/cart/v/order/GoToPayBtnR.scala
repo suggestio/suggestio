@@ -17,7 +17,7 @@ import japgolly.univeq._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 27.09.18 17:58
-  * Description: Компонент для кнопки перехода к оплате.
+  * Description: Go to pay form button component.
   */
 class GoToPayBtnR(
                    orderCss: OrderCss
@@ -70,11 +70,10 @@ class GoToPayBtnR(
 
   }
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
 
 }

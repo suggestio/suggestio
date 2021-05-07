@@ -20,7 +20,7 @@ import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiToolBar, MuiTo
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 26.09.18 15:27
-  * Description: Тулбар для функций таблицы.
+  * Description: Order items toolbar for actions.
   */
 class ItemsToolBarR(
                      orderCss: OrderCss
@@ -41,13 +41,12 @@ class ItemsToolBarR(
   type Props = ModelProxy[Props_t]
 
 
-  /** Ядро компонента тулбара. */
   class Backend( $: BackendScope[Props, Unit] ) {
 
-    /** Сигнализировать о клике по кноке удаления. */
-    def _onDeleteBtnClick(e: ReactEvent): Callback =
+    /** Delete button clicked. */
+    lazy val _onDeleteBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       dispatchOnProxyScopeCB( $, CartDeleteBtnClick )
-    lazy val _onDeleteBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onDeleteBtnClick )
+    }
 
 
     def render(propsOptProxy: Props): VdomElement = {
@@ -62,7 +61,7 @@ class ItemsToolBarR(
             override val disableGutters = true
           }
         )(
-          // Кол-во выбранных элементов.
+          // If selected (checked) items non-empty, render count selected:
           ReactCommonUtil.maybeNode( props.countSelected > 0 ) {
             VdomArray(
 
@@ -70,7 +69,7 @@ class ItemsToolBarR(
                 ^.key := "t",
                 orderCss.ItemsTable.ToolBar.title,
 
-                // Кол-во выбранных элементов:
+                // Selected items count:
                 MuiTypoGraphy.component.withKey("n")(
                   new MuiTypoGraphyProps {
                     override val variant = MuiTypoGraphyVariants.subtitle1
@@ -86,7 +85,7 @@ class ItemsToolBarR(
                 orderCss.ItemsTable.ToolBar.spacer
               ),
 
-              // Кнопка удаления:
+              // Delete button:
               MuiToolTip.component.withKey("d")(
                 new MuiToolTipProps {
                   override val title: React.Node = Messages( MsgCodes.`Delete` )
@@ -113,11 +112,10 @@ class ItemsToolBarR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsProxy: Props) = component( propsProxy )
 
 }

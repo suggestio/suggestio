@@ -14,29 +14,30 @@ import scala.concurrent.Future
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.09.18 16:41
-  * Description: API для взаимодействия с сервером по вопросам биллинга/корзины.
+  * Description: API for server interactions about cart & cart items.
   */
 trait ILkCartApi {
 
-  /** Чтение данных ордера с сервера.
+  /** Ask server about order contents.
     *
-    * @param orderId id ордера. None для корзины.
-    * @return Фьючерс с результатом запроса.
+    * @param orderId Order id.
+    *                None means current user's Cart order.
+    * @return Future with order contents.
     */
   def getOrder(orderId: Option[Gid_t]): Future[MOrderContent]
 
-  /** Удаление item'ов из ордера.
+  /** Remove items from current user's Cart order.
     *
-    * @param itemIds id удаляемых item'ов.
-    * @return Обновлённые данные ордера корзины.
+    * @param itemIds Item ids to be deleted.
+    * @return Future with updated cart order contents.
     */
   def deleteItems(itemIds: Iterable[Gid_t]): Future[MOrderContent]
 
 }
 
 
-/** Реализация Bill-Cart API поверх Http XHR. */
-class LkCartApiXhrImpl extends ILkCartApi {
+/** Bill-Cart API implementation over HTTP Fetch/XHR. */
+final class LkCartApiXhrImpl extends ILkCartApi {
 
   override def getOrder(orderId: Option[Gid_t]): Future[MOrderContent] = {
     HttpClient.execute(

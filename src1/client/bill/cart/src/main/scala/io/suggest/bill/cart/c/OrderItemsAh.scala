@@ -16,7 +16,7 @@ import scala.util.Success
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.09.18 16:12
-  * Description: Контроллер для корзинных экшенов.
+  * Description: Controller for order-related actions.
   */
 class OrderItemsAh[M](
                        lkCartApi        : ILkCartApi,
@@ -28,11 +28,11 @@ class OrderItemsAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Клик по галочке item'а.
+    // Item's selection checkbox changed its state.
     case m: CartSelectItem =>
       val v0 = value
       val selItemIds2 = m.itemId.fold [Set[Gid_t]] {
-        // Управление всеми элементами.
+        // Overall all-items checkbox inside table header.
         if (m.checked) {
           (for {
             oc      <- v0.orderContents.iterator
@@ -48,8 +48,8 @@ class OrderItemsAh[M](
         }
 
       } { itemId =>
+        // Checkbox for only one item.
         val itemIdSet = Set.empty + itemId
-        // Управление одним элементом
         if (m.checked) {
           v0.itemsSelected ++ itemIdSet
         } else {
@@ -60,14 +60,14 @@ class OrderItemsAh[M](
       updated( v2 )
 
 
-    // Нажатие по кнопке удаления выбранных item'ов.
+    // Delete items button pressed.
     case CartDeleteBtnClick =>
       val v0 = value
       if (v0.itemsSelected.isEmpty || v0.orderContents.isPending) {
         noChange
 
       } else {
-        // Запросить на сервере удаление, возвращающее обновлённый MOrderContent.
+        // Execute items deletion request on server:
         val req2 = v0.orderContents.pending()
         val timestampMs = req2.asInstanceOf[PendingBase].startTime
         val fx = Effect {
@@ -83,7 +83,7 @@ class OrderItemsAh[M](
       }
 
 
-    // Запуск запроса данных текущего ордера на сервер.
+    // Ask server about order contents.
     case m: GetOrderContent =>
       val v0 = value
       if ( v0.orderContents.isPending ) {
@@ -105,7 +105,7 @@ class OrderItemsAh[M](
       }
 
 
-    // Обработка ответа по данным на текущий ордер.
+    // GetOrderContent response reaction.
     case m: HandleOrderContentResp =>
       val v0 = value
       if (v0.orderContents isPendingWithStartTime m.timestampMs) {
@@ -123,7 +123,7 @@ class OrderItemsAh[M](
             )
               .to( LazyList )
           ),
-          // Сброс (перефильтровать?) выделенных элементов, т.к. список item'ов изменился.
+          // Reset (re-filter?) selected items, because items list updated.
           itemsSelected =
             if (req2.isFailed) v0.itemsSelected
             else Set.empty,

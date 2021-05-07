@@ -11,7 +11,7 @@ import scala.scalajs.js.typedarray.Uint8Array
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 14.06.18 15:18
-  * Description: Унифицированная модель доступа к платформо-зависимым данным.
+  * Description: Utils for parsing bluetooth adv data.
   */
 object BtAdvData {
 
@@ -38,7 +38,7 @@ object BtAdvData {
   }
 
 
-  /** Интерфейс одного токена. */
+  /** Parsed token interface. */
   sealed trait ScanRecordToken
 
   object ScanRecordToken {
@@ -47,26 +47,26 @@ object BtAdvData {
       lazy val uuid16lc = helper.to16lc(part)
 
       def matchUuid(serviceUuid: UuidToken): Boolean = {
-        // Для ускорения можно сравнивать part, если длины совпадают.
+        // Compare parts of service UUID, only if parts lengths matches.
         if (part.length ==* serviceUuid.part.length) {
-          // Одинаковые длины - значит сравниваем только эти значимые части. Обычно тут 2 байта для маячков eddystone.
+          // Same length of parts: compare these parts. Usually, 2 bytes here for 0xFEAA for EddyStone.
           part equalsIgnoreCase serviceUuid.part
         } else {
-          // Длины id различаются. Сравнить полные uuid.
+          // Different len for parts. Compare full Service UUIDs
           uuid16lc equalsIgnoreCase serviceUuid.uuid16lc
         }
       }
 
     }
     object UuidToken {
-      /** UUID-кусок для eddystone-сервиса. */
+      /** UUID-part for EddyStone service UUID. */
       def EDDY_STONE = apply( BleConstants.Beacon.EddyStone.SERVICE_UUID_16B_LC, UuidHelper.B2 )
     }
 
-    /** Локальное имя устройства. */
+    /** Device local name. */
     final case class LocalName(name: String) extends ScanRecordToken
 
-    /** Нормированная мощность сигнала устройства. */
+    /** Normal device signal tx-power. */
     final case class TxPower(txPowerDb: Int) extends ScanRecordToken
 
     final case class ServiceData(uuid: UuidToken, data: Uint8Array) extends ScanRecordToken
@@ -113,11 +113,11 @@ object BtAdvData {
   }
 
 
-  /** Пропарсить scan record. */
+  /** Parse scan record. */
   def parseScanRecord(arr: Uint8Array): List[ScanRecordToken] = {
     val tokensAcc = List.newBuilder[ScanRecordToken]
 
-    /** Прочитать полный uuid из массива по указанному индексу. */
+    /** Parse full uuid from array by offset. */
     def __arrayReadUuidFull(offset: Int): ScanRecordToken.UuidToken = {
       ScanRecordToken.UuidToken(
         JsBinaryUtil.byteArrayReadUuid(arr, offset),
@@ -125,7 +125,7 @@ object BtAdvData {
       )
     }
 
-    /** Кода чтения неполного uuid. */
+    /** Parse partial UUID. */
     def __readShortenUuid(pos: Int, len: Int, helper: UuidHelper)(reader: (Uint8Array, Int) => Double): ScanRecordToken.UuidToken = {
       val part = reader(arr, pos)
       val hex = JsBinaryUtil.toHexString( part, len )
@@ -136,15 +136,15 @@ object BtAdvData {
     val l32bit = l16bit * 2
     val l128bit = l32bit * l32bit
 
-    /** Прочитать 2-байтовый uuid. */
+    /** Parse 2-bytes short UUID. */
     def __read16bitUuid(pos: Int): ScanRecordToken.UuidToken =
       __readShortenUuid(pos, len = l16bit, UuidHelper.B2)( JsBinaryUtil.littleEndianToUint16 )
 
-    /** Прочитать 4-байтовый uuid. */
+    /** Parse 4-bytes short UUID. */
     def __read32bitUuid(pos: Int): ScanRecordToken.UuidToken =
       __readShortenUuid(pos, len = l32bit, UuidHelper.B4)( JsBinaryUtil.littleEndianToUint32 )
 
-    /** Прочитать последовательности элементов одинаковой длины. */
+    /** Parse sequence of fixed-len elements. */
     def __readMany[T](pos: Int, fullDataLen: Int, oneItemLen: Int)(reader: Int => T): Iterator[T] = {
       for {
         i <- 0.to(fullDataLen, oneItemLen).iterator
@@ -153,11 +153,11 @@ object BtAdvData {
       }
     }
 
-    // Цикл прохода по массиву байт.
+    // Parsing on while loop over array of bytes.
     @tailrec
     def __step(pos: Int): Unit = {
       if (pos < arr.length) {
-        // Сначала идёт байт длины. 0 значит надо закончить парсинг.
+        // Starting from length byte. 0 to stop parsing.
         val tokenBytesLen = arr(pos)
         if (tokenBytesLen > 0) {
           val typePos = pos + 1
@@ -167,11 +167,11 @@ object BtAdvData {
 
           typeCode match {
 
-            // Короткий двухбайтовый id сервиса (без данных).
+            // Short 2-byte service UUID.
             case GattTypes.EBLE_16BitUUIDInc | GattTypes.EBLE_16BitUUIDCom =>
               tokensAcc ++= __readMany(dataPos, dataLen, l16bit)(__read16bitUuid)
 
-            // Короткий 4-байтовый id сервиса
+            // Short 4-byte service UUID.
             case GattTypes.EBLE_32BitUUIDInc | GattTypes.EBLE_32BitUUIDCom =>
               tokensAcc ++= __readMany(dataPos, dataLen, l32bit)(__read32bitUuid)
 
@@ -206,21 +206,21 @@ object BtAdvData {
               tokensAcc += ScanRecordToken.ManufacturerData(data)
 
             case _ =>
-              // Для маячков - это что-то неважное. Пропускаем мимо.
+              // For beacons - dont care. Just skip it.
               //println("Unknown eBLE GATT type: 0x" + JsBinaryUtil.toHexString(typeCode, 1))
 
           }
 
-          // Переход на следующую итерацию. +1 т.к. байт длины тоже имеет длину.
+          // Next step, next bytes. +1 - because len byte also have its len.
           __step( pos + tokenBytesLen + 1 )
         }
       }
     }
 
-    // Запустить проход по массиву байт.
+    // Go over bytes array:
     __step(0)
 
-    // Собрать и вернуть итоговый список.
+    // Finally, return collected results...
     tokensAcc.result()
   }
 

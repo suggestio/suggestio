@@ -10,11 +10,10 @@ import org.scalajs.dom.html
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.09.18 17:42
-  * Description: Поддержка инициализации для react-формы корзины/биллинга.
+  * Description: Initializer for Cart react-form.
   */
 trait CartPageInit extends InitRouter {
 
-  /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
   override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
     if (itg ==* MJsInitTargets.LkCartPageForm) {
       _doInit()
@@ -24,17 +23,14 @@ trait CartPageInit extends InitRouter {
   }
 
 
-  /** Произвести запуск корзины. */
+  /** Start the Cart form. */
   private def _doInit(): Unit = {
     val modules = new CartModules
-
-    // Выполнить инициализацию circuit'а:
     val circuit = modules.cartPageCircuit
 
-    // Рендер корзины на экране:
-    // Найти на странице контейнер для формы и отрендерить:
+    // Render cart into the DOM:
     val cartFormCont = VUtil.getElementById[html.Div]( CartConstants.FORM_ID ).get
-    val formContent = circuit.wrap( identity(_) )( modules.orderR.apply )
+    val formContent = circuit.wrap( identity(_) )( modules.orderR.component.apply )
     formContent.renderIntoDOM( cartFormCont )
   }
 

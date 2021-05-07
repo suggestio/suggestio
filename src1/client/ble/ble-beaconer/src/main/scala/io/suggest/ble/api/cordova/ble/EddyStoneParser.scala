@@ -19,18 +19,18 @@ import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 13.10.16 11:34
-  * Description: Поддержка парсинга маячков в EddyStone.
+  * Description: Beacon parser for EddyStone beacons.
   */
 object EddyStoneParser extends BeaconParserFactory {
   override type T = EddyStoneParser
 }
 
 
-/** Парсер для маячков по спеке Eddy Stone.
+/** Parser for beacons according to EddyStone-UID specs.
   *
   * @param dev BLE Device info.
   *
-  * Инфа по EddyStone-UID-маячку от MS на Android выглядит так:
+  * Info about EddyStone-UID-beacon from MagicSystem on Android looks like that:
   * {{{
   *   {
   *     "address": "EF:3B:62:6A:2E:9B",
@@ -45,7 +45,7 @@ object EddyStoneParser extends BeaconParserFactory {
   *   }
   * }}}
   *
-  * А это сигнал EddyStone-URL маячка:
+  * But, EddyStone-URL signal looks similar:
   * {{{
   *   {
   *     "address": "EF:3B:62:6A:2E:9B",
@@ -60,7 +60,7 @@ object EddyStoneParser extends BeaconParserFactory {
   *   }
   * }}}
   *
-  * TODO В теории, могут быть маячки, отсылающие пачкой несколько фреймов, а не по очереди.
+  * TODO Theoretically, may be EddyStone beacons, sending several frames at once.
   */
 case class EddyStoneParser(override val dev: BtDevice)
   extends BeaconParser
@@ -70,9 +70,9 @@ case class EddyStoneParser(override val dev: BtDevice)
   override type T = MEddyStoneUid
 
   /**
-    * Парсинг eddystone-маячков.
-    * @see Содрано с [[https://github.com/evothings/evothings-libraries/blob/master/libs/evothings/eddystone/eddystone.js#L79]]
-    * @return Опциональный EddyStone или exception.
+    * Extract EddyStone frame from bluetooth adv. data.
+    * @see From [[https://github.com/evothings/evothings-libraries/blob/master/libs/evothings/eddystone/eddystone.js#L79]]
+    * @return Optional EddyStone data or exception.
     */
   override def parse(): ParseRes_t = {
     val s = (for {
@@ -80,17 +80,17 @@ case class EddyStoneParser(override val dev: BtDevice)
       advDataRaw <- dev.advertising.iterator
       if advDataRaw != null
 
-      // Найти service data для eddystone.
-      // Логика разветвляется, т.к. здесь многое зависит от платформы этого [мобильного] устройства.
-      // Android зачем-то возвращает только сырой блобик с advertising data.
-      // iOS возвращает разобранный объект с бинарями в некоторых местах.
+      // Find service data for eddystone.
+      // Logic here splits, because logic is platform-depend (android, ios, etc).
+      // Android returned raw blob with advertising data.
+      // iOS returns slightly-parsed object with binaries inside some parts.
       esAdBytes: Uint8Array <- {
         val rawType = js.typeOf(advDataRaw.asInstanceOf[js.Any])
 
         if ( rawType ==* JsTypes.OBJECT ) {
           val eddyStoneUuidTok = ScanRecordToken.UuidToken.EDDY_STONE
           val resps = advDataRaw match {
-            // Обнаружен сырой выхлоп из андройда
+            // Here is android raw blob.
             case arrBuf: ArrayBuffer =>
               val parsedTokens = BtAdvData.parseScanRecord( new Uint8Array(arrBuf) )
               for {
@@ -109,7 +109,7 @@ case class EddyStoneParser(override val dev: BtDevice)
                 sd.data
               }
 
-            // Обнаружен распарсенный выхлоп от apple-ios.
+            // Parsed output, apple-ios result.
             case _ =>
               val iosAdData = advDataRaw.asInstanceOf[CBAdvData]
               for {
@@ -124,27 +124,28 @@ case class EddyStoneParser(override val dev: BtDevice)
           resps
 
         } else {
-          // Что тут?
+          // Wtf?
           logger.warn( ErrorMsgs.JSON_PARSE_ERROR, msg = advDataRaw )
           Nil
         }
       }
 
     } yield {
-      // Это eddystone какого-то типа. На руках есть service data, заявленная для eddystone uuid.
-      // Надо разобрать байты, сверить тип с UID:
+      // This is EddyStone of some type. We have service data, possibly related to eddystone uuid.
+      // Next, parse frame bytes, compare type with EddyStone-UID identifier:
       val frameCode = esAdBytes(0)
 
       if (
-        // 2017.mar.29: Бывают инновационные маячки, которые излишне длинные фреймы, что не противоречит стандарту.
-        // Могут и 20 байт прислать, где в хвосте 0x0000. Первый такой маячок был обнаружен в ТК Гулливер.
-        // Парсим только первые N байт в UID-фреймах:
+        // 2017-03-29: Exists over-innovate beacons, sending too big frames (ok to EddyStone standard).
+        // Also, such beacons may send 20 bytes, and 0x0000 in the tail. First found in TK Gulliver.
+
+        // Parse only firs N bytes only in EddyStone-UID frame:
         frameCode ==* MFrameTypes.UID.frameCode &&
           esAdBytes.byteLength >= MFrameTypes.UID.frameMinByteLen
       ) {
         val euid = MEddyStoneUid(
           rssi    = dev.rssi
-            // Фильтруем сигналы до валидных значений. В частности, фильтруем dev.rssi=127, официально означающий None.
+            // Filter signal RSSI to valid value. Filter out dev.rssi=127, officially meaning None.
             .filter( RadioUtil.isRssiValid )
             .toOption,
           txPower = JsBinaryUtil.littleEndianToInt8(esAdBytes, 1),
@@ -160,10 +161,9 @@ case class EddyStoneParser(override val dev: BtDevice)
         Left(frameCode)
       }
     })
-    // Вернуть первый найденный uid
       .to( LazyList )
 
-    // Найти первый eddystone-UID. Если нет, то вернуть первый попавшийся элемент.
+    // Return first valid EddyStone-UID. If not found, return something, if any.
     s .find(_.isRight)
       .orElse( s.headOption )
   }

@@ -9,7 +9,7 @@ import io.suggest.bill.cart.m.{GetOrderContent, LoadCurrentOrder}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 27.09.18 17:13
-  * Description: Корневой (config-level?) контроллер.
+  * Description: Cart config controller.
   */
 class BillConfAh[M](
                      modelRW: ModelRW[M, MCartConf]
@@ -19,7 +19,7 @@ class BillConfAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Экшен загрузки/перезагрузки текущего ордера. Может быть инициирован юзером.
+    // Action for (re)loading current order.
     case LoadCurrentOrder =>
       val v0 = value
       val fx = GetOrderContent( orderId = v0.orderId )

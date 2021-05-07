@@ -1,2 +1,4 @@
-Основная часть компонента корзины покупок.
-Должна быть расшарена между lk-cart и sc3.
+Cart Form.
+
+React form for Cart and other orders.
+Must be ready to share code between LK and SC3 forms.

@@ -17,8 +17,8 @@ import io.suggest.dt.CommonDateTimeUtil.Implicits._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 28.09.18 11:02
-  * Description: Рендер мета-данных по одному ордеру.
-  * Для ордера-корзины это не рендерилось, в основном для архивных и остальных ордеров.
+  * Description: One order meta-data display component.
+  * For cart-order this is mostly useless; only for archived or other orders.
   */
 class OrderInfoR {
 
@@ -33,7 +33,7 @@ class OrderInfoR {
         MuiCard()(
           MuiCardContent()(
 
-            // Заголовок - Заказ N3343 | или Корзина | ...
+            // Header: - Order #3343 | or Cart | or ...
             MuiTypoGraphy(
               new MuiTypoGraphyProps {
                 override val variant = MuiTypoGraphyVariants.h5
@@ -45,7 +45,7 @@ class OrderInfoR {
                 }
             ),
 
-            // Статус заказа с датой выставления статуса.
+            // Order status with date of last status change.
             materialui.MuiTypoGraphy(
               new MuiTypoGraphyProps {
                 override val variant = MuiTypoGraphyVariants.caption
@@ -57,7 +57,7 @@ class OrderInfoR {
               HtmlConstants.PIPE,
               HtmlConstants.SPACE,
 
-              // Дата выставления статуса
+              // Date of order's status change.
               YmdR(
                 morder.dateStatus.toLocalDate.toYmd
               )()
@@ -71,11 +71,10 @@ class OrderInfoR {
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply( propsOptProxy: Props ) = component( propsOptProxy )
 
 }

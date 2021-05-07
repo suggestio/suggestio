@@ -16,8 +16,7 @@ import monocle.macros.GenLens
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.10.16 16:01
-  * Description: Модель состояния для Beaconer-контроллера.
-  * Является неявно-пустой, т.е. живёт без Option.
+  * Description: Beaconer state-data container model.
   */
 object MBeaconerS {
 
@@ -51,27 +50,27 @@ object MBeaconerS {
 }
 
 
-/** Контейнер данных состояния мониторилки маячков.
+/** Beaconer state-data container class.
+  * Contains runtime state about BLE beacons scanning, and other data.
   *
-  * @param isEnabled Изначально - флаг, но он имеет более широкое значение.
-  *                  Pot.empty - сейчас BLE API недоступно на устройстве.
-  *                  true - включено, true+pending - ВКЛючается
-  *                  false - выключено, false+pending - ВЫКЛючается
-  * @param afterOnOff После включения/выключения надо исполнить указанный эффект.
-  * @param beacons Текущая карта маячков по id.
-  * @param envFingerPrint Хэш некоторых данных из карты маячков: чек-сумма текущего состояния.
-  * @param bleBeaconsApi Текущее активное API.
-  *                      empty - нет подключённого API на текущий момент.
-  *                      Pending - идёт активация API в фоне.
-  *                      Error - не удалось задействовать обнаруженное API.
-  * @param gcIntervalId id таймера интервала сборки мусора.
-  * @param nearbyReport Итоговый отчёт по текущим наблюдаемым маячкам.
-  *                     Подписка на его изменения позволяет определять появление/исчезновение маячков.
-  * @param hasBle Известно ли, есть ли bluetooth-поддержка на данном устройстве.
-  *               Проверяется только после platform ready.
-  *               Pot.empty - ничего не проверялось, пока что.
-  *               Ready(true|false) - известно, поддерживается ли bluetooth или нет.
-  *               failed(ex) - ошибка проверки доступности bluetooth на текущем устройстве.
+  * @param isEnabled Is scanning enabled now?
+  *                  Pot.empty - now BLE API not available on device or not yet tested.
+  *                  true - Enabled now. true+pending - Enabling in progress.
+  *                  false - Disabled. false+pending - Disabling in progress.
+  * @param afterOnOff After enabling/disablig, this effect must be executed.
+  * @param beacons Current beacons scan state (map by beacon id).
+  * @param envFingerPrint Beacons scan state current state hash.
+  * @param bleBeaconsApi Current active BLE API.
+  *                      Pot.empty - no initialized API, at the moment.
+  *                      Pending - API initialization going in background.
+  *                      Error - API failed to initialize.
+  * @param gcIntervalId timer id for GC in beacons.
+  * @param nearbyReport Overall report about currently visible beacons.
+  * @param hasBle Has BLE scan support on this device?
+  *               Can be checked after Cordova PLATFORM_READY
+  *               Pot.empty - not checked, by now.
+  *               Ready(true|false) - Detected bluetooth support.
+  *               failed(ex) - Detection failed.
   */
 case class MBeaconerS(
                        isEnabled            : Pot[Boolean]               = Pot.empty,
@@ -88,13 +87,13 @@ case class MBeaconerS(
   extends EmptyProduct
 {
 
-  /** Отчёт по id маяков. */
+  /** nearbyReport, indexed by beacon id. */
   lazy val nearbyReportById: Map[String, MUidBeacon] =
     nearbyReport
       .zipWithIdIter
       .toMap
 
-  // Перезапись toString, чтобы лишний мусор не рендерить.
+  /** Minimized toString implementation. */
   override final def toString: String = {
     import HtmlConstants._
 
@@ -102,14 +101,14 @@ case class MBeaconerS(
       .append( `(` )
       .append( isEnabled ).append( COMMA )
       .append( notifyAllTimer )
-      // Вместо карты маячков генерим упрощённый список из укороченных id маячков:
+      // Instead of full beacons map rendering, generate simplified string.
       .append( beacons.size ).append( COLON )
       .append( `[` )
       .appendAll(
         beacons
           .keysIterator
           .flatMap { bcnId =>
-            // Генерим строку вида "02...43A5"
+            // Generate string like "02...43A5"
             bcnId.substring(0, 2) ::
               HtmlConstants.ELLIPSIS ::
               bcnId.substring(bcnId.length - 4, bcnId.length) ::
@@ -119,7 +118,7 @@ case class MBeaconerS(
           .flatMap(_.toCharArray)
       )
       .append( `]` ).append( COMMA )
-      // mearbyReport: укорачиваем просто до длины
+      // nearbyReport: render only hash-length, not full hash.
       .append( nearbyReport.length ).append( DIEZ ).append( COMMA )
       .append( gcIntervalId ).append( COMMA )
       .append( envFingerPrint ).append( COMMA )

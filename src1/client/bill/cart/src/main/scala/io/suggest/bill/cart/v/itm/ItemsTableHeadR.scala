@@ -21,13 +21,13 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.09.18 18:46
-  * Description: Компонент для рендера шапки таблицы заказа.
+  * Description: Order items table header component.
   */
 class ItemsTableHeadR(
                        orderCss    : OrderCss,
                      ) {
 
-  /** Модель пропертисов элемента. */
+  /** Properties model. */
   case class PropsVal(
                        hasCheckedItems      : Boolean,
                        hasUnCheckedItems    : Boolean,
@@ -50,21 +50,20 @@ class ItemsTableHeadR(
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
-    private def _onCheckBoxClick(e: ReactEventFromInput): Callback = {
+    private lazy val _onCheckBoxClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val checked = e.target.checked
       dispatchOnProxyScopeCB($, CartSelectItem(itemId = None, checked = checked))
     }
-    private lazy val _onCheckBoxClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onCheckBoxClick )
 
 
     def render(propsProxy: Props): VdomElement = {
       val props = propsProxy.value
 
-      // Заголовок таблицы.
+      // Table header
       MuiTableHead()(
         MuiTableRow()(
 
-          // Столбец рендера карточки
+          // Ad preview or node logo column
           MuiTableCell {
             val cssClasses = new MuiTableCellClasses {
               override val root = orderCss.ItemsTable.NodePreviewColumn.head.htmlClass
@@ -76,21 +75,20 @@ class ItemsTableHeadR(
             HtmlConstants.NBSP_STR
           ),
 
-          // Столбец названия товара
+          // Item contents/name columnt.
           MuiTableCell()(
             Messages( MsgCodes.`_order.Items` )
           ),
 
-          // Столбец стоимости товара
+          // Price column.
           MuiTableCell()(
             Messages( MsgCodes.`Price` )
           ),
 
-          // Опциональный столбец статуса обработки одного item'а.
+          // Optional status column.
           MuiTableCell()(
             if ( props.isItemsEditable && (props.hasUnCheckedItems || props.hasCheckedItems) ) {
-              // Разрешён рендер галочки
-              // Есть хотя бы один какой-либо item? Иначе в галочке нет смысла.
+              // Checkbox will be rendered.
               MuiCheckBox(
                 new MuiCheckBoxProps {
                   override val onChange = _onCheckBoxClickCbF
@@ -112,11 +110,10 @@ class ItemsTableHeadR(
 
   }
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsProxy: Props) = component( propsProxy )
 
 }

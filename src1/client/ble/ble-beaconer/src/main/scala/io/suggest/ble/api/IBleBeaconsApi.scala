@@ -15,36 +15,35 @@ import scala.util.Try
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.10.16 16:21
-  * Description: Интерфейс для конкретных API'шек работы с маячками.
-  * Изначально была реализация для cordova-ble, но в планах была ещё реализовать web-bluetooth.
+  * Description: Interface for Bluetooth beacons radio scanning API.
   */
 
 trait IBleBeaconsApi {
 
-  /** Узнать, включён ли bluetooth в данный момент? */
+  /** Is Bluetooth enabled at the moment? */
   def isBleEnabled(): Future[Boolean]
 
-  /** Попробовать включить bluetooth. */
+  /** Try to enable Bluetooth. */
   def enableBle(): Future[Boolean]
 
-  /** Доступно ли текущее API для использования? */
+  /** Is this API implementation available for using? */
   def isApiAvailable: Boolean
 
-  /** Начать слушанье ble-маячков, отсылая данные в указанный fsm. */
+  /** Start to listen for bluetooth beacon signals. */
   def listenBeacons(opts: IBleBeaconsApi.ListenOptions): Future[_]
 
-  /** Прекратить любое слушанье маячков. */
+  /** Stop all bluetooth listening. */
   def unListenAllBeacons(): Future[_]
 
-  /** Требуется ли перезапуск BLE-сканнера?
-    * Тут НЕ сравниваются инстансы функций onBeacon и проч. Интересует только сверка настроек сканирования. */
+  /** Is this scanner restart needed, if some settings changed?
+    * Do not compared ListenOptions.onBeacon or other function instances. Only compare basic scan options. */
   def isScannerRestartNeededSettingsOnly(
                                           v0: IBleBeaconsApi.ListenOptions,
                                           v2: IBleBeaconsApi.ListenOptions,
                                           osFamily: Option[MOsFamily],
                                         ): Boolean
 
-  /** Требуется ли перезапуск BLE-сканнера? Сравнение всех элементов ListenOptions. */
+  /** Is scanner restart needed, if some/any of ListenOptions changed. */
   def isScannerRestartNeeded(v0: IBleBeaconsApi.ListenOptions,
                              v2: IBleBeaconsApi.ListenOptions,
                              osFamily: Option[MOsFamily]): Boolean = {
@@ -70,18 +69,18 @@ object IBleBeaconsApi extends Log {
 
   type ScanMode = Int
   object ScanMode {
-    /** Подразумевается скан без скана: если другие приложения/сервисы будут слушать эфир, то сюда бонусом упадут возможные результаты, если повезёт. */
+    /** Scan without scanning. Other unknown services/apps may start radio scan, and results may be popupalted into this beaconer. */
     final def OPPORTUNISTIC = 0.asInstanceOf[ScanMode]
-    /** Скан с длинными паузами. */
+    /** Scan with long pauses to save more energy. */
     final def LOW_POWER = 1.asInstanceOf[ScanMode]
-    /** Скан и паузы в сканировании примерно поровну. */
+    /** Scan and power-saving pauses nearby equal, balanced power-consumption. */
     final def BALANCED = 2.asInstanceOf[ScanMode]
-    /** Скан без пауз. */
+    /** Scan without any pauses, maximum power consumption. */
     final def FULL_POWER = 3.asInstanceOf[ScanMode]
   }
 
 
-  /** Найти доступные API для маячков. */
+  /** Find available API for beacon scan. */
   def detectApis(): Seq[IBleBeaconsApi] = {
     (for {
       cordovaBleApi <- Try( new CordovaBleApi )

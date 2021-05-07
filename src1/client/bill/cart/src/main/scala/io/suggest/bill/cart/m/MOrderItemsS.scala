@@ -13,7 +13,7 @@ import monocle.macros.GenLens
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.09.18 15:07
-  * Description: Контейнер разных данных по текущему ордеру или корзине.
+  * Description: Order items state datas model.
   */
 object MOrderItemsS {
 
@@ -33,9 +33,11 @@ object MOrderItemsS {
 }
 
 
-/** Данные биллинга.
+/** Billing state-data container.
   *
-  * @param orderContents Содержимое ордера.
+  * @param orderContents Order contents request state.
+  * @param itemsSelected Currently selected items in current order.
+  * @param jdRuntime Ads render runtime data.
   */
 case class MOrderItemsS(
                          orderContents    : Pot[MOrderContentJs]  = Pot.empty,

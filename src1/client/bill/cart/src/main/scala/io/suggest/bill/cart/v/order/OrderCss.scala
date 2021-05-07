@@ -6,25 +6,25 @@ import io.suggest.css.ScalaCssDefaults._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 25.09.18 22:25
-  * Description: Статические стили для компонента корзины.
+  * Description: Static CSS styles for Cart Form.
   */
 class OrderCss extends StyleSheet.Inline {
 
   import dsl._
 
-  // Стили для таблицы item'ов.
+  /** Styles for order items table. */
   object ItemsTable {
 
-    /** Колонка с превьюшкой карточки. */
+    /** Ad preview or node logo column styles. */
     object NodePreviewColumn {
 
-      /** Стиль для ячейки заголовка колонки. */
+      /** Preview cell's header column style. */
       val head = style(
         width( 70.px ),
         padding( 0.px )
       )
 
-      /** Стиль для ячейки контента колонки. */
+      /** Preview cell body style. */
       val body = {
         val fivePx = 5.px
         style(
@@ -34,7 +34,7 @@ class OrderCss extends StyleSheet.Inline {
         )
       }
 
-      /** Стиль для картинки логотипа adn-узла.*/
+      /** Node logo image style. */
       val adnLogo = style(
         width( 75.px )
       )
@@ -42,21 +42,21 @@ class OrderCss extends StyleSheet.Inline {
     }
 
 
-    // Стили для тул-бара над таблицей.
+    /** Toolbar styles. */
     object ToolBar {
 
-      /** Распорка между левым и правым элементами. */
+      /** Delimiter between left/right toolbar parts style. */
       val spacer = style(
         flex := "1 1 100%"
       )
 
-      /** Контейнер элементов тулбара. */
+      /** Toolbar container style. */
       val root = style(
         paddingRight( 32.px ).important,
         paddingLeft( 70.px ).important
       )
 
-      /** Контейнер заголовка на тулбаре. */
+      /** Toolbar title container style. */
       val title = style(
         flex := "0 0 auto"
       )
@@ -64,7 +64,7 @@ class OrderCss extends StyleSheet.Inline {
     }
 
 
-    /** Стили, используемые для рендера тела таблицы: item'ов. */
+    /** Order item table body styles. */
     object TBody {
 
       val fullRowCell = style(
@@ -78,7 +78,7 @@ class OrderCss extends StyleSheet.Inline {
 
   object PayBtn {
 
-    /** Стили для кнопки перехода к оплате. */
+    /** Style for PAY button. */
     val root = style(
       float.right
     )

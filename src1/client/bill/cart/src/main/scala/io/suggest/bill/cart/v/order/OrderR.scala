@@ -19,7 +19,7 @@ import japgolly.univeq._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.09.18 18:20
-  * Description: Корневой компонент корзины приобретённых товаров и услуг.
+  * Description: Cart/order Form root component.
   */
 class OrderR(
               cartCss                : OrderCss,
@@ -47,48 +47,48 @@ class OrderR(
                     txnsPricedOptC  : ReactConnectProxy[txnsR.Props_t],
                   )
 
-  /** Ядро компонента корзины. */
+  /** Root component core. */
   class Backend( $: BackendScope[Props, State] ) {
 
     def render(propsProxy: Props, s: State): VdomElement = {
       <.div(
 
-        // Краткое описание заказа, если требуется:
-        s.orderOptC { orderInfoR.apply },
+        // Short order description, if any.
+        s.orderOptC { orderInfoR.component.apply },
 
-        // Статические стили плитки.
+        // Static cart form CSS styles:
         propsProxy.wrap(_ => cartCss)( CssR.compProxied.apply ),
 
-        // Статические jd-стили:
+        // Static jd-css styles:
         propsProxy.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
 
-        // Рендер стилей отображаемых карточек.
+        // Dynamic jd-css styles (jd-runtime).
         s.jdCssC { CssR.compProxied.apply },
 
-        // Панелька-тулбар
-        s.toolBarPropsC { itemsToolBarR.apply },
+        // Cart Form Toolbar
+        s.toolBarPropsC { itemsToolBarR.component.apply },
 
         MuiTable()(
 
-          // Заголовок таблицы ордеров.
-          s.orderHeadC { itemsTableHeadR.apply },
+          // Order items table header.
+          s.orderHeadC { itemsTableHeadR.component.apply },
 
-          // Содержимое таблицы.
-          s.orderBodyC { itemsTableBodyR.apply }
+          // Order items table rows (tbody).
+          s.orderBodyC { itemsTableBodyR.component.apply }
 
         ),
 
         <.br,
         <.br,
 
-        // Кнопка перехода к оплате, когда оплата возможна (ордер-корзина + есть item'ы).
-        s.goToPayPropsC { goToPayBtnR.apply },
+        // PAY button, when payment is possible (non-empty cart-order).
+        s.goToPayPropsC { goToPayBtnR.component.apply },
 
         <.br,
         <.br,
 
-        // Список транзакций, если есть:
-        s.txnsPricedOptC { txnsR.apply }
+        // Transactions list, if any:
+        s.txnsPricedOptC { txnsR.component.apply }
 
       )
     }
@@ -96,7 +96,8 @@ class OrderR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
 
@@ -125,7 +126,7 @@ class OrderR(
         }( itemsTableBodyR.ItemsTableBodyRPropsValFastEq ),
 
         toolBarPropsC = propsProxy.connect { props =>
-          // Нужно отображать тулбар только если ордер-корзина
+          // Toolbar is visible only on cart-order, not visible with payed/closed/etc orders.
           val ocPot = props.order.orderContents
           OptionUtil.maybe {
             ocPot.exists { ocJs =>
@@ -142,8 +143,8 @@ class OrderR(
         }( OptFastEq.Wrapped( itemsToolBarR.ItemsToolBarRPropsValFastEq ) ),
 
         goToPayPropsC = propsProxy.connect { props =>
-          // TODO Разрешить сабмит без nodeId. Зависимость от nodeId - на уровне ЛК, хотя можно и без неё.
           for {
+            // TODO onNodeId: Allow to submit without nodeId, currenly Lk API historically depends on onNodeId, but not very needed.
             onNodeId <- props.conf.onNodeId
             if props.order.orderContents.exists { ocJs =>
               val oc = ocJs.content
@@ -182,7 +183,5 @@ class OrderR(
     }
     .renderBackend[Backend]
     .build
-
-  def apply(props: Props) = component( props )
 
 }
