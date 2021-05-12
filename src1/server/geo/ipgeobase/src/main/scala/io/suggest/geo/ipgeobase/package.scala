@@ -7,8 +7,9 @@ package io.suggest.geo
   */
 package object ipgeobase {
 
-  // Конкретный целочисленный тип CityId_t и его поддержка:
+  // Type of city ids, used in ipgeobase dump.
   type CityId_t = Short
+
   def StringToCityId(cityId: String): CityId_t = cityId.toShort
 
 }

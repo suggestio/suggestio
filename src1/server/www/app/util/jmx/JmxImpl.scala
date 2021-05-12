@@ -6,7 +6,7 @@ import models.adv.MExtTargetsJmx
 import models.mcal.MCalendarJmx
 
 import java.lang.management.ManagementFactory
-import io.suggest.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
+import io.suggest.geo.ipgeobase.{IpgbImporterJmx, MIpgbItemsJmx}
 import io.suggest.sec.util.SCryptUtilJmx
 import io.suggest.stat.inx.StatIndexUtilJmx
 import io.suggest.stat.m.MStatsJmx
@@ -39,8 +39,7 @@ case class JmxImpl @Inject()(
                                mNodesJmx                     : MNodesJmx,
                                geoTagsUtilJmx                : GeoTagsUtilJmx,
                                mExtTargetsJmx                : MExtTargetsJmx,
-                               mIpRangesJmx                  : MIpRangesJmx,
-                               mCitiesJmx                    : MCitiesJmx,
+                               MIpgbItemsJmx                 : MIpgbItemsJmx,
                                mStatsJmx                     : MStatsJmx,
                                ipgbImporterJmx               : IpgbImporterJmx,
                                statIndexUtilJmx              : StatIndexUtilJmx,

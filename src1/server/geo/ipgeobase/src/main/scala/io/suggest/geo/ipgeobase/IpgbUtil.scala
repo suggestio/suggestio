@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoPoint}
 import io.suggest.util.logs.MacroLogsImpl
+import japgolly.univeq._
 import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,9 +25,7 @@ final class IpgbUtil @Inject() (
 {
 
   private lazy val esModel = injector.instanceOf[EsModel]
-  private lazy val mIpRangesModel = injector.instanceOf[MIpRangesModel]
-  private lazy val mCities = injector.instanceOf[MCities]
-  private lazy val mIpRanges = injector.instanceOf[MIpRanges]
+  private lazy val mIpgbItemsModel = injector.instanceOf[MIpgbItemsModel]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
@@ -40,35 +39,54 @@ final class IpgbUtil @Inject() (
     */
   override def findIp(ip: String): Future[Option[MGeoFindIpResult]] = {
     import esModel.api._
-    import mIpRangesModel.api._
+    import mIpgbItemsModel.api._
 
+    val mIpgbItems = MIpgbItems.CURRENT
     for {
       // Найти диапазоны ip-адресов
-      ipRanges  <- mIpRanges.findForIp(ip)
+      ipRanges  <- mIpgbItems.findForIp(ip)
 
       // Выявить id городов, связанных с найденными диапазонами.
       cityEsIds = (for {
         ipRange <- ipRanges.iterator
-        cityId  <- ipRange.cityId
+        cityId  <- ipRange.payload.cityId
       } yield
-        MCity.cityId2esId( cityId )
+        MIpgbItem.cityId2esId( cityId )
       )
         .toSet
 
       // Получить города по city ids.
-      mcities   <- mCities.multiGet(cityEsIds)
+      mcities   <- mIpgbItems.multiGet(cityEsIds)
 
     } yield {
+      lazy val logPrefix = s"findId($ip):"
+
+      if (mcities.lengthIs > 1)
+        LOGGER.warn(s"$logPrefix Too many ${mcities.length} IPGB GeoLoc results found, but 0 or 1 expected. Some of the results will be dropped.\n ALL results are:\n ${mcities.mkString("\n ")}")
 
       // Собрать опциональный результат, залоггировать, вернуть.
-      val r = for {
-        mcity   <- mcities.headOption
-        mrange  <- ipRanges.find(_.cityId.contains( mcity.cityId ))
+      val r = (for {
+        mcity <- mcities.iterator
+        if {
+          val r = (mcity.payload.itemType ==* MIpgbItemTypes.City)
+          if (!r) LOGGER.warn(s"$logPrefix Expected city, but iprange received: $mcity")
+          r
+        }
+        mrange  <- ipRanges.find { ipRange =>
+          ipRange.payload.cityId ==* mcity.payload.cityId &&
+          ipRange.payload.cityId.nonEmpty
+        }
+        center <- {
+          val centerOpt = mcity.payload.center
+          if (centerOpt.isEmpty) LOGGER.error(s"$logPrefix City#${mcity.idOrNull} found, but center geoPoint missing or invalid:\n $mcity")
+          centerOpt
+        }
       } yield {
-        MGeoFindIpResult(mcity, mrange)
-      }
+        MGeoFindIpResult(center, mcity, mrange)
+      })
+        .nextOption()
 
-      LOGGER.trace(s"findId($ip):\n IP Ranges:\t${ipRanges.mkString(", ")}\n Cities:\t${mcities.mkString(", ")}\n Result:\t$r")
+      LOGGER.trace(s"$logPrefix\n IP Ranges:\t${ipRanges.mkString(", ")}\n Cities:\t${mcities.mkString(", ")}\n Result:\t$r")
       r
     }
   }
@@ -78,20 +96,18 @@ final class IpgbUtil @Inject() (
 
 /** Реализация модели результата работы [[IpgbUtil]].findId(). */
 final case class MGeoFindIpResult(
-                                   city: MCity,
-                                   range: MIpRange
+                                   override val center: MGeoPoint,
+                                   city: MIpgbItem,
+                                   range: MIpgbItem,
                                  )
   extends IGeoFindIpResult
 {
 
-  override def center: MGeoPoint =
-    city.center
-
   override def cityName: Option[String] =
-    Some( city.cityName )
+    city.payload.cityName
 
   override def countryIso2: Option[String] =
-    Some( range.countryIso2 )
+    range.payload.countryIso2
 
   override def accuracyMetersOpt: Option[Int] =
     // TODO Нужно ли что-нибудь тут задать? 50км например?

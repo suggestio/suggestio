@@ -34,13 +34,13 @@ class CidrParsers extends CityIdParser {
   def cityIdOptP: Parser[Option[CityId_t]] = ("-" ^^^ None) | (cityIdP ^^ Some.apply)
 
   /** Парсер одной строки файла. */
-  def cidrLineP: Parser[MIpRange] = {
+  def cidrLineP: Parser[MIpgbItem] = {
     // Защищаемся от дубликации инстансов парсеров для колонок с одинаковыми типами.
     val iip = inetIntP
     val ip4p = ip4P
     (iip ~> iip ~> ip4p ~ ("-" ~> ip4p) ~ countryIso2P ~ cityIdOptP) ^^ {
       case ipStart ~ ipEnd ~ countryIso2 ~ cityIdOpt =>
-        MIpRange(
+        MIpgbItem.ipRange(
           countryIso2 = countryIso2,
           ipRange     = Seq(ipStart, ipEnd),
           cityId      = cityIdOpt
@@ -62,16 +62,16 @@ class CityParsers extends CityIdParser {
   def nameP: Parser[String] = s"[^$whiteSpace]+".r
 
   /** Парсер одной строки в файле (парсинг одного города). */
-  def cityLineP: Parser[MCity] = {
+  def cityLineP: Parser[MIpgbItem] = {
     // Оптимизация: используем единые инстансы для повторяющихся парсеров
     val floatp = floatP
     val namep = nameP
     // Собираем парсер и маппер строки.
     cityIdP ~ namep ~ namep ~ namep ~ floatp ~ floatp ^^ {
       case cityId ~ cityName ~ region ~ fedDistrict ~ lat ~ lon =>
-        MCity(
+        MIpgbItem.city(
           cityId    = cityId,
-          cityName  = cityName,
+          cityName  = Some( cityName ),
           region    = Option(region),
           center    = MGeoPoint.fromDouble(lat = lat, lon = lon)
         )

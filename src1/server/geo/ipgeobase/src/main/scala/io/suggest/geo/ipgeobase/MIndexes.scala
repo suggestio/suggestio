@@ -46,7 +46,7 @@ final class MIndexes @Inject() (
         } else {
           0   // Нет дела до реплик на тестовой или dev-базе.
         }
-        LOGGER.debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
+        LOGGER.trace(s"REPLICAS_COUNT => $r, isProd = ${_isProd}")
         r
       }
   }

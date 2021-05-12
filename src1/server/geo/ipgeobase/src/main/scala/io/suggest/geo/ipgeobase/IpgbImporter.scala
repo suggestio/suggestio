@@ -35,13 +35,13 @@ final class IpgbImporter @Inject() (
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mIndexes = injector.instanceOf[MIndexes]
-  private lazy val mCitiesTmpFactory = injector.instanceOf[MCitiesTmpFactory]
-  private lazy val mIpRangesTmpFactory = injector.instanceOf[MIpRangesTmpFactory]
   private lazy val httpGetToFile = injector.instanceOf[HttpGetToFile]
   private lazy val asyncUtil = injector.instanceOf[AsyncUtil]
   private lazy val configuration = injector.instanceOf[Configuration]
   implicit private lazy val esClient = injector.instanceOf[org.elasticsearch.client.Client]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
+  import esModel.api._
 
   /** Ссылка для скачивания текущей базы. */
   private def ARCHIVE_DOWNLOAD_URL = configuration.getOptional[String]("ipgeobase.archive.url")
@@ -217,12 +217,11 @@ final class IpgbImporter @Inject() (
       bp = createBulkProcessor()
 
       // Наконец импортировать данные в новый индекс.
-      citiesImportFut = importCities(unpackedDir, bp, newIndexName)
+      toModel = MIpgbItems( newIndexName )
+      _ <- toModel.putMapping()
 
-      rangesImportFut = importIpRanges(unpackedDir, bp, newIndexName)
-
-      _ <- citiesImportFut
-      _ <- rangesImportFut
+      _ = importCities(toModel, unpackedDir, bp)
+      _ = importIpRanges(toModel, unpackedDir, bp)
 
       // TODO Нужен отдельный ExecutionContext. А он пока только в play есть...
       _ <- Future {
@@ -273,12 +272,7 @@ final class IpgbImporter @Inject() (
 
 
   /** Импорт таблицы городов. */
-  def importCities(dir: File, bp: BulkProcessor, newIndexName: String)(implicit dsl: MappingDsl): Future[_] = {
-    import esModel.api._
-
-    val mCitiesTmp = mCitiesTmpFactory.create(newIndexName)
-    val putMappingFut = mCitiesTmp.putMapping()
-
+  def importCities(toModel: MIpgbItems, dir: File, bp: BulkProcessor)(implicit dsl: MappingDsl): Unit = {
     val startedAtMs = System.currentTimeMillis
     lazy val logPrefix = s"importCities($startedAtMs):"
     val citiesFile = new File(dir, CITIES_FILENAME)
@@ -288,32 +282,30 @@ final class IpgbImporter @Inject() (
     val parsers = new CityParsers
     val p = parsers.cityLineP
 
-    for (_ <- putMappingFut) yield {
-      val src = Source.fromFile( citiesFile, CITIES_FILE_ENCODING )
-      val linesTotal = try {
-        src
-          .getLines()
-          .foldLeft(1) { (counter, cityLine) =>
-            val pr = parsers.parse(p, cityLine)
-            if (pr.successful) {
-              val mcity = pr.get
-              val inxReq = mCitiesTmp
-                .prepareIndexNoVsn(mcity)
-                .request()
-              bp.add( inxReq )
-            } else {
-              LOGGER.warn(s"${logPrefix}Failed to parse line $counter file=${citiesFile.getAbsolutePath}:\n$cityLine\n$pr")
-            }
-            if ((counter % 500) ==* 0)
-              LOGGER.trace(s"${logPrefix}Still importing... ($counter)")
-            counter + 1
+    val src = Source.fromFile( citiesFile, CITIES_FILE_ENCODING )
+    val linesTotal = try {
+      src
+        .getLines()
+        .foldLeft(1) { (counter, cityLine) =>
+          val pr = parsers.parse(p, cityLine)
+          if (pr.successful) {
+            val mcity = pr.get
+            val inxReq = toModel
+              .prepareIndexNoVsn(mcity)
+              .request()
+            bp.add( inxReq )
+          } else {
+            LOGGER.warn(s"${logPrefix}Failed to parse line $counter file=${citiesFile.getAbsolutePath}:\n$cityLine\n$pr")
           }
-      } finally {
-        src.close()
-      }
-
-      LOGGER.info(s"$logPrefix$linesTotal lines total. Took ${System.currentTimeMillis - startedAtMs} ms.")
+          if ((counter % 500) ==* 0)
+            LOGGER.trace(s"${logPrefix}Still importing... ($counter)")
+          counter + 1
+        }
+    } finally {
+      src.close()
     }
+
+    LOGGER.info(s"$logPrefix$linesTotal lines total. Took ${System.currentTimeMillis - startedAtMs} ms.")
   }
 
 
@@ -321,51 +313,41 @@ final class IpgbImporter @Inject() (
    * Импорт диапазонов ip-адресов. Используется Pg COPY table FROM source.
    * @param dir директория с распакованными файлами.
    */
-  def importIpRanges(dir: File, bp: BulkProcessor, newIndexName: String)(implicit dsl: MappingDsl): Future[_] = {
-    import esModel.api._
-
-    val mRangesTmp = mIpRangesTmpFactory.create( newIndexName )
-    val putMappingFut = mRangesTmp.putMapping()
-
+  def importIpRanges(toModel: MIpgbItems, dir: File, bp: BulkProcessor)(implicit dsl: MappingDsl): Unit = {
     val startedAtMs = System.currentTimeMillis
     lazy val logPrefix = s"importIpRanges($startedAtMs):"
     val cidrFile = new File(dir, IP_RANGES_FILENAME)
     LOGGER.debug(s"$logPrefix Will read $cidrFile ...")
 
-
     // Собираем инстанс парсера для всех строк:
     val parsers = new CidrParsers
     val p = parsers.cidrLineP
 
-    for (_ <- putMappingFut) yield {
-      // Делаем итератор для обхода неограниченно большого файла:
-
-      val src = Source.fromFile(cidrFile, IP_RANGES_FILE_ENCODING)
-      val linesTotal = try {
-        src
-          .getLines()
-          .foldLeft(1) { (counter, cidrLine) =>
-            val pr = parsers.parse(p, cidrLine)
-            if (pr.successful) {
-              val mrange = pr.get
-              bp.add {
-                mRangesTmp
-                  .prepareIndexNoVsn( mrange )
-                  .request()
-              }
-            } else {
-              LOGGER.warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
+    val src = Source.fromFile(cidrFile, IP_RANGES_FILE_ENCODING)
+    val linesTotal = try {
+      src
+        .getLines()
+        .foldLeft(1) { (counter, cidrLine) =>
+          val pr = parsers.parse(p, cidrLine)
+          if (pr.successful) {
+            val mrange = pr.get
+            bp.add {
+              toModel
+                .prepareIndexNoVsn( mrange )
+                .request()
             }
-            if ((counter % 20000) ==* 0)
-              LOGGER.trace(s"$logPrefix Still converting... ($counter)")
-            counter + 1
+          } else {
+            LOGGER.warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
           }
-      } finally {
-        src.close()
-      }
-
-      LOGGER.info(s"$logPrefix $linesTotal lines converted total. Took ${System.currentTimeMillis - startedAtMs} ms.")
+          if ((counter % 20000) ==* 0)
+            LOGGER.trace(s"$logPrefix Still converting... ($counter)")
+          counter + 1
+        }
+    } finally {
+      src.close()
     }
+
+    LOGGER.info(s"$logPrefix $linesTotal lines converted total. Took ${System.currentTimeMillis - startedAtMs} ms.")
   }
 
 }
