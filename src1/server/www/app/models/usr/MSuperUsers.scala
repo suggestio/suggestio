@@ -1,6 +1,7 @@
 package models.usr
 
 import io.suggest.common.empty.OptionUtil
+
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -12,81 +13,77 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.text.StringUtil
 import play.api.{Configuration, Environment, Mode}
 import play.api.inject.Injector
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.util.Try
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.09.15 12:38
- * Description: Модель суперюзеров.
+ * Description: SuperUsers model.
  */
 @Singleton
-class MSuperUsers @Inject()(
-                             injector        : Injector,
-                           )
+final class MSuperUsers @Inject()(
+                                   injector        : Injector,
+                                 )
   extends MacroLogsImpl
 {
+  private def configuration = injector.instanceOf[Configuration]
 
-  /** Список емейлов админов suggest.io.
-    * Раньше жил в конфигах, что вызывало больше неудобств, чем пользы. */
-  val SU_EMAILS: Seq[String] = {
-    Seq(
-      "konstantin.nikiforov@cbca.ru",
-      "sasha@cbca.ru",
-      "alexander.pestrikov@cbca.ru"
-    )
+  /** List of superuser emails from application.conf */
+  def SU_EMAILS: Set[String] = {
+    configuration
+      .getOptional[Seq[String]]( "superusers.emails" )
+      .fold( Set.empty[String] )( _.toSet )
   }
 
-  /** PersonId суперпользователей sio. */
+  /** Person NodeIDs of superusers. */
   private var SU_IDS: Set[String] = Set.empty
 
   // Constructor
   onAppStart()
 
-  /** Логика реакции на запуск приложения: нужно создать суперюзеров в БД. */
+  /** onAppStart hook, called from constructor during play initialization. To initialize superuser nodes in DB. */
   private def onAppStart(): Future[_] = {
-    // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
-    // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
-    // юзеров в MNode, при наличии уже существующих в MPerson.
-    val ck = "start.ensure.superusers"
-    val createIfMissing = injector
-      .instanceOf[Configuration]
-      .getOptional[Boolean](ck)
-      .getOrElseFalse
-    val fut = resetSuperuserIds( createIfMissing )
+    val suEmails = SU_EMAILS
 
-    // Если app.mode=dev, надо заблокироваться до завершения fut.
-    // Это надо, чтобы не слетали открытые вкладки в /sys/ во время пиления и перезагрузки dev-сервера:
+    val createIfMissing = configuration
+      .getOptional[Boolean]( "superusers.autocreate" )
+      .getOrElseFalse
+
+    val fut = resetSuperuserIds( suEmails, createIfMissing )
+
+    // If app.mode == dev, block current thread for some time, until resetSuperuserIds become completed.
+    // TODO Need async analog for isSuperuserId(), to remove await here.
     if ( injector.instanceOf[Environment].mode == Mode.Dev ) {
       LOGGER.trace("Dev mode, awaiting superuser ids...")
-      Await.ready( fut, 5.seconds )
+      Try( Await.ready( fut, 5.seconds ) )
     }
 
-    if (!createIfMissing)
-      LOGGER.debug("Does not ensuring superusers in permanent models: " + ck + " != true")
+    if (suEmails.isEmpty || !createIfMissing)
+      LOGGER.debug(s"Does NOT ensuring superusers in permanent models: empty SU emails list or !autocreate")
 
     fut
   }
 
 
   /**
-   * Принадлежит ли указанный id суперюзеру suggest.io?
-   * @param personId Реальный id юзера.
-   * @return true, если это админ. Иначе false.
+   * Is person nodeId - contained in superusers set?
+   * @param personId Person node id.
+   * @return true, if user is superuser. False overwise.
    */
+  // TODO Need to become async somehow.
   def isSuperuserId(personId: String): Boolean = {
-    // TODO Нужно, чтобы было Future[Boolean]. Иначе есть проблема, что при запуске суперюзеры отсутствуют на небольшой момент времени.
     SU_IDS contains personId
   }
 
-  /** Выставить в MNode id'шники суперпользователей.
-    * Для этого надо убедится, что все админские MPersonIdent'ы
-    * существуют. Затем, сохранить в глобальную переменную в MPerson этот списочек. */
-  def resetSuperuserIds(createIfMissing: Boolean): Future[_] = {
+  /** Reset SU_IDS, possibly initialize neede person nodes. */
+  def resetSuperuserIds(suEmails: Set[String], createIfMissing: Boolean): Future[_] = {
     val mNodes = injector.instanceOf[MNodes]
     val scryptUtil = injector.instanceOf[ScryptUtil]
     val esModel = injector.instanceOf[EsModel]
@@ -94,20 +91,19 @@ class MSuperUsers @Inject()(
 
     import esModel.api._
 
-    val logPrefix = s"resetSuperuserIds(create=$createIfMissing): "
-    val suEmails = SU_EMAILS
+    val logPrefix = s"resetSuperuserIds(#${suEmails.size}, $createIfMissing): "
     LOGGER.debug(s"${logPrefix}Let's do it. There are ${suEmails.size} superuser emails: [${suEmails.mkString(", ")}]")
 
     val resFut = for {
 
-      // Найти текущие узлы, ассоциированные с указанными мыльниками:
+      // Find existing person nodes, related to superuser emails.
       userNodes <- mNodes.dynSearch {
         new MNodeSearch {
           override val nodeTypes = MNodeTypes.Person :: Nil
           override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
               predicates        = MPredicates.Ident.Email :: Nil,
-              nodeIds           = suEmails,
+              nodeIds           = suEmails.toSeq,
               nodeIdsMatchAll   = false,
               flag              = OptionUtil.SomeBool.someTrue,
             )
@@ -118,22 +114,23 @@ class MSuperUsers @Inject()(
         }
       }
 
-      // Интересуют только отсутствующие юзеры. Уже существующие трогать не требуется.
-      email2nodeMap = {
-        val iter = for {
-          userNode <- userNodes.iterator
-          email    <- userNode.edges.withPredicateIterIds( MPredicates.Ident.Email )
-        } yield {
-          email -> userNode
-        }
-        iter.toMap
-      }
+      // Collect missing person nodes:
+      email2nodeMap = (for {
+        userNode <- userNodes.iterator
+        email    <- userNode.edges.withPredicateIterIds( MPredicates.Ident.Email )
+      } yield {
+        email -> userNode
+      })
+        .toMap
 
       createdPersonIdOpts <- Future.traverse {
         suEmails.filterNot( email2nodeMap.contains )
       } { email =>
         if (createIfMissing) {
-          LOGGER.trace(s"$logPrefix Installing new superuser for $email ...")
+          // Initialize superuser with email and random password.
+          LOGGER.debug(s"$logPrefix Installing new superuser for $email ...")
+          val password = StringUtil.randomId(20)
+
           val mperson0 = MNode(
             common = MNodeCommon(
               ntype = MNodeTypes.Person,
@@ -157,10 +154,10 @@ class MSuperUsers @Inject()(
                 val pwIdentEdge = MEdge(
                   predicate = MPredicates.Ident.Password,
                   info = MEdgeInfo(
-                    textNi = Some( scryptUtil.mkHash(email + System.currentTimeMillis().millis.toHours.toLong) ),
-                    // На будущее - флаг необходимости смены пароля, чтобы напомнить юзеру.
+                    textNi = Some( scryptUtil.mkHash( password ) ),
+                    // For future: flag to ask user to reset password after login.
                     flag = Some(false)
-                  )
+                  ),
                 )
                 emailIdentEdge :: pwIdentEdge :: Nil
               }
@@ -170,7 +167,7 @@ class MSuperUsers @Inject()(
           for {
             personId <- mNodes.save(mperson0)
           } yield {
-            LOGGER.info(s"$logPrefix New superuser installed as $personId for $email")
+            LOGGER.info(s"$logPrefix New superuser created as node#$personId\n *** login: $email\n *** password: $password")
             Some( personId )
           }
 

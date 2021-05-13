@@ -1,0 +1,305 @@
+## Initialize superusers during this instance startup.
+superusers {
+  
+  ## Define emails for super-users.
+  #emails = ["your.admin@email.he.re"]
+  emails = []
+
+  ## Auto-create missing superusers on current instance startup?
+  ## If true, new superusers will be created with login and password same as email.
+  autocreate = true
+
+}
+
+
+## Protocols used by current instance.
+## Suggest.io system should know, is it possible to use https to generate absolute URLs or not.
+## https/http implementation is provided by nginx or others elsewhere, not here.
+sio.https.disabled = true
+
+## Primary EXTERNAL host:port for current instance.
+## For localhost: it matches local host ports.
+sio.hostport.dflt = "localhost:9000"
+
+
+## EMAIL settings for play-mailer plugin.
+## Mail is used, for example, during user registration.
+play.mailer {
+  host = "your.mail.server.tld"
+  user = "username"
+  password = "password"
+}
+
+
+## Elasticsearch
+es {
+  ## Attach to ElasticSearch cluster only with given name.
+  ## If missing, ES-cluster with any name will be ok.
+  #cluster.name = "mycluster"
+
+  ## Unicast allows to specify elasticsearch cluster nodes hostname:port.
+  ## If omitted, suggest.io will try to connect to defaults host:port (localhost:9300).
+  #unicast.hosts = ["localhost:9300"]
+
+  ## Update all ElasticSearch mappings on start.
+  ## - true enought for all cases.
+  ## - false for possible debugging purposes.
+  ##   If false for long time, it may cause schema errors:
+  ##   When new fields added to models, schema mapping will not be configured properly and automatically.
+  mapping.model.ignore_exist = true
+}
+
+
+###############################################################################
+## Play framework
+###############################################################################
+## The secret key is used to secure cryptographics functions.
+## If you deploy your application to several instances be sure to use the same key!
+## Use `pwgen -1syn 64` to generate key and paste it here.
+#play.http.secret.key = ""
+
+play.allowGlobalApplication = false
+play.http.session.maxAge = "30d"
+
+## The application languages
+play.i18n.langs = ["en", "ru"]
+
+## Evolutions plugin is disabled, by now.
+evolutionplugin = "disabled"
+
+## Name of Play! session cookie
+#play.http.session.cookieName = "session"
+## Name of Play! lang cookie
+#play.i18n.langCookieName = "lang"
+
+## Run periodical billing cron tasks on current node.
+## Currently, cluster-wide lock not present, so use true in only one node, near postgresql.
+bill.cron.enabled = true
+
+## Signing secret key for generated pictures. Must be same on all nodes.
+## Use `pwgen -1syn 64` to generate key and paste it here.
+#dynimg.sign.key = ""
+
+## One-ad server side rendering URL signing secret key. Must be same on all nodes.
+## Use `pwgen -1syn 64` to generate key and paste it here.
+#only.one.ad.qs.sign.key = ""
+
+
+## Lk-adv-ext.
+## Currently, disabled and hidden. Need partial rewrite and JD-html integration.
+ext.adv {
+  ## vkontakte app API ID. Usually, long integer.
+  #vk.api.id = ""
+  ## Facebook app API ID. Usually, long integer.
+  #fb.api.id = ""
+}
+
+## Actor path signing secret key (for URLs).
+## Use `pwgen -1syn 64` to generate key and paste it here.
+#qsb.actor.path.sign.key = ""
+
+
+## For users interaction with facebook/vk/twitter, this metadata used.
+## OAuth2 login deprecated and mostly removed, currently we using internal login with SMS-verification.
+#securesocial {
+#  vk {
+#    authorizationUrl = "https://oauth.vk.com/authorize"
+#    accessTokenUrl   = "https://oauth.vk.com/access_token"
+#    clientId         = ""
+#    clientSecret     = ""
+#  },
+#  twitter {
+#    requestTokenUrl  = "https://api.twitter.com/oauth/request_token"
+#    accessTokenUrl   = "https://api.twitter.com/oauth/access_token"
+#    authorizationUrl = "https://api.twitter.com/oauth/authorize"
+#    consumerKey      = ""
+#    consumerSecret   = ""
+#  }
+#}
+
+## Custom HTTP ErrorHandler for play.
+play.http.errorHandler = "controllers.ErrorHandler"
+## Custom filters for play.
+play.http.filters = "util.xplay.Filters"
+
+
+## Slick Database connection configuration (postgresql)
+slick.dbs.default {
+  profile     = "io.suggest.slick.profile.pg.SioPgSlickProfile$"
+  db {
+    driver    = "org.postgresql.Driver"
+    hostport  = "localhost:5432"
+    url	      = "jdbc:postgresql://"${slick.dbs.default.db.hostport}"/postgres?searchpath=sio2"
+    user      = "sio2"
+    password  = "sio2"
+  }
+}
+
+
+## SeaWeedFS distributed file-storage Master HTTP host:port
+swfs.masters = ["localhost:9333"]
+
+## During startup and periodically (see CronTasks), ipgeobase re-import will be started.
+## Related elasticsearch indexes will be created/rotated after import atomically,
+## and updated ipgeobase dump will be available to all cluster nodes.
+## Usually, only one cluster node should be responsible for it.
+## - true - Do periodical re-import on current node.
+## - false - Do not touch ipgeobase-indexes.
+ipgeobase.import.enabled = true
+
+
+## Node id, where billing comission from transactions is counted.
+## If omitted, hardcoded node id will be used.
+#bill.cbca.node.id = "AUzledEIITehtyXq7GtI"
+
+## Yandex.Kassa data for billing payments.
+sio.pay.yaka.profiles = [
+  {
+    mode      = test
+    #scid      = 12345
+    #password  = ""
+  }
+]
+
+
+## Periodically rotate elasticsearch statistics indices on this node.
+## To prevent hypotetical conflicts, 
+stat.cron.enabled = true
+
+## Statistics collector. Possible values:
+## - dummy - Just drop all statistics, for development.
+## - plain - Save documents one-by-one into elasticsearch, for debugging
+## - bulk - Use ElasticSearch BulkProcessor to maximize performance. Useful for production.
+## Statistics may be viewed using kibana.
+sc.stat.saver.type = "dummy"
+
+
+## Moderation: notify the following moderators via email, if paid moderation needed ASAP.
+mdr.notify.emails = ["konstantin.nikiforov@cbca.ru"]
+
+play.http.parser.maxMemoryBuffer = 512k
+
+## Upload configuration.
+upload {
+  ## Generated upload URLs will be signed using following secret key.
+  ## Must be same on all nodes (or at least, on master nodes and upload nodes).
+  url.sign.secret = "UBf$C&zGx?K*vi9Dty9+Bu~N6j;xbaWWgD,CH9eN!=mw9%t/h6J^#4#q*6)MU&4Q"
+
+  ## This node can upload files from users:
+  host.my {
+    ## Public URL for upload/download links to current instance.
+    public = "outself:9000"
+    #private = "localhost:8080"
+  }
+}
+## For uploaded files (and other cases), anti-virus checking used via ClamAV Daemon.
+sec.av.clam.tcp {
+  host = "localhost"
+  #port = "3310"
+}
+
+## Signing secret key for ctx_id tokens, used for websockets and uploads.
+## Must be same on all nodes.
+ctx.id.sig.secret = ";<ba*H4`_n>3D-d~QZ5Oih1?vkb:1'%l<)eG5VLtr1_n^/]nIKC DU962eyJ;Rop"
+
+## Play cookies policies
+play.http.session.sameSite = Strict
+play.http.flash.sameSite = Strict
+
+
+## CDN integration. Commented == disabled.
+## protocols: For which Assets URLs use CDN-rewriting? Supported protocols: http, https.
+## [] to disable CDN URLs rewriting.
+cdn {
+  #protocols = []
+  #protocols = ["http", "https"]
+  ## To which hostname rewrite http/https url.
+  hosts {
+    #http = ["suggest.cdnvideo.ru"]
+    #https = ["suggest.cdnvideo.ru"]
+    #rewrite.from_to = [".nodes.suggest.io", "-suggest.cdnvideo.ru"]
+  }
+  ## Do not rewrite URLs, if Host: header matches to these hosts:
+  ## TODO move into cdn.hosts
+  ##disabled.on.hosts = ["backend.suggest.io"]
+  ## Enable CDN support for webfonts.
+  #fonts.enabled = true
+}
+
+## Play! GZIP filter tweaks:
+play.filters.gzip {
+  contentType {
+    # If non empty, then a response will only be compressed if its content type is in this list.
+    whiteList = [ "text/*", "application/javascript", "application/json" ]
+    # The black list is only used if the white list is empty.
+    # Compress all responses except the ones whose content type is in this list.
+    blackList = []
+  }
+}
+
+## Add debug flag to Sc3Conf? Showcase may display some debug functions.
+sc.js.debug = true
+
+
+## Automatically create initial pgp-keys for encrypted client-side data-storage.
+## Was used in lk-adv-ext subsystem, disabled by default, until lk-adv-ext will be ported to react.js
+## and html-pages render.
+#pgp.keyring.init.enabled = false
+
+
+## Storage for PKI certificates/key (Used for ESIA integration stuff).
+sio.sec.keystore {
+  file = "/home/user/projects/sio/-data/esia/siocerts.p12"
+  password = "rjvfhjdj"
+}
+
+## ESIA integration configuration.
+esia {
+  client.id = "SUGGESTIO"
+  mode = "test"
+}
+
+## Enforce akka shutdown timeout.
+akka.coordinated-shutdown.timeout = "7s"
+
+## SMS services integration.
+sms {
+  ## sms.ru integration backend (production).
+  #smsru {
+  #  app.id = "0BDD01F1-EFFF-FB49-DD3E-14AFC84A7421"
+  #}
+  ## sms.test: Send test flags to SMS providers, if possible.
+  test = true
+  ## dummy backend - SMS renders into console (for development).
+  dummy {
+    enabled  = true
+    code     = "0000"
+  }
+}
+
+
+
+## ThreadPool tweaks for JDBC.
+async.ec.jdbc {
+    fork-join-executor {
+	parallelism-factor = 10.0
+	parallelism-max = 2
+    }
+}
+## ThreadPool for single io-blocking non-threaded execution context.
+async.ec.iosingle {
+    fork-join-executor {
+	parallelism-factor = 1.0
+	parallelism-max = 1
+    }
+}
+## CPU-bounded execution context configuration.
+## Used for alinging CPU-too-hungry tasks.
+async.ec.cpusingle {
+    fork-join-executor {
+	parallelism-factor = 1.0
+	parallelism-max = 2
+    }
+}
+
+

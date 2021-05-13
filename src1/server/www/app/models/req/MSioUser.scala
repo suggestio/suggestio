@@ -88,8 +88,8 @@ sealed trait ISioUser {
 }
 
 
-/** Пустая инфа по юзеру. Инстанс кешируется в factory. Полезно для анонимусов без js-init-таргетов. */
-class MSioUserEmpty extends ISioUser {
+/** Empty user context. Used as fast shared singleton implementation of [[ISioUser]] for anonymous users. */
+final class MSioUserEmpty extends ISioUser {
   private def _futOptOk[T] = Future.successful(Option.empty[T])
 
   override def personIdOpt          = None
@@ -109,11 +109,11 @@ class MSioUserEmpty extends ISioUser {
 }
 
 
-/** Частичная реализация [[ISioUser]] для дальнейших ижектируемых реализаций. */
+/** Partial implementation of [[ISioUser]]. */
 @ImplementedBy( classOf[MSioUserLazy] )
 sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
 
-  // DI-инжектируемые контейнер со статическими моделями.
+  // Injected container with static models.
   protected def msuStatics: MsuStatic
 
 

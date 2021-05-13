@@ -73,16 +73,17 @@ final class MdrUtil @Inject() (
 
 
   /** Кого надо уведомить о необходимости заняться модерацией? */
-  val MDR_NOTIFY_SU_EMAILS: Seq[String] = {
+  val MDR_NOTIFY_SU_EMAILS: Set[String] = {
     val confKey = "mdr.notify.emails"
-    val res = configuration.getOptional[Seq[String]](confKey)
+    val res = configuration
+      .getOptional[Seq[String]](confKey)
       .filter(_.nonEmpty)
-      .getOrElse {
+      .fold [Set[String]] {
         LOGGER.trace(s"$confKey is undefined. Using all superusers as moderators.")
         current.injector
           .instanceOf[MSuperUsers]
           .SU_EMAILS
-      }
+      } (_.toSet)
     LOGGER.trace(s"Moderators are: ${res.mkString(", ")}")
     res
   }
@@ -363,7 +364,7 @@ final class MdrUtil @Inject() (
         mailerWrapper
           .instance
           .setSubject("Требуется модерация")
-          .setRecipients(MDR_NOTIFY_SU_EMAILS: _*)
+          .setRecipients(MDR_NOTIFY_SU_EMAILS.toSeq: _*)
           .setHtml(_mdrNeededEmailTpl(tplArgs).body)
           .send()
       }
