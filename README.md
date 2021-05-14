@@ -1,10 +1,12 @@
-# Suggest.io -- Design, radio-signals, nodes graph.
+# Suggest.io -- Abstract physical infospace
+
 Suggest.io is concept solution to simplify create rich eye-candy content, attached to regions on the geo-map or
 Bluetooth (and possibly others) physical radio-beacons.
 
 ## Contents
 
 - [About](#about)
+- [Goals](#goals)
 - [Requirements](#requirements)
   - [Runtime](#runtime)
   - [Development](#development)
@@ -21,6 +23,22 @@ All server, client and shared code written on Scala.
 Client-side UI developed using [scalajs-react](https://github.com/japgolly/scalajs-react/)
 and translated into JavaScript using [Scala.js](https://www.scala-js.org/) compiler.
 Server-side code based on [Play! framework](https://playframework.com/).
+
+
+## Goals
+- Create a simple representation into the internet for end-users.
+  Currently, sites+domains+certificates+programmers+html+designers+etc+etc have
+  high and raising cost for small/middle business.
+- More content dimensions.
+  Current usual Internet structured into sites, and pages mapped into URLs.
+  Content may be also transparently attached to radio-beacon signals, geographical regions, NFC dots, etc.
+  Abstract out from virtual and physical dimensions.
+- Extended navigation dimensions: usual site page-to-page navigation may be extended by extending current content view
+  with new content.
+- Page can contain apps, app can show pages. Single-page view can become app. Abstract over browsers and apps.
+- Many screens -- one content. Abstract over mobiles, tables and PCs screens. Be responsible.
+- Become distributed. Current implementation designed with horizontal cluster scaling in mind.
+  In future become more federated/distributed using blockchains/git/activitypub/etc as underlying storage.
 
 
 ## Requirements
@@ -60,5 +78,4 @@ TODO Pre-build images/binaries not-yet ready, so see [Development](#development)
 6. See console log for created superusers with email typed at step 4.
 7. Open browser, go to [login page](http://localhost:9000/id). Wait for compilation finishes. Type login/password from step 6.
 8. Superuser also have access to special [/sys/ pages](http://localhost:9000/sys).
-
 

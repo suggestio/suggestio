@@ -33,3 +33,5 @@ src1/server/www/conf/elasticsearch.yml*
 src1/server/www/conf/logback.xml*
 
 src1/app/
+*.dia.autosave
+*.*~

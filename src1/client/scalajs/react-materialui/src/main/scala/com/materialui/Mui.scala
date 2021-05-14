@@ -122,6 +122,7 @@ object Mui {
   @js.native @JSImport("@material-ui/lab/TreeView", JSImport.Default) object TreeView extends js.Any
   @js.native @JSImport("@material-ui/lab/TreeItem", JSImport.Default) object TreeItem extends js.Any
 
+  // TODO /core/styles becoming /styles from alpha to alpha. Need to port it from JSS to styles/styled (emotion).
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   @js.native @JSImport("@material-ui/styles/StylesProvider", JSImport.Default) object StylesProvider extends js.Any
   @js.native @JSImport("@material-ui/core/StyledEngineProvider", JSImport.Default) object StyledEngineProvider extends js.Any
