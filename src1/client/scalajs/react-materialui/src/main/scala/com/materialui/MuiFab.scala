@@ -10,7 +10,7 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 04.07.19 10:23
-  * Description: Fab вынесен за пределы Button начиная с materialui-4.0.
+  * Description: Fab outside MuiButton since materialui-4.0.
   */
 object MuiFab {
 

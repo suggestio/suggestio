@@ -1,6 +1,6 @@
 package io.suggest.n2.edge.edit.v.inputs.media
 
-import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiCircularProgress, MuiCircularProgressProps, MuiFormControlClasses, MuiFormControlLabel, MuiFormControlLabelClasses, MuiFormControlLabelProps, MuiInput, MuiInputClasses, MuiInputProps, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiPaper, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTableRowProps, MuiTextField, MuiTextFieldProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiCircularProgress, MuiCircularProgressProps, MuiColorTypes, MuiFormControlClasses, MuiFormControlLabel, MuiFormControlLabelClasses, MuiFormControlLabelProps, MuiInput, MuiInputClasses, MuiInputProps, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiPaper, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTableRowProps, MuiTextField, MuiTextFieldProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
@@ -196,6 +196,7 @@ class MediaR(
                       override val checked = isOrig
                       @JSName("onChange")
                       override val onChange2 = _onFileIsOriginalChanged
+                      override val color = MuiColorTypes.secondary
                     }
                   )
                 )

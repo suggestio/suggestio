@@ -17,6 +17,7 @@ libraryDependencies ++= Seq(
     "com.github.japgolly.scalajs-react" %%% "extra"   % Common.reactSjsVsn,
     "com.github.japgolly.scalacss" %%% "ext-react"    % Common.Vsn.SCALACSS,
     "io.suzaku"     %%% "diode-react"                 % Common.diodeReactVsn,
+    //"com.github.japgolly.scalajs-react" %%% "test" % Common.reactSjsVsn % Test,
 )
 
 npmDependencies in Compile ++= Seq(

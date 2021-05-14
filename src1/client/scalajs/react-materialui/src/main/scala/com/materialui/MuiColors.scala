@@ -2,7 +2,7 @@ package com.materialui
 
 import scala.scalajs.js
 
-// TODO useless. Запилить в object для @material-ui/core/colors
+// TODO useless. Make object for @material-ui/core/colors
 @js.native
 trait MuiColors extends js.Object {
   val red50: MuiColor          = js.native

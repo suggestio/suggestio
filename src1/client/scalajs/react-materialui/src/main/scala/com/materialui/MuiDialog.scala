@@ -35,7 +35,7 @@ trait MuiDialogProps
 }
 
 
-/** JSON props for [[MuiDialogProps.classes]]. */
+/** JSON CSS Classes for [[MuiDialogProps.classes]]. */
 trait MuiDialogClasses extends MuiClassesBase {
   val scrollPaper: js.UndefOr[String] = js.undefined
   val scrollBody: js.UndefOr[String] = js.undefined

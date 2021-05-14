@@ -60,7 +60,7 @@ trait MuiPropsBase extends js.Object {
   val onInput:                  js.UndefOr[js.Function1[ReactKeyboardEventFromInput, Unit]]       = js.undefined
   val onChange:                 js.UndefOr[js.Function1[ReactEventFromInput, Unit]]               = js.undefined
 
-  // аттрибуты с префиксом html* - форвардятся прямо в html-теги.
+  // Attributes with "html" prefix - forwarded into HTML-tags.
   val htmlFor: js.UndefOr[String] = js.undefined
 
 }

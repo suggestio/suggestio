@@ -9,7 +9,7 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.06.19 10:16
-  * Description: Простой мобильный stepper.
+  * Description: Simple mobile stepper API.
   */
 object MuiMobileStepper {
 

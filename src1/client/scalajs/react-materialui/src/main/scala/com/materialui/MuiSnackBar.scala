@@ -18,7 +18,7 @@ object MuiSnackBar {
 }
         
 
-/** JSON Props for [[MuiSnackBar.component]]. */
+/** Props for [[MuiSnackBar.component]]. */
 trait MuiSnackBarProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiSnackBarClasses]
@@ -40,7 +40,7 @@ trait MuiSnackBarProps
 }
 
 
-/** JSON fop [[MuiSnackBarProps.transitionDuration]]. */
+/** [[MuiSnackBarProps.transitionDuration]] JSON model. */
 trait MuiTransitionDuration extends js.Object {
   val enter: js.UndefOr[Double] = js.undefined
   val exit: js.UndefOr[Double] = js.undefined
@@ -53,7 +53,7 @@ object MuiTransitionDuration {
 }
 
 
-/** JSON css classes for [[MuiSnackBarProps.classes]]. */
+/** CSS classes for [[MuiSnackBarProps.classes]]. */
 trait MuiSnackBarClasses extends MuiClassesBase {
   val anchorOriginTopCenter: js.UndefOr[String] = js.undefined
   val anchorOriginBottomCenter: js.UndefOr[String] = js.undefined

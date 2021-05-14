@@ -40,7 +40,8 @@ trait MuiTemporaryDrawerProps
   extends MuiDrawerPropsBase
   with MuiModalPropsBase
 {
-  // TODO scala.js не поддерживает фиксированные значения в sjsDefined-traits. В данном случае это безопасно, т.к. дефолтовое значение совпадает с temporary.
+  // TODO scala.js does not support default values for sjsDefined-traits.
+  // In current case, it is safe to ignore default value, beacuse default value here matches "temporary".
   override val variant: js.UndefOr[String] // = MuiDrawerVariants.temporary
 }
 

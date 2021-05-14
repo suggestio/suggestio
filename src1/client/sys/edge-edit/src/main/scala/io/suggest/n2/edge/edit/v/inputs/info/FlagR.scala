@@ -1,16 +1,14 @@
 package io.suggest.n2.edge.edit.v.inputs.info
 
-import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps}
+import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiColorTypes, MuiFormControlLabel, MuiFormControlLabelProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.n2.edge.edit.m.FlagSet
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.React.Node
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -53,6 +51,7 @@ class FlagR(
               @JSName("onChange")
               override val onChange2 = _onFlagChanged
               override val classes = css
+              override val color = MuiColorTypes.secondary
             }
           }
         }
@@ -61,7 +60,7 @@ class FlagR(
 
         new MuiFormControlLabelProps {
           override val control = _control.rawElement
-          override val label: UndefOr[Node] = _label.rawNode
+          override val label = _label.rawNode
         }
       }
 

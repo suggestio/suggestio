@@ -50,7 +50,7 @@ final class ScThemes {
       //override val shadows = js.Array("none")
     }
 
-    Mui.Styles.createMuiTheme( themeRaw )
+    Mui.Styles.createTheme( themeRaw )
   }
 
 

@@ -38,7 +38,7 @@ trait MuiTypoGraphyProps
   with MuiPropsBaseComponent
 
 
-/** Общие поля для [[MuiTypoGraphyProps]] и [[MuiTypoGraphyProps.variantMapping]]. */
+/** Shared prosp for [[MuiTypoGraphyProps]] and [[MuiTypoGraphyProps.variantMapping]]. */
 sealed trait MuiTypoGraphyMappings extends js.Object {
   val h1: js.UndefOr[String] = js.undefined
   val h2: js.UndefOr[String] = js.undefined
@@ -52,7 +52,7 @@ sealed trait MuiTypoGraphyMappings extends js.Object {
 }
 
 
-/** JSON API for [[MuiTypoGraphyProps.classes]]. */
+/** CSS Classes for [[MuiTypoGraphyProps.classes]]. */
 trait MuiTypoGraphyClasses
   extends MuiClassesBase
   with MuiTypoGraphyMappings

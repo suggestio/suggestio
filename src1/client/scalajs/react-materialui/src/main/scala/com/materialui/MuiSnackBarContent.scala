@@ -20,7 +20,7 @@ object MuiSnackBarContent {
 }
 
 
-/** JSON props for [[MuiSnackBarContent.component]] */
+/** Props for [[MuiSnackBarContent.component]] */
 trait MuiSnackBarContentProps
   extends MuiPaperPropsBase
   with MuiPropsBaseClasses[MuiSnackBarContentClasses]
@@ -31,7 +31,7 @@ trait MuiSnackBarContentProps
 
 
 
-/** JSON css classes for [[MuiSnackBarContentProps.classes]]. */
+/** CSS classes for [[MuiSnackBarContentProps.classes]]. */
 trait MuiSnackBarContentClasses extends MuiClassesBase {
   val action: js.UndefOr[String] = js.undefined
   val message: js.UndefOr[String] = js.undefined

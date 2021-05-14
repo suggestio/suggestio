@@ -20,7 +20,7 @@ object MuiList {
 }
 
 
-/** JSON для [[MuiList]] props. */
+/** Props for [[MuiList]]. */
 trait MuiListProps extends MuiPropsBase {
   val classes:        js.UndefOr[MuiListClasses] = js.undefined
   val component:      js.UndefOr[String | js.Object] = js.undefined
@@ -30,7 +30,7 @@ trait MuiListProps extends MuiPropsBase {
 }
 
 
-/** JSON для [[MuiListProps.classes]]. */
+/** CSS Classes for [[MuiListProps.classes]]. */
 trait MuiListClasses extends js.Object {
   val root: js.UndefOr[String] = js.undefined
   val padding: js.UndefOr[String] = js.undefined

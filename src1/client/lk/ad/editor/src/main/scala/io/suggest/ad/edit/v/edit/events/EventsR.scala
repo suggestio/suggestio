@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.v.edit.events
 
-import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps, MuiIconButton, MuiIconButtonProps, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiMenuPropsBase, MuiPaperProps, MuiSelectClasses, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy}
+import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiColorTypes, MuiFormControlLabel, MuiFormControlLabelProps, MuiIconButton, MuiIconButtonProps, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiMenuPropsBase, MuiPaperProps, MuiSelectClasses, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy}
 import diode.AnyAction.aType
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
@@ -180,6 +180,7 @@ final class EventsR(
                     val _eventOnOffCheckBox = MuiCheckBox(
                       new MuiCheckBoxProps {
                         override val checked = js.defined( eventsForType.nonEmpty )
+                        override val color = MuiColorTypes.secondary
                       }
                     )
                     val _label = MuiTypoGraphy()(

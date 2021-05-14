@@ -11,7 +11,7 @@ import scala.scalajs.js
   * @see [[https://github.com/mui-org/material-ui/pull/22846]]
   */
 
-/** m-ui v5.alpha23: Content-компонент пока является internal, но его props уже доступны. */
+/** m-ui v5.alpha23: Content-cinoibebt still internal, but component props are visible. */
 trait MuiTreeItemContentProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiTreeItemContentClasses]

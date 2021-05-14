@@ -8,7 +8,7 @@ import org.scalajs.dom
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 17.08.2020 18:33
-  * Description: ListItem Secondary Action - экшен справа.
+  * Description: ListItem Secondary Action - Right-side action.
   * @see [[https://material-ui.com/ru/api/list-item-secondary-action/]]
   */
 object MuiListItemSecondaryAction {

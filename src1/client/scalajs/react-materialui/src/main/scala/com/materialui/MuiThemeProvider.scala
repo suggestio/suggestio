@@ -8,7 +8,7 @@ import scala.scalajs.js
 
 object MuiThemeProvider {
 
-  val component = JsComponent[MuiThemeProviderProps, Children.Varargs, Null](Mui.MuiThemeProvider)
+  val component = JsComponent[MuiThemeProviderProps, Children.Varargs, Null](Mui.Styles.ThemeProvider)
 
   def apply(props: MuiThemeProviderProps)(children: VdomElement*) =
     component(props)(children: _*)

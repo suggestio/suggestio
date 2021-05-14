@@ -36,7 +36,6 @@ trait MuiSelectProps
   val inputProps: js.UndefOr[js.Object] = js.undefined
   val label: js.UndefOr[raw.React.Node] = js.undefined
   val labelId: js.UndefOr[String] = js.undefined
-  val labelWidth: js.UndefOr[Double] = js.undefined
   val MenuProps: js.UndefOr[MuiMenuPropsBase] = js.undefined
   val multiple: js.UndefOr[Boolean] = js.undefined
   val native: js.UndefOr[Boolean] = js.undefined

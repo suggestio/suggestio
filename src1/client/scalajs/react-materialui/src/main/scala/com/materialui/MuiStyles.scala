@@ -14,27 +14,27 @@ trait MuiColor extends js.Object {
 @js.native
 trait MuiStyles extends js.Object {
   /** @see [[https://material-ui.com/customization/themes/#createmuitheme-options-theme]] */
-  def createMuiTheme(options: MuiRawTheme): MuiTheme = js.native
+  def createTheme(options: MuiRawTheme): MuiTheme = js.native
 
-  val MuiThemeProvider: js.Dynamic = js.native
+  val ThemeProvider: js.Dynamic = js.native
 
   /**
     * Link a style sheet with a component.
     * It does not modify the component passed to it;
     * instead, it returns a new component, with a `classes` property.
-    * @param styles Стили в виде js-объекта.
-    * @return Функция, принимающая компонент и собирающая обёртку с выставленными стилями внутри.
+    * @param styles JS Object with styles.
+    * @return HOC Function, accepting component as argument and produces component with styles applied.
     */
   def withStyles(styles: js.Object): js.Function1[js.Any, js.Any] = js.native
 
   @JSName("withStyles")
   def withStylesF(stylesCreator: js.Function1[MuiTheme, js.Object]): js.Function1[js.Any, js.Any] = js.native
 
-  // Далее, идёт API для colorManipulator.js:
+  // Next, API for colorManipulator.js:
   // https://github.com/mui-org/material-ui/blob/master/packages/material-ui/src/styles/colorManipulator.js
 
-  // Функции прямо тут, т.к. https://github.com/mui-org/material-ui/blob/master/packages/material-ui/src/styles/index.js
-  // содержит строку "export * from './colorManipulator';"
+  // Functions right here: https://github.com/mui-org/material-ui/blob/master/packages/material-ui/src/styles/index.js
+  // contains line: "export * from './colorManipulator';"
 
   /** relative brightness of any point in a color space.
     *
@@ -102,7 +102,7 @@ trait MuiPalette extends js.Object {
   val action: js.UndefOr[MuiPaletteAction] = js.undefined
 }
 
-/** Значения для [[MuiPalette]].type */
+/** Possible values for [[MuiPalette]].type */
 object MuiPaletteTypes {
   val dark = "dark"
   val light = "light"

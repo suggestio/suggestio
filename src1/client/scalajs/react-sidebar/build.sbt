@@ -15,7 +15,8 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  "io.monix"      %%% "minitest" % Common.minitestVsn % Test
+  "io.monix"      %%% "minitest" % Common.minitestVsn % Test,
+  "com.github.japgolly.scalajs-react" %%% "test" % Common.reactSjsVsn % Test,
 )
 
 npmDependencies in Compile ++= Seq(

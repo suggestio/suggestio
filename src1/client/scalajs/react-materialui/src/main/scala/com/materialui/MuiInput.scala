@@ -12,7 +12,7 @@ import scala.scalajs.js.|
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 07.09.18 15:11
-  * Description: Поле ввода текста.
+  * Description: Text input field API.
   */
 object MuiInput {
 
@@ -24,7 +24,7 @@ object MuiInput {
 }
 
 
-/** JSON для [[MuiInput]].props. */
+/** Props for [[MuiInput]]. */
 trait MuiInputProps extends MuiPropsBase {
   val autoComplete: js.UndefOr[String] = js.undefined
   val autoFocus: js.UndefOr[Boolean] = js.undefined
@@ -54,7 +54,7 @@ trait MuiInputProps extends MuiPropsBase {
 }
 
 
-/** JSON для [[MuiInputProps.classes]]. */
+/** CSS Classes for [[MuiInputProps.classes]]. */
 trait MuiInputClasses extends js.Object {
   val root: js.UndefOr[String] = js.undefined
   val error: js.UndefOr[String] = js.undefined
@@ -72,7 +72,7 @@ trait MuiInputClasses extends js.Object {
 }
 
 
-/** Допустимые значения для [[MuiInputProps.margin]]. */
+/** Enum for values of [[MuiInputProps.margin]]. */
 object MuiInputPropsMargins {
   val dense = "dense"
   val none = "none"

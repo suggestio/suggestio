@@ -90,8 +90,13 @@ bill.cron.enabled = true
 ext.adv {
   ## vkontakte app API ID. Usually, long integer.
   #vk.api.id = ""
+  
   ## Facebook app API ID. Usually, long integer.
   #fb.api.id = ""
+  
+  ## Signing key for URLs, related to lk-adv-ext.
+  ## Use `pwgen -1syn 64` to generate key and paste it here.
+  #qs.sign.key = ""
 }
 
 ## Actor path signing secret key (for URLs).

@@ -6,7 +6,6 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 11.06.2020 18:35
-  * Description:
   */
 
 /** JSON fop [[MuiSnackBarProps.anchorOrigin]]. */

@@ -17,7 +17,7 @@ object MuiTable {
 }
 
 
-/** JSON props for [[MuiTable.component]]. */
+/** Props for [[MuiTable.component]]. */
 trait MuiTableProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiTableClasses]

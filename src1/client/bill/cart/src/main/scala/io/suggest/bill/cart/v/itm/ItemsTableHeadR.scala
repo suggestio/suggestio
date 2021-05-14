@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.itm
 
-import com.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableHead, MuiTableRow}
+import com.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiColorTypes, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableHead, MuiTableRow}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartSelectItem
@@ -97,6 +97,7 @@ class ItemsTableHeadR(
                   }
                   override val indeterminate = props.hasCheckedItems && props.hasUnCheckedItems
                   override val disabled = props.isPendingReq
+                  override val color = MuiColorTypes.secondary
                 }
               )
             } else {

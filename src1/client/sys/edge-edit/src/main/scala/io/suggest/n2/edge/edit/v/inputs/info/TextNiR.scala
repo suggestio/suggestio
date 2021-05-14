@@ -1,6 +1,6 @@
 package io.suggest.n2.edge.edit.v.inputs.info
 
-import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiFormControlClasses, MuiFormControlLabel, MuiFormControlLabelProps, MuiPaper, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiColorTypes, MuiFormControlClasses, MuiFormControlLabel, MuiFormControlLabelProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -64,6 +64,7 @@ class TextNiR(
                 @JSName("onChange")
                 override val onChange2 = _onCheckBoxChange
                 override val classes = css
+                override val color = MuiColorTypes.secondary
               }
             )
           }

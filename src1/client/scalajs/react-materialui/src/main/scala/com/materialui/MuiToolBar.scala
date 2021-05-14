@@ -17,7 +17,7 @@ object MuiToolBar {
 }
 
 
-/** JSON-props для [[MuiToolBar]]. */
+/** Props для [[MuiToolBar]]. */
 trait MuiToolBarProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiToolBarClasses]
@@ -34,7 +34,7 @@ trait MuiToolBarClasses extends MuiClassesBase {
 }
 
 
-/** JSON-модель классов для [[MuiToolBarProps.classes]]. */
+/** CSS Classes for [[MuiToolBarProps.classes]]. */
 object MuiToolBarVariants {
   val dense = "dense"
   val regular = "regular"

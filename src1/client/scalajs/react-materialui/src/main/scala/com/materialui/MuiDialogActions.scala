@@ -31,7 +31,7 @@ trait MuiDialogActionsProps
 }
 
 
-/** Props for [[MuiDialogActionsProps.classes]]. */
+/** CSS Classes for [[MuiDialogActionsProps.classes]]. */
 trait MuiDialogActionsClasses
   extends MuiClassesBase
 {

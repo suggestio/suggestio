@@ -1,6 +1,9 @@
 # This file defines all application routes (Higher priority routes first)
 
-## Перехват коротких ссылок (EddyStone-URL длина макс. 17 минус схема-домен-тильда = 4 => 39 млн.комбинаций)
+## If any path starts with /~, jsRevRouterTpl will NOT append CSRF-token to URL query string.
+
+## Short links handle.
+## (E.g. EddyStone-URL allow max.len = 17 bytes minus "https://sugest.io/~" = 4 bytes for URL tails => 39 million short links)
 GET  /~$code<[.a-zA-Z0-9~_&$#@?=;:/,+$&-]{1,4}>        @controllers.ShortUrls.handleUrl(code: String)
 
 ## Home page
@@ -9,55 +12,52 @@ GET  /                                  @controllers.sc.ScSite.geoSite(a: io.sug
 GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 HEAD /img/dyn                           @controllers.Img.dynImgHead(i: im.MImgT)
 
-## Если path начинается с /~, то jsRevRouterTpl НЕ будет приписывать CSRF-токен к роуте.
-## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
+## Restrict access to client-side debug stuff (fastopt, js-maps, etc) in production only for superusers.
 GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt(-bundle)?\.js).*>       @controllers.Static.vassetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
 
 ## Map static resources from the /public folder to the /assets URL path
 GET  /vassets/*file                     @controllers.Assets.versioned(path = ASSETS_PUBLIC_ROOT, file: Asset)
 
 ## "... most browsers of all types will request /favicon.ico by default" https://stackoverflow.com/a/1445016
-## TODO Заменить на moved temporary + versioned-роута, чтобы усилить кэширование?
 GET  /favicon.ico                       @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file = "images/favicon/512.ico")
 
-## sc3+ Объединённое API:
+## Showcase (sc3sjs) unified API entrypoint:
 GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
 
+## Remote logs receiver (from clients).
 POST /log/rcv                           @controllers.RemoteLogs.receive()
 
-## ServiceWorker выдачи из-за scope должен жить в корне, иначе не сможет обрабатывать / (sc-site).
+## ServiceWorker.js for showcase must be in site root scope.
 GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )
 
 
-## Обслуживание около-статических ответов.
-## Cross-Origin resource sharing: preflight request:
+## Static or semi-static routes.
 OPTIONS /*path                          @controllers.Static.corsPreflight(path)
 GET  /robots.txt                        @controllers.Static.robotsTxt()
 GET  /sitemap.xml                       @controllers.Static.siteMapXml()
 GET  /ws/ch/:c                          @controllers.Static.wsChannel( c: io.suggest.ctx.MCtxId )
 GET  /api/csrf                          @controllers.Static.csrfToken()
 
-## Рендер ровно одной карточки.
+## Render only one ad:
 GET  /sc/one/html                       @controllers.sc.ScOnlyOneAd.onlyOneAd(o: blk.OneAdQsArgs)
 GET  /sc/one/img                        @controllers.sc.ScOnlyOneAd.onlyOneAdAsImage(o: blk.OneAdQsArgs)
-## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/routes/:c/router.js            @controllers.sc.ScJsRouter.scJsRouterCache(c: Int)
 GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
 GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m: io.suggest.sc.app.MScAppManifestQs )
 POST /sc/nodes/fill                     @controllers.sc.ScStuff.fillNodesList()
 
-## Входы в личные кабинеты
+## Personal cabinets entrypoints.
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode()
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit()
 GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
 
-## Управления карточками узла.
+## Ads list of node.
 GET  /lk/mads/form/*nodeKey             @controllers.LkAds.adsPage(nodeKey: RcvrKey)
 GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrKey, offset: Int, newAdId: Option[String] ?= None)
 
-## Размещение рекламы на внешних сервисах
+## lk-adv-ext: Posting ads to external services.
 GET  /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)
 POST /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTargetSubmit(adnId)
 GET  /ws/lk/xadv/ext/run                @controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
@@ -68,7 +68,7 @@ GET  /lk/xadv/ext/runner/:adId          @controllers.LkAdvExt.runner(adId, x: Op
 GET  /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 
-## Размещение в теге с учетом географии.
+## lk-adv-geo: Advertising on the geo.map, geo-nodes, sub-nodes, radio-beacons, etc.
 GET  /lk/xadv/geo/for/:adId             @controllers.LkAdvGeo.forAd(adId)
 POST /lk/xadv/geo/for/:adId             @controllers.LkAdvGeo.forAdSubmit(adId)
 POST /lk/xadv/geo/price/:adId           @controllers.LkAdvGeo.getPriceSubmit(adId)
@@ -77,16 +77,15 @@ GET  /~/geo/map/rcvrs/:c/map.json       @controllers.Static.advRcvrsMapJson(c: I
 GET  /lk/xadv/geo/map/rcvr/pop/:adId/:nodeId     @controllers.LkAdvGeo.rcvrMapPopup(adId: MEsUuId, nodeId: MEsUuId)
 GET  /lk/xadv/geo/map/shapes/:adId      @controllers.LkAdvGeo.existGeoAdvsMap(adId)
 GET  /lk/xadv/geo/map/shape/pop/:itemId @controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId: Gid_t)
-## Тут должен быть GET, но почему-то GET с бинарным телом не выходит из Ajax/XHR.
 
-## ЛК: Редактор рекламных карточек v2:
+## lk-ad-edit: Editor for ads.
 GET  /lk/mad/new2/:nodeId               @controllers.LkAdEdit.createAd(nodeId: MEsUuId)
 POST /lk/mad/save2                      @controllers.LkAdEdit.saveAdSubmit(mad: Option[MEsUuId] ?= None, prod: Option[MEsUuId] ?= None)
 GET  /lk/mad/edit2/:adId                @controllers.LkAdEdit.editAd(adId: MEsUuId)
 POST /lk/mad/up/img                     @controllers.LkAdEdit.prepareImgUpload(madId: Option[MEsUuId] ?= None, nodeId: Option[MEsUuId] ?= None)
 POST /lk/mad/delete2/:adId              @controllers.LkAdEdit.deleteSubmit(adId: MEsUuId)
 
-## ЛК: Управление под-узлами.
+## lk-nodes: Control over sub-nodes tree.
 GET  /lk/nodes/near/:nodeId                      @controllers.LkNodes.nodesOf(nodeId: MEsUuId)
 GET  /lk/nodes/tree                              @controllers.LkNodes.subTree(node: Option[RcvrKey] ?= None, mad: Option[MEsUuId] ?= None)
 POST /lk/nodes/create/*parentRk                  @controllers.LkNodes.createSubNodeSubmit(parentRk: RcvrKey)
@@ -98,19 +97,19 @@ GET  /lk/beacons/scan                            @controllers.LkNodes.beaconsSca
 POST /lk/nodes/modify                            @controllers.LkNodes.modifyNode( qs: io.suggest.lk.nodes.MLknModifyQs )
 
 
-## Редактор ADN-узла: v2 react
+## lk-adn-edit: Editor of ADN-node metadata
 GET  /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.editNodePage(nodeId: MEsUuId)
 POST /lk/node/edit2/up/img/:nodeId      @controllers.LkAdnEdit.uploadImg(nodeId: MEsUuId)
 POST /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.save(nodeId: MEsUuId)
 
-## ЛК: Размещение ADN-узла на карте
+## lk-adn-map: ADN-nodes placement on geo-map.
 POST /lk/adn/map/price/:nodeId          @controllers.LkAdnMap.getPriceSubmit(nodeId: MEsUuId)
 GET  /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNode(nodeId: MEsUuId)
 POST /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNodeSubmit(nodeId: MEsUuId)
 GET  /lk/adn/current/:nodeId            @controllers.LkAdnMap.currentNodeGeoGj(nodeId: MEsUuId)
 GET  /lk/adn/pop/item/:itemId           @controllers.LkAdnMap.currentGeoItemPopup( itemId: Gid_t )
 
-## lk.bill2
+## lk-bill2: Node billing 2nd-generation.
 GET  /lk/order/:nodeId                  @controllers.LkBill2.orderPage(nodeId, orderId: Option[Gid_t] ?= None, r: Option[String] ?= None)
 POST /lk/items/del                      @controllers.LkBill2.deleteItems( i: QsbSeq[Gid_t] )
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
@@ -120,49 +119,50 @@ GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNode
 GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
 GET  /lk/order2                         @controllers.LkBill2.getOrder(orderId: Option[Gid_t] ?= None)
 
-## lk pay systems
+## lk pay systems support.
+## Yandex.Kassa backend:
 GET  /pay/yaka/order/:onNodeId/:orderId @controllers.pay.PayYaka.payForm(orderId: Gid_t, onNodeId: MEsUuId)
 POST /pay/yaka/check                    @controllers.pay.PayYaka.check()
 POST /pay/yaka/payment                  @controllers.pay.PayYaka.payment()
 GET  /pay/yaka/success                  @controllers.pay.PayYaka.success(qs: mpay.yaka.MYakaReturnQs)
-## Обработка ошибок нетривиальна: обычно GET + qs, но может быть и POST, может быть GET без нормальных параметров.
+## Error handing: Usually, via GET + queryString, but POST also should be supported.
 GET  /pay/yaka/fail                     @controllers.pay.PayYaka.fail(qs: mpay.yaka.MYakaReturnQs)
 GET  /pay/yaka/fail                     @controllers.pay.PayYaka.failUnknown()
 POST /pay/yaka/fail                     @controllers.pay.PayYaka.failPostQs(qs: mpay.yaka.MYakaReturnQs)
 GET  /pay/yaka/_fail                    @controllers.pay.PayYaka.failLoggedIn(orderId: Gid_t, onNodeId: MEsUuId)
-## lk pay demos
+## lk pay demos: Yandex.Kassa:
 GET  /demopay/yaka/order/:onNodeId/:orderId   @controllers.pay.PayYaka.demoPayForm(orderId: Gid_t, onNodeId: MEsUuId)
 POST /demopay/yaka/check                @controllers.pay.PayYaka.demoCheck()
 POST /demopay/yaka/payment              @controllers.pay.PayYaka.demoPayment()
 GET  /demopay/yaka/success              @controllers.pay.PayYaka.demoSuccess(qs: mpay.yaka.MYakaReturnQs)
-## Обработка ошибок нетривиальна: обычно GET + qs, но может быть и POST, может быть GET без нормальных параметров.
+## demos error handing via GET/POST.
 GET  /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFail(qs: mpay.yaka.MYakaReturnQs)
 GET  /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailUnknown()
 POST /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailPostQs(qs: mpay.yaka.MYakaReturnQs)
 
-## Принятие приглашения на управления узлом.
+## Nodes invite to take control over node via invite.
 GET  /lk/node/invite                    @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm( e: usr.MEmailRecoverQs )
 POST /lk/node/invite                    @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit( e: usr.MEmailRecoverQs )
 
-## Обращение в тех.поддерку зареганного клиента sio-market.
+## Support help routes.
 GET  /lk/h/support/at/:nodeId           @controllers.LkHelp.supportFormNode(nodeId, r: Option[String] ?= None)
 POST /lk/h/support/at/:nodeId           @controllers.LkHelp.supportFormNodeSubmit(nodeId, r: Option[String] ?= None)
 GET  /lk/h/support                      @controllers.LkHelp.supportForm(r: Option[String] ?= None)
 POST /lk/h/support                      @controllers.LkHelp.supportFormSubmit(r: Option[String] ?= None)
 GET  /lk/h/about                        @controllers.LkHelp.companyAbout(nodeId: Option[String] ?= None)
 
-## Языки и локализация
+## Languages & localization.
 GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
 POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
 GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
 GET  /syslang/:lang/:hash/messages.js   @controllers.LkLang.sysMessagesJs(lang: String, hash: Int)
 
-## Генераторы капч
+## Internal captcha generator.
 GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptchaImg(captchaId, cp: io.suggest.captcha.MCaptchaCookiePath)
 GET  /captcha/get                       @controllers.Captcha.getCaptcha(t: String)
 
-## Upload controller
-## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено на клиенте в UploadApi.
+## Files Upload controller
+## TODO Make supported for signed JSON-models in jsRoutes. QS-parameter "c" hardcoded in UploadApi on client.
 POST /upload/file                       @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs, c: Option[io.suggest.ctx.MCtxId] ?= None)
 GET  /upload/_config                    @controllers.Upload.getConfig()
 GET  /upload/download                   @controllers.Upload.download( d: mup.MDownLoadQs )
@@ -200,21 +200,21 @@ GET  /sys/mad/:adId/show                @controllers.SysAd.showAd(adId)
 GET  /sys/mad/:adId/rcvrs/analyze       @controllers.SysAd.analyzeAdRcvrs(adId)
 POST /sys/mad/:adId/rcvrs/reset         @controllers.SysAd.resetReceivers(adId, r: Option[String] ?= None)
 POST /sys/mad/:adId/rcvrs/clean         @controllers.SysAd.cleanReceivers(adId, r: Option[String] ?= None)
-# sys.ad.render - диагностический рендер одиночных карточек в html и картинки.
+# sys.ad.render - render signle ads for debugging purposes.
 GET  /sys/mad/:adId/one/render/:rvar    @controllers.SysAd.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
 POST /sys/mad/:adId/one/render/:rvar    @controllers.SysAd.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
 ## sys.adn.install
 GET  /sys/adn/inst/mads/:adnId          @controllers.SysAd.installDfltMads(adnId)
 POST /sys/adn/inst/mads/:adnId          @controllers.SysAd.installDfltMadsSubmit(adnId)
 
-## SysNodeDomains - управлением доменами узла.
+## SysNodeDomains - Control over domains.
 GET  /sys/node/domain/add/:nodeId       @controllers.SysNodeDomains.createNodeDomain(nodeId)
 POST /sys/node/domain/add/:nodeId       @controllers.SysNodeDomains.createNodeDomainFormSubmit(nodeId)
 GET  /sys/node/domain/edit/:nodeId/dkey @controllers.SysNodeDomains.editNodeDomain(nodeId, dkey)
 POST /sys/node/domain/edit/:nodeId/dkey @controllers.SysNodeDomains.editNodeDomainFormSubmit(nodeId, dkey)
 POST /sys/node/domain/del/:nodeId/dkey  @controllers.SysNodeDomains.deleteNodeDomainFormSubmit(nodeId, dkey)
 
-## SysNodeEdges: работа с эджами узлов
+## SysNodeEdges: Node Edge editor.
 GET  /sys/node/edge2                    @controllers.SysNodeEdges.editEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 POST /sys/node/edge2                    @controllers.SysNodeEdges.saveEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 DELETE /sys/node/edge2                  @controllers.SysNodeEdges.deleteEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
@@ -222,7 +222,7 @@ POST /sys/node/edges/up                 @controllers.SysNodeEdges.prepareUploadF
 GET  /sys/node/edges/dl                 @controllers.SysNodeEdges.openFile( e: io.suggest.n2.edge.edit.MNodeEdgeIdQs )
 
 
-## sys: Календари
+## sys: Calendars for billing.
 GET  /sys/cal                            @controllers.SysCalendar.showCalendars()
 POST /sys/cal/new/tpl                    @controllers.SysCalendar.newCalendarFromTemplateSubmit()
 POST /sys/cal/new                        @controllers.SysCalendar.createCalendarSubmit()
@@ -230,7 +230,7 @@ GET  /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendar(c
 POST /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendarSubmit(calId)
 GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml(calId)
 
-## sys: mdr - модерация контента
+## sys mdr: Content moderation in personal cabinet and in /sys/
 GET  /lk/mdr/*onNode                     @controllers.SysMdr.lkMdr( onNode: RcvrKey )
 GET  /sys/mdr                            @controllers.SysMdr.sysPage()
 GET  /sys/mdr/next                       @controllers.SysMdr.nextMdrInfo(a: io.suggest.sys.mdr.MdrSearchArgs)
@@ -251,7 +251,7 @@ GET  /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircle(g: mg
 POST /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircleSubmit(g: mgeo.MGsPtr)
 GET  /sys/adn/geo/json                   @controllers.SysAdnGeo.showGeoJson(g: mgeo.MGsPtr)
 
-## Карта umap
+## umap display.
 GET  /sys/umap/nodes                     @controllers.Umap.getAdnNodesMap()
 GET  /sys/umap/nodes/datalayer           @controllers.Umap.getDataLayerGeoJson(ngl: io.suggest.geo.MNodeGeoLevel)
 POST /sys/umap/nodes/settings            @controllers.Umap.saveMapSettingsSubmit()
@@ -261,7 +261,7 @@ GET  /sys/umap/node/:adnId               @controllers.Umap.getAdnNodeMap(adnId)
 GET  /sys/umap/node/:adnId/datalayer     @controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: io.suggest.geo.MNodeGeoLevel)
 POST /sys/umap/node/:adnId/datalayer     @controllers.Umap.saveNodeDataLayer(adnId, ngl: io.suggest.geo.MNodeGeoLevel)
 
-## sys/Картинки
+## sys/images
 GET  /sys/img                            @controllers.SysImg.index(q: Option[String] ?= None)
 POST /sys/img/search                     @controllers.SysImg.searchFormSubmit()
 GET  /sys/img/show                       @controllers.SysImg.showOne(i: im.MImgT)
@@ -277,22 +277,22 @@ GET  /sys/person/show/:personId          @controllers.SysPerson.showPerson(perso
 GET  /sys/person/idents                  @controllers.SysPerson.allIdents(offset: Int ?= 0)
 
 
-## sys/billing v2 -- Весь новый биллинг разом в этом контроллере.
+## Sys/billing v2
 GET  /sys/bill/node/:nodeId              @controllers.SysBilling.forNode(nodeId)
-## посуточные тарифы
+## Daily tariff
 GET  /sys/bill/tf/daily/:nodeId          @controllers.SysBilling.editNodeTfDaily(nodeId)
 POST /sys/bill/tf/daily/:nodeId          @controllers.SysBilling.editNodeTfDailySubmit(nodeId)
 POST /sys/bill/tf/daily/del/:nodeId      @controllers.SysBilling.deleteNodeTfDaily(nodeId)
-## контракты v2
+## Contracts v2
 GET  /sys/bill/contract/new/:nodeId      @controllers.SysBilling.createContract(nodeId)
 POST /sys/bill/contract/new/:nodeId      @controllers.SysBilling.createContractSubmit(nodeId)
 GET  /sys/bill/contract/edit/:nodeId     @controllers.SysBilling.editContract(nodeId)
 POST /sys/bill/contract/edit/:nodeId     @controllers.SysBilling.editContractSubmit(nodeId)
 POST /sys/bill/contract/delete/:nodeId   @controllers.SysBilling.deleteContractSubmit(nodeId)
-## Балансы v2
+## Balances v2
 GET  /sys/bill/payment/:nodeId           @controllers.SysBilling.payment(nodeId)
 POST /sys/bill/payment/:nodeId           @controllers.SysBilling.paymentSubmit(nodeId)
-## Обзор системы балансов v2
+## Sys billing index page.
 GET  /sys/bill                           @controllers.SysBilling.overview()
 
 
@@ -304,11 +304,11 @@ POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDe
 GET  /sys/debug/cpRes                    @controllers.SysDebug.getClassPathResourceInfoGet()
 POST /sys/debug/cpRes                    @controllers.SysDebug.getClassPathResourceInfoPost()
 
-## ident v2: react-форма логина.
+## ident v2: login form.
 ## Password change v2
 GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.spa.SioPages.Login ?= io.suggest.spa.SioPages.Login.default)
 POST /id/login                          @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
-## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.
+## Signup via password.
 POST /id/reg/s0                         @controllers.Ident.regStep0Submit()
 POST /id/reg/s1                         @controllers.Ident.epw2RegSubmit()
 POST /id/reg/s2                         @controllers.Ident.smsCodeCheck()
@@ -317,22 +317,21 @@ GET  /id/pwch                           @controllers.Ident.pwChangeForm(onNode: 
 POST /id/pwch                           @controllers.Ident.pwChangeSubmit()
 GET  /id/logout                         @controllers.Ident.logout()
 GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: models.usr.MEmailRecoverQs)
-## ident: редирект куда-нибудь
+## ident: redirection somewhere.
 GET  /id/rdr/me/somewhere               @controllers.Ident.rdrUserSomewhere()
-## ident: вход через внешнего провайдера
+## ident: login via external id-provider.
 GET  /id/push/:extService               @controllers.Ident.extServicePushGet(extService: io.suggest.ext.svc.MExtService)
 GET  /id/via/:extService                @controllers.Ident.idViaProvider(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
 POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
 POST /id/push/:extService               @controllers.Ident.extServicePushPost(extService: io.suggest.ext.svc.MExtService)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm()
 
-## compat
+## compat. TODO keepalive - Not used?
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession()
-## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
 GET  /privacy                           @controllers.Static.privacyPolicy()
 GET  /st/popup/check                    @controllers.Static.popupCheckContent()
 POST /_/csp/report                      @controllers.Static.handleCspReport()
 
-## Редкие обращения к ассетам напрямую. На момент перемещения вниз, это использовалось только в одном редком месте в коде.
+## Rare non-versioned access to assets.
 GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
 GET  /assets/*file                      @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file)

@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.itm
 
-import com.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiColorTypes, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartSelectItem
@@ -235,6 +235,7 @@ class ItemRowR(
                 override val checked = js.defined( props.isSelected.getOrElseFalse )
                 override val indeterminate = false
                 override val disabled = props.isPendingReq
+                override val color = MuiColorTypes.secondary
               }
             )
           )

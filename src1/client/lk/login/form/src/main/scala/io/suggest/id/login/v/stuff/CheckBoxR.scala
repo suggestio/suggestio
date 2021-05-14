@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.stuff
 
-import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps}
+import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiColorTypes}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.id.login.m.ICheckBoxActionStatic
@@ -70,6 +70,7 @@ class CheckBoxR(
               override val checked = js.defined( props.checked )
               override val classes = cbCss
               override val disabled = props.disabled
+              override val color = MuiColorTypes.secondary
             }
           )
         }

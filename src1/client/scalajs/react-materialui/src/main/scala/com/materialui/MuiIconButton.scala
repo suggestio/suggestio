@@ -25,7 +25,7 @@ object MuiIconButton {
 }
 
 
-/** JSON для [[MuiIconButton]] props. */
+/** Props for [[MuiIconButton]]. */
 trait MuiIconButtonPropsBase extends MuiButtonBaseCommonProps {
   val edge: js.UndefOr[MuiIconButton.Edge] = js.undefined
   val color, size: js.UndefOr[String] = js.undefined
@@ -36,7 +36,7 @@ trait MuiIconButtonProps
   with MuiPropsBaseClasses[MuiIconButtonClasses]
 
 
-/** JSON для [[MuiIconButtonProps.classes]]. */
+/** CSS Classes for [[MuiIconButtonProps.classes]]. */
 trait MuiIconButtonClasses extends MuiClassesBase {
   val colorInherit: js.UndefOr[String] = js.undefined
   val colorPrimary: js.UndefOr[String] = js.undefined

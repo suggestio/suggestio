@@ -16,7 +16,7 @@ object MuiCircularProgress {
 }
 
 
-/** JSON для [[MuiCircularProgress]].props. */
+/** JSON Props for [[MuiCircularProgress]]. */
 trait MuiCircularProgressProps extends js.Object {
   val classes: js.UndefOr[MuiCircularProgressClasses] = js.undefined
   val color: js.UndefOr[String] = js.undefined
@@ -27,7 +27,7 @@ trait MuiCircularProgressProps extends js.Object {
   val variant: js.UndefOr[String] = js.undefined
 }
 
-/** JSON для [[MuiCircularProgressProps]].classes. */
+/** JSON CSS-Classes for [[MuiCircularProgressProps]]. */
 trait MuiCircularProgressClasses extends js.Object {
   val root: js.UndefOr[String] = js.undefined
   val static: js.UndefOr[String] = js.undefined

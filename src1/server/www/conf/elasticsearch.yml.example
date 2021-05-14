@@ -1,4 +1,5 @@
-#network.host: 10.0.0.223
-transport.tcp.port: 9301
-http.port: 9201
-node.name" "sioX-web"
+## See https://www.elastic.co/guide/en/elasticsearch/reference/current/important-settings.html
+#node.name" "sioX-web"
+#network.host: 192.168.10.10
+#transport.tcp.port: 9301
+#http.port: 9201

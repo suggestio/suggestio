@@ -22,6 +22,7 @@ Client-side UI developed using [scalajs-react](https://github.com/japgolly/scala
 and translated into JavaScript using [Scala.js](https://www.scala-js.org/) compiler.
 Server-side code based on [Play! framework](https://playframework.com/).
 
+
 ## Requirements
 
 ### Runtime

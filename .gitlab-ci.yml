@@ -8,7 +8,7 @@ stages:
 #  paths:
 #    - src1/server/www/target/universal
 
-## Полная сборка www-релиза:
+## Full build of [www] sub-project stage (release):
 www-stage:
   stage: build
   # TODO cache:
@@ -20,10 +20,3 @@ www-stage:
   - sbt 'set scalaJSStage in Global := FullOptStage' 'project www' 'stage'
   - src1/server/docker/scripts/deploy-www-stage-to-nodes.sh  src1/server/www  sio2/sioweb21  sio2.suggest.io sio3.suggest.io
 
-## Развёртывание на серверах. (надо разобраться, почему target/universal недоступен отсюда).
-#www-stage-deploy-nodes:
-#  stage: deploy
-#  before_script:
-#  - /sbin/entrypoint.sh
-#  script:
-#  - src1/server/docker/scripts/deploy-www-stage-to-nodes.sh  src1/server/www  sio2/sioweb21  sio2.suggest.io sio3.suggest.io sio5.suggest.io

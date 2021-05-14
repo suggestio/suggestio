@@ -11,113 +11,100 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val DIR0 = "src1/"
 
-// Активация offline-режима резолва зависимостей, и выставление прочих самых базовых сеттингов:
+// Import common settings
 Common.settingsOrg
 
-/** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
+/** Shared client/server code living in "common" subproject. */
 lazy val common = crossProject(JSPlatform, JVMPlatform)
   .crossType( CrossType.Full )
   .in( file(DIR0 + "shared/common") )
   .settings(
-    // TODO Надо избавляться от SNAPSHOT в коде.
     updateOptions := updateOptions.value.withLatestSnapshots(false),
     Common.settingsOrg,
     version := "0.0.0",
     testFrameworks += new TestFramework("minitest.runner.Framework"),
     libraryDependencies ++= Seq(
-      // Универсальные зависимости для клиента и сервера. Наследуются во ВСЕ компоненты проекта.
+      // Univeral dependencies for client/server.
       "com.typesafe.play" %%% "play-json" % Common.Vsn.PLAY_JSON_VSN,
-      // Вместо scala.Enumeration используем сие:
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
-      // scalaz появилась для Validation.
       "org.scalaz"   %%% "scalaz-core" % Common.Vsn.SCALAZ,
-      // UnivEq позволяет избегать fruitless comparison даже с дженериками.
       "com.github.japgolly.univeq"   %%% "univeq-scalaz" % Common.Vsn.UNIVEQ,
-      // Комбинируемые парсеры. Раньше они не были доступны для scala.js, поэтому жили только на сервере.
       "org.scala-lang.modules" %%% "scala-parser-combinators" % Common.Vsn.SCALA_PARSER_COMBINATORS,
-      // diode для FastEq в [common], а не только в js.
+      // diode for FastEq to [common], possibly need to move to js-only with dropping most of FastEq implementations in [common].
       "io.suzaku"    %%% "diode-core"  % Common.diodeVsn,
       // monocle
       "com.github.julien-truffaut" %%%  "monocle-core"  % Common.Vsn.MONOCLE,
       "com.github.julien-truffaut" %%%  "monocle-macro" % Common.Vsn.MONOCLE,
       "com.github.julien-truffaut" %%%  "monocle-law"   % Common.Vsn.MONOCLE % Test,
-      // Тесты **не*наследуется**, только на [common].
+      // Tests only for [common].
       "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
     )
   )
   .jsConfigure(_ enablePlugins ScalaJSWeb)
 
+/** Common classes, cross-compiled for server-side. */
 lazy val commonJVM = common.jvm
   .settings(
     name := "commonJVM",
     scalaVersion := Common.SCALA_VSN
   )
 
-/** common для client-only-сборки. */
+/** Common classes, cross-compiled for client-side. */
 lazy val commonJS = common.js
   .settings(
     name := "commonJS",
     scalaVersion := Common.SCALA_VSN_JS,
     libraryDependencies ++= Seq(
-      // java.time-поддержка на клиенте:
+      // java.time client-side support:
       "io.github.cquiroz" %%% "scala-java-time" % Common.Vsn.SCALA_JAVA_TIME,
-      // tzdb только в [lk-dt-period-sjs]
+      // tzdb only for [lk-dt-period-sjs]
     )
   )
 
 
-/** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
+/** Historically server-side utils. */
 lazy val util = project
   .in( file(DIR0 + "server/util/util") )
   .dependsOn(commonJVM, logsMacro, streamsUtil, srvTestUtil % Test)
 
-/** Кое-какие общие вещи для js. */
+/** CommonSjs -- client-side-only JS stuff. */
 lazy val commonSjs = {
   val name = "common-sjs"
   Project(id = name, base = file(DIR0 + "client/" ++ name))
     .dependsOn(commonJS)
 }
 
-/** Для доступа к react test-utils, используется такая шпилька в конфигурации:
-  * Testing - https://github.com/japgolly/scalajs-react/blob/master/doc/TESTING.md#setup
-  */
-lazy val libDepsReactTest = {
-  libraryDependencies ++= Seq(
-    "com.github.japgolly.scalajs-react" %%% "test" % Common.reactSjsVsn % Test
-  )
-}
 
-/** Расшаренная утиль для интеграции с react.js через scalajs-react. */
+/** Shared client-side react.js and related stuff. */
 lazy val commonReactSjs = {
   Project(id = "scalajs-react-common", base = file(DIR0 + "client/scalajs/react-common"))
     .dependsOn(commonSjs)
-    .settings( libDepsReactTest )   // Чисто чтобы понимать, что эта конфигурация работает
 }
 
-/** Sjs-фасад для JSON-формата Quill Delta. */
+/** Scala.js API for Quill Delta. */
 lazy val quillDeltaSjs = {
   Project(id = "scalajs-quill-delta", base = file(DIR0 + "client/scalajs/quill/quill-delta"))
 }
 
-/** Sjs-фасад для quill.js */
+/** Scala.js API for Quill.js. */
 lazy val quillSjs = {
   Project(id = "scalajs-quill", base = file(DIR0 + "client/scalajs/quill/quill"))
     .dependsOn( quillDeltaSjs )
 }
 
-/** Sjs-фасад для react-quill. */
+/** Scala.js API for react-quill. */
 lazy val reactQuillSjs = {
   Project(id = "scalajs-react-quill", base = file(DIR0 + "client/scalajs/quill/react-quill"))
     .dependsOn(commonReactSjs, quillSjs)
 }
 
-/** sio-утиль для sjs-фасадов quill, react-quill, quill-delta и прочих смежных вещей. */
+/** Suggest.io utils for quill.js, react-quill, delta, etc. */
 lazy val quillSioSjs = {
   Project(id = "quill-sio-sjs", base = file(DIR0 + "client/scalajs/quill/quill-sio"))
     .dependsOn(reactQuillSjs, quillDeltaSjs)
 }
 
-/** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из www. */
+/** Server-side SVG-utilities. */
 lazy val svgUtil = {
   val name = "svg-util"
   Project(name, base = file(DIR0 + "server/media/" + name))
@@ -125,8 +112,8 @@ lazy val svgUtil = {
 }
 
 /** 
- * Модуль scala.js для подсистемы внешнего размещения исторически отдельно и он довольно жирный и сложный,
- * чтобы жить внутри дерева lk-sjs.
+ * Scala.js form for posting suggest.io content to external resources.
+ * As of 2021, still not support jd-rendering and without react.js, and disabled.
  */
 lazy val lkAdvExtSjs = {
   val name = "lk-adv-ext-sjs"
@@ -134,39 +121,38 @@ lazy val lkAdvExtSjs = {
     .dependsOn(commonSjs)
 }
 
-/** Редактор рекламных карточкек на базе scala.js. */
+/** Ads editor scala.js react form. */
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
     .dependsOn( lkCommonSjs, quillSioSjs, jdEditSjs, asmCryptoSioSjs, reactMaterialUiSjs )
 }
 
-/** Трейты для поддержки простых логов. */
+/** Traits for server-side macro logging. */
 lazy val logsMacro = {
   val name = "logs-macro"
   Project(id = name, base = file(DIR0 + "server/util/" + name))
 }
 
-/** Поддержка seaweedfs */
+/** SeaWeedFS storage HTTP client. */
 lazy val swfs = project
   .in( file(DIR0 + "server/media/swfs") )
   .dependsOn(util, streamsUtil % Test)
 
-/** Поддержка моделей n2. */
+/** Nodes-v2 graph models. */
 lazy val n2 = project
   .in( file(DIR0 + "server/nodes/n2") )
   .dependsOn(esUtil, swfs, mgeo, srvTestUtil % Test)
 
-/**
- * Расширенный pg-драйвер для slick-based моделей в подпроектах.
- * Из-за проблем с classLoader'ами в play и slick, этот подпроект живёт изолировано.
- */
+/** Slick Postgresql extended driver (profile).
+  * Due to old classLoader issues, this driver imported via libdeps as external dependency.
+  */
 lazy val commonSlickDriver = {
   val name = "common-slick-driver"
   Project(id = name, base = file(DIR0 + "server/util/" ++ name))
 }
 
-/** всякая мелочь, специфчная только для личного кабинета, но используется в нескольких модулях. */
+/** Stuff/utils for users private cabinet, shared between other cabinet modules. */
 lazy val lkCommonSjs = {
   val name = "lk-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/common"))
@@ -177,283 +163,275 @@ lazy val lkCommonSjs = {
     )
 }
 
-/** Форма логина sjs. */
+/** Scala.js react login/signup/password-reset forms. */
 lazy val loginFormSjs = {
   Project(id = "login-form-sjs", base = file(DIR0 + "client/lk/login/form") )
     .dependsOn( lkCommonSjs )
 }
 
-/** Компоненты для покупательской корзины suggest.io. */
+/** Scala.js React.js component/forms for Suggest.io billing Cart. */
 lazy val cartSjs = {
   Project(id = "cart-sjs", base = file(DIR0 + "client/bill/cart"))
     .dependsOn( lkCommonSjs, reactMaterialUiSjs, jdRenderSjs )
 }
 
-/** Самопальные биндинги для moment.js. */
+/** Scala.js API form Moment.js. */
 lazy val momentSjs = Project(id = "moment-sjs", base = file(DIR0 + "client/dt/moment"))
 
-/** sio-утиль для moment.js. */
+/** Suggest.io utils for moment.js. */
 lazy val momentSioSjs = {
   Project(id = "moment-sio-sjs", base = file(DIR0 + "client/dt/moment-sio"))
     .dependsOn(momentSjs, commonSjs)
 }
 
-/** Фасады scala.js для react-date-picker. */
+/** Scala.js API for react-date-picker. */
 lazy val reactDatePickerSjs = {
   Project(id = "scalajs-react-date-picker", base = file(DIR0 + "client/scalajs/react-date-picker"))
     .dependsOn(commonReactSjs, momentSioSjs)
 }
 
-/** Scala.js API для react-color. */
+/** Scala.js API for react-color. */
 lazy val reactColorSjs = {
   Project(id = "scalajs-react-color", base = file(DIR0 + "client/scalajs/react-color"))
     .dependsOn(commonReactSjs)
 }
 
-/** Jodit - Scala.js API. */
+/** Scala.js API for jodit. */
 lazy val joditSjs = {
   Project(id = "scalajs-jodit", base = file(DIR0 + "client/scalajs/jodit/jodit"))
 }
 
-/** Jodit-react Scala.js API. */
+/** Scala.js API for jodit-react. */
 lazy val joditReactSjs = {
   Project(id = "scalajs-jodit-react", base = file(DIR0 + "client/scalajs/jodit/jodit-react"))
-    .settings( libDepsReactTest )
     .dependsOn( commonReactSjs, joditSjs )
 }
 
-/** Scala.js API для react-image-crop. */
+/** Scala.js API for react-image-crop. */
 lazy val reactImageCropSjs = {
   Project(id = "scalajs-react-image-crop", base = file(DIR0 + "client/scalajs/react-image-crop"))
     .dependsOn(commonReactSjs)
 }
 
-/** Фасады scala.js для react-image-gallery. */
+/** Scala.js API for react-image-gallery. */
 lazy val reactImageGallerySjs = {
   Project(id = "scalajs-react-image-gallery", base = file(DIR0 + "client/scalajs/react-image-gallery"))
     .dependsOn(commonReactSjs)
 }
 
-/** Sjs-фасады для react-grid-layout. */
-// TODO Унести на гитхаб и удалить окончательно из проекта
+/** Scala.js API for react-grid-layout (TODO unused). */
 lazy val reactGridLayoutSjs = {
   val name = "react-grid-layout"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
 }
 
-/** Форма модерации. */
+/** Moderation react.js form. */
 lazy val sysMdrSjs = {
   Project(id = "sys-mdr-sjs", base = file(s"${DIR0}client/sys/mdr"))
     .dependsOn( lkCommonSjs, reactMaterialUiSjs, jdRenderSjs )
 }
 
-/** Scala.js-фасад для компонентов react-stonecutter (реализация grid layout). */
+/** Scala.js API for react-stonecutter. */
 lazy val reactStoneCutterSjs = {
   val name = "react-stonecutter"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
 }
 
-/** Scala.js-фасад для react-measure. */
+/** Scala.js API for react-measure. */
 lazy val reactMeasureSjs = {
   val name = "react-measure"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
 }
 
-/** Scala.js facade for react-resizable. */
+/** Scala.js API for react-resizable. */
 lazy val reactResizableSjs = {
   val name = "react-resizable"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
-    .settings( libDepsReactTest )
 }
 
-/** React drag-n-drop фасады scala-js. */
+/** Scala.js API for react-dnd. */
 lazy val reactDndSjs = {
   val name = "react-dnd"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
-    .settings( libDepsReactTest )
 }
 
-/** Scala.js-фасад для компонентов в react-sanfona. */
-// TODO Унести на гитхаб и удалить окончательно из проекта
+/** Scala.js API for react-sanfona (TODO unused). */
 lazy val reactSanfonaSjs = {
   val name = "react-sanfona"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
 }
 
-/** Scala.js биндинги для react-sidebar компонентов.
-  * MuiDrawer не всегда подходит, т.к. обрабатывает touch-события на уровне document, пробрасывая их в панель на уровне js.
-  */
+/** Scala.js API for react-sidebar (TODO unused). */
 lazy val reactSidebar = {
   val name = "react-sidebar"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
-    .settings( libDepsReactTest )
 }
 
-/** Scala.js биндинги для компонентов react-scroll. */
+/** Scala.js API for react-scroll. */
 lazy val reactScroll = {
   val name = "react-scroll"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
 }
 
-/** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
+/** React.js components for date period forms. */
 lazy val lkDtPeriodSjs = {
   val name = "lk-dt-period-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/dt-period"))
     .dependsOn(lkCommonSjs, commonReactSjs, reactDatePickerSjs)
 }
 
-/** lk-adv-common sjs. */
+/** Common react-components for lk-adv-forms. */
 lazy val lkAdvCommonSjs = {
   val name = "lk-adv-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/adv/common"))
     .dependsOn(lkCommonSjs, commonReactSjs, mapsSjs)
 }
 
-/** Sjs-модуль для поддержки подсистемы размещения в гео-тегах. */
+/** Form for geo-advertising of ads in geo-regions, tags, direct adv, etc. */
 lazy val lkAdvGeoSjs = {
   val name = "lk-adv-geo-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/adv/geo"))
     .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarkerClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs, lkDtPeriodSjs)
 }
 
-/** Sjs поддержки формы управления узлами/под-узлами в ЛК узла. */
+/** React.js form for Nodes management. */
 lazy val lkNodesFormSjs = {
   val name = "lk-nodes-form-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/nodes/form"))
     .dependsOn(lkAdvCommonSjs, commonReactSjs)
 }
 
-/** Поддержка тестов для server-side тестов. Использовать так: .dependsOn(srvTestUtil % Test) */
+/** Some server-side test utils.
+  * To use: .dependsOn(srvTestUtil % Test) */
 lazy val srvTestUtil = {
   Project(id = "srv-test-util", base = file(DIR0 + "server/util/test-util"))
     .dependsOn(logsMacro, commonJVM)
 }
 
-/** Модели биллинга второго поколения. */
+/** Slick SQL billing models for 2nd-generation billing. */
 lazy val mbill2 = project
   .in( file(DIR0 + "server/bill/mbill2") )
   .dependsOn(logsMacro, commonJVM, util, mgeo, commonSlickDriver)
 
-/** Утиль и модели для поддержки интеграции с БД ipgeobase. */
+/** IPGeoBase server-side utils for fetching/parsing/indexing ipgeobase.ru database dumps. */
 lazy val ipgeobase = {
   val name = "ipgeobase"
   Project(id = name, base = file(DIR0 + "server/geo/" + name))
     .dependsOn(logsMacro, esUtil, mgeo)
 }
 
-/** Подсистема сбора статистики. */
+/** Server-side statistics collection stuff. */
 lazy val stat = project
   .in( file(DIR0 + "server/stat/mstat") )
   .dependsOn(logsMacro, esUtil, mgeo)
 
-/** Scala.js API для самой cordova. */
+/** Scala.js API for Apache Cordova and some cordova plugin's APIs. */
 lazy val cordovaSjs = {
   Project(id = "scalajs-cordova", base = file(DIR0 + "client/scalajs/cordova"))
     .dependsOn( commonSjs )
 }
 
-/** scala.js API для evothings/cordova-ble. */
+/** Scala.js API for cordova-ble-central. */
 lazy val cordovaBleSjs = Project(id = "scalajs-cordova-ble", base = file(DIR0 + "client/ble/cordova-ble"))
 
-/** S.io sjs-утиль поверх нативной кордовы. */
+/** Suggest.io util/addons over Apache Cordova APIs. */
 lazy val cordovaSioUtilSjs = {
   val name = "cordova-sio-util"
   Project(id = name, base = file(DIR0 + "client/util/" + name))
     .dependsOn( commonSjs, cordovaSjs )
 }
 
-/** Scala.js фасады для доступа к web-bluetooth API. */
+/** Scala.js API for WebBluetooth. */
 //lazy val webBluetoothSjs = {
 //  val name = "web-bluetooth"
 //  Project(id = "scalajs-" + name, base = file(DIR0 + "client/ble/" + name))
 //}
 
-/** Самописное leaflet API. */
+/** Scala.js API for Leaflet.js */
 lazy val leafletSjs = Project(id = "scalajs-leaflet", base = file(DIR0 + "client/geo/leaflet/main"))
     .dependsOn(commonSjs)
 
-/** Самописное leaflet-react API. */
+/** Scala.js API for react-leaflet. */
 lazy val leafletReactSjs = {
   Project(id = "scalajs-leaflet-react", base = file(DIR0 + "client/geo/leaflet/react"))
     .dependsOn(commonSjs, leafletSjs, leafletMarkerClusterSjs, commonReactSjs)
 }
 
-/** leaflet.markercluster.js scalajs API. */
+/** Scala.js API for Leaflet.MarkerCluster.js */
 lazy val leafletMarkerClusterSjs = {
   Project(id = "scalajs-leaflet-markercluster", base = file(DIR0 + "client/geo/leaflet/markercluster"))
     .dependsOn(leafletSjs, commonReactSjs)
 }
 
-/** Поддержка MaxMind GeoIP2. */
-// Отложено до переезда на elasticsearch 5.x. См. mmgeoip2/README
+/** MaxMind GeoIP2 stuff (TODO unused, not yet implemented, see mmgeoip2/README). */
 lazy val mmgeoip2 = {
   val name = "mmgeoip2"
   Project(id = name, base = file(DIR0 + "server/geo/" + name))
     .dependsOn(util, logsMacro)
 }
 
-/** Scala.js API facades for asmcrypto.js library. */
+/** Scala.js API facades for asmcrypto.js */
 lazy val asmCryptoJsSjs = {
   Project(id = "scalajs-asmcryptojs", base = file(DIR0 + "client/scalajs/asmcrypto/asmcryptojs"))
 }
 
-/** Sio-утиль для asmCrypto.js. */
+/** Suggest.io extensions over asmCrypto.js APIs. */
 lazy val asmCryptoSioSjs = {
   Project(id = "asmcrypto-sio-sjs", base = file(DIR0 + "client/scalajs/asmcrypto/asmcrypto-sio"))
     .dependsOn( asmCryptoJsSjs, commonSjs )
     .aggregate( asmCryptoJsSjs )
 }
 
-/** mapbox-gl API. */
+/** Scala.js API for Mapbox-gl.js (TODO unused). */
 lazy val mapBoxGlSjs = {
   Project(id = "scalajs-mapboxgl", base = file(DIR0 + "client/geo/mapboxgl"))
     .dependsOn(commonSjs)
 }
 
-/** Утиль для поддержки географических карт. */
+/** Suggest.io client-side utils and MVCs for geo.maps and related things. */
 lazy val mapsSjs = {
   val name = "maps-sjs"
   Project(id = name, base = file(DIR0 + "client/geo/common-maps"))
     .dependsOn(commonSjs, leafletSjs, commonReactSjs, leafletReactSjs)
 }
 
-/** Sjs-модуль редактора тегов. */
+/** Tags editor react-components. */
 lazy val lkTagsEditSjs = {
   val name = "lk-tags-edit-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/tags-edit"))
     .dependsOn(lkCommonSjs)
 }
 
-/** Sjs-поддержка размещения ADN-узла на карте. */
+/** React-form for nodes placements on the map as logo. */
 lazy val lkAdnMapSjs = {
   val prefix = "lk-adn-map"
   Project(id = prefix + "-sjs", base = file(DIR0 + "client/lk/adn/" + prefix))
     .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs, lkDtPeriodSjs)
 }
 
-/** Scala.js формы редактирования метаданных узла. */
+/** React-form for editing node metadata (name, address, etc). */
 lazy val lkAdnEditSjs = {
   Project(id = "lk-adn-edit-sjs", base = file(DIR0 + "client/lk/adn/edit"))
     .dependsOn(lkCommonSjs)
 }
 
-/** JS страницы управления карточками узла в личном кабинете. */
+/** React form for ads list inside personal cabinet. */
 lazy val lkAdsSjs = {
   Project(id = "lk-ads-sjs", base = file(DIR0 + "client/lk/ads"))
-    // Связь с lkNodes: интеграция сначала по api, а затем со всей nodes-формой.
+    // lkNodesSjs: integration by API now, full nodes sub-form popup integration in future.
     .dependsOn(lkCommonSjs, jdRenderSjs, lkNodesFormSjs, reactStoneCutterSjs, reactScroll)
 }
 
-/** Всякие мелкие скрипты ЛК объеденены в этом scala-js.
-  * Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь.
+/** Merged top-level js of personal cabinet.
+  * Aggregates all related cabinet react-forms.
   */
 lazy val lkSjs = {
   Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
@@ -464,7 +442,7 @@ lazy val lkSjs = {
     )
 }
 
-/** Объединение мелких модулей для /sys-раздела по аналогии с lk-sjs. */
+/** Merged react-forms in one JS for /sys/ area. */
 lazy val sysSjs = {
   Project(id = "sys-sjs", base = file(DIR0 + "client/sys/main"))
     .enablePlugins( WebScalaJS )
@@ -474,26 +452,26 @@ lazy val sysSjs = {
     )
 }
 
-/** scala.js реализация системы мониторинга js-маячков. */
+/** BluetoothLE Listener for detection of radio-beacons (Scala.js). */
 lazy val bleBeaconerSjs = {
   val name = "ble-beaconer"
   Project(id = name, base = file(DIR0 + "client/ble/" + name))
     .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs)
 }
 
-/** ServiceWorker toolbox. */
+/** Scala.js API for ServiceWorker toolbox. */
 lazy val swToolBoxSjs = {
   val id = "sw-toolbox"
   Project(id = id + "-sjs", base = file(DIR0 + "client/scalajs/" + id))
 }
 
-/** Аналог lk-common-sjs, но без лишних зависимостей. */
+/** Some showcase stuff outside sc3-sjs. */
 lazy val scCommonSjs = {
   Project(id = "sc-common", base = file(DIR0 + "client/sc/common"))
     .dependsOn( commonSjs, reactMaterialUiSjs )
 }
 
-/** Выдача на scala.js+react. */
+/** Showcase 3rd-generation -- react.js main single-page-application of Suggest.io. */
 lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
@@ -504,123 +482,124 @@ lazy val sc3Sjs = {
     )
 }
 
-/** ServiceWorker для выдачи. */
+/** ServiceWorker for showcase (sc3Sjs). */
 lazy val scSwSjs = {
   Project(id = "sc-sw-sjs", base = file(DIR0 + "client/sc/sw"))
     .enablePlugins( WebScalaJS )
     .dependsOn( commonSjs, swToolBoxSjs )
 }
 
-/** Экспорт material-ui core+icons с поправками для новой версии. */
+/** Scala.js API for React MaterialUI. */
 lazy val reactMaterialUiSjs = {
   Project(id = "scalajs-react-materialui", base = file(DIR0 + "client/scalajs/react-materialui"))
     .dependsOn( commonReactSjs )
 }
 
-/** Поддержка mui-treasure для нужд. */
+/** Scala.js API for mui-treasury (material-ui addons). */
 lazy val muiTreasurySjs = {
   Project(id = "scalajs-mui-treasury", base = file(DIR0 + "client/scalajs/mui-treasury"))
     .dependsOn( reactMaterialUiSjs )
 }
 
-/** API для mui color picker. */
+/** Scala.js API for materialui-color color-picker. */
 lazy val reactMaterialUiColorSjs = {
   Project( id = "scalajs-react-materialui-color", base = file(DIR0 + "client/scalajs/react-materialui-color") )
     .dependsOn( reactMaterialUiSjs )
 }
 
-/** Форма организации заливки какого-либо файла на сервер. */
+/** React-form for editing node edges with file-uploading support. */
 lazy val sysEdgeEditSjs = {
   Project(id = "sys-edge-edit-sjs", base = file(DIR0 + "client/sys/edge-edit"))
     .dependsOn( lkCommonSjs, scCommonSjs, reactMaterialUiSjs )
 }
 
-/** json document react renderer */
+/** JD (Json Document) tree rendering components. */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
     .dependsOn( commonSjs, reactStoneCutterSjs, reactMeasureSjs, reactStoneCutterSjs, reactScroll )
 }
 
-/** Поддержка редактирования jd с кучей доп.зависимостей ЛК. */
+/** JD editing components. */
 lazy val jdEditSjs = {
   Project(id = "jd-edit-sjs", base = file(DIR0 + "client/jd/jd-edit"))
     .dependsOn( lkCommonSjs, jdRenderSjs )
 }
 
-/** Внутренний форк securesocial. */
+/** Securesocial internal parts (TODO legacy, remove/merge?). */
 lazy val securesocial = project
   .in( file(DIR0 + "server/id/securesocial") )
   .enablePlugins(PlayScala, SbtWeb)
   .dependsOn( secWwwUtil )
 
-/** Модели, связывающие географию, es и sio. */
+/** Server-side geographical models and utils. */
 lazy val mgeo = project
   .in( file(DIR0 + "server/geo/mgeo") )
   .dependsOn(esUtil, logsMacro, srvTestUtil % Test)
 
-/** Пошаренная утиль для сборки www-кусков. */
+/** Server-side utilities extracted from [www]. */
 lazy val commonWww = {
   val id = "common-www"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
     .dependsOn(util, logsMacro, n2, mbill2, secWwwUtil)
 }
 
-/** security-утиль для веб-морды. */
+/** Some security-related classes for server-side www. */
 lazy val secWwwUtil = {
   val id = "sec-www-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
     .dependsOn(util, esUtil, logsMacro)
 }
 
-/** Утиль для взаимодействия с антивирусами. */
+/** Anti-virus software integration classes. */
 lazy val secAvUtil = {
   val id = "sec-av-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
     .dependsOn(util, streamsUtil, logsMacro)
 }
 
-/** Разная поддержка узлов для вёб-морды. */
+/** Some nodes-related stuff for server-side. */
 lazy val nodesWww = {
   val id = "nodes-www"
   Project(id = id, base = file(DIR0 + "server/nodes/" + id))
     .dependsOn(commonWww, n2)
 }
 
-/** Утиль для поддержки ElasticSearch. */
+/** ElasticSearch utilities. */
 lazy val esUtil = {
   val id = "es-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
     .dependsOn(util, textUtil)
 }
 
+/** Some additional classes over akka-streams. */
 lazy val streamsUtil = {
   val id = "streams-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
     .dependsOn(logsMacro, commonJVM)
 }
 
-/** Sio-утиль для brotli. */
+/** Utilities for brotli compression on server. */
 lazy val brotliUtil = {
   val id = "brotli-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
     .dependsOn(streamsUtil)
 }
 
-/** Текстовая утиль, выносимая из util и других мест. */
+/** Text processing server-side classes. */
 lazy val textUtil = {
   val id = "text-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
     .dependsOn(util, logsMacro)
-}    // TODO Возможно, зависимость от util не потребуется после окончания рефакторинга. Проверить.
+}
 
-/** Клиент-сайд генератор QR-кодов. */
+/** Scala.js API for react-qrcode. */
 lazy val reactQrCodeSjs = {
   val id = "scalajs-react-qrcode"
   Project(id = id, base = file(DIR0 + "client/scalajs/react-qrcode"))
     .dependsOn( commonReactSjs )
 }
 
-/** Sjs-фасад для Flow.js.
+/** Scala.js API for Flow.js.
   * @see [[https://github.com/flowjs/flow.js/]]
   */
 lazy val flowjsSjs = {
@@ -629,7 +608,7 @@ lazy val flowjsSjs = {
 }
 
 
-/** веб-интерфейс suggest.io v2. */
+/** Suggest.io server WEB/HTTP interface.*/
 lazy val www = project
   .in( file(DIR0 + "server/www") )
   .enablePlugins(PlayScala, WebScalaJSBundlerPlugin)
@@ -644,7 +623,7 @@ lazy val www = project
   .settings(
     scalaJSProjects := Seq(lkSjs, sc3Sjs, scSwSjs, sysSjs),
     pipelineStages in Assets := Seq(scalaJSPipeline),
-    // Скопипастить некоторые ассеты прямо из npm:
+    // Copy some assets from npm:
     // react DatePicker
     npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
       (nodeModules / "react-datepicker" / "dist") * "*.min.css"
@@ -659,9 +638,7 @@ lazy val www = project
       val lDist = nodeModules / "leaflet" / "dist"
       val lCss = lDist * "*.css"
       val lImages = (lDist / "images").allPaths
-      // Из-за использования этого через webpack externals: // TODO Надо ли это, если переезд на prunecluster?
-      val lJs = lDist * "leaflet.js"
-      llcCss +++ lCss +++ lImages +++ lJs
+      llcCss +++ lCss +++ lImages
     }.value,
     // leaflet MarkerCluster
     npmAssets ++= NpmAssets.ofProject(leafletMarkerClusterSjs) { nodeModules =>
@@ -685,7 +662,7 @@ lazy val www = project
   )
 
 
-/** JS-код на стороне клиента. */
+/** Aggregate project for client-side sub-projects (compiled to js). */
 lazy val client = project
   .in( file(DIR0 + "client") )
   .settings(Common.settingsOrg: _*)
@@ -713,7 +690,7 @@ lazy val client = project
   )
 
 
-/** JVM-код на стороне сервера. */
+/** Aggregate for server-side sub-projects (compiled for JVM). */
 lazy val server = project
   .in( file(DIR0 + "server") )
   .settings(Common.settingsOrg: _*)
@@ -730,7 +707,7 @@ lazy val server = project
   )
 
 
-/** Корневой проект. Он должен аггрегировать подпроекты. */
+/** Root project aggregate. */
 lazy val sio2 = project
   .in( file(".") )
   .settings(Common.settingsOrg: _*)
@@ -740,7 +717,7 @@ lazy val sio2 = project
   )
 
 
-/** Разные под-проекты, уже или ещё не нужные и не используемые. */
+/** Diffenent sub-projects, not used anymore. */
 /*
 lazy val trash = project
   .in( file(DIR0) )

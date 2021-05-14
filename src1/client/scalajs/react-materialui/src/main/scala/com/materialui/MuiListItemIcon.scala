@@ -22,13 +22,13 @@ object MuiListItemIcon {
 }
 
 
-/** JSON для [[MuiListItem]] props. */
+/** Props for [[MuiListItem]]. */
 trait MuiListItemIconProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiListItemIconClasses]
 
 
-/** JSON для [[MuiListItemIconProps.classes]]. */
+/** CSS Clases for [[MuiListItemIconProps.classes]]. */
 trait MuiListItemIconClasses extends js.Object {
   val root: js.UndefOr[String] = js.undefined
 }

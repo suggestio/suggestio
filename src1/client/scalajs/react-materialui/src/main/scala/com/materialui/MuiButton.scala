@@ -17,7 +17,7 @@ object MuiButton {
 }
 
 
-/** Модель props для [[MuiButton]]. */
+/** Props for [[MuiButton]]. */
 trait MuiButtonProps
   extends MuiButtonBaseCommonProps
   with MuiPropsBaseClasses[MuiButtonClasses]
@@ -33,7 +33,7 @@ trait MuiButtonProps
 }
 
 
-/** JSON для [[MuiButtonProps]].classes. */
+/** JSON clasess for [[MuiButtonProps]]. */
 trait MuiButtonClasses extends MuiClassesBase {
   // TODO https://material-ui.com/api/button/#css-api
 }

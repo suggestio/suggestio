@@ -16,7 +16,7 @@ object MuiLinearProgress {
 }
 
 
-/** JSON для [[MuiLinearProgress]] props. */
+/** Props for [[MuiLinearProgress]]. */
 trait MuiLinearProgressProps extends MuiPropsBase {
   val classes: js.UndefOr[MuiLinearProgressClasses] = js.undefined
   /** The value of progress, only works in determinate mode. */
@@ -27,14 +27,14 @@ trait MuiLinearProgressProps extends MuiPropsBase {
 }
 
 
-/** JSON для [[MuiLinearProgressProps]].classes. */
+/** CSS classes for [[MuiLinearProgressProps]]. */
 trait MuiLinearProgressClasses extends js.Object {
   val root: js.UndefOr[String] = js.undefined
   val colorPrimary: js.UndefOr[String] = js.undefined
 }
 
 
-/** Допустимые значения для [[MuiLinearProgressProps]].variant. */
+/** Enum values for [[MuiLinearProgressProps]].variant field. */
 object MuiProgressVariants {
   val determinate = "determinate"
   val indeterminate = "indeterminate"

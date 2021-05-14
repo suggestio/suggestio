@@ -19,7 +19,7 @@ object MuiTablePagination {
 }
 
 
-/** JSON props for [[MuiTablePagination.component]]. */
+/** Props for [[MuiTablePagination.component]]. */
 trait MuiTablePaginationProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiTablePaginationClasses]
