@@ -1,8 +1,11 @@
 package io.suggest.es.model
 
 import japgolly.univeq.UnivEq
+import org.apache.commons.collections4.IteratorUtils
 import org.elasticsearch.index.query.InnerHitBuilder
+import org.elasticsearch.search.fetch.subphase.DocValueFieldsContext.FieldAndFormat
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext
+
 import scala.jdk.CollectionConverters._
 
 /**
@@ -22,7 +25,17 @@ object MEsInnerHitsInfo {
     // Включён возврат предикатов, на основе которых отобраны карточки:
     val b = new InnerHitBuilder()
       .setFetchSourceContext( FetchSourceContext.DO_NOT_FETCH_SOURCE )
-      .setDocValueFields( esIhInfo.fields.asJava )
+      .setDocValueFields(
+        IteratorUtils.toList(
+          esIhInfo
+            .fields
+            .iterator
+            .map { fieldName =>
+              new FieldAndFormat( fieldName, null )
+            }
+            .asJava
+        )
+      )
 
     esIhInfo.name foreach b.setName
 

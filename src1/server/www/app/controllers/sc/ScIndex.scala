@@ -186,7 +186,7 @@ trait ScIndex
 
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
         circle = CircleGs(geoLoc.point, radiusM = 1)
-        qShapes = CircleGsJvm.toEsQueryMaker( circle ) :: Nil
+        qShapes = GeoShapeJvm.toEsQueryMaker( circle ) :: Nil
         nodeLocPreds = MPredicates.NodeLocation :: Nil
 
         // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:

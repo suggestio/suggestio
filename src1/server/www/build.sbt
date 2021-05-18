@@ -54,10 +54,6 @@ libraryDependencies ++= Seq(
   //"com.nappin" %% "play-recaptcha" % "2.4sio",
 
   "org.postgresql" % "postgresql" % "42.+",
-  // geo
-  //"org.locationtech.spatial4j" % "spatial4j" % Common.Vsn.SPATIAL4J,
-  //"com.vividsolutions" % "jts-core" % Common.Vsn.JTS,
-  //"com.sanoma.cda" %% "maxmind-geoip2-scala" % "1.3.5",
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.

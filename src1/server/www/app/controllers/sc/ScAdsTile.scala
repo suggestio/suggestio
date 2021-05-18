@@ -189,11 +189,12 @@ trait ScAdsTile
               edgeIhHit <- edgesIhHits
                 .getHits
                 .iterator
+              edgeIhHitFields = edgeIhHit.getFields
 
               // Поиск предиката в inner_hit:
               ihPreds = (for {
                 ihPredField <- Option(
-                  edgeIhHit.getField( MNodeFields.Edges.EO_PREDICATE_FN )
+                  edgeIhHitFields.get( MNodeFields.Edges.EO_PREDICATE_FN )
                 )
                   .iterator
                 // Предикат у эджа один. Но тут возвращается цепочка id предикатов в неопределённом порядке.
@@ -211,7 +212,7 @@ trait ScAdsTile
               // Поиск nodeIds в inner_hits.
               ihNodeIds = (for {
                 ihNodeIdsField <- Option(
-                  edgeIhHit.getField( MNodeFields.Edges.EO_NODE_IDS_FN )
+                  edgeIhHitFields.get( MNodeFields.Edges.EO_NODE_IDS_FN )
                 )
                   .iterator
                 ihNodeIdsValues = ihNodeIdsField.getValues

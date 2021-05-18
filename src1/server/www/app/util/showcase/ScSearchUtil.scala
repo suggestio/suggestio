@@ -1,13 +1,14 @@
 package util.showcase
 
 import io.suggest.common.empty.OptionUtil
-import javax.inject.{Inject, Singleton}
+
+import javax.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.es.model.{IMust, MEsNestedSearch}
-import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc, MNodeGeoLevels}
+import io.suggest.geo.{CircleGs, GeoShapeJvm, MGeoLoc, MNodeGeoLevels}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
-import io.suggest.n2.node.{MNodeType, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 
@@ -83,7 +84,7 @@ final class ScSearchUtil {
             )
             GsCriteria(
               levels = MNodeGeoLevels.geoTag :: Nil,
-              shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
+              shapes = GeoShapeJvm.toEsQueryMaker(circle) :: Nil
             )
           }
         },
@@ -105,7 +106,7 @@ final class ScSearchUtil {
           )
           GsCriteria(
             levels = MNodeGeoLevels.geoPlacesSearchAt,
-            shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
+            shapes = GeoShapeJvm.toEsQueryMaker(circle) :: Nil
           )
         },
         must        = should,

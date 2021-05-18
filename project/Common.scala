@@ -51,9 +51,9 @@ object Common {
 
 
     /** Версия elasticsearch. */
-    val ELASTIC_SEARCH = "5.6.8"
-    //val ELASTIC_SEARCH = "6.5.4"
-    // TODO 6.x Нужно объеденить остаточные модели в MNode, разъеденить оставшиеся типы по разным индексам.
+    val ELASTIC_SEARCH = "6.8.13"
+    val JTS = "1.15.0"
+    val SPATIAL4J = "0.7"
 
     /** Бывает, что используется slf4j. Тут его версия.
       * По-хорошему, у нас на сервере logback, на клиенте -- scala-logging поверх slf4j.
@@ -61,21 +61,18 @@ object Common {
       *
       * 2017.jul.6: Версии 1.7 и 1.8 несовместимы из-за jigsaw, нужно и logback тоже обновлять.
       */
-    val SLF4J      = "1.7.25"
+    val SLF4J      = "1.7.+"
 
     /** elasticsearch и сотоварищи используют log4j impl (вместо log4j-api, ага!).
       * es-5.0 -> log4j-2.7
       * @see [[https://github.com/elastic/elasticsearch/issues/19415#issuecomment-257840940]]
       */
-    val LOG4J      = "2.10.0"
+    val LOG4J      = "2.11.1"
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
     val THREETEN_EXTRA = "1.5.+"
 
 
-    // Это связано с elasticsearch-5.x. Так-то, можно уже обновлять и до 1.16.1 и 0.7 соответстветственно.
-    val JTS = "1.14.0"
-    val SPATIAL4J = "0.6"
 
 
     val REACT_IMAGE_GALLERY = "1.0.8"

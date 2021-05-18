@@ -7,7 +7,7 @@ import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
+import org.elasticsearch.common.transport.TransportAddress
 import play.api.Configuration
 import play.api.inject.{ApplicationLifecycle, Injector}
 import io.suggest.conf.PlayConfigUtil._
@@ -125,8 +125,7 @@ final class TransportEsClient @Inject() (
           EsClientUtil.parseHostPortStr( addr )
         }
       }
-      .map( new InetSocketTransportAddress(_) )
-      // TODO ES-6.0+: .map( new TransportAddress(_) )
+      .map( new TransportAddress(_) )
       .toSeq
 
     LOGGER.trace(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}\n Transport addrs: ${addrs.mkString(", ")}")

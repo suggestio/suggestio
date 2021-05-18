@@ -1,8 +1,9 @@
 package io.suggest.geo
 
-import com.vividsolutions.jts.geom.Coordinate
 import org.elasticsearch.common.geo.builders.ShapeBuilders
 import au.id.jazzy.play.geojson.{LngLat, MultiPoint}
+import org.locationtech.jts.geom.Coordinate
+
 import java.{util => ju}
 
 /**

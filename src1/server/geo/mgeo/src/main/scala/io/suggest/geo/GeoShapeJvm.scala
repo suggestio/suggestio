@@ -1,9 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.util.logs.MacroLogsDyn
-import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import play.api.libs.json._
 import au.id.jazzy.play.geojson.{Geometry, LngLat}
 
 /**
@@ -29,7 +27,7 @@ object GeoShapeJvm extends MacroLogsDyn {
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
     */
-  def toEsShapeBuilder(gs: IGeoShapeQuerable): ShapeBuilder = {
+  def toEsShapeBuilder(gs: IGeoShapeQuerable): AnyEsShapeBuilder_t = {
     val c = GsTypesJvm.jvmCompanionFor( gs.shapeType )
       .asInstanceOf[GsStaticJvmQuerable]
     c.toEsShapeBuilder( gs.asInstanceOf[c.Shape_t] )
@@ -75,14 +73,6 @@ trait GsStaticJvmQuerable extends GsStaticJvm {
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
     */
-  def toEsShapeBuilder(gs: Shape_t): ShapeBuilder
+  def toEsShapeBuilder(gs: Shape_t): AnyEsShapeBuilder_t
 
-  def toEsQueryMaker(gs: Shape_t): IToEsQueryFn = {
-    val gsb = toEsShapeBuilder(gs)
-    new IToEsQueryFn {
-      override def toEsQuery(fn: String): QueryBuilder = {
-        QueryBuilders.geoShapeQuery(fn, gsb)
-      }
-    }
-  }
 }

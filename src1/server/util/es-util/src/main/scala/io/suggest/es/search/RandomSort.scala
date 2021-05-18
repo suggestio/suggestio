@@ -27,8 +27,8 @@ trait RandomSort extends DynSearchArgs {
     randomSort.fold(q0) { rs =>
       // Можно рандомно сортировать с учётом generation.
       val scoreFun = ScoreFunctionBuilders
-        .randomFunction( rs.generation )
-        // TODO ES-6.0+: .seed( rs.generation )
+        .randomFunction()
+        .seed( rs.generation )
 
       // Нормировать рандомное значение. Оно гуляет до Int.MaxValue (2.14e9), а такой разбег может навредить
       // при попытках поднять какие-либо результаты поика над остальными. Например, поиск в маячках на фоне обычного поиска.

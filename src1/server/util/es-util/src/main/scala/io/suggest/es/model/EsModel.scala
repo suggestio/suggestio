@@ -374,7 +374,8 @@ final class EsModel @Inject()(
 
 
       def bulkProcessor(listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
-        BulkProcessor.builder(esClient, listener)
+        BulkProcessor
+          .builder(esClient.bulk(_, _), listener)
           .setBulkActions( queueLen )
           .build()
       }
@@ -1603,7 +1604,7 @@ final class EsModel @Inject()(
       // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
       .setSettings( settings )
       .executeFut()
-      .map(_.isShardsAcked)
+      .map(_.isShardsAcknowledged)
 
     lazy val logPrefix = s"createIndex($newIndexName):"
     fut.onComplete {

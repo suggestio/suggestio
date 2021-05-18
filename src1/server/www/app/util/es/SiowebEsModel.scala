@@ -9,7 +9,7 @@ import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.adv.MExtTargets
 import models.mcal.MCalendars
-import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
+import org.elasticsearch.common.transport.TransportAddress
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.MappingDsl
 import play.api.Configuration
@@ -198,7 +198,7 @@ final class SiowebEsModelJmx @Inject() (
       .iterator
       .map { hostPortStr =>
         val sockAddr = EsClientUtil.parseHostPortStr(hostPortStr)
-        new InetSocketTransportAddress(sockAddr)
+        new TransportAddress(sockAddr)
       }
       .toSeq
     for (result <- siowebEsModel.importModelsFromRemote(addrs, models)) yield {

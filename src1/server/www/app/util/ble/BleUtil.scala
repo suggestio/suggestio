@@ -6,7 +6,7 @@ import io.suggest.es.model.{MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicate
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
-import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
+import org.elasticsearch.common.lucene.search.function.{CombineFunction, FunctionScoreQuery}
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder.FilterFunctionBuilder
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -92,7 +92,7 @@ class BleUtil {
           // Собирать итоговую function-score без function'ов внутри, только с весами и фильтрами внутрях.
           QueryBuilders.functionScoreQuery(qb0, ffbs)
             // При объединении скоров интересует только самый ближайший скор.
-            .scoreMode( FiltersFunctionScoreQuery.ScoreMode.MAX )
+            .scoreMode( FunctionScoreQuery.ScoreMode.MAX )
             // При накладывании function-скора на найденную ноду, забывать об исходном скоринге, заменяя его кастомом.
             .boostMode( CombineFunction.REPLACE )
             .boost(maxBoost)

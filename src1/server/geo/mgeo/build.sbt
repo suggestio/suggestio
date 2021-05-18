@@ -16,8 +16,7 @@ libraryDependencies ++= {
 
     // остальное geo
     "org.locationtech.spatial4j"  % "spatial4j"   % Common.Vsn.SPATIAL4J,
-    //"org.locationtech.jts"        % "jts-core"    % Common.Vsn.JTS,   // elasticsearch-6/7.x скорее всего
-    "com.vividsolutions"          % "jts-core"    % Common.Vsn.JTS,
+    "org.locationtech.jts"        % "jts-core"    % Common.Vsn.JTS,
 
     // TEST
     "org.scalatest" %% "scalatest" % Common.scalaTestVsn % Test,

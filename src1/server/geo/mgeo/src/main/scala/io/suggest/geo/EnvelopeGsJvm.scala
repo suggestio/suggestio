@@ -70,7 +70,7 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
     )
   }
 
-  override def toEsShapeBuilder(gs: Shape_t): ShapeBuilder = {
+  override def toEsShapeBuilder(gs: Shape_t): AnyEsShapeBuilder_t = {
     ShapeBuilders.newEnvelope(
       GeoPoint.toJtsCoordinate(gs.topLeft),
       GeoPoint.toJtsCoordinate(gs.bottomRight)

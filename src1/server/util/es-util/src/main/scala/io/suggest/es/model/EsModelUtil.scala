@@ -3,6 +3,9 @@ package io.suggest.es.model
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
 
+import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -70,13 +73,25 @@ object EsModelUtil {
 
   /** Десериализовать документ всырую, вместе с _id, _type и т.д. */
   def deserializeGetRespFullRawStr(getResp: GetResponse): Option[String] = {
-    if (getResp.isExists) {
-      val xc = getResp.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS)
-      val result = xc.string()
-      Some(result)
-    } else {
-      None
+    val baos = new ByteArrayOutputStream( 2048 )
+
+    val result: String = try {
+      val xc = XContentFactory
+        .jsonBuilder(baos)
+        .prettyPrint()
+
+      try {
+        getResp.toXContent(xc, ToXContent.EMPTY_PARAMS)
+      } finally {
+        xc.close()
+      }
+
+      new String( baos.toByteArray, StandardCharsets.UTF_8 )
+    } finally {
+      baos.close()
     }
+
+    Some(result)
   }
 
 }

@@ -6,7 +6,7 @@ import io.suggest.geo.{MGeoPoint, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.n2.node.MNodeFields
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.lucene.search.join.ScoreMode
-import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
+import org.elasticsearch.common.lucene.search.function.{CombineFunction, FunctionScoreQuery}
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders, RangeQueryBuilder}
 
@@ -287,7 +287,7 @@ object OutEdges extends MacroLogsImpl {
               QueryBuilders.functionScoreQuery(qb0, func)
             }
             .boostMode( CombineFunction.REPLACE )
-            .scoreMode( FiltersFunctionScoreQuery.ScoreMode.MAX )
+            .scoreMode( FunctionScoreQuery.ScoreMode.MAX )
             .boost(5f)
           if (withQname)
             fq.queryName(s"f-score-q: $fn $geoPointStr scale=$scale overInner?${_qOpt.nonEmpty}")

@@ -167,7 +167,7 @@ final class IpgbImporter @Inject() (
 
     // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
     BulkProcessor
-      .builder(esClient, listener)
+      .builder( esClient.bulk(_, _), listener )
       .setBulkActions(BULK_QUEUE_LEN)
       .build()
   }

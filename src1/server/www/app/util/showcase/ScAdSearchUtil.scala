@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.es.model.{EsModel, IMust, MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
-import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
+import io.suggest.geo.{GeoShapeJvm, MNodeGeoLevels, PointGs}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.n2.node.{MNodeTypes, MNodes}
@@ -99,7 +99,7 @@ class ScAdSearchUtil @Inject() (
             must        = must,
             gsIntersect = Some(GsCriteria(
               levels = MNodeGeoLevels.geoPlacesSearchAt,
-              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
+              shapes = GeoShapeJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             ))
           )
         }
@@ -127,7 +127,7 @@ class ScAdSearchUtil @Inject() (
           } yield {
             GsCriteria(
               levels = MNodeGeoLevels.geoTag :: Nil,
-              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil,
+              shapes = GeoShapeJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil,
             )
           }
         )
