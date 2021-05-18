@@ -7,7 +7,7 @@ Primary NoSQL database. All nodes (including ads, users, pictures metadata, etc)
 ipgeobase index -- all stored here.
 Clustered multi-master by design, so ES allows to horizontally scale Suggest.io nodes cluster.
 
-ES models [MNode](mnode.md) and `MStat` designed to use ES for underlying storage.
+ES models [MNode](node.md) and `MStat` designed to use ES for underlying storage.
 
 
 ## PostgreSQL (PG)
