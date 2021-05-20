@@ -55,6 +55,7 @@ class MEvents
 
   override type T = MEvent
   override def ES_TYPE_NAME = "ntf"
+  override def ES_INDEX_NAME = ???
 
   private def _throwDeprecated =
     throw new UnsupportedOperationException("MEvent deprecated")

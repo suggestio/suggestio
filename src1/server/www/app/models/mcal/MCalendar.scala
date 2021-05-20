@@ -14,6 +14,7 @@ import play.api.libs.json._
  * Created: 30.05.14 18:36
  * Description: Модель для хранения календарей в текстовых форматах.
  */
+@deprecated("MNodes and MNode().extras.calendar", "2021-05-20")
 @Singleton
 final class MCalendars
   extends EsModelStatic
@@ -24,6 +25,8 @@ final class MCalendars
 
   override type T = MCalendar
 
+
+  override def ES_INDEX_NAME = "sio.main.v5"
   override def ES_TYPE_NAME = "holyCal"
 
   /** Идентификаторы полей на стороне elasticsearch. */
@@ -89,6 +92,7 @@ final class MCalendars
 }
 
 
+@deprecated("MNode().extras.calendar", "2021-05-20")
 final case class MCalendar(
                             name                    : String,
                             data                    : String,
@@ -97,18 +101,3 @@ final case class MCalendar(
                             versionOpt              : Option[Long]    = None
                           )
   extends EsModelT
-
-
-
-// Поддержка JMX.
-trait MCalendarJmxMBean extends EsModelJMXMBeanI
-
-class MCalendarJmx @Inject() (
-                               override val companion    : MCalendars,
-                               override val esModelJmxDi : EsModelJmxDi,
-                             )
-  extends EsModelJMXBaseImpl
-  with MCalendarJmxMBean
-{
-  override type X = MCalendar
-}

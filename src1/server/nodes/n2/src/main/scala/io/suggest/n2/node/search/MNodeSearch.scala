@@ -18,7 +18,6 @@ import io.suggest.n2.node.meta.search._
  */
 class MNodeSearch
   extends SubSearches
-  with FtsAll
   with WithIds
   with DomainsSearch
   with OutEdges
@@ -38,6 +37,6 @@ class MNodeSearch
   with DateCreatedSort
   with ContractIdSearch
 {
-  override final def esTypes = MNodeFields.ES_TYPE_NAMES
+  override final def esTypes = MNodeFields.ES_TYPE_NAME :: Nil
 }
 

@@ -1,4 +1,4 @@
-@(args: mbill.ITfDailyTplArgs)(implicit ctx: Context)
+@(args: mbill.MTfDailyTplArgs)(implicit ctx: Context)
 
 @import madn.AdnShownTypes
 @import ctx._
@@ -42,7 +42,7 @@
         }
         <td class="td tariff_info-title">
           @* По календарю определить тип и слова для рендера. *@
-          @defining( clause.calId.flatMap(args.calsMap.get).fold[MCalType](MCalTypes.WeekDay)(_.calType) ) { mct =>
+          @defining( clause.calId.flatMap(args.calsMap.get).flatMap(_.extras.calendar).fold[MCalType](MCalTypes.WeekDay)(_.calType) ) { mct =>
             @messages(mct.i18nCode):
             @for(dayStart <- mct.dayStart; dayEnd <- mct.dayEnd) {
               @messages( MsgCodes.`dayOfW.N.`(dayStart) )-@messages( MsgCodes.`dayOfW.N.`(dayEnd) )

@@ -2,7 +2,6 @@ package models.mbill
 
 import io.suggest.n2.bill.tariff.daily.MTfDaily
 import io.suggest.n2.node.MNode
-import models.mcal.MCalendar
 
 /**
   * Suggest.io
@@ -11,31 +10,12 @@ import models.mcal.MCalendar
   * Description: Модель аргументов для шаблона [[views.html.lk.billing._dailyTfTpl]].
   */
 
-trait ITfDailyTplArgs {
-
-  /** Текущий узел. */
-  def mnode: MNode
-
-  /** Посуточный тариф прямого размещения на данном узле. */
-  def tfDaily: MTfDaily
-
-  /** Если надо отрендерить цены в контексте карточки, то тут данные по ценам карточки. */
-  def madTfOpt: Option[MAdTfInfo]
-
-  /** Календари, используются для рендера тарифа. */
-  def calsMap: Map[String, MCalendar]
-
-}
-
-
-/** Дефолтовая реализация [[ITfDailyTplArgs]]. */
-case class MTfDailyTplArgs(
-                            override val mnode      : MNode,
-                            override val tfDaily    : MTfDaily,
-                            override val madTfOpt   : Option[MAdTfInfo],
-                            override val calsMap    : Map[String, MCalendar]
-)
-  extends ITfDailyTplArgs
+final case class MTfDailyTplArgs(
+                                  mnode      : MNode,
+                                  tfDaily    : MTfDaily,
+                                  madTfOpt   : Option[MAdTfInfo],
+                                  calsMap    : Map[String, MNode],
+                                )
 
 
 /** Инфа по фактическим ценам размещения карточки. */

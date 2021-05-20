@@ -1,17 +1,19 @@
 package util.cal
 
 import java.net.URL
-
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import controllers.routes
 import de.jollyday.HolidayManager
 import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.EsModel
-import models.mcal.{MCalCtx, MCalendars, MCalsCtx}
-import models.mproj.ICommonDi
+import io.suggest.n2.node.MNodes
+import io.suggest.playx.CacheApiUtil
+import models.mcal.{MCalCtx, MCalsCtx}
+import play.api.Configuration
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -20,16 +22,17 @@ import scala.concurrent.Future
   * Description: Утиль для календарей.
   * Изначально жила внутри биллинга прямых размещений первого поколения биллинга.
   */
-@Singleton
-class CalendarUtil @Inject() (
-                               esModel                 : EsModel,
-                               mCalendars              : MCalendars,
-                               asyncUtil               : AsyncUtil,
-                               mCommonDi               : ICommonDi
-                             ) {
+final class CalendarUtil @Inject() (
+                                     injector                : Injector,
+                                   ) {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val asyncUtil = injector.instanceOf[AsyncUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /**
     * Ссылка на самого себя для нужд календарей.
@@ -65,9 +68,10 @@ class CalendarUtil @Inject() (
     * @return Фьючерс с инстансом контекста.
     */
   def getCalsCtx(calIds: Iterable[String]): Future[MCalsCtx] = {
-    // TODO Opt Кеш ОЧЕНЬ нужен для multiGet на стороне MCalendar. Вообще лучше эту модель запилить внутрь MNod и заюзать mNodeCache
-    val mcalsFut = mCalendars.multiGetMap(calIds)
-    // TODO Получать по multiGet календари пачкой из MCalendars, заворачивать их в HolydayManager'ы.
+    import esModel.api._
+
+    val mcalsFut = mNodes.multiGetMapCache( calIds )
+
     val calsFut = Future.traverse( calIds.toSeq ) { calId =>
       for {
         mgr   <- getCalMgr(calId)

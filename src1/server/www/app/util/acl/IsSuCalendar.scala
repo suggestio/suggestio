@@ -1,9 +1,10 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
+import io.suggest.n2.node.{MNodeTypes, MNodes}
+
 import javax.inject.Inject
-import models.mcal.MCalendars
-import models.req.{MCalendarReq, MReq}
+import models.req.{MNodeReq, MReq}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
 import play.api.http.{HttpErrorHandler, Status}
@@ -24,7 +25,7 @@ final class IsSuCalendar @Inject()(
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val aclUtil = injector.instanceOf[AclUtil]
-  private lazy val mCalendars = injector.instanceOf[MCalendars]
+  private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
@@ -33,23 +34,26 @@ final class IsSuCalendar @Inject()(
   /**
     * @param calId id календаря, вокруг которого идёт работа.
     */
-  def apply(calId: String): ActionBuilder[MCalendarReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MCalendarReq] {
+  def apply(calId: String): ActionBuilder[MNodeReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeReq] {
 
-      override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
           import esModel.api._
 
-          mCalendars.getById(calId).flatMap {
-            case Some(mcal) =>
-              val req1 = MCalendarReq(mcal, request, user)
-              block(req1)
+          mNodes
+            .getById(calId)
+            .withNodeType(MNodeTypes.Calendar)
+            .flatMap {
+              case Some(mcal) =>
+                val req1 = MNodeReq(mcal, request, user)
+                block(req1)
 
-            case None =>
-              httpErrorHandler.onClientError( request, Status.NOT_FOUND, s"Calendar not found: $calId")
-          }
+              case None =>
+                httpErrorHandler.onClientError( request, Status.NOT_FOUND, s"Calendar not found: $calId")
+            }
 
         } else {
           val req1 = MReq(request, user)

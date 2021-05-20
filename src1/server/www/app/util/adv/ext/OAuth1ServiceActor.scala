@@ -9,10 +9,8 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adv.ext.model.ctx.MAskActions
 import io.suggest.async.AsyncUtil
-import io.suggest.es.model.EsModel
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
-import io.suggest.sec.m.MAsymKeys
 import io.suggest.sec.util.PgpUtil
 import io.suggest.streams.JioStreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -66,7 +64,6 @@ class OAuth1ServiceActor @Inject() (
                                      mCommonDi                   : ICommonDi,
                                      oa1SvcActorUtil             : OAuth1SvcActorUtil,
                                      pgpUtil                     : PgpUtil,
-                                     mAsymKeys                   : MAsymKeys,
                                      asyncUtil                   : AsyncUtil,
                                      override val extServicesUtil: ExtServicesUtil,
                                      override val ctxUtil        : ContextUtil,

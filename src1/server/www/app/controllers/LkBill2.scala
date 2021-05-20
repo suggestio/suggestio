@@ -25,7 +25,6 @@ import io.suggest.xplay.qsb.QsbSeq
 import japgolly.univeq._
 import javax.inject.Inject
 import models.mbill._
-import models.mcal.MCalendars
 import models.mctx.Context
 import models.mdr.MMdrNotifyMeta
 import models.req._
@@ -65,7 +64,6 @@ final class LkBill2 @Inject() (
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
-  private lazy val mCalendars = injector.instanceOf[MCalendars]
   private lazy val galleryUtil = injector.instanceOf[GalleryUtil]
   private lazy val advUtil = injector.instanceOf[AdvUtil]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
@@ -90,7 +88,16 @@ final class LkBill2 @Inject() (
         // Получить данные по тарифу.
         tfDaily   <- tfDailyUtil.nodeTf( mnode )
         // Прочитать календари, относящиеся к тарифу.
-        calsMap   <- mCalendars.multiGetMap( tfDaily.calIds )
+        calsRaw   <- mNodes.multiGet( tfDaily.calIds )
+        calsMap = calsRaw
+          .iterator
+          .filter { mnode =>
+            mnode.common.ntype ==* MNodeTypes.Calendar
+          }
+          .map { mnode =>
+            mnode.id.get -> mnode
+          }
+          .toMap
       } yield {
 
         // Подготовить инфу по ценам на карточку, если она задана.
@@ -113,7 +120,7 @@ final class LkBill2 @Inject() (
           mnode     = mnode,
           tfDaily   = tfDaily,
           madTfOpt  = madTfOpt,
-          calsMap   = calsMap
+          calsMap   = calsMap,
         )
         Some(args1)
       }

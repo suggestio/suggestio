@@ -1,4 +1,4 @@
-@(cals: Seq[mcal.MCalendar], cf: Form[_])(implicit ctx: Context)
+@(cals: Seq[MNode], cf: Form[_])(implicit ctx: Context)
 
 @* Системная страница работы с календарями.
    cf: Маппинг формы. Можно создавать календари на базе локальных календарей из списка. *@
@@ -14,7 +14,7 @@
   <ul>
     @cals.map { cal =>
       <li>
-        <a href="@routes.SysCalendar.editCalendar(cal.id.get)">@cal.name</a>
+        <a href="@routes.SysCalendar.editCalendar(cal.id.get)">@cal.meta.basic.name</a>
       </li>
     }
   </ul>

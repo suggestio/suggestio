@@ -2,7 +2,6 @@ package io.suggest.es.util
 
 import io.suggest.es.MappingDsl
 import io.suggest.util.SioConstants._
-import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.index.mapper._
 
 /**
@@ -12,7 +11,7 @@ import org.elasticsearch.index.mapper._
  * Description: Функции для работы с ElasticSearch. В основном - функции генерации json-спек индексов.
  */
 
-object SioEsUtil extends MacroLogsImpl {
+object SioEsUtil {
 
   def ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS = 1000
 
@@ -36,16 +35,15 @@ object SioEsUtil extends MacroLogsImpl {
   def DEEP_NGRAM_TN = "deepNgramTn"
 
   /** Стандартные имена полей ES. */
-  object StdFns {
-    @deprecated("_all field is removed in ES-6.x", "ES-6.x")
-    def FIELD_ALL           = AllFieldMapper.NAME
-    def FIELD_SOURCE        = SourceFieldMapper.NAME
-    def FIELD_ROUTING       = RoutingFieldMapper.NAME
-    def FIELD_ID            = IdFieldMapper.NAME
-    def FIELD_UID           = UidFieldMapper.NAME
-    def FIELD_VERSION       = VersionFieldMapper.NAME
-    def FIELD_PARENT        = ParentFieldMapper.NAME
-    def FIELD_DOC           = "_doc"
+  object StandardFieldNames {
+    def SOURCE        = SourceFieldMapper.NAME
+    def ROUTING       = RoutingFieldMapper.NAME
+    def ID            = IdFieldMapper.NAME
+    def VERSION       = VersionFieldMapper.NAME
+    def PARENT        = ParentFieldMapper.NAME
+    def DOC           = "_doc"
+    @deprecated( "_type field not actual anymore", "elasticsearch-6.0" )
+    def TYPE          = TypeFieldMapper.NAME
   }
 
   /**
@@ -79,8 +77,8 @@ object SioEsUtil extends MacroLogsImpl {
         filters = Map(
           STD_FN            -> Filter.standard,
           LOWERCASE_FN      -> Filter.lowerCase,
-          STOP_RU_FN        -> Filter.stopWords( "russian" ),
-          STOP_EN_FN        -> Filter.stopWords( "english" ),
+          STOP_RU_FN        -> Filter.stopWords( "_russian_" :: Nil ),
+          STOP_EN_FN        -> Filter.stopWords( "_english_" :: Nil ),
           WORD_DELIM_FN     -> Filter.wordDelimiter(preserveOriginal = true),
           STEM_RU_FN        -> Filter.stemmer( "russian" ),
           STEM_EN_FN        -> Filter.stemmer( "english" ),

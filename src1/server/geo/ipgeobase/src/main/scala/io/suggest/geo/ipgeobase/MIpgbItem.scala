@@ -4,7 +4,6 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.{EsModel, EsModelJMXBaseImpl, EsModelJMXMBeanI, EsModelJmxDi, EsModelJsonWrites, EsModelStatic, EsModelT, EsmV2Deserializer, IEsDocMeta}
 import io.suggest.geo.MGeoPoint
-import io.suggest.model.PrefixedFn
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import japgolly.univeq._
 import org.elasticsearch.index.query.QueryBuilders
@@ -25,26 +24,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object MIpgbItem {
 
-  object Fields {
+  /** Fields forwarded to Payload-model. */
+  @inline def Fields = MIpgbItemPayload.Fields
 
-    final def PAYLOAD = "payload"
-
-    object Payload extends PrefixedFn {
-      override final protected def _PARENT_FN = PAYLOAD
-      import MIpgbItemPayload.{Fields => F}
-
-      final def P_ITEM_TYPE             = _fullFn( F.ITEM_TYPE )
-      final def P_CITY_ID_FN            = _fullFn( F.CITY_ID_FN )
-
-      final def P_COUNTRY_CODE_FN       = _fullFn( F.COUNTRY_CODE_FN )
-      final def P_IP_RANGE_FN           = _fullFn( F.IP_RANGE_FN )
-
-      final def P_CITY_NAME_FN          = _fullFn( F.CITY_NAME_FN )
-      final def P_REGION_FN             = _fullFn( F.REGION_FN )
-      final def P_CENTER_FN             = _fullFn( F.CENTER_FN )
-    }
-
-  }
 
   /** Make an IP-Range [[MIpgbItem]] instance. */
   def ipRange(
@@ -122,18 +104,14 @@ final case class MIpgbItems (
   override def ES_TYPE_NAME = "items"
 
   override protected def esDocReads(meta: IEsDocMeta): Reads[MIpgbItem] = {
-    val F = MIpgbItem.Fields
-    (__ \ F.PAYLOAD)
-      .read[MIpgbItemPayload]
+    implicitly[Reads[MIpgbItemPayload]]
       .map[MIpgbItem] {
         MIpgbItem(_, meta.id, meta.version)
       }
   }
 
   override def esDocWrites: OWrites[MIpgbItem] = {
-    val F = MIpgbItem.Fields
-    (__ \ F.PAYLOAD)
-      .write[MIpgbItemPayload]
+    implicitly[OWrites[MIpgbItemPayload]]
       .contramap[MIpgbItem](_.payload)
   }
 
@@ -142,10 +120,7 @@ final case class MIpgbItems (
     IndexMapping(
       source = Some( FSource(enabled = someTrue) ),
       properties = Some {
-        val F = MIpgbItem.Fields
-        Json.obj(
-          F.PAYLOAD -> FObject.plain( MIpgbItemPayload ),
-        )
+        MIpgbItemPayload.esMappingProps
       }
     )
   }
@@ -177,7 +152,7 @@ final class MIpgbItemsModel @Inject()(
       def findForIp(ip: String): Future[Seq[MIpgbItem]] = {
         import esModel.api._
 
-        val fn = MIpgbItem.Fields.Payload.P_IP_RANGE_FN
+        val fn = MIpgbItem.Fields.IP_RANGE_FN
         val q = QueryBuilders.boolQuery()
           .must {
             QueryBuilders.rangeQuery(fn)
@@ -188,7 +163,7 @@ final class MIpgbItemsModel @Inject()(
               .gte(ip)
           }
           .filter {
-            QueryBuilders.termQuery( MIpgbItem.Fields.Payload.P_ITEM_TYPE, MIpgbItemTypes.IpRange.value )
+            QueryBuilders.termQuery( MIpgbItem.Fields.ITEM_TYPE, MIpgbItemTypes.IpRange.value )
           }
 
         val resFut = model
@@ -213,7 +188,7 @@ final class MIpgbItemsModel @Inject()(
         * Internally, getById() is used, because city-items are indexed by id.
         *
         * @param cityId ipgb id of city.
-        * @return Future with [[MCity]] optionally found.
+        * @return Future with [[MIpgbItem]] optionally found.
         */
       def getByCityId(cityId: CityId_t): Future[Option[MIpgbItem]] = {
         import esModel.api._
@@ -352,6 +327,7 @@ final class MIpgbItemsJmx @Inject() (
 
   private def mIpgbItemModel = injector.instanceOf[MIpgbItemsModel]
   override def companion = injector.instanceOf[MIpgbItems]
+
 
   override def getByCityId(cityId: CityId_t): String = {
     import esModelJmxDi.ec

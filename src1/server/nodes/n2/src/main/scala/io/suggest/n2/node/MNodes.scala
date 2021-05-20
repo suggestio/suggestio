@@ -1,13 +1,14 @@
 package io.suggest.n2.node
 
 import java.time.OffsetDateTime
-
 import io.suggest.adn.edit.m.MAdnResView
+import io.suggest.cal.m.MCalType
+
 import javax.inject.{Inject, Singleton}
 import io.suggest.n2.ad.MNodeAd
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.edge.{MEdge, MNodeEdges}
-import io.suggest.n2.extra.MNodeExtras
+import io.suggest.n2.extra.{MNodeCalendar, MNodeExtras}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.event.{MNodeDeleted, MNodeSaved}
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
@@ -41,8 +42,6 @@ import scala.concurrent.duration._
  * Архитектура "N2" с этой моделью в центре появилась в ходе принятого решения объеденить
  * ADN-узлы, карточки, теги, юзеры и прочие сущности в единую модель узлов графа.
  *
- * В итоге получилась архитектура, похожая на модели zotonic: m_rsc + m_edge в одном флаконе.
- *
  * Есть также ребра (поле edges), описанные моделями [[io.suggest.n2.edge.MEdge]].
  * Они направленно связывают между собой разные узлы, перечисляемые в модели.
  *
@@ -51,7 +50,8 @@ import scala.concurrent.duration._
 
 @Singleton
 final class MNodes @Inject() (
-                               esModel    : EsModel
+                               esModel    : EsModel,
+                               sioMainEsIndex: SioMainEsIndex,
                              )(implicit
                                ec         : ExecutionContext,
                                sn         : SioNotifierStaticClientI,
@@ -69,7 +69,9 @@ final class MNodes @Inject() (
   override val CACHE_KEY_SUFFIX = ".nc"
 
   override type T = MNode
+
   override def ES_TYPE_NAME = MNodeFields.ES_TYPE_NAME
+  override def ES_INDEX_NAME = sioMainEsIndex.getMainIndexName()
 
   @inline def Fields = MNodeFields
 
@@ -123,7 +125,7 @@ final class MNodes @Inject() (
       meta = MMeta(
         basic = MBasicMeta(
           nameOpt = nameOpt,
-          langs   = List(lang)
+          langs   = lang :: Nil,
         ),
         person  = mpm
       )
@@ -141,16 +143,18 @@ final class MNodes @Inject() (
     import esModel.api._
 
     val aggName = "ntypeAgg"
-    (if (dsa == null) this.prepareSearch() else this.prepareSearch1(dsa))
+    Option( dsa )
+      .fold( this.prepareSearch() )( this.prepareSearch1 )
       .addAggregation(
-        AggregationBuilders.terms(aggName)
+        AggregationBuilders
+          .terms( aggName )
           .field( MNodeFields.Common.NODE_TYPE_FN )
       )
       .executeFut()
       .map { resp =>
         resp
           .getAggregations
-          .get[Terms](aggName)
+          .get[Terms]( aggName )
           .getBuckets
           .iterator()
           .asScala
@@ -235,6 +239,7 @@ final case class MNode(
   extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
   // TODO ad - Удалить: это остатки старого рендера, который зависит от непортированных на jd-ads кусков кода в www (рендер, MAdAi, etc)
+  @deprecated("Use extras.doc with jd-format", "2019")
   ad                          : MNodeAd         = MNodeAd.empty,
   billing                     : MNodeBilling    = MNodeBilling.empty,
   override val id             : Option[String]  = None,
@@ -348,6 +353,30 @@ object MNode {
       .composeLens( MMeta.basic )
       .composeLens( MBasicMeta.dateEdited )
       .set( Some(OffsetDateTime.now()) )
+  }
+
+  /** Make calendar node. */
+  def calendar(id: Option[String], calType: MCalType, name: String, data: String): MNode = {
+    MNode(
+      id = id,
+      common = MNodeCommon(
+        ntype       = MNodeTypes.Calendar,
+        isDependent = false,
+      ),
+      extras = MNodeExtras(
+        calendar = Some(
+          MNodeCalendar(
+            calType = calType,
+            data    = data,
+          )
+        ),
+      ),
+      meta = MMeta(
+        basic = MBasicMeta(
+          nameOpt = Option( name ),
+        ),
+      )
+    )
   }
 
 }

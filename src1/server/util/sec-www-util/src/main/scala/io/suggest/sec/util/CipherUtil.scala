@@ -4,7 +4,7 @@ import java.security.{MessageDigest, SecureRandom}
 
 import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.lang3.ArrayUtils
 import play.api.inject.Injector
@@ -16,7 +16,6 @@ import japgolly.univeq._
  * Created: 20.08.14 15:12
  * Description: Утиль для доступа к удобным фунцкиям шифрования.
  */
-@Singleton
 final class CipherUtil @Inject() (
                                    injector   : Injector,
                                  ) {

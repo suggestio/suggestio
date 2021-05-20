@@ -1,10 +1,10 @@
-@(cal: mcal.MCalendar, cf: Form[_])(implicit ctx: Context)
+@(cal: MNode, cf: Form[MNode])(implicit ctx: Context)
 
 @* Страница редактирования календаря. *@
 
 @import ctx._
 
-@calBase("Редактировать календарь " + cal.name) {
+@calBase("Редактировать календарь " + cal.meta.basic.name) {
 
   @calFormTpl(
     cf = cf,

@@ -21,7 +21,8 @@ trait WithIds extends DynSearchArgs with IEsTypes {
       qbOpt0
 
     } else {
-      val idf = QueryBuilders.idsQuery(esTypes: _*)
+      val idf = QueryBuilders
+        .idsQuery( esTypes: _* )
         .addIds( _withIds: _* )
       qbOpt0.map { qb =>
         QueryBuilders.boolQuery()

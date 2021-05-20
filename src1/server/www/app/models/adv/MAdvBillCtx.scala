@@ -2,7 +2,7 @@ package models.adv
 
 import io.suggest.n2.bill.tariff.daily.MTfDaily
 import io.suggest.n2.node.MNode
-import models.mcal.ICalsCtx
+import models.mcal.MCalsCtx
 import models.mdt.IDateStartEnd
 
 /**
@@ -21,7 +21,7 @@ trait IAdvBillCtx {
   def blockModulesCount   : Option[Int]
 
   /** Контекст календарей, необходимых для рассчёта выходных/рабочих дней. */
-  def mcalsCtx            : ICalsCtx
+  def mcalsCtx            : MCalsCtx
 
   /** Период размещения. */
   def ivl                 : IDateStartEnd
@@ -54,7 +54,7 @@ trait IAdvBillCtxWrap extends IAdvBillCtx {
 /** Дефолтовая реализация контейнера [[IAdvBillCtx]]. */
 case class MAdvBillCtx(
                         override val blockModulesCount   : Option[Int],
-                        override val mcalsCtx            : ICalsCtx,
+                        override val mcalsCtx            : MCalsCtx,
                         override val tfsMap              : Map[String, MTfDaily],
                         override val ivl                 : IDateStartEnd,
                         override val rcvrsMap            : Map[String, MNode]

@@ -32,8 +32,10 @@ import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
+import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.reindex.{BulkByScrollResponse, ReindexAction, ReindexRequestBuilder}
 import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
@@ -226,7 +228,7 @@ final class EsModel @Inject()(
         srb
           .setScroll(keepAlive)
           // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
-          .addSort( SortBuilders.fieldSort( SioEsUtil.StdFns.FIELD_DOC ) )
+          .addSort( SortBuilders.fieldSort( SioEsUtil.StandardFieldNames.DOC ) )
       }
 
       /** Прочитать маппинг текущей ES-модели из ES. */
@@ -621,13 +623,13 @@ final class EsModel @Inject()(
 
       /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
       def toEsJsonDoc(e: T1): String = {
-        import SioEsUtil.StdFns._
+        import SioEsUtil.StandardFieldNames._
 
-        var kvs = List[String] (s""" "$FIELD_SOURCE": ${model.toJson(e)}""")
+        var kvs = List[String] (s""" "$SOURCE": ${model.toJson(e)}""")
         if (e.versionOpt.isDefined)
-          kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
+          kvs ::= s""" "$VERSION": ${e.versionOpt.get}"""
         if (e.id.isDefined)
-          kvs ::= s""" "$FIELD_ID": "${e.id.get}" """
+          kvs ::= s""" "$ID": "${e.id.get}" """
         kvs.mkString("{",  ",",  "}")
       }
 
@@ -1269,7 +1271,7 @@ final class EsModel @Inject()(
       }
 
 
-      def multiGetMapCache(ids: Set[String])(implicit classTag: ClassTag[T1]): Future[HashMap[String, T1]] = {
+      def multiGetMapCache(ids: Iterable[String])(implicit classTag: ClassTag[T1]): Future[HashMap[String, T1]] = {
         multiGetCache(ids)
           .map { resultsToMap }
       }
@@ -1645,28 +1647,56 @@ final class EsModel @Inject()(
     * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
     *         Если индекс уже существует, то false.
     */
-  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)(implicit dsl: MappingDsl): Future[Boolean] = {
+  def ensureSioMainIndex(indexName: String, shards: Int = 5, replicas: Int = 1)(implicit dsl: MappingDsl): Future[Boolean] = {
+    lazy val logPrefix = s"ensureSioMainIndex($indexName, ${shards}x${replicas}):"
+
     for {
       existsResp <- esClient.admin().indices()
         .prepareExists(indexName)
         .executeFut()
 
-      _ <- if (existsResp.isExists) {
+      res <- if (existsResp.isExists) {
         Future.successful(false)
       } else {
         val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
-        val settingsJson = Json
-          .toJson( indexSettings )
-          .toString()
+        val indexSettingsPlayJson = Json.toJson( indexSettings )
+        LOGGER.trace(s"$logPrefix Index settings:\n---------------------------------------\n${Json.prettyPrint(indexSettingsPlayJson)}\n---------------------------------")
+        val settingsJson = indexSettingsPlayJson.toString()
         esClient.admin().indices()
           .prepareCreate( indexName )
           .setSettings( settingsJson, XContentType.JSON )
           .executeFut()
           .map { _ => true }
       }
+
     } yield {
-      true
+      res
     }
+  }
+
+
+  /** Run ES-cluster-side reindexing from/to indices.
+    *
+    * @param fromIndex Source index.
+    * @param toIndex Destination index.
+    * @param filter Filter documents by query.
+    * @return Future of reindexing action result.
+    */
+  def reindexData(fromIndex: String, toIndex: String, filter: QueryBuilder = QueryBuilders.matchAllQuery()): Future[BulkByScrollResponse] = {
+    lazy val logPrefix = s"reindexData($fromIndex => $toIndex):"
+
+    new ReindexRequestBuilder( esClient, ReindexAction.INSTANCE )
+      .source( fromIndex )
+      .destination( toIndex )
+      .abortOnVersionConflict( false )
+      .filter( filter )
+      .executeFut()
+      .andThen {
+        case Success(resp) =>
+          LOGGER.info(s"$logPrefix Reindex done.\n Took=${resp.getTook.seconds()}s\n status=${resp.getStatus}\n total=${resp.getTotal}\n updated=${resp.getUpdated}\n retries=${resp.getBulkRetries}\n created=${resp.getCreated}\n del=${resp.getDeleted}\n vsnConflicts=${resp.getVersionConflicts}\n noops=${resp.getNoops}\n bulkFailures[${resp.getBulkFailures.size()}]=${resp.getBulkFailures.iterator().asScala.map(_.toString).mkString("\n  ")}")
+        case Failure(ex) =>
+          LOGGER.error(s"$logPrefix Failed to migrate data", ex)
+      }
   }
 
 
@@ -1822,6 +1852,9 @@ final class EsModel @Inject()(
           .index(indexName)
         Option(maybeResult)
       }
+      .recover { case ex: IndexNotFoundException =>
+        None
+      }
   }
 
   /**
@@ -1931,20 +1964,6 @@ final class EsModel @Inject()(
       }
     }.map {
       _.reduceLeft { _ && _ }
-    }
-  }
-
-
-  /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
-  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT])(implicit dsl: MappingDsl): Future[_] = {
-    val indices = models
-      .map { esModel =>
-        esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
-      }
-      .toMap
-    Future.traverse(indices.toSeq) {
-      case (inxName, (shards, replicas)) =>
-        esModel.ensureIndex(inxName, shards=shards, replicas=replicas)
     }
   }
 

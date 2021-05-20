@@ -1,9 +1,8 @@
 package util.jmx
 
 import javax.inject.Inject
-import io.suggest.n2.node.MNodesJmx
+import io.suggest.n2.node.{MNodesJmx, SioMainEsIndexJmx}
 import models.adv.MExtTargetsJmx
-import models.mcal.MCalendarJmx
 
 import java.lang.management.ManagementFactory
 import io.suggest.geo.ipgeobase.{IpgbImporterJmx, MIpgbItemsJmx}
@@ -19,7 +18,7 @@ import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.{Bill2UtilJmx, BillDebugUtilJmx, TfDailyUtilJmx}
 import util.billing.cron.ReActivateCurrentAdvsJmx
-import util.compat.AdvAlwaysOpenedFlagIntoFlagsJmx
+import util.compat.{AdvAlwaysOpenedFlagIntoFlagsJmx, CalendarsToNodesJmx}
 import util.es.SiowebEsModelJmx
 import util.img.{DynImgUtilJmx, ImgMaintainUtilJmx}
 
@@ -35,7 +34,6 @@ import scala.concurrent.{ExecutionContext, Future}
 case class JmxImpl @Inject()(
                                siowebEsModelJmx              : SiowebEsModelJmx,
                                advRcvrsUtilJmx               : AdvRcvrsUtilJmx,
-                               mCalendarJmx                  : MCalendarJmx,
                                mNodesJmx                     : MNodesJmx,
                                geoTagsUtilJmx                : GeoTagsUtilJmx,
                                mExtTargetsJmx                : MExtTargetsJmx,
@@ -54,6 +52,8 @@ case class JmxImpl @Inject()(
                                imgMaintainUtilJmx            : ImgMaintainUtilJmx,
                                lifecycle                     : ApplicationLifecycle,
                                advAlwaysOpenedFlagIntoFlagsJmx: AdvAlwaysOpenedFlagIntoFlagsJmx,
+                               calendarsToNodesJmx           : CalendarsToNodesJmx,
+                               sioMainEsIndexJmx             : SioMainEsIndexJmx,
                                implicit private val ec       : ExecutionContext,
                              )
   extends MacroLogsImplLazy

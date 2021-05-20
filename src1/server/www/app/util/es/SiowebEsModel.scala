@@ -3,12 +3,9 @@ package util.es
 import javax.inject.Inject
 import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT}
 import io.suggest.es.util.{EsClientUtil, IEsClient, TransportEsClient}
-import io.suggest.n2.node.MNodes
-import io.suggest.sec.m.MAsymKeys
+import io.suggest.n2.node.{MNodes, SioMainEsIndex}
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.adv.MExtTargets
-import models.mcal.MCalendars
 import org.elasticsearch.common.transport.TransportAddress
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.MappingDsl
@@ -24,16 +21,18 @@ import scala.util.{Failure, Success}
  * Created: 24.02.14 17:43
  * Description: Дополнительная утиль для ES-моделей.
  */
-class SiowebEsModel @Inject() (
-                                esModel                   : EsModel,
-                                configuration             : Configuration,
-                                implicit private val ec   : ExecutionContext,
-                                injector                  : Injector,
-                              )
+final class SiowebEsModel @Inject() (
+                                      injector                  : Injector,
+                                    )
   extends MacroLogsImplLazy
 {
 
-  import esModel.api._
+
+  private val configuration = injector.instanceOf[Configuration]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val sioMainEsIndex = injector.instanceOf[SioMainEsIndex]
+
 
   // Устанавливать ES-mapping'и сразу при запуске? [true]
   {
@@ -51,9 +50,6 @@ class SiowebEsModel @Inject() (
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     injector.instanceOf[MNodes] #::
-    injector.instanceOf[MCalendars] #::
-    injector.instanceOf[MExtTargets] #::
-    injector.instanceOf[MAsymKeys] #::
     LazyList.empty
   }
 
@@ -65,19 +61,32 @@ class SiowebEsModel @Inject() (
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT])(implicit dsl: MappingDsl): Future[Boolean] = {
-    val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
+    lazy val logPrefix = s"putAllMappings(${models.length}):"
+    val ignoreExist = configuration
+      .getOptional[Boolean]("es.mapping.model.ignore_exist")
       .getOrElseFalse
-    LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)
-    esModel.putAllMappings(models, ignoreExist)
+    LOGGER.trace(s"$logPrefix ignoreExists = $ignoreExist\n models = [${models.mkString(", ")}]")
+
+    val resFut = esModel.putAllMappings( models, ignoreExist )
+
+    resFut.onComplete {
+      case Success(_)  => LOGGER.info(s"$logPrefix Finishied successfully.")
+      case Failure(ex) => LOGGER.error(s"$logPrefix Failure", ex)
+    }
+
+    resFut
   }
 
 
   /** Запуск импорта данных ES-моделей из удалённого источника (es-кластера) в текущий.
     * Для подключения к стороннему кластеру будет использоваться transport client, не подключающийся к кластеру. */
   def importModelsFromRemote(addrs: Seq[TransportAddress], esModels: Seq[EsModelCommonStaticT] = ES_MODELS): Future[CopyContentResult] = {
+    import esModel.api._
+
     val logPrefix = "importModelsFromRemote():"
     val esModelsCount = esModels.size
     LOGGER.trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
+
     val fromClient = try {
       injector
         .instanceOf[TransportEsClient]
@@ -87,7 +96,9 @@ class SiowebEsModel @Inject() (
         LOGGER.error(s"Failed to create transport client: addrs=$addrs", ex)
         throw ex
     }
+
     val toClient = injector.instanceOf[IEsClient].esClient
+
     val resultFut = Future.traverse(esModels) { esM =>
       val copyResultFut = esM.copyContent(fromClient, toClient)
       copyResultFut.onComplete {
@@ -98,6 +109,7 @@ class SiowebEsModel @Inject() (
       }
       copyResultFut
     }
+
     for (results <- resultFut) yield {
       val result = CopyContentResult(
         success = results.iterator.map(_.success).sum,
@@ -115,38 +127,33 @@ class SiowebEsModel @Inject() (
    * @param triedIndexUpdate Флаг того, была ли уже попытка обновления индекса на последнюю версию.
    */
   def initializeEsModels(triedIndexUpdate: Boolean = false): Future[_] = {
+    val startedAtMs = System.currentTimeMillis()
     maybeErrorIfIncorrectModels()
+
     val esModels = ES_MODELS
+    lazy val logPrefix = s"initializeEsModels($triedIndexUpdate, [${esModels.length}]):"
+
     implicit val dsl = MappingDsl.Implicits.mkNewDsl
 
-    val futInx = esModel.ensureEsModelsIndices(esModels)
-    val logPrefix = "initializeEsModels(): "
-    futInx.onComplete {
-      case Success(result) => LOGGER.trace(s"$logPrefix ensure() -> $result")
-      case Failure(ex)     => LOGGER.error(s"$logPrefix ensureIndex() failed", ex)
-    }
+    for {
+      // Do main index initialization:
+      _ <- sioMainEsIndex.doInit()
+      // Do needed mappings initializations:
+      _ <- putAllMappings( esModels )
+      /*
+      // Some old-code for possible update of index settings:
+      .recoverWith {
+        case ex: MapperException if !triedIndexUpdate =>
+          info("Trying to update main index to v2.1 settings...")
+          SioEsUtil.updateIndex2_1To2_2(EsModelUtil.DFLT_INDEX) flatMap { _ =>
+            initializeEsModels(triedIndexUpdate = true)
+          }
+      }
+      */
 
-    val futMappings = futInx.flatMap { _ =>
-      putAllMappings(esModels)
+    } yield {
+      LOGGER.trace(s"$logPrefix Done, took ${System.currentTimeMillis() - startedAtMs}ms")
     }
-    futMappings.onComplete {
-      case Success(_)  => LOGGER.info(s"$logPrefix Finishied successfully.")
-      case Failure(ex) => LOGGER.error(s"$logPrefix Failure", ex)
-    }
-
-    // Это код обновления на следующую версию. Его можно держать и после обновления.
-    /*
-    import org.elasticsearch.index.mapper.MapperException
-    futMappings.recoverWith {
-      case ex: MapperException if !triedIndexUpdate =>
-        info("Trying to update main index to v2.1 settings...")
-        SioEsUtil.updateIndex2_1To2_2(EsModelUtil.DFLT_INDEX) flatMap { _ =>
-          initializeEsModels(triedIndexUpdate = true)
-        }
-    }
-    */
-
-    futMappings
   }
 
 }
@@ -160,8 +167,7 @@ trait SiowebEsModelJmxMBean {
 
 /** Реализация jmx-бина, открывающая доступ к функциям [[SiowebEsModel]]. */
 final class SiowebEsModelJmx @Inject() (
-                                         siowebEsModel           : SiowebEsModel,
-                                         implicit val ec         : ExecutionContext
+                                         injector: Injector,
                                        )
   extends JmxBase
   with SiowebEsModelJmxMBean
@@ -169,6 +175,9 @@ final class SiowebEsModelJmx @Inject() (
 {
 
   import JmxBase._
+
+  private def siowebEsModel = injector.instanceOf[SiowebEsModel]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
   override def _jmxType = Types.ELASTICSEARCH
 

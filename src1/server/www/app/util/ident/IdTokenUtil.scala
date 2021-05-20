@@ -1,15 +1,16 @@
 package util.ident
 
 import java.time.{Instant, ZoneOffset}
-
 import io.suggest.id.token.{MIdMsg, MIdToken}
 import io.suggest.sec.util.PgpUtil
 import io.suggest.streams.JioStreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+
+import javax.inject.Inject
 import play.api.libs.json.Json
 import japgolly.univeq._
 import models.req.IReqHdr
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -19,13 +20,14 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 14.06.19 15:48
   * Description: Утиль для обработки id-токенов.
   */
-@Singleton
-class IdTokenUtil @Inject()(
-                             pgpUtil                      : PgpUtil,
-                             implicit private val ec      : ExecutionContext,
-                           )
+final class IdTokenUtil @Inject()(
+                                   injector: Injector,
+                                 )
   extends MacroLogsImpl
 { outer =>
+
+  private lazy val pgpUtil = injector.instanceOf[PgpUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Допустимое кол-во секунд для неточного сравнения с now. */
   private def NOW_LAG_SECONDS = 1

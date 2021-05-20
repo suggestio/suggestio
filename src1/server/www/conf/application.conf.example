@@ -78,11 +78,11 @@ bill.cron.enabled = true
 
 ## Signing secret key for generated pictures. Must be same on all nodes.
 ## Use `pwgen -1syn 64` to generate key and paste it here.
-#dynimg.sign.key = ""
+dynimg.sign.key = ${play.http.secret.key}
 
 ## One-ad server side rendering URL signing secret key. Must be same on all nodes.
 ## Use `pwgen -1syn 64` to generate key and paste it here.
-#only.one.ad.qs.sign.key = ""
+only.one.ad.qs.sign.key = ${play.http.secret.key}
 
 
 ## Lk-adv-ext.
@@ -96,12 +96,12 @@ ext.adv {
   
   ## Signing key for URLs, related to lk-adv-ext.
   ## Use `pwgen -1syn 64` to generate key and paste it here.
-  #qs.sign.key = ""
+  qs.sign.key = ${play.http.secret.key}
 }
 
 ## Actor path signing secret key (for URLs).
 ## Use `pwgen -1syn 64` to generate key and paste it here.
-#qsb.actor.path.sign.key = ""
+qsb.actor.path.sign.key = ${play.http.secret.key}
 
 
 ## For users interaction with facebook/vk/twitter, this metadata used.

@@ -165,7 +165,8 @@ final class AdvUtil @Inject() (
 
         val clause4dayOpt = clausesWithCals
           .find { case (_, calCtx) =>
-            calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(day)
+            val calExt = calCtx.mcal.extras.calendar.get
+            calExt.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(day)
           }
 
         // Пройтись по праздничным календарям, попытаться найти подходящий
@@ -180,7 +181,7 @@ final class AdvUtil @Inject() (
           PriceDsl.base(
             price     = MPrice(dayAmount, tf.currency),
             mCalType  = clause4dayOpt
-              .map(_._2.mcal.calType)
+              .map(_._2.mcal.extras.calendar.get.calType)
               .orElse( Some(MCalTypes.WeekDay) ),
             date      = Some( MYmd.from(day) )
           )

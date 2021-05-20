@@ -51,7 +51,7 @@ class MExtTargets
   override type T = MExtTarget
 
   override def ES_TYPE_NAME: String = "aet"
-
+  override def ES_INDEX_NAME = ???
 
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {

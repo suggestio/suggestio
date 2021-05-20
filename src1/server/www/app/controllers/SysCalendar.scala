@@ -2,15 +2,18 @@ package controllers
 
 import java.io.{ByteArrayInputStream, StringWriter}
 import java.nio.charset.StandardCharsets
-
 import javax.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import io.suggest.cal.m.MCalTypes
 import io.suggest.es.model.EsModel
+import io.suggest.n2.extra.MNodeExtras
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.mcal.{MCalTypesJvm, MCalendar, MCalendars}
-import models.req.ICalendarReq
+import models.mcal.MCalTypesJvm
+import models.req.INodeReq
 import org.apache.commons.io.IOUtils
 import play.api.data.Forms._
 import play.api.data._
@@ -41,7 +44,7 @@ final class SysCalendar @Inject() (
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
-  private lazy val mCalendars = injector.instanceOf[MCalendars]
+  private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val isSuCalendar = injector.instanceOf[IsSuCalendar]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val mCalTypesJvm = injector.instanceOf[MCalTypesJvm]
@@ -70,7 +73,7 @@ final class SysCalendar @Inject() (
   )
 
   /** Форма создания/редактирования спеки календаря. */
-  private def calFormM = Form(mapping(
+  private def calFormM: Form[MNode] = Form(mapping(
     "name" -> nonEmptyText(minLength = 5, maxLength = 256)
       .transform(strTrimSanitizeF, strIdentityF),
     "type" -> mCalTypesJvm.calTypeM,
@@ -92,22 +95,35 @@ final class SysCalendar @Inject() (
     }
   )
   {(name, calType, data) =>
-    MCalendar(
-      name      = name,
-      data      = data,
-      calType   = calType
+    MNode.calendar(
+      id = None,
+      calType = calType,
+      name = name,
+      data = data,
     )
   }
   {mcal =>
-    Some((mcal.name, mcal.calType, mcal.data))
+    val mcalExt = mcal.extras.calendar.get
+    Some((mcal.meta.basic.name, mcalExt.calType, mcalExt.data))
   })
 
+  private def _getAllCalendars() = {
+    mNodes
+      .dynSearch(
+        new MNodeSearch {
+          override def nodeTypes = MNodeTypes.Calendar :: Nil
+          override def limit = 100
+        }
+      )
+  }
 
   /** Отобразить список всех сохранённых календарей. */
   def showCalendars() = csrf.AddToken {
     isSu().async { implicit request =>
       val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
-      mCalendars.getAll(maxResults = 500).map { cals =>
+      for {
+        cals <- _getAllCalendars()
+      } yield {
         Ok(listCalsTpl(cals, createFormM))
       }
     }
@@ -119,9 +135,9 @@ final class SysCalendar @Inject() (
     isSu().async { implicit request =>
       newCalTplFormM.bindFromRequest().fold(
         {formWithErrors =>
-          val calsFut = mCalendars.getAll(maxResults = 500)
+          val calsFut = _getAllCalendars()
           LOGGER.debug("newCalendarFormTpl(): Form bind failed:\n" + formatFormErrors(formWithErrors))
-          calsFut.map { cals =>
+          for (cals <- calsFut) yield {
             NotAcceptable(listCalsTpl(cals, formWithErrors))
           }
         },
@@ -135,10 +151,11 @@ final class SysCalendar @Inject() (
                 val sw = new StringWriter()
                 IOUtils.copy(stream, sw, StandardCharsets.UTF_8)
                 val data = sw.toString
-                val stub = MCalendar(
+                val stub = MNode.calendar(
                   name      = "",
                   data      = data,
-                  calType   = MCalTypes.default
+                  calType   = MCalTypes.default,
+                  id        = None,
                 )
                 val newFormBinded = calFormM.fill( stub )
                 Ok(createCalFormTpl(newFormBinded))
@@ -161,7 +178,7 @@ final class SysCalendar @Inject() (
           NotAcceptable(createCalFormTpl(formWithErrors))
         },
         {mcal =>
-          for (_ <- mCalendars.save(mcal)) yield {
+          for (_ <- mNodes.save(mcal)) yield {
             Redirect(routes.SysCalendar.showCalendars())
               .flashing(FLASH.SUCCESS -> "Создан новый календарь.")
           }
@@ -178,15 +195,15 @@ final class SysCalendar @Inject() (
    */
   def editCalendar(calId: String) = csrf.AddToken {
     isSuCalendar(calId).async { implicit request =>
-      val cf = calFormM fill request.mcal
+      val cf = calFormM fill request.mnode
       editCalendarRespBody(calId, cf, Ok)
     }
   }
 
   /** Общий код экшенов, рендерящих страницу редактирования. */
-  private def editCalendarRespBody(calId: String, cf: Form[MCalendar], rs: Status)
-                                  (implicit request: ICalendarReq[AnyContent]): Future[Result] = {
-    rs( editCalFormTpl(request.mcal, cf) )
+  private def editCalendarRespBody(calId: String, cf: Form[MNode], rs: Status)
+                                  (implicit request: INodeReq[AnyContent]): Future[Result] = {
+    rs( editCalFormTpl(request.mnode, cf) )
   }
 
   /**
@@ -202,12 +219,19 @@ final class SysCalendar @Inject() (
           editCalendarRespBody(calId, formWithErrors, NotAcceptable)
         },
         {mcal2 =>
-          val mcal3 = request.mcal.copy(
-            name    = mcal2.name,
-            data    = mcal2.data,
-            calType = mcal2.calType
-          )
-          for (_ <- mCalendars.save(mcal3)) yield {
+          val mcal3 = (
+            MNode.extras
+              .composeLens( MNodeExtras.calendar )
+              .set( mcal2.extras.calendar ) andThen
+            MNode.meta
+              .composeLens( MMeta.basic )
+              .composeLens( MBasicMeta.nameOpt )
+              .set( mcal2.meta.basic.nameOpt )
+          )(request.mnode)
+
+          for {
+            _ <- mNodes.save(mcal3)
+          } yield {
             HolidayManager.clearManagerCache()
             Redirect(routes.SysCalendar.showCalendars())
               .flashing(FLASH.SUCCESS -> "Изменения в календаре сохранены.")
@@ -226,7 +250,7 @@ final class SysCalendar @Inject() (
    * @return xml-содержимое календаря текстом.
    */
   def getCalendarXml(calId: String) = calendarAccessAny(calId) { implicit request =>
-    Ok(request.mcal.data)
+    Ok( request.mnode.extras.calendar.get.data )
       .as( MimeTypes.XML )
   }
 

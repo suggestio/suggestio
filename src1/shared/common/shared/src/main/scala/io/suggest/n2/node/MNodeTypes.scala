@@ -67,6 +67,13 @@ object MNodeTypes extends StringEnum[MNodeType] {
   }
 
 
+  /** Calendar type. Merged from model MCalendar. */
+  case object Calendar extends MNodeType("calendar")
+
+  /** Crypto.key type - storing key material inside node. */
+  case object CryptoKey extends MNodeType("cryptoKey")
+
+
   override def values = findValues
 
   def adnTreeMemberTypes: List[MNodeType] = AdnNode :: Ad :: BleBeacon :: Nil

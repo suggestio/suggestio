@@ -1,6 +1,6 @@
 package io.suggest.n2.edge.search
 
-import java.time.{OffsetDateTime, ZoneOffset}
+import java.time.ZoneOffset
 
 import enumeratum._
 import io.suggest.es.model.{IMust, Must_t}
@@ -28,7 +28,6 @@ object EsRangeClause {
 
   case class op(op: EsRangeOp) {
     def value( s: String ) = new EsRangeClause(op, s)
-    def value( dt: OffsetDateTime ) = new EsRangeClause( op, dt )
   }
 
 }

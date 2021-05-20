@@ -1,35 +1,33 @@
 package io.suggest.es.search
 
-import io.suggest.es.util.SioEsUtil
 import org.elasticsearch.index.query.QueryBuilder
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 06.10.15 10:30
- * Description: Аддон для сборки базовых аргументов поиска карточек.
+ * Description: Example search addon for full-text-searching.
  */
 
 trait FtsAll extends DynSearchArgs {
 
-  private def qOptField = SioEsUtil.StdFns.FIELD_ALL
+  def ftsSearchFieldName: String
 
-  /** Произвольный текстовый запрос, если есть. */
-  def qOpt: Option[String] = None
+  /** Full-text query, if any. */
+  // TODO Must include filed names inside Option[FtsQuery], not just string. Remove ftsSearchField above.
+  def ftsQuery: Option[String] = None
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
-    // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
-    TextQuerySearch.mkEsQuery(qOptField, qOpt, super.toEsQueryOpt)
+    TextQuerySearch.mkEsQuery(ftsSearchFieldName, ftsQuery, super.toEsQueryOpt)
   }
 
   override def sbInitSize: Int = {
-    collStringSize(qOpt, super.sbInitSize, addOffset = qOptField.length + 1)
+    collStringSize(ftsQuery, super.sbInitSize, addOffset = ftsSearchFieldName.length + 1)
   }
 
   override def toStringBuilder: StringBuilder = {
-    // Для форматирования вывода используется эта функция. Выводит в lucene формате: field:value.
-    val qOptWithFn = qOpt.map(qOptField + ":" + _)
-    fmtColl2sb("qStr", qOptWithFn, super.toStringBuilder)
+    val qOptWithFn = ftsQuery.map(ftsSearchFieldName + ":" + _)
+    fmtColl2sb("ftsQuery", qOptWithFn, super.toStringBuilder)
   }
 
 }

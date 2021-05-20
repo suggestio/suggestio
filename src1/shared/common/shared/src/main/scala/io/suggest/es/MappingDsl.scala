@@ -20,7 +20,7 @@ final class MappingDsl { dsl =>
   val someFalse = OptionUtil.SomeBool.someFalse
 
   private object Util {
-    val typ = (__ \ "_type").format[String]
+    val typ = (__ \ "type").format[String]
   }
 
   sealed abstract class TermVectorVariant(override val value: String) extends StringEnumEntry
@@ -229,7 +229,7 @@ final class MappingDsl { dsl =>
     implicit lazy val filterJson: OFormat[Filter] = (
       Util.typ and
       // stopwords
-      (__ \ "stopwords").formatNullable[String] and
+      (__ \ "stopwords").formatNullable[Seq[String]] and
       // word delimiter
       (__ \ "preserve_original").formatNullable[Boolean] and
       // stemmer
@@ -244,9 +244,9 @@ final class MappingDsl { dsl =>
     )(apply, unlift(unapply))
 
     def stopWords(
-                   stopWords: String,    // = english, russian, etc
+                   stopWords: Seq[String],    // = _english_, _russian_, etc
                  ) = apply(
-      typ = "stopwords",
+      typ = "stop",
       stopWords = Some( stopWords ),
     )
 
@@ -298,7 +298,7 @@ final class MappingDsl { dsl =>
   final case class Filter private(
                                    typ                : String,
                                    // stopwords
-                                   stopWords          : Option[String]          = None,
+                                   stopWords          : Option[Seq[String]]     = None,
                                    // word delimiter
                                    preserveOriginal   : Option[Boolean]         = None,
                                    // stemmer

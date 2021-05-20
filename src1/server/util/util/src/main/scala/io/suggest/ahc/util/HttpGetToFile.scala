@@ -1,10 +1,10 @@
 package io.suggest.ahc.util
 
 import java.io.File
-import javax.inject.{Inject, Singleton}
-
+import javax.inject.Inject
 import io.suggest.streams.StreamsUtil
 import play.api.http.HttpVerbs
+import play.api.inject.Injector
 import play.api.libs.ws.{WSClient, WSResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,12 +15,13 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 28.11.14 10:23
  * Description: Простая утиль чтобы асинхронно и поточно скачать ссылку в файл по HTTP.
  */
-@Singleton
-class HttpGetToFile @Inject() (
-                                ws                      : WSClient,
-                                streamsUtil             : StreamsUtil,
-                                implicit private val ec : ExecutionContext
-                              ) {
+final class HttpGetToFile @Inject() (
+                                      injector                : Injector,
+                                    ) {
+
+  private lazy val ws = injector.instanceOf[WSClient]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Класс для качания из интернетов. */
   abstract class AbstractDownloader {

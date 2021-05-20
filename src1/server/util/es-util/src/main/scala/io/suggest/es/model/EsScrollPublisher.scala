@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 /** Guice-factory для сборки инстансов [[EsScrollPublisher]]. */
 trait EsScrollPublisherFactory {
   /** mk publisher instance. */
-  def publisher(scrollArgs: IScrollArgs): EsScrollPublisher
+  def publisher(scrollArgs: MScrollArgs): EsScrollPublisher
 }
 
 /**
@@ -25,7 +25,7 @@ trait EsScrollPublisherFactory {
  * a query for all documents in an index (and type).
  */
 class EsScrollPublisher @Inject() (
-                                    @Assisted scrollArgs      : IScrollArgs,
+                                    @Assisted scrollArgs      : MScrollArgs,
                                     scrollSubscriptionFactory : EsScrollSubscriptionFactory
                                   )
   extends Publisher[SearchHit] {
@@ -46,11 +46,11 @@ class EsScrollPublisher @Inject() (
 
 /** Guice-factory для сборки инстансов [[EsScrollSubscription]]. */
 trait EsScrollSubscriptionFactory {
-  def subsription(scrollArgs: IScrollArgs, s: Subscriber[_ >: SearchHit]) : EsScrollSubscription
+  def subsription(scrollArgs: MScrollArgs, s: Subscriber[_ >: SearchHit]) : EsScrollSubscription
 }
 
 class EsScrollSubscription @Inject() (
-                                       @Assisted scrollArgs    : IScrollArgs,
+                                       @Assisted scrollArgs    : MScrollArgs,
                                        @Assisted s             : Subscriber[_ >: SearchHit],
                                        actorSystem             : ActorSystem,
                                        publishActoryFactory    : EsPublishActoryFactory
@@ -85,7 +85,7 @@ class EsScrollSubscription @Inject() (
 
 /** Guice DI-factory для сборки инстансов [[EsPublishActor]]. */
 trait EsPublishActoryFactory {
-  def publishActor(scrollArgs: IScrollArgs, s: Subscriber[_ >: SearchHit]): EsPublishActor
+  def publishActor(scrollArgs: MScrollArgs, s: Subscriber[_ >: SearchHit]): EsPublishActor
 }
 
 
@@ -96,7 +96,7 @@ object EsPublishActor {
 
 
 class EsPublishActor @Inject() (
-                                 @Assisted scrollArgs  : IScrollArgs,
+                                 @Assisted scrollArgs  : MScrollArgs,
                                  @Assisted s           : Subscriber[_ >: SearchHit],
                                  esModel               : EsModel,
                                  esClientP             : IEsClient,
@@ -145,7 +145,7 @@ class EsPublishActor @Inject() (
     // we will send a request for more while sending what we can now
     case EsPublishActor.Request(n) if n > queue.size =>
       scrollIdOpt.fold {
-        // Начинается первый запрос.
+        // First scroll request:
         val srb0 = scrollArgs.model
           .prepareScroll( scrollArgs.keepAlive )
           .setQuery( scrollArgs.query )
@@ -156,7 +156,7 @@ class EsPublishActor @Inject() (
           .onComplete { result => self ! result }
 
       } { id =>
-        // Продолжается скроллинг.
+        // Continue scrolling.
         esClient.prepareSearchScroll( id )
           .setScroll( scrollArgs.keepAlive )
           .executeFut()

@@ -9,11 +9,11 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.bill.tariff.daily.MTfDaily
-import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 
 import javax.inject.Inject
-import models.mcal.MCalendars
 import models.msys.bill._
 import models.req.{INodeContractReq, INodeReq}
 import play.api.data.Form
@@ -49,7 +49,6 @@ final class SysBilling @Inject() (
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
   private lazy val mNodes = injector.instanceOf[MNodes]
-  private lazy val mCalendars = injector.instanceOf[MCalendars]
   private lazy val mContracts = injector.instanceOf[MContracts]
   private lazy val mBalances = injector.instanceOf[MBalances]
   private lazy val mTxns = injector.instanceOf[MTxns]
@@ -175,7 +174,11 @@ final class SysBilling @Inject() (
     import esModel.api._
 
     // Собираем доступные календари.
-    val mcalsFut = mCalendars.getAll()
+    val mcalsFut = mNodes.dynSearch(
+      new MNodeSearch {
+        override def nodeTypes = MNodeTypes.Calendar :: Nil
+      }
+    )
 
     // Рендер результата, когда все исходные вданные будут собраны.
     for {

@@ -547,7 +547,7 @@ lazy val commonWww = {
 lazy val secWwwUtil = {
   val id = "sec-www-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
-    .dependsOn(util, esUtil, logsMacro)
+    .dependsOn(util, esUtil, logsMacro, n2)
 }
 
 /** Anti-virus software integration classes. */

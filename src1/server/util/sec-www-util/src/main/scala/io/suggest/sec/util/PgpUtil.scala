@@ -1,16 +1,18 @@
 package io.suggest.sec.util
 
 import java.io.{ByteArrayOutputStream, InputStream, OutputStream}
-
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.es.model.EsModel
-import io.suggest.sec.m.{MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.n2.extra.{MNodeCryptoKey, MNodeExtras}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.streams.JioStreamsUtil
 import play.api.Configuration
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -31,16 +33,17 @@ import scala.concurrent.duration._
  * Normal key -- это ключ защиты простых данных. Тот, кто может отбрутить такой ключ, совсем не интересуется
  * данными, которые защищает данный ключ.
  */
-@Singleton
-class PgpUtil @Inject() (
-                          esModel                 : EsModel,
-                          mAsymKeys               : MAsymKeys,
-                          cacheApiUtil            : CacheApiUtil,
-                          configuration           : Configuration,
-                          implicit private val ec : ExecutionContext,
-                        )
+final class PgpUtil @Inject() (
+                                injector                : Injector,
+                              )
   extends MacroLogsDyn
 {
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   import esModel.api._
 
@@ -64,29 +67,42 @@ class PgpUtil @Inject() (
     * данных в localStorage. */
   def LOCAL_STOR_KEY_ID = "lsk1"
 
-  def getLocalStorKey(): Future[MAsymKey] = {
+  def getLocalStorKey(): Future[MNode] = {
     val keyId = LOCAL_STOR_KEY_ID
     cacheApiUtil.getOrElseFut( s"$keyId.${getClass.getSimpleName}", expiration = 10.seconds ) {
-      val fut = mAsymKeys.getById(keyId)
+      val fut = mNodes
+        .getByIdCache(keyId)
+        .withNodeType( MNodeTypes.CryptoKey )
         .map(_.get)
+
       fut.failed.foreach {
         case _: NoSuchElementException =>
           LOGGER.warn("Server normal PGP key not yet created! I cannot store access tokens!")
         case ex =>
           LOGGER.error(s"Cannot read server PGP key: $keyId", ex)
       }
+
       fut
     }
   }
 
   /** Генерация нового ключа защиты данных. */
-  def genNewNormalKey(): MAsymKey = {
+  def genNewNormalKey(): MNode = {
     val keyId = LOCAL_STOR_KEY_ID
     val key = KF.generateKeyPair(keyId, getPw)
-    MAsymKey(
-      pubKey = key.getPublicKey.toArmoredString,
-      secKey = Some(key.toArmoredString),
-      id     = Some(keyId)
+
+    MNode(
+      common = MNodeCommon(
+        ntype = MNodeTypes.CryptoKey,
+        isDependent = false,
+      ),
+      extras = MNodeExtras(
+        cryptoKey = Some( MNodeCryptoKey(
+          pubKey = key.getPublicKey.toArmoredString,
+          secKey = Some(key.toArmoredString),
+        ))
+      ),
+      id = Some( keyId ),
     )
   }
 
@@ -96,7 +112,9 @@ class PgpUtil @Inject() (
     if ( configuration.getOptional[Boolean](cfk).getOrElseFalse ) {
       Some(init())
     } else {
-      mAsymKeys.getById(LOCAL_STOR_KEY_ID)
+      mNodes
+        .getByIdCache(LOCAL_STOR_KEY_ID)
+        .withNodeType( MNodeTypes.CryptoKey )
         // TODO проверять, что пароль соответствует ключу. Нужно пытаться зашифровать какие-то простые данные.
         .filter { _.isDefined }
         .failed
@@ -112,11 +130,13 @@ class PgpUtil @Inject() (
 
   /** Запустить инициализацию необходимых ключей. */
   def init(): Future[_] = {
-    val fut = mAsymKeys.getById(LOCAL_STOR_KEY_ID)
+    val fut = mNodes
+      .getByIdCache( LOCAL_STOR_KEY_ID )
+      .withNodeType( MNodeTypes.CryptoKey )
       .map( _.get )
       .recoverWith { case _: NoSuchElementException =>
         val k = genNewNormalKey()
-        for (id <- mAsymKeys.save(k)) yield
+        for (id <- mNodes.save(k)) yield
           k.copy(id = Some(id))
       }
     for (ex <- fut.failed) {
@@ -137,12 +157,13 @@ class PgpUtil @Inject() (
     * Используется для надежного хранения охраняемых серверных данных на стороне клиента.
     *
     * @param data Входной поток данных.
-    * @param key Используемый ASCII-PGP-ключ зашифровки и будущей расшифровки.
+    * @param keyNode Используемый ASCII-PGP-ключ зашифровки и будущей расшифровки.
     * @param out Куда производить запись?
     */
-  def encryptForSelf(data: InputStream, key: MAsymKey, out: OutputStream): Unit = {
-    val sc = KF.parseSecretKey(key.secKey.get)
-    encrypt(data, sc, key.pubKey, out)
+  def encryptForSelf(data: InputStream, keyNode: MNode, out: OutputStream): Unit = {
+    val cryptoKey = keyNode.extras.cryptoKey.get
+    val sc = KF.parseSecretKey( cryptoKey.secKey.get )
+    encrypt(data, sc, cryptoKey.pubKey, out)
   }
 
   /**
@@ -167,9 +188,10 @@ class PgpUtil @Inject() (
     * @param key Экземпляр ключа.
     * @param out Выходной поток данных.
     */
-  def decryptFromSelf(data: InputStream, key: MAsymKey, out: OutputStream): Unit = {
-    val sc = KF.parseSecretKey(key.secKey.get)
-    decrypt(data, sc, key.pubKey, out)
+  def decryptFromSelf(data: InputStream, key: MNode, out: OutputStream): Unit = {
+    val cryptoKey = key.extras.cryptoKey.get
+    val sc = KF.parseSecretKey( cryptoKey.secKey.get )
+    decrypt(data, sc, cryptoKey.pubKey, out)
   }
 
   /**

@@ -3,7 +3,6 @@ package util.captcha
 import java.io.ByteArrayOutputStream
 import java.time.{Instant, ZoneId, ZoneOffset}
 import java.util.{Properties, UUID}
-
 import akka.util.ByteString
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
@@ -14,10 +13,12 @@ import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
 import io.suggest.mbill2.util.effect
 import io.suggest.n2.edge.MPredicates
 import io.suggest.playx.CacheApiUtil
-import javax.inject.{Inject, Singleton}
-import io.suggest.sec.util.{CipherUtil, PgpUtil}
+
+import javax.inject.Inject
+import io.suggest.sec.util.CipherUtil
 import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.imageio.ImageIO
 import models.mproj.ICommonDi
 import play.api.data.Form
@@ -29,6 +30,7 @@ import util.FormUtil._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import models.req.IReqHdr
+import play.api.inject.Injector
 import util.ident.IdTokenUtil
 
 import scala.concurrent.Future
@@ -55,17 +57,17 @@ object CaptchaUtil {
 
 
 /** Инжектируемая часть капча-утили. */
-@Singleton
 final class CaptchaUtil @Inject() (
-                                    mOneTimeTokens              : MOneTimeTokens,
-                                    cacheApiUtil                : CacheApiUtil,
-                                    pgpUtil                     : PgpUtil,
-                                    idTokenUtil                 : IdTokenUtil,
-                                    protected val cipherUtil    : CipherUtil,
-                                    val mCommonDi               : ICommonDi,
+                                    injector                    : Injector,
                                   )
   extends MacroLogsImpl
 {
+
+  private lazy val mOneTimeTokens = injector.instanceOf[MOneTimeTokens]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  private lazy val idTokenUtil = injector.instanceOf[IdTokenUtil]
+  private lazy val cipherUtil = injector.instanceOf[CipherUtil]
+  protected lazy val mCommonDi = injector.instanceOf[ICommonDi]
 
   import mCommonDi.{ec, slick}
 
@@ -87,7 +89,7 @@ final class CaptchaUtil @Inject() (
     .transform(strTrimF, strIdentityF)
 
   /** Сброка инстанса шифровальной/дешифровальной машины. */
-  def cipherer = cipherUtil.Cipherer(
+  private def cipherer = cipherUtil.Cipherer(
     // TODO Sec Запилить получение IV и ключа по рандомным строкам из конфига.
     IV_MATERIAL_DFLT = Array[Byte](-112, 114, -62, 99, -19, -86, 118, -42, 77, -103, 33, -30, -91, 104, 18, -105,
       101, -39, 4, -41, 24, -79, 58, 58, -7, -119, -68, -42, -102, 53, -104, -33),
@@ -428,12 +430,6 @@ final class CaptchaUtil @Inject() (
     createCaptchaImg( createCaptchaDigits() )
   }
 
-}
-
-
-/** Интерфейс для доступа к инжектируемому через DI инстансу [[CaptchaUtil]]. */
-trait ICaptchaUtilDi {
-  def captchaUtil: CaptchaUtil
 }
 
 

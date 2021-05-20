@@ -97,7 +97,7 @@ final class CleanStaleUploads @Inject() (
               date = EsRange(
                 rangeClauses = EsRangeClause
                   .op( EsRangeOps.`<` )
-                  .value( OffsetDateTime.now().minusDays(RM_STALE_AFTER_DAYS) ) :: Nil,
+                  .value( OffsetDateTime.now().minusDays(RM_STALE_AFTER_DAYS).toString ) :: Nil,
                 must = must,
               ) :: Nil,
             )

@@ -26,7 +26,7 @@ object MNodeExtras
   override type T = MNodeExtras
 
   /** Расшаренный пустой экземпляр для дедубликации пустых инстансов контейнера в памяти. */
-  override val empty = MNodeExtras()
+  override val empty = apply()
 
 
   /** Статическая модель полей модели [[MNodeExtras]]. */
@@ -34,66 +34,76 @@ object MNodeExtras
 
     /** ES-поля legacy-узлов AD Network. */
     object Adn extends PrefixedFn {
-      val ADN_FN    = "a"
+      final val ADN_FN    = "a"
       override protected def _PARENT_FN = ADN_FN
 
       import MAdnExtra.{Fields => F}
-      def IS_TEST_FN          = _fullFn( F.IS_TEST )
-      def RIGHTS_FN           = _fullFn( F.RIGHTS )
-      def SHOWN_TYPE_FN       = _fullFn( F.SHOWN_TYPE )
+      final def IS_TEST_FN          = _fullFn( F.IS_TEST )
+      final def RIGHTS_FN           = _fullFn( F.RIGHTS )
+      final def SHOWN_TYPE_FN       = _fullFn( F.SHOWN_TYPE )
     }
 
 
     /** ES-поля iBeacon (BLE-маячка). */
     object Beacon extends PrefixedFn {
-      val BEACON_FN   = "b"
+      final val BEACON_FN   = "b"
       override protected def _PARENT_FN = BEACON_FN
 
       import MBeaconExtra.{Fields => F}
-      def UUID_FN   = _fullFn( F.UUID_FN )
-      def MAJOR_FN  = _fullFn( F.MAJOR_FN )
-      def MINOR_FN  = _fullFn( F.MINOR_FN )
+      final def UUID_FN   = _fullFn( F.UUID_FN )
+      final def MAJOR_FN  = _fullFn( F.MAJOR_FN )
+      final def MINOR_FN  = _fullFn( F.MINOR_FN )
     }
 
 
     /** ES-поля данных по слинкованным интернет-доменам. */
     object Domain extends PrefixedFn {
-      val DOMAIN_FN = "d"
+      final val DOMAIN_FN = "d"
       override protected def _PARENT_FN = DOMAIN_FN
 
       import MDomainExtra.{Fields => F}
-      def DKEY_FN   = _fullFn( F.DKEY_FN )
-      def MODE_FN   = _fullFn( F.MODE_FN )
+      final def DKEY_FN   = _fullFn( F.DKEY_FN )
+      final def MODE_FN   = _fullFn( F.MODE_FN )
     }
 
 
     object MNDoc extends PrefixedFn {
-      val MNDOC_FN = "o"
+      final val MNDOC_FN = "o"
       override protected def _PARENT_FN = MNDOC_FN
 
       // TODO Хз, надо ли это с момента создания. Document -- это шаблон без данных и не индексируем.
       import MNodeDoc.{Fields => F}
-      def DOCUMENT_FN = _fullFn( F.TEMPLATE_FN )
+      final def DOCUMENT_FN = _fullFn( F.TEMPLATE_FN )
     }
 
 
     object VideoExt extends PrefixedFn {
-      val VIDEO_EXT_FN = "v"
+      final val VIDEO_EXT_FN = "v"
       override protected def _PARENT_FN = VIDEO_EXT_FN
 
       import MVideoExtInfo.{Fields => F}
-      def VIDEO_SERVICE_FN  = _fullFn( F.VIDEO_SERVICE_FN )
-      def REMOTE_ID_FN      = _fullFn( F.REMOTE_ID_FN )
+      final def VIDEO_SERVICE_FN  = _fullFn( F.VIDEO_SERVICE_FN )
+      final def REMOTE_ID_FN      = _fullFn( F.REMOTE_ID_FN )
     }
 
 
     object Resource extends PrefixedFn {
-      val RESOURCE_FN = "r"
+      final val RESOURCE_FN = "r"
       override protected def _PARENT_FN = RESOURCE_FN
     }
 
-  }
 
+    object Calendar extends PrefixedFn {
+      final val CALENDAR_FN = "calendar"
+      override protected def _PARENT_FN = CALENDAR_FN
+    }
+
+    object CryptoKey extends PrefixedFn {
+      final val CRYPTO_KEY_FN = "cryptoKey"
+      override protected def _PARENT_FN = CRYPTO_KEY_FN
+    }
+
+  }
 
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
@@ -107,7 +117,9 @@ object MNodeExtras
       ) and
     (__ \ Fields.MNDoc.MNDOC_FN).formatNullable[MNodeDoc] and
     (__ \ Fields.VideoExt.VIDEO_EXT_FN).formatNullable[MVideoExtInfo] and
-    (__ \ Fields.Resource.RESOURCE_FN).formatNullable[MRscExtra]
+    (__ \ Fields.Resource.RESOURCE_FN).formatNullable[MRscExtra] and
+    (__ \ Fields.Calendar.CALENDAR_FN).formatNullable[MNodeCalendar] and
+    (__ \ Fields.CryptoKey.CRYPTO_KEY_FN).formatNullable[MNodeCryptoKey]
   )(apply, unlift(unapply))
 
 
@@ -120,6 +132,8 @@ object MNodeExtras
       F.MNDoc.MNDOC_FN        -> MNodeDoc,
       F.VideoExt.VIDEO_EXT_FN -> MVideoExtInfo,
       F.Resource.RESOURCE_FN  -> MRscExtra,
+      F.Calendar.CALENDAR_FN  -> MNodeCalendar,
+      F.CryptoKey.CRYPTO_KEY_FN -> MNodeCryptoKey,
     )
       .esSubModelsJsObjects( nested = false )
 
@@ -134,6 +148,8 @@ object MNodeExtras
   def doc       = GenLens[MNodeExtras](_.doc)
   def extVideo  = GenLens[MNodeExtras](_.extVideo)
   def resource  = GenLens[MNodeExtras](_.resource)
+  def calendar  = GenLens[MNodeExtras](_.calendar)
+  def cryptoKey = GenLens[MNodeExtras](_.cryptoKey)
 
 
   implicit final class NodeExtrasOpsExt( private val nodeExt: MNodeExtras ) extends AnyVal {
@@ -158,6 +174,8 @@ object MNodeExtras
   * @param doc jd-документ.
   * @param extVideo Данные встраиваемого (связанного) видео, на каком-то видео-сервисе.
   * @param resource Интернет-ресурс, доступный по ссылке.
+  * @param calendar Calendar data.
+  * @param cryptoKey Cryptographic key storage.
   */
 final case class MNodeExtras(
                               adn       : Option[MAdnExtra]         = None,
@@ -166,5 +184,7 @@ final case class MNodeExtras(
                               doc       : Option[MNodeDoc]          = None,
                               extVideo  : Option[MVideoExtInfo]     = None,
                               resource  : Option[MRscExtra]         = None,
+                              calendar  : Option[MNodeCalendar]     = None,
+                              cryptoKey : Option[MNodeCryptoKey]    = None,
                             )
   extends EmptyProduct

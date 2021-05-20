@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import japgolly.univeq._
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
 
@@ -18,17 +19,6 @@ object EsModelUtil {
   /** Сколько раз по дефолту повторять попытку update при конфликте версий. */
   def UPDATE_RETRIES_MAX_DFLT = 5
 
-  /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей. */
-  // es-5.0+ запрещает создание индексов, начинающихся с -/+ или прочего непотребства.
-  // Однако, индекс "-sio" уже давно с нами, со всеми данными надо промигрировать.
-  val DFLT_INDEX        = "sio.main.v5"
-
-
-  // Имена полей в разных хранилищах. НЕЛЬЗЯ менять их значения.
-  val PERSON_ID_ESFN    = "personId"
-  val KEY_ESFN          = "key"
-  val VALUE_ESFN        = "value"
-  val IS_VERIFIED_ESFN  = "isVerified"
 
   def MAX_RESULTS_DFLT = 100
   def OFFSET_DFLT = 0

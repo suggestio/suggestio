@@ -1,25 +1,23 @@
 package util.billing
 
 import java.util.concurrent.atomic.AtomicInteger
-
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.bill.tf.daily._
 import io.suggest.bill.{Amount_t, MCurrencies, MPrice}
 import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.n2.bill.tariff.daily.{MDayClause, MTfDaily}
 import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
-import models.mcal.MCalendars
 import models.mctx.Context
-import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
+import akka.stream.Materializer
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.bill.tariff.MNodeTariffs
@@ -40,18 +38,17 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 24.12.15 15:02
  * Description: Утиль для сборки маппингов форм редактирования тарифов.
  */
-@Singleton
-class TfDailyUtil @Inject()(
-                             esModel     : EsModel,
-                             bill2Conf   : Bill2Conf,
-                             mNodes      : MNodes,
-                             mCalendars  : MCalendars,
-                             mCommonDi   : ICommonDi
-                           )
+final class TfDailyUtil @Inject()(
+                                   injector    : Injector,
+                                 )
   extends MacroLogsImpl
 {
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
-  import mCommonDi._
   import esModel.api._
 
 
@@ -66,9 +63,7 @@ class TfDailyUtil @Inject()(
     val clause = VERY_DEFAULT_WEEKDAY_CLAUSE
     MTfDaily(
       currency      = MCurrencies.default,
-      clauses       = Map(
-        clause.name -> clause
-      ),
+      clauses       = Map.empty + (clause.name -> clause),
       comissionPc   = Some(1.0)
     )
   }
@@ -347,7 +342,22 @@ class TfDailyUtil @Inject()(
       val calIds = tf.clauses.valuesIterator
         .flatMap(_.calId)
         .toSet
-      mCalendars.multiGetMap( calIds )
+      mNodes
+        .multiGetMapCache( calIds )
+    }
+
+    for {
+      tf <- tfFut
+      calIds = tf.clauses.valuesIterator
+        .flatMap(_.calId)
+        .toSet
+      tfNodesRaw <- mNodes.multiGet( calIds )
+    } yield {
+      tfNodesRaw
+        .iterator
+        .filter(_.common.ntype ==* MNodeTypes.Calendar)
+        .zipWithIdIter
+        .toMap
     }
 
     val clausesInfoFut = for {
@@ -357,14 +367,15 @@ class TfDailyUtil @Inject()(
       tf.clauses
         .valuesIterator
         .map { mClause =>
-          val mcalOpt = mClause.calId
+          val calType = mClause
+            .calId
             .flatMap( calsMap.get )
-          val calType = mcalOpt.fold [MCalType] {
-            if (tf.clauses.size ==* 1)
-              MCalTypes.All
-            else
-              MCalTypes.WeekDay
-          } { _.calType }
+            .fold [MCalType] {
+              if (tf.clauses.size ==* 1)
+                MCalTypes.All
+              else
+                MCalTypes.WeekDay
+            } { _.extras.calendar.get.calType }
           val mprice0 = MPrice( mClause.amount, tf.currency )
           val mprice1 = TplDataFormatUtil.setFormatPrice(mprice0)
           calType -> mprice1

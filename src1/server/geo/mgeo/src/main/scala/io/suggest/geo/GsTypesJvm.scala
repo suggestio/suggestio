@@ -17,8 +17,7 @@ object GsTypesJvm {
     * @return Инстанс объекта-компаньона для абстрактного гео-шейпа.
     */
   def jvmCompanionFor(gsType: GsType): GsStaticJvm = {
-    val cqOpt: Option[GsStaticJvm] = esQuerableJvmCompanionFor(gsType)
-    cqOpt.getOrElse {
+    esQuerableJvmCompanionFor(gsType) getOrElse {
       gsType match {
         case GsTypes.GeometryCollection =>
           GeometryCollectionGsJvm
