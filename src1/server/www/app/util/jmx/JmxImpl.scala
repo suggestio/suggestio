@@ -1,5 +1,7 @@
 package util.jmx
 
+import io.suggest.es.model.EsModelJmx
+
 import javax.inject.Inject
 import io.suggest.n2.node.{MNodesJmx, SioMainEsIndexJmx}
 import models.adv.MExtTargetsJmx
@@ -31,7 +33,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: JMX MBean'ы нужно заливать в энтерпрайз. Тут добавка к Global, чтобы тот мог включать/выключать jmx.
  */
 
-case class JmxImpl @Inject()(
+case class JmxImpl @Inject() (
+                               esModelJmx                    : EsModelJmx,
                                siowebEsModelJmx              : SiowebEsModelJmx,
                                advRcvrsUtilJmx               : AdvRcvrsUtilJmx,
                                mNodesJmx                     : MNodesJmx,

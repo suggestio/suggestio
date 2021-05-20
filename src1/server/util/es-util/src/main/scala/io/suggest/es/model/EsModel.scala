@@ -7,12 +7,13 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
-import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
+import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic, EsTypesFilter}
 import io.suggest.es.util.{IEsClient, SioEsUtil}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.MappingDsl
+import io.suggest.util.JmxBase
 
 import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.DocWriteResponse.Result
@@ -40,9 +41,10 @@ import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
+import play.api.inject.Injector
 import play.api.libs.json.{JsObject, Json}
 
-import scala.collection.immutable.HashMap
+import scala.collection.immutable.{ArraySeq, HashMap}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
@@ -1601,20 +1603,18 @@ final class EsModel @Inject()(
 
   /** Собрать новый индекс для заливки туда моделей ipgeobase. */
   def createIndex(newIndexName: String, settings: Settings): Future[_] = {
-    val fut = esClient.admin().indices()
-      .prepareCreate(newIndexName)
+    lazy val logPrefix = s"createIndex($newIndexName):"
+
+    esClient.admin().indices()
+      .prepareCreate( newIndexName )
       // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
       .setSettings( settings )
       .executeFut()
+      .andThen {
+        case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
+        case Failure(ex)  => LOGGER.error(s"$logPrefix failed, settings was:\n${settings.toDelimitedString('\n')}", ex)
+      }
       .map(_.isShardsAcknowledged)
-
-    lazy val logPrefix = s"createIndex($newIndexName):"
-    fut.onComplete {
-      case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
-      case Failure(ex)  => LOGGER.error(s"$logPrefix failed, settings was:\n${settings.toDelimitedString('\n')}", ex)
-    }
-
-    fut
   }
 
   /** Логика удаления старого ненужного индекса. */
@@ -2160,4 +2160,113 @@ final case class EsSaveOpts(
                            )
 case object EsSaveOpts {
   val empty = apply()
+}
+
+
+
+sealed trait EsModelJmxMBean {
+  def createIndexByNameShardsReplicas(name: String, shards: Int, replicas: Int): String
+  def deleteIndex(name: String): String
+  def ensureSioMainIndexByNameSharesReplicase(name: String, shards: Int, replicas: Int): String
+  def reindexDataFromToTypes(from: String, to: String, types: String): String
+  def resetAliasToIndex(aliasName: String, indexName: String): String
+  def getAliasedIndexName(aliasName: String): String
+  def optimize(indexName: String): String
+}
+final class EsModelJmx @Inject() (
+                                   injector: Injector,
+                                 )
+  extends JmxBase
+  with EsModelJmxMBean
+{
+
+  private def esModel = injector.instanceOf[EsModel]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
+
+  override def _jmxType = JmxBase.Types.ELASTICSEARCH
+
+  override def createIndexByNameShardsReplicas(name: String, shards: Int, replicas: Int): String = {
+    val settings = Settings.builder()
+      .put( "index.number_of_shards", shards )
+      .put( "index.number_of_replicas", replicas )
+      .build()
+
+    val fut = esModel
+      .createIndex( name, settings )
+      .map { res =>
+        s"Created index $name\n" + res.toString
+      }
+    JmxBase.awaitString( fut )
+  }
+
+  override def deleteIndex(name: String): String = {
+    val fut = esModel
+      .deleteIndex( name )
+      .map { res =>
+        s"Deleted index: $name\n$res"
+      }
+    JmxBase.awaitString( fut )
+  }
+
+  override def ensureSioMainIndexByNameSharesReplicase(name: String, shards: Int, replicas: Int): String = {
+    val fut = esModel
+      .ensureSioMainIndex(name, shards = shards, replicas = replicas)( MappingDsl.Implicits.mkNewDsl )
+      .map { isCreated =>
+        s"Ensured ok. isCreated?$isCreated"
+      }
+
+    JmxBase.awaitString( fut )
+  }
+
+  override def reindexDataFromToTypes(from: String, to: String, types: String): String = {
+    val fut = esModel
+      .reindexData(
+        fromIndex = from,
+        toIndex = to,
+        filter = {
+          if (types.isEmpty)
+            QueryBuilders.matchAllQuery()
+          else
+            (new EsTypesFilter {
+              override val esTypes = ArraySeq.unsafeWrapArray( types.split("[,;\\s]+") )
+            })
+              .toEsQuery
+        },
+      )
+      .map { bulkResp =>
+        s"Done, ${bulkResp.getTotal} total, ${bulkResp.getBulkFailures.size()} failures, more details in logs."
+      }
+    JmxBase.awaitString( fut )
+  }
+
+  override def resetAliasToIndex(aliasName: String, indexName: String): String = {
+    val fut = esModel
+      .resetAliasToIndex(
+        indexName = indexName,
+        aliasName = aliasName,
+      )
+      .map { res =>
+        s"Done\n$res"
+      }
+    JmxBase.awaitString( fut )
+  }
+
+  override def getAliasedIndexName(aliasName: String): String = {
+    val fut = esModel
+      .getAliasedIndexName( aliasName )
+      .map { indexNames =>
+        s"Found ${indexNames.size} indexes:\n-----------\n${indexNames.mkString("\n")}"
+      }
+    JmxBase.awaitString( fut )
+  }
+
+  override def optimize(indexName: String): String = {
+    val fut = esModel
+      .optimizeAfterBulk( indexName )
+      .map { res =>
+        s"Done\n$res"
+      }
+    JmxBase.awaitString( fut )
+  }
+
 }
