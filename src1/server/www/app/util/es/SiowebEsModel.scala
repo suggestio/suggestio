@@ -140,6 +140,7 @@ final class SiowebEsModel @Inject() (
       _ <- sioMainEsIndex.doInit()
       // Do needed mappings initializations:
       _ <- putAllMappings( esModels )
+      _ <- sioMainEsIndex.doReindex()
       /*
       // Some old-code for possible update of index settings:
       .recoverWith {

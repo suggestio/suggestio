@@ -7,6 +7,7 @@ import io.suggest.es.search.EsTypesFilter
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsDyn
 import org.apache.lucene.index.IndexNotFoundException
+import org.elasticsearch.index.reindex.BulkByScrollResponse
 import play.api.Configuration
 import play.api.inject.Injector
 import org.elasticsearch.{Version => EsVersion}
@@ -18,8 +19,6 @@ import scala.util.{Failure, Success, Try}
 
 /** Injected utilities for accessing/maintaining sio.main ElasticSearch index.
   * Primarily created for index upgrading between major ES updates.
-  *
-  * Singleton, because it is stateful, by now.
   */
 @Singleton
 final class SioMainEsIndex @Inject() (
@@ -28,6 +27,10 @@ final class SioMainEsIndex @Inject() (
   extends MacroLogsDyn
 {
 
+  private def _configuration = injector.instanceOf[Configuration]
+  private implicit def _ec = injector.instanceOf[ExecutionContext]
+  private implicit def _esModel = injector.instanceOf[EsModel]
+
   private def _MAIN_INDEX_NAME_PREFIX = "sio.main.v"
 
   private def _mkMainIndexName(esMajorVsnOffset: Int = 0): String =
@@ -35,10 +38,8 @@ final class SioMainEsIndex @Inject() (
 
   def OLD_INDEX_NAME: String = _mkMainIndexName( -1 )
 
-  def CURR_INDEX_NAME: String = _mkMainIndexName()
+  val CURR_INDEX_NAME: String = _mkMainIndexName()
 
-
-  private var _currIndexName: String = CURR_INDEX_NAME
 
 
   /** Get current sio.main-index name.
@@ -46,15 +47,12 @@ final class SioMainEsIndex @Inject() (
     *
     * @return Currently in-use index name.
     */
-  def getMainIndexName(): String = _currIndexName
+  def getMainIndexName(): String = CURR_INDEX_NAME
 
 
   def deleteOldIndex(): Future[Boolean] = {
-    implicit val esModel = injector.instanceOf[EsModel]
-    implicit val ec = injector.instanceOf[ExecutionContext]
-
     val oldIndexName = OLD_INDEX_NAME
-    esModel
+    _esModel
       .deleteIndex( oldIndexName )
       .transform {
         case Success( r ) =>
@@ -69,44 +67,39 @@ final class SioMainEsIndex @Inject() (
   }
 
 
+  /** Detect, if sio-main index exist with given name.
+    *
+    * @param indexName Expected name of sio.main-index.
+    * @return true, if sio.main index exist at given name.
+    */
+  def isMainIndexExists(indexName: String): Future[Boolean] = {
+    lazy val logPrefix = s"isMainIndexExists($indexName):"
+    LOGGER.trace(s"$logPrefix Looking up for old index '$indexName' ...")
+    _esModel
+      .getIndexMeta( indexName )
+      .map { oldIndexMetaOpt =>
+        val r = oldIndexMetaOpt.exists { oldIndexMeta =>
+          !oldIndexMeta.getMappings.isEmpty
+        }
+
+        if (r)
+          LOGGER.trace(s"$logPrefix Found old index $indexName with mapping/data")
+        else if (oldIndexMetaOpt.nonEmpty)
+          LOGGER.warn(s"$logPrefix Main index '$indexName' is empty/uninitialized, this is unexpected")
+        else
+          LOGGER.trace(s"$logPrefix Index not exists: $indexName")
+
+        r
+      }
+  }
+
   /** Start main index ensuring/initialization. */
   def doInit(force: Boolean = false)(implicit dsl: MappingDsl): Future[_] = {
-
-    lazy val configuration = injector.instanceOf[Configuration]
-    implicit val ec = injector.instanceOf[ExecutionContext]
-    implicit lazy val esModel = injector.instanceOf[EsModel]
-
     lazy val loggerInst = LOGGER
-
-    /** Detect, if sio-main index exist with given name.
-      *
-      * @param indexName Expected name of sio.main-index.
-      * @return true, if sio.main index exist at given name.
-      */
-    def isMainIndexExists(indexName: String): Future[Boolean] = {
-      lazy val logPrefix = s"isMainIndexExists($indexName):"
-      loggerInst.trace(s"$logPrefix Looking up for old index '$indexName' ...")
-      esModel
-        .getIndexMeta( indexName )
-        .map { oldIndexMetaOpt =>
-          val r = oldIndexMetaOpt.exists { oldIndexMeta =>
-            !oldIndexMeta.getMappings.isEmpty
-          }
-
-          if (r)
-            loggerInst.trace(s"$logPrefix Found old index $indexName with mapping/data")
-          else if (oldIndexMetaOpt.nonEmpty)
-            loggerInst.warn(s"$logPrefix Main index '$indexName' is empty/uninitialized, this is unexpected")
-          else
-            loggerInst.trace(s"$logPrefix Index not exists: $indexName")
-
-          r
-        }
-    }
 
     // Check about currently used settings.
     // is old sio-main index upgrade enabled?
-    val isUpdateOldIndex = force || configuration
+    val isUpdateOldIndex = force || _configuration
       .getOptional[Boolean]("es.index.main.migrate.enabled")
       .getOrElseTrue
 
@@ -119,58 +112,55 @@ final class SioMainEsIndex @Inject() (
       val currentIndexName = CURR_INDEX_NAME
 
       // Ensure, if current sio-main index exists:
-      val isCurrentIndexHasBeenCreatedFut = esModel.ensureSioMainIndex(
+      val isCurrentIndexHasBeenCreatedFut = _esModel.ensureSioMainIndex(
         indexName = currentIndexName,
         shards    = EsModelUtil.SHARDS_COUNT_DFLT,
         replicas  = EsModelUtil.REPLICAS_COUNT_DFLT,
       )
 
-      // Check if old sio-main index exists, in background:
-      val oldIndexName = OLD_INDEX_NAME
-      val isOldIndexExistsFut = isMainIndexExists( oldIndexName )
+      isCurrentIndexHasBeenCreatedFut
+    }
+  }
 
-      for {
-        _ <- isCurrentIndexHasBeenCreatedFut
 
-        isOldIndexExists <- isOldIndexExistsFut
-        if isOldIndexExists
+  def doReindex(): Future[BulkByScrollResponse] = {
+    val oldIndexName = OLD_INDEX_NAME
 
-        _ <- {
-          // Found old sio-main index. Let's copy data to new main index...
+    for {
+      isOldIndexExists <- isMainIndexExists( oldIndexName )
+      if isOldIndexExists
 
-          // Temporary reset current index to old index:
-          _currIndexName = oldIndexName
+      currentIndexName = CURR_INDEX_NAME
 
-          LOGGER.info(s"Will migrate sio-main index data from old=$oldIndexName to new=$currentIndexName")
+      res <- {
+        // Found old sio-main index. Let's copy data to new main index...
+        LOGGER.info(s"Will migrate sio-main index data from old=$oldIndexName to new=$currentIndexName")
 
-          esModel.reindexData(
-            fromIndex = oldIndexName,
-            toIndex   = currentIndexName,
-            // Copy only nodes from _type = "n2"
-            filter    = {
-              new EsTypesFilter {
-                override def esTypes = MNodeFields.ES_TYPE_NAME :: Nil
-              }
-                .toEsQuery
-            },
-          )
-        }
-
-        _ <- {
-          val isDeleteOldIndex = configuration
-            .getOptional[Boolean]("es.index.main.old.autodelete")
-            .getOrElseFalse
-
-          if (isDeleteOldIndex)
-            deleteOldIndex()
-          else
-            Future.successful(false)
-        }
-
-      } yield {
-        // Permanently set main index name to current name:
-        _currIndexName = currentIndexName
+        _esModel.reindexData(
+          fromIndex = oldIndexName,
+          toIndex   = currentIndexName,
+          // Copy only nodes from _type = "n2"
+          filter    = {
+            new EsTypesFilter {
+              override def esTypes = MNodeFields.ES_TYPE_NAME :: Nil
+            }
+              .toEsQuery
+          },
+        )
       }
+
+      _ <- {
+        val isDeleteOldIndex = _configuration
+          .getOptional[Boolean]("es.index.main.old.autodelete")
+          .getOrElseFalse
+
+        if (isDeleteOldIndex)
+          deleteOldIndex()
+        else
+          Future.successful(false)
+      }
+    } yield {
+      res
     }
   }
 
@@ -179,6 +169,7 @@ final class SioMainEsIndex @Inject() (
 
 sealed trait SioMainEsIndexJmxMBean {
   def doInit(force: Boolean): String
+  def doReindex(): String
   def deleteOldIndex(): String
 }
 
@@ -199,6 +190,16 @@ final class SioMainEsIndexJmx @Inject() (
       r <- sioMainEsIndex.doInit(force)( MappingDsl.Implicits.mkNewDsl )
     } yield {
       "Done, " + r
+    }
+    JmxBase.awaitString( fut )
+  }
+
+
+  override def doReindex(): String = {
+    val fut = for {
+      r <- sioMainEsIndex.doReindex()
+    } yield {
+      s"Done, total ${r.getTotal} documents"
     }
     JmxBase.awaitString( fut )
   }
