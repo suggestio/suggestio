@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.ShapeBuilders
+import org.elasticsearch.common.geo.builders.MultiPointBuilder
 import au.id.jazzy.play.geojson.{LngLat, MultiPoint}
 import org.locationtech.jts.geom.Coordinate
 
@@ -22,7 +22,8 @@ object MultiPointGsJvm extends MultiPointShapeStatic {
     )
   }
 
-  override def toEsShapeBuilder(gs: MultiPointGs) = ShapeBuilders.newMultiPoint( gsCoords2esCoords(gs) )
+  override def toEsShapeBuilder(gs: MultiPointGs) =
+    new MultiPointBuilder( gsCoords2esCoords(gs) )
 
   def geoPoints2esCoords(points: Seq[MGeoPoint]): ju.List[Coordinate] = {
     import scala.jdk.CollectionConverters._

@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuilders}
+import org.elasticsearch.common.geo.builders.MultiLineStringBuilder
 import au.id.jazzy.play.geojson.{LngLat, MultiLineString}
 
 
@@ -31,7 +31,7 @@ object MultiLineStringGsJvm extends GsStaticJvmQuerable {
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
   override def toEsShapeBuilder(gs: Shape_t): MultiLineStringBuilder = {
     // Заливаем линии
-    gs.lines.foldLeft(ShapeBuilders.newMultiLinestring()) {
+    gs.lines.foldLeft( new MultiLineStringBuilder() ) {
       (acc0, coordLine) =>
         // Заливаем все точки в линию
         val lsb = LineStringGsJvm.toEsShapeBuilder(coordLine)

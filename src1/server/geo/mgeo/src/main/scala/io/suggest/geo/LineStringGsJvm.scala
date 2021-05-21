@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.ShapeBuilders
+import org.elasticsearch.common.geo.builders.LineStringBuilder
 import au.id.jazzy.play.geojson.{LineString, LngLat}
 
 /**
@@ -20,7 +20,8 @@ object LineStringGsJvm extends MultiPointShapeStatic {
     )
   }
 
-  override def toEsShapeBuilder(gs: LineStringGs) = ShapeBuilders.newLineString( gsCoords2esCoords(gs) )
+  override def toEsShapeBuilder(gs: LineStringGs) =
+    new LineStringBuilder( gsCoords2esCoords(gs) )
 
 }
 

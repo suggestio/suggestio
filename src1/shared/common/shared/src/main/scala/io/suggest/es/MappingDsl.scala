@@ -124,16 +124,16 @@ final class MappingDsl { dsl =>
     )
 
   }
-  final case class CharFilter private (
-                                        typ          : String,
-                                        // type = html_strip
-                                        escapedTags  : Option[Iterable[String]]  = None,
-                                        // t = mapping
-                                        mappings     : Option[Iterable[String]]  = None,
-                                        // t = pattern_replace
-                                        pattern      : Option[String]            = None,
-                                        replacement  : Option[String]            = None,
-                                      )
+  case class CharFilter private (
+                                  typ          : String,
+                                  // type = html_strip
+                                  escapedTags  : Option[Iterable[String]]  = None,
+                                  // t = mapping
+                                  mappings     : Option[Iterable[String]]  = None,
+                                  // t = pattern_replace
+                                  pattern      : Option[String]            = None,
+                                  replacement  : Option[String]            = None,
+                                )
 
 
   object Analyzer {
@@ -163,12 +163,12 @@ final class MappingDsl { dsl =>
     )(apply, unlift(unapply))
 
   }
-  final case class Analyzer private(
-                                     // analyzer.type = custom
-                                     charFilters  : Seq[String]       = Nil,
-                                     tokenizer    : Option[String]    = None,
-                                     filters      : Seq[String]       = Nil,
-                                   )
+  case class Analyzer private(
+                               // analyzer.type = custom
+                               charFilters  : Seq[String]       = Nil,
+                               tokenizer    : Option[String]    = None,
+                               filters      : Seq[String]       = Nil,
+                             )
 
 
 
@@ -211,16 +211,16 @@ final class MappingDsl { dsl =>
     )(apply, unlift(unapply))
 
   }
-  final case class Tokenizer private (
-                                       typ            : String,
-                                       // standard
-                                       maxTokenLen    : Option[Int]           = None,
-                                       // ngram
-                                       minGram        : Option[Int]           = None,
-                                       maxGram        : Option[Int]           = None,
-                                       tokenChars     : Seq[TokenCharType]    = Nil,
-                                       bufferSize     : Option[Int]           = None,
-                                     )
+  case class Tokenizer private (
+                                 typ            : String,
+                                 // standard
+                                 maxTokenLen    : Option[Int]           = None,
+                                 // ngram
+                                 minGram        : Option[Int]           = None,
+                                 maxGram        : Option[Int]           = None,
+                                 tokenChars     : Seq[TokenCharType]    = Nil,
+                                 bufferSize     : Option[Int]           = None,
+                               )
 
 
 
@@ -295,22 +295,22 @@ final class MappingDsl { dsl =>
     )
 
   }
-  final case class Filter private(
-                                   typ                : String,
-                                   // stopwords
-                                   stopWords          : Option[Seq[String]]     = None,
-                                   // word delimiter
-                                   preserveOriginal   : Option[Boolean]         = None,
-                                   // stemmer
-                                   language           : Option[String]          = None,
-                                   // length
-                                   min                : Option[Int]             = None,
-                                   max                : Option[Int]             = None,
-                                   // edgeNGram
-                                   minGram            : Option[Int]             = None,
-                                   maxGram            : Option[Int]             = None,
-                                   side               : Option[String]          = None,
-                                 )
+  case class Filter private(
+                             typ                : String,
+                             // stopwords
+                             stopWords          : Option[Seq[String]]     = None,
+                             // word delimiter
+                             preserveOriginal   : Option[Boolean]         = None,
+                             // stemmer
+                             language           : Option[String]          = None,
+                             // length
+                             min                : Option[Int]             = None,
+                             max                : Option[Int]             = None,
+                             // edgeNGram
+                             minGram            : Option[Int]             = None,
+                             maxGram            : Option[Int]             = None,
+                             side               : Option[String]          = None,
+                           )
 
 
   object IndexSettings {
@@ -320,11 +320,11 @@ final class MappingDsl { dsl =>
       (__ \ "analysis").format[IndexSettingsAnalysis]
     )(apply, unlift(unapply))
   }
-  final case class IndexSettings(
-                                  shards        : Option[Int],
-                                  replicas      : Option[Int],
-                                  analysis      : IndexSettingsAnalysis   = IndexSettingsAnalysis(),
-                                )
+  case class IndexSettings(
+                            shards        : Option[Int],
+                            replicas      : Option[Int],
+                            analysis      : IndexSettingsAnalysis   = IndexSettingsAnalysis(),
+                          )
 
 
   object IndexSettingsAnalysis {
@@ -351,12 +351,12 @@ final class MappingDsl { dsl =>
         )
     )(apply, unlift(unapply))
   }
-  final case class IndexSettingsAnalysis(
-                                          charFilters         : Map[String, CharFilter]  = Map.empty,
-                                          analyzers           : Map[String, Analyzer]    = Map.empty,
-                                          tokenizers          : Map[String, Tokenizer]   = Map.empty,
-                                          filters             : Map[String, Filter]      = Map.empty,
-                                        )
+  case class IndexSettingsAnalysis(
+                                    charFilters         : Map[String, CharFilter]  = Map.empty,
+                                    analyzers           : Map[String, Analyzer]    = Map.empty,
+                                    tokenizers          : Map[String, Tokenizer]   = Map.empty,
+                                    filters             : Map[String, Filter]      = Map.empty,
+                                  )
     extends EmptyProduct
 
 
@@ -426,24 +426,24 @@ final class MappingDsl { dsl =>
     lazy val notIndexedJs = Json.toJsObject( apply(index = someFalse) )
 
   }
-  final case class FText(
-                          typ                  : DocFieldType                  = DocFieldTypes.Text,
-                          indexName            : Option[String]                = None,
-                          store                : Option[Boolean]               = None,
-                          index                : Option[Boolean]               = None,
-                          nullValue            : Option[String]                = None,
-                          boost                : Option[Double]                = None,
-                          fields               : Option[JsObject]              = None,
-                          docValues            : Option[Boolean]               = None,
-                          // field-text:
-                          termVector           : Option[TermVectorVariant]     = None,
-                          omitNorms            : Option[Boolean]               = None,
-                          indexOptions         : Option[String]                = None,
-                          analyzer             : Option[String]                = None,
-                          searchAnalyzer       : Option[String]                = None,
-                          ignoreAbove          : Option[Boolean]               = None,
-                          positionOffsetGap    : Option[Int]                   = None,
-                        )
+  case class FText(
+                    typ                  : DocFieldType                  = DocFieldTypes.Text,
+                    indexName            : Option[String]                = None,
+                    store                : Option[Boolean]               = None,
+                    index                : Option[Boolean]               = None,
+                    nullValue            : Option[String]                = None,
+                    boost                : Option[Double]                = None,
+                    fields               : Option[JsObject]              = None,
+                    docValues            : Option[Boolean]               = None,
+                    // field-text:
+                    termVector           : Option[TermVectorVariant]     = None,
+                    omitNorms            : Option[Boolean]               = None,
+                    indexOptions         : Option[String]                = None,
+                    analyzer             : Option[String]                = None,
+                    searchAnalyzer       : Option[String]                = None,
+                    ignoreAbove          : Option[Boolean]               = None,
+                    positionOffsetGap    : Option[Int]                   = None,
+                  )
 
 
 

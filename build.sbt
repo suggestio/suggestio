@@ -708,7 +708,7 @@ lazy val server = project
 
 
 /** Root project aggregate. */
-lazy val sio2 = project
+lazy val suggestio = project
   .in( file(".") )
   .settings(Common.settingsOrg: _*)
   .aggregate(

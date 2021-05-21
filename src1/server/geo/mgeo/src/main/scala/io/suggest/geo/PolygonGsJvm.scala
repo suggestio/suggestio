@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders._
+import org.elasticsearch.common.geo.builders.{PolygonBuilder, CoordinatesBuilder}
 import au.id.jazzy.play.geojson.{LngLat, Polygon}
 
 /**
@@ -32,7 +32,7 @@ object PolygonGsJvm extends GsStaticJvmQuerable {
       .coordinates( MultiPointGsJvm.geoPoints2esCoords(gs.outer.coords) )
       .close()
 
-    gs.holes.foldLeft( ShapeBuilders.newPolygon( inner ) ) { (pb, lsGs) =>
+    gs.holes.foldLeft( new PolygonBuilder( inner ) ) { (pb, lsGs) =>
       val lsb = LineStringGsJvm.toEsShapeBuilder( lsGs )
       pb.hole( lsb, true )
     }

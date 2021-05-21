@@ -711,6 +711,8 @@ Ntype.mf=File
 Ntype.e=External
 Ntype.ev=Video
 Ntype.ev=Resource
+Ntypes.calendar=Calendar
+Ntypes.cryptoKey=Crypto.key
 
 Ntypes.p=People
 Ntypes.n=Cabinets
@@ -723,6 +725,8 @@ Ntypes.mf=Files
 Ntypes.e=Externals
 Ntypes.ev=Videos
 Ntypes.er=Resources
+Ntypes.calendar=Calendars
+Ntypes.cryptoKey=Crypto.keys
 Nodes=Nodes
 
 edge.predicate.a=Owner

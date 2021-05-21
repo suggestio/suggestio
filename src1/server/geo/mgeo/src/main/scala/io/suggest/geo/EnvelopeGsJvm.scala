@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoConstants.Qs
-import org.elasticsearch.common.geo.builders.{ShapeBuilder, ShapeBuilders}
+import org.elasticsearch.common.geo.builders.EnvelopeBuilder
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.{LngLat, Polygon}
 import io.suggest.xplay.qsb.QueryStringBindableImpl
@@ -71,7 +71,7 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
   }
 
   override def toEsShapeBuilder(gs: Shape_t): AnyEsShapeBuilder_t = {
-    ShapeBuilders.newEnvelope(
+    new EnvelopeBuilder(
       GeoPoint.toJtsCoordinate(gs.topLeft),
       GeoPoint.toJtsCoordinate(gs.bottomRight)
     )

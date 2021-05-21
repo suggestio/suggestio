@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import au.id.jazzy.play.geojson.{Geometry, LngLat}
-import org.elasticsearch.common.geo.builders.ShapeBuilders
+import org.elasticsearch.common.geo.builders.CircleBuilder
 import org.elasticsearch.common.unit.DistanceUnit
 
 /**
@@ -35,7 +35,7 @@ object CircleGsJvm extends GsStaticJvmQuerable {
   def distance(circle: CircleGs) = Distance.meters( circle.radiusM )
 
   override def toEsShapeBuilder(gs: Shape_t) = {
-    ShapeBuilders.newCircleBuilder()
+    new CircleBuilder()
       .center(gs.center.lon.doubleValue, gs.center.lat.doubleValue)
       .radius(gs.radiusM, DistanceUnit.METERS)
   }

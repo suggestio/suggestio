@@ -719,6 +719,8 @@ Ntype.mf=Файл
 Ntype.e=Внешние ресурсы
 Ntype.ev=Видео
 Ntype.er=Ресурс
+Ntype.calendar=Календарь
+Ntype.cryptoKey=Крипто.ключ
 
 Ntypes.p=Люди
 Ntypes.n=Кабинеты
@@ -731,6 +733,8 @@ Ntypes.mf=Файлы
 Ntypes.e=Внешние ресурсы
 Ntypes.ev=Видео
 Ntypes.er=Ресурсы
+Ntypes.calendar=Календари
+Ntypes.cryptoKey=Крипто.ключи
 Nodes=Узлы
 
 edge.predicate.a=Владелец

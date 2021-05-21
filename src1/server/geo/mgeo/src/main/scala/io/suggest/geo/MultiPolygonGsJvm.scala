@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilders}
+import org.elasticsearch.common.geo.builders.MultiPolygonBuilder
 import au.id.jazzy.play.geojson.{LngLat, MultiPolygon}
 
 /**
@@ -28,7 +28,7 @@ object MultiPolygonGsJvm extends GsStaticJvmQuerable {
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
   override def toEsShapeBuilder(gs: Shape_t): MultiPolygonBuilder = {
-    gs.polygons.foldLeft(ShapeBuilders.newMultiPolygon()) {
+    gs.polygons.foldLeft( new MultiPolygonBuilder() ) {
       (mpb, poly) =>
         val polyBuilder = PolygonGsJvm.toEsShapeBuilder( poly )
         mpb.polygon( polyBuilder )
