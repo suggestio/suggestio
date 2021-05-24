@@ -4,6 +4,9 @@
 ## $ kubectl -n ingress-nginx edit deploy
 ## И в список spec/template/spec/container/args дописать строку:
 ##          - --tcp-services-configmap=default/tcp-services
+##
+## If pod shows no ports on node available, delete old pod manually:
+## kubectl delete pod -n ingress-nginx ingress-nginx-controller-769b74758f-kz4bn
 apiVersion: v1
 kind: ConfigMap
 metadata:

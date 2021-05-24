@@ -10,7 +10,7 @@ import Keys._
 object Common {
 
   /** Версия scala для сервной части и дефолтовая версия для scala.js. */
-  val SCALA_VSN = "2.13.5"
+  val SCALA_VSN = "2.13.6"
   
 
   /** Версия scala для scala.js. */
@@ -372,24 +372,16 @@ object Common {
 
   object Repo {
 
-    /** Адрес внутреннего кеширующего сервера artifactory */
-    val ARTIFACTORY_URL               = "http://ci.suggest.io/artifactory/"
+    val TYPESAFE_RELEASES_URL         = "https://repo.typesafe.com/typesafe/releases/"
 
-    val TYPESAFE_RELEASES_URL         = ARTIFACTORY_URL + "typesafe-releases"
+    val SONATYPE_OSS_RELEASES_URL     = "https://oss.sonatype.org/content/repositories/releases/"
+    val SONATYPE_OSS_SNAPSHOTS_URL    = "https://oss.sonatype.org/content/repositories/snapshots/"
+    val SONATYPE_GROUPS_FORGE_URL     = "https://repository.sonatype.org/content/groups/forge/"
 
-    val SONATYPE_OSS_RELEASES_URL     = ARTIFACTORY_URL + "sonatype-oss-releases"
-    val SONATYPE_OSS_SNAPSHOTS_URL    = ARTIFACTORY_URL + "sonatype-oss-snapshots"
-    val SONATYPE_GROUPS_FORGE_URL     = ARTIFACTORY_URL + "sonatype-groups-forge"
+    def APACHE_RELEASES_URL           = "https://repository.apache.org/content/repositories/releases/"
 
-    def APACHE_RELEASES_URL           = ARTIFACTORY_URL + "apache-releases"
-
-    def JCENTER_URL                   = ARTIFACTORY_URL + "jcenter"
-
-    val JROPER_MAVEN_REPO             = ARTIFACTORY_URL + "jroper-maven"
-    def JBROTLI                       = ARTIFACTORY_URL + "bintray-nitram509-jbrotli"
-
-    //val CONJARS_REPO_URL            = ARTIFACTORY_URL + "conjars-repo"
-    //val MAVEN_TWTTR_COM_URL         = ARTIFACTORY_URL + "maven-twttr-com"
+    val JROPER_MAVEN_REPO             = "https://dl.bintray.com/jroper/maven/"
+    def JBROTLI                       = "https://dl.bintray.com/nitram509/jbrotli"
 
   }
 

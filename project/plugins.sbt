@@ -1,14 +1,11 @@
-// Comment to get more information during initialization
 //logLevel := Level.Warn
-
-//offline := true
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers := Seq(
-  Resolver.url("sbt-plugin-releases-art",    url("http://ci.suggest.io/artifactory/sbt-plugin-releases"))(Resolver.ivyStylePatterns).withAllowInsecureProtocol(true),
-  ("typesafe-releases-art"                   at "http://ci.suggest.io/artifactory/typesafe-releases").withAllowInsecureProtocol(true),
-  ("bintray-nitram509-jbrotli"               at "http://ci.suggest.io/artifactory/bintray-nitram509-jbrotli").withAllowInsecureProtocol(true)
+  Resolver.url("sbt-plugin-releases-art",    url("https://dl.bintray.com/sbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),
+  ("typesafe-releases-art"                   at "https://repo.typesafe.com/typesafe/releases/"),
+  ("bintray-nitram509-jbrotli"               at "https://dl.bintray.com/nitram509/jbrotli")
 )
 
 // Для ускорения update на куче subprojects.
@@ -55,4 +52,3 @@ addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.1" cross CrossVersion.f
 
 // для for-yield-оптимизации (https://github.com/fosskers/scalaz-and-cats#i-chain-operations-with-for--yield-isnt-that-all-i-need)
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
-

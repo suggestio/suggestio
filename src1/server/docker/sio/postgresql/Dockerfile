@@ -50,3 +50,8 @@ CMD ["postgres"]
 COPY docker-entrypoint.sh /bin/
 #CMD ["/bin/systemctl", "default"]
 
+## Crunches for ru+RU DB. TODO Make locale db to en_US.
+COPY ru_RU /usr/share/i18n/locales/
+RUN echo ru_RU.UTF-8 UTF-8 >> /etc/locale.gen && \
+    locale-gen
+

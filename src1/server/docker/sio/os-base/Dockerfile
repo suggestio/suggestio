@@ -3,14 +3,15 @@
 ## TODO 2020-07-31 Не получается запустить fakeroot, когда сборка через buildkit.
 ## Базовый образ для сборке всех остальных обычных контейнеров.
 
-FROM archlinux/base
+FROM archlinux:latest
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 RUN : \
   ## Install locales
   && echo en_US.UTF-8 UTF-8 > /etc/locale.gen \
-  && echo ru_RU.UTF-8 UTF-8 >> /etc/locale.gen \
-  && echo LANG=ru_RU.UTF-8 > /etc/locale.conf \
+  ## archlinux 2021: missing locales in official docker image
+  #&& echo ru_RU.UTF-8 UTF-8 >> /etc/locale.gen \
+  #&& echo LANG=ru_RU.UTF-8 > /etc/locale.conf \
   && locale-gen \
   ## Для ускорения работы pacman'а, выставить только быстрые зеркала:
   && echo 'Server = http://mirror.yandex.ru/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist

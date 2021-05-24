@@ -8,7 +8,7 @@ ARG user=artifactory
 ARG group=$user
 ARG uid=784
 ARG gid=$uid
-ARG ARTIFACTORY_HOME=/opt/artifactory
+ARG ARTIFACTORY_HOME=/opt/jfrog/artifactory
 
 RUN groupadd -g ${gid} ${group} && \
   useradd --system -d "$ARTIFACTORY_HOME" --no-create-home -u ${uid} -g ${gid} -s /bin/nologin ${user}
@@ -31,7 +31,7 @@ RUN $PACMAN -S --noconfirm --needed --asdeps net-tools tar
 
 RUN sudo -u $PACWRAP $PACWRAP --noconfirm -Sy artifactory-oss
 
-## tar нужен, чтобы начальный etc распаковать в volume,
+## tar нужен, чтобы начальный var распаковать в volume,
 ## для запуска скрипта artifactory нужен gawk:
 RUN $PACMAN -S --noconfirm --needed tar gzip gawk && \
     pacman -D --asexplicit gawk tar gzip
@@ -43,12 +43,12 @@ RUN sio-finalize-container.sh
 RUN chown -R $user:$group $ARTIFACTORY_HOME && \
     ln -s $ARTIFACTORY_HOME /var/lib/artifactory
 
-## Нужно начальные данные etc забэкапить, чтобы, сделав из конфигов ещё один volume, распаковать начальные конфиги в пустой volume.
-ENV artifactory_etc_init_tar_gz=/var/lib/artifactory-etc-initial.tar.gz \
-    ARTIFACTORY_ETC=$ARTIFACTORY_HOME/etc
+## Нужно начальные данные var забэкапить, чтобы, сделав из конфигов ещё один volume, распаковать начальные конфиги в пустой volume.
+ENV artifactory_var_init_tar_gz=/var/lib/artifactory-var-initial.tar.gz \
+    ARTIFACTORY_VAR=$ARTIFACTORY_HOME/var
 
-RUN cd "${ARTIFACTORY_ETC}" && \
-    tar -czpf "${artifactory_etc_init_tar_gz}" .
+RUN cd "${ARTIFACTORY_VAR}" && \
+    tar -czpf "${artifactory_var_init_tar_gz}" .
 
 ## Создать необходимые для работы директории:
 RUN for dir in /run/artifactory; do \
@@ -68,10 +68,7 @@ ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
 
 CMD ["/bin/systemctl", "default"]
 
-VOLUME "$ARTIFACTORY_ETC"
-VOLUME "$ARTIFACTORY_HOME/data"
-VOLUME "$ARTIFACTORY_HOME/access"
-VOLUME "$ARTIFACTORY_HOME/backup"
-VOLUME "$ARTIFACTORY_HOME/replicator"
-VOLUME "$ARTIFACTORY_HOME/support"
+VOLUME "$ARTIFACTORY_VAR"
+
+ENV JF_SHARED_NODE_ID=artifacts
 

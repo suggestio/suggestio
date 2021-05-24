@@ -126,7 +126,7 @@ if [ "$1" = 'postgres' ]; then
 	listen_addresses = '*'
 	wal_level = hot_standby
 	max_wal_senders = $PG_MAX_WAL_SENDERS
-	wal_keep_segments = $PG_WAL_KEEP_SEGMENTS
+	#wal_keep_segments = $PG_WAL_KEEP_SEGMENTS ## pg-13 => wal_keep_size=??
 	hot_standby = on
 	EOF
 

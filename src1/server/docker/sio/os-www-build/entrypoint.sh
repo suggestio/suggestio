@@ -20,35 +20,7 @@ user=$K8S_SECRET_IVY2_USER
 password=$K8S_SECRET_IVY2_PASSWORD
 EOF
 
-## Подготовить конфиг sbt, чтобы активнее работал с локальной artifactory:
-GLOBAL_SBT="$HOME/.sbt/${SBT_VERSION_ABI}/global.sbt"
-echo -n "$GLOBAL_SBT ... "
-
-if [ -f $GLOBAL_SBT ]; then
-  echo " (Skipped, already exist)"
-else
-  cat > $HOME/.sbt/${SBT_VERSION_ABI}/global.sbt <<EOF
-credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
-
-//val ARTIFACTORY_URL = "http://ivy2-internal.cbca.ru/artifactory"
-val ARTIFACTORY_URL = "http://ci.suggest.io/artifactory"
-
-val corpRepoResolver = ("cbca-corp-repo" at s"$ARTIFACTORY_URL/corp-repo").withAllowInsecureProtocol(true)
-
-publishTo := Some(corpRepoResolver)
-
-// Удалить дефолтовый maven1/repo2, чтобы использовать кеш artifactory для ускорения работы.
-externalResolvers ~= { extResolvers =>
-  extResolvers.filter (_.name != "public")
-}
-
-resolvers ++= Seq(
-  ("repo1"   at  s"$ARTIFACTORY_URL/repo1").withAllowInsecureProtocol(true),
-  corpRepoResolver
-)
-EOF
-  echo "Saved ok."
-fi
+## Local Artifactory support for global.sbt was here until 2021-05-24
 
 _fatal() {
   echo "$1\n Waiting for admin for debugging..." >&2
