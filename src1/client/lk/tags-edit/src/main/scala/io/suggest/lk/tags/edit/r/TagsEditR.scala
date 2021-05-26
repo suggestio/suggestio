@@ -176,7 +176,7 @@ final class TagsEditR(
                 .rawElement
           }
 
-          val _getOptionSelectedJsF = { (a: MTagFound, b: MTagFound) =>
+          val _isOptionEqualToF = { (a: MTagFound, b: MTagFound) =>
             (a.face ==* b.face)
           }: js.Function2[MTagFound, MTagFound, Boolean]
 
@@ -208,7 +208,7 @@ final class TagsEditR(
                   override val value                = mtfEmpty
                   override val inputValue           = tagsEditState.props.query.text
                   override val onInputChange        = _onTextChangeCb
-                  override val getOptionSelected    = _getOptionSelectedJsF
+                  override val isOptionEqualToValue = _isOptionEqualToF
                   override val renderOption         = _renderOneOptionJsF
                   override val renderInput          = _renderInputJsF
                   @JSName("onChange")

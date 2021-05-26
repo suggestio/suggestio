@@ -75,7 +75,7 @@ object MuiAutoComplete {
     val getOptionDisabled: js.UndefOr[js.Function1[T, Boolean]] = js.undefined
     // TODO T|String - при нажатии Enter в input'е - функция вызывается над строкой из input'а. В остальных случаях - T.
     val getOptionLabel: js.UndefOr[js.Function1[T | String, String]] = js.undefined
-    val getOptionSelected: js.UndefOr[js.Function2[T, T, Boolean]] = js.undefined
+    val isOptionEqualToValue: js.UndefOr[js.Function2[T, T, Boolean]] = js.undefined
     val groupBy: js.UndefOr[js.Function1[T, String]] = js.undefined
     val limitTags: js.UndefOr[Int] = js.undefined
     val ListboxComponent: js.UndefOr[js.Any] = js.undefined
