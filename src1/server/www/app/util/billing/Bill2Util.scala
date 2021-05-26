@@ -1975,9 +1975,7 @@ final class Bill2Util @Inject() (
       }.toEsQuery
     )
 
-    val bp = mNodes.bulkProcessor(
-      listener = BulkProcessorListener(logPrefix),
-    )
+    val bp = mNodes.bulkProcessorLog( this, logPrefix )
     val totalCounter = new AtomicInteger(0)
     val repairCounter = new AtomicInteger(0)
 

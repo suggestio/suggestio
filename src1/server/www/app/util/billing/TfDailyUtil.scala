@@ -450,9 +450,7 @@ final class TfDailyUtil @Inject()(
     val logPrefix = s"resetAllTfDailyComissions()#${System.currentTimeMillis()}:"
     LOGGER.warn(s"$logPrefix Starting")
 
-    val bp = mNodes.bulkProcessor(
-      listener = BulkProcessorListener( logPrefix )
-    )
+    val bp = mNodes.bulkProcessorLog( this, logPrefix )
     val counter = new AtomicInteger(0)
 
     val nodeResetTfComissionF = MNode.billing

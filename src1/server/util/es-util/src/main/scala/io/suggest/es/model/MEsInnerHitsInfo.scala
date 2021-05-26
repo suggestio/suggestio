@@ -4,8 +4,7 @@ import io.suggest.es.util.SioEsUtil
 import japgolly.univeq.UnivEq
 import org.apache.commons.collections4.IteratorUtils
 import org.elasticsearch.index.query.InnerHitBuilder
-import org.elasticsearch.search.fetch.subphase.DocValueFieldsContext.FieldAndFormat
-import org.elasticsearch.search.fetch.subphase.FetchSourceContext
+import org.elasticsearch.search.fetch.subphase.{FetchSourceContext, FieldAndFormat}
 
 import scala.jdk.CollectionConverters._
 

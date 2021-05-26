@@ -1,4 +1,4 @@
-package io.suggest.geo.ipgeobase
+package io .suggest.geo.ipgeobase
 
 import java.io._
 import java.util.concurrent.TimeUnit
@@ -167,7 +167,7 @@ final class IpgbImporter @Inject() (
 
     // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
     BulkProcessor
-      .builder( esClient.bulk(_, _), listener )
+      .builder( esClient.bulk(_, _), listener, getClass.getSimpleName )
       .setBulkActions(BULK_QUEUE_LEN)
       .build()
   }

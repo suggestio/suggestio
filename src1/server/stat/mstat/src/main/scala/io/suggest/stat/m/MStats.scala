@@ -12,7 +12,7 @@ import io.suggest.es.model._
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.aggregations.AggregationBuilders
-import org.elasticsearch.search.aggregations.metrics.max.Max
+import org.elasticsearch.search.aggregations.metrics.Max
 import org.elasticsearch.search.sort.SortOrder
 import play.api.inject.Injector
 import play.api.libs.functional.syntax._

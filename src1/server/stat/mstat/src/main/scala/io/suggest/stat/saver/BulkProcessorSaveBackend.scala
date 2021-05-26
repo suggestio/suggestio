@@ -57,6 +57,7 @@ class BulkProcessorSaveBackend @Inject() (
       .builder(
         esClient.bulk(_, _),
         listener,
+        getClass.getSimpleName,
       )
       .setFlushInterval( TimeValue.timeValueSeconds(FLUSH_INTERVAL_SECONDS) )
       .setBulkSize(new ByteSizeValue(BULK_SIZE_BYTES))

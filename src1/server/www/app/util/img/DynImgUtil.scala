@@ -373,9 +373,7 @@ final class DynImgUtil @Inject() (
     LOGGER.trace(s"$logPrefix Started. deleteEvenStorageMissing=$deleteEvenStorageMissing")
 
     // Создаём и запускаем BulkProcessor:
-    val bp = mNodes.bulkProcessor(
-      listener = BulkProcessorListener( logPrefix + "BULK:" )
-    )
+    val bp = mNodes.bulkProcessorLog( this, logPrefix )
 
     mNodes
       .source[MNode] {
@@ -544,9 +542,7 @@ final class DynImgUtil @Inject() (
       override def limit = nodesPerTime
     }
 
-    val bp = mNodes.bulkProcessor(
-      listener = BulkProcessorListener( logPrefix ),
-    )
+    val bp = mNodes.bulkProcessorLog( this, logPrefix )
 
     val countProcessed = new AtomicInteger(0)
 

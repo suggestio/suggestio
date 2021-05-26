@@ -72,11 +72,10 @@ final class CleanStaleUploads @Inject() (
     implicit val mat = injector.instanceOf[Materializer]
 
     val log = LOGGER
-    val bpListener = BulkProcessorListener( getClass.getSimpleName )
 
     import esModel.api._
 
-    val bp = mNodes.bulkProcessor( bpListener )
+    val bp = mNodes.bulkProcessorLog( this, "cleanUpStale()" )
     val counter = new AtomicInteger(0)
 
     // Поискать узлы, которые залежались в недокачанном состоянии.

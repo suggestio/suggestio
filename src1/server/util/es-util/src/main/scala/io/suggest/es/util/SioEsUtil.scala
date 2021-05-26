@@ -39,7 +39,6 @@ object SioEsUtil {
     def ROUTING       = RoutingFieldMapper.NAME
     def ID            = IdFieldMapper.NAME
     def VERSION       = VersionFieldMapper.NAME
-    def PARENT        = ParentFieldMapper.NAME
     def DOC           = "_doc"
   }
 

@@ -29,7 +29,7 @@ import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionRes
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy
-import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
+import org.elasticsearch.cluster.metadata.{IndexMetadata, MappingMetadata}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
@@ -39,7 +39,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, ReindexAction, ReindexRequestBuilder}
 import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.aggregations.AggregationBuilders
-import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
+import org.elasticsearch.search.aggregations.metrics.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
 import play.api.inject.Injector
 import play.api.libs.json.{JsObject, Json}
@@ -87,7 +87,7 @@ final class EsModel @Inject()(
     /** Класс для ActionRequestBuilder'ов, который явно возвращает Future.
       * Для ES >= 6.x, возможно для младших версий.
       */
-    implicit class EsActionBuilderOpsExt[AResp <: ActionResponse]( esActionBuilder: ActionRequestBuilder[_, AResp, _] ) {
+    implicit class EsActionBuilderOpsExt[AResp <: ActionResponse]( esActionBuilder: ActionRequestBuilder[_, AResp] ) {
 
       /** Запуск экшена с возвращением Future[AResp]. */
       def executeFut(): Future[AResp] = {
@@ -172,7 +172,6 @@ final class EsModel @Inject()(
       def prepareSearchViaClient(client: Client): SearchRequestBuilder = {
         client
           .prepareSearch(model.ES_INDEX_NAME)
-          .setTypes(model.ES_TYPE_NAME)
       }
 
       def prepareSearch(): SearchRequestBuilder =
@@ -223,7 +222,7 @@ final class EsModel @Inject()(
         prepareCount()
           .setQuery(query)
           .executeFut()
-          .map { _.getHits.getTotalHits }
+          .map( _.getHits.getTotalHits.value )
       }
 
       def prepareScroll(keepAlive: TimeValue = model.SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = prepareSearch()): SearchRequestBuilder = {
@@ -237,7 +236,6 @@ final class EsModel @Inject()(
       def getCurrentMapping(): Future[Option[String]] = {
         esModel.getCurrentMapping(
           indexName = model.ES_INDEX_NAME,
-          typeName  = model.ES_TYPE_NAME
         )
       }
 
@@ -246,7 +244,6 @@ final class EsModel @Inject()(
       def isMappingExists(): Future[Boolean] = {
         esModel.isMappingExists(
           indexName = model.ES_INDEX_NAME,
-          typeName  = model.ES_TYPE_NAME
         )
       }
 
@@ -316,7 +313,7 @@ final class EsModel @Inject()(
         }
 
         // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
-        val bp = bulkProcessor(listener, model.BULK_DELETE_QUEUE_LEN)
+        val bp = bulkProcessor( listener, model.getClass.getSimpleName + "." + logPrefix, model.BULK_DELETE_QUEUE_LEN )
 
         // Интересуют только id документов
         val totalFut = scroller
@@ -327,7 +324,9 @@ final class EsModel @Inject()(
               (acc01, hits) =>
                 for (hit <- hits.iterator().asScala) {
                   val req = esClient
-                    .prepareDelete(hit.getIndex, hit.getType, hit.getId)
+                    .prepareDelete()
+                    .setIndex( hit.getIndex )
+                    .setId( hit.getId )
                     .request()
                   bp.add(req)
                 }
@@ -371,15 +370,22 @@ final class EsModel @Inject()(
         } yield {
           // Извлечь результат из ES-ответа:
           val agg = resp.getAggregations.get[ScriptedMetric](aggName)
-          LOGGER.trace(s"docsHashSum(): r=${Option(agg).map(_.aggregation()).orNull} totalHits=${resp.getHits.totalHits}")
+          LOGGER.trace(s"docsHashSum(): r=${Option(agg).map(_.aggregation()).orNull} totalHits=${resp.getHits.getTotalHits.value}")
           agg.aggregation().asInstanceOf[Integer].intValue()
         }
       }
 
 
-      def bulkProcessor(listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
+      def bulkProcessorLog(thatThis: AnyRef, logPrefix: String, queueLen: Int = 100): BulkProcessor = {
+        bulkProcessor(
+          listener  = BulkProcessorListener( logPrefix ),
+          name      = thatThis.getClass.getSimpleName + "." + logPrefix,
+          queueLen  = queueLen,
+        )
+      }
+      def bulkProcessor(listener: BulkProcessor.Listener, name: String, queueLen: Int = 100): BulkProcessor = {
         BulkProcessor
-          .builder(esClient.bulk(_, _), listener)
+          .builder( esClient.bulk(_, _), listener, name )
           .setBulkActions( queueLen )
           .build()
       }
@@ -523,9 +529,7 @@ final class EsModel @Inject()(
 
         val logPrefix = s"update(${System.currentTimeMillis}):"
 
-        val bp = model.bulkProcessor(
-          listener = BulkProcessorListener(logPrefix),
-        )
+        val bp = model.bulkProcessorLog( model, logPrefix )
 
         // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
         // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
@@ -654,9 +658,7 @@ final class EsModel @Inject()(
         val src = source[T1]( QueryBuilders.matchAllQuery() )
 
         val logPrefix = s"resaveMany()#${System.currentTimeMillis()}:"
-        val bp = model.bulkProcessor(
-          listener = BulkProcessorListener(logPrefix),
-        )
+        val bp = model.bulkProcessorLog( model, logPrefix )
 
         val counter = new AtomicInteger(0)
 
@@ -979,7 +981,7 @@ final class EsModel @Inject()(
         val indexName = model.ES_INDEX_NAME
         val typeName = model.ES_TYPE_NAME
         for (id <- ids) {
-          val item = new Item(indexName, typeName, id)
+          val item = new Item( indexName, id )
           for (sf <- options.sourceFiltering)
             item.fetchSourceContext( sf.toFetchSourceCtx )
           req.add(item)
@@ -1484,8 +1486,10 @@ final class EsModel @Inject()(
               val mgetReq = esClient
                 .prepareMultiGet()
                 .setRealtime(true)
+
               for (hit <- searchHits)
-                mgetReq.add(hit.getIndex, hit.getType, hit.getId)
+                mgetReq.add( new Item(hit.getIndex, hit.getId) )
+
               mgetReq
                 .executeFut()
                 .map { model.mgetResp2Stream }
@@ -1593,7 +1597,10 @@ final class EsModel @Inject()(
     val hitsArr = searchResp.getHits.getHits
     new AbstractSearchResp[String] {
       override def total: Long =
-        searchResp.getHits.getTotalHits
+        searchResp
+          .getHits
+          .getTotalHits
+          .value
       override def length: Int =
         hitsArr.length
       override def apply(idx: Int): String =
@@ -1841,14 +1848,14 @@ final class EsModel @Inject()(
     * @param indexName Название индекса.
     * @return Фьючерс с опциональными метаданными индекса.
     */
-  def getIndexMeta(indexName: String): Future[Option[IndexMetaData]] = {
+  def getIndexMeta(indexName: String): Future[Option[IndexMetadata]] = {
     esClient.admin().cluster()
       .prepareState()
       .setIndices(indexName)
       .executeFut()
       .map { cs =>
         val maybeResult = cs.getState
-          .getMetaData
+          .getMetadata
           .index(indexName)
         Option(maybeResult)
       }
@@ -1861,14 +1868,13 @@ final class EsModel @Inject()(
     * Прочитать метаданные маппинга.
     *
     * @param indexName Название индекса.
-    * @param typeName Название типа.
     * @return Фьючерс с опциональными метаданными маппинга.
     */
-  def getIndexTypeMeta(indexName: String, typeName: String): Future[Option[MappingMetaData]] = {
+  def getIndexTypeMeta(indexName: String): Future[Option[MappingMetadata]] = {
     for (imdOpt <- getIndexMeta(indexName)) yield {
       for {
         imd <- imdOpt
-        mappingOrNull = imd.mapping(typeName)
+        mappingOrNull = imd.mapping()
         r   <- Option( mappingOrNull )
       } yield {
         r
@@ -1880,21 +1886,20 @@ final class EsModel @Inject()(
     * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
     * внутри общего индекса.
     *
-    * @param typeName Имя типа.
     * @return Да/нет.
     */
-  def isMappingExists(indexName: String, typeName: String): Future[Boolean] = {
+  def isMappingExists(indexName: String): Future[Boolean] = {
     for {
-      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
+      metaOpt <- getIndexTypeMeta( indexName )
     } yield {
       metaOpt.isDefined
     }
   }
 
   /** Прочитать текст маппинга из хранилища. */
-  def getCurrentMapping(indexName: String, typeName: String): Future[Option[String]] = {
+  def getCurrentMapping(indexName: String): Future[Option[String]] = {
     for {
-      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
+      metaOpt <- getIndexTypeMeta( indexName )
     } yield {
       for (meta <- metaOpt) yield
         meta.source().string()
