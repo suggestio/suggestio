@@ -4,11 +4,6 @@ name := "logs-macro"
 
 version := "0.0.0"
 
-resolvers ++= Seq(
-  ("typesafe-releases-art" at Common.Repo.TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true)
-)
-
-
 libraryDependencies ++= {
   Seq(
     //"com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.+"

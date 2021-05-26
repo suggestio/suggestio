@@ -8,7 +8,7 @@ version := "0.0.0"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-resolvers += ("jroper-maven" at Common.Repo.JROPER_MAVEN_REPO).withAllowInsecureProtocol(true)
+resolvers += ("jroper-maven" at Common.Repo.JROPER_MAVEN_REPO)
 
 libraryDependencies ++= {
   Seq(

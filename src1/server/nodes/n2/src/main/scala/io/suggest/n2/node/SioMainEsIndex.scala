@@ -3,7 +3,6 @@ package io.suggest.n2.node
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.MappingDsl
 import io.suggest.es.model.{EsModel, EsModelUtil}
-import io.suggest.es.search.EsTypesFilter
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsDyn
 import org.apache.lucene.index.IndexNotFoundException
@@ -139,13 +138,6 @@ final class SioMainEsIndex @Inject() (
         _esModel.reindexData(
           fromIndex = oldIndexName,
           toIndex   = currentIndexName,
-          // Copy only nodes from _type = "n2"
-          filter    = {
-            new EsTypesFilter {
-              override def esTypes = MNodeFields.ES_TYPE_NAME :: Nil
-            }
-              .toEsQuery
-          },
         )
       }
 

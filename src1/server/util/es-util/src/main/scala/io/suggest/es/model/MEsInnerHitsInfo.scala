@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import io.suggest.es.util.SioEsUtil
 import japgolly.univeq.UnivEq
 import org.apache.commons.collections4.IteratorUtils
 import org.elasticsearch.index.query.InnerHitBuilder
@@ -31,7 +32,7 @@ object MEsInnerHitsInfo {
             .fields
             .iterator
             .map { fieldName =>
-              new FieldAndFormat( fieldName, null )
+              new FieldAndFormat( fieldName, SioEsUtil.USE_FIELD_MAPPING )
             }
             .asJava
         )

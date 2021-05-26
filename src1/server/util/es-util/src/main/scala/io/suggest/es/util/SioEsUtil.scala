@@ -28,7 +28,6 @@ object SioEsUtil {
   //def EDGE_NGRAM_FN_2 = "fEdgeNgram2"
   def EDGE_NGRAM_FN_1 = "fEdgeNgram1"
   def LOWERCASE_FN  = "fLowercase"
-  def STD_FN        = "fStd"
   def WORD_DELIM_FN = "fWordDelim"
 
   def STD_TN        = "tStd"
@@ -42,9 +41,12 @@ object SioEsUtil {
     def VERSION       = VersionFieldMapper.NAME
     def PARENT        = ParentFieldMapper.NAME
     def DOC           = "_doc"
-    @deprecated( "_type field not actual anymore", "elasticsearch-6.0" )
-    def TYPE          = TypeFieldMapper.NAME
   }
+
+  /** Special use_field_mapping format tells Elasticsearch to use the format from the mapping.
+    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-docvalue-fields.html]]
+    */
+  final def USE_FIELD_MAPPING = "use_field_mapping"
 
   /**
     * Версия документов, только что добавленных в elasticsearch.
@@ -52,7 +54,7 @@ object SioEsUtil {
     * @see [[https://www.elastic.co/blog/elasticsearch-versioning-support]]
     *      That version number is a positive number between 1 and 2**63-1 (inclusive).
     */
-  def DOC_VSN_0     = 1L
+  final def DOC_VSN_0     = 1L
 
 
   /**
@@ -67,22 +69,25 @@ object SioEsUtil {
     import dsl.{TokenCharTypes => TCT, _}
 
     val chFilters = "html_strip" :: Nil
-    val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
+    val filters0 = List(WORD_DELIM_FN, LOWERCASE_FN)
     val filters1 = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
+
+    // Without this settings, deprecation warning will be emitted: too much difference.
+    val MAX_NGRAM_LEN = 10
 
     dsl.IndexSettings(
       shards = Some(shards),
       replicas = Some(replicas),
+      maxNGramDiff = Some( MAX_NGRAM_LEN ),
       analysis = IndexSettingsAnalysis(
         filters = Map(
-          STD_FN            -> Filter.standard,
           LOWERCASE_FN      -> Filter.lowerCase,
           STOP_RU_FN        -> Filter.stopWords( "_russian_" :: Nil ),
           STOP_EN_FN        -> Filter.stopWords( "_english_" :: Nil ),
           WORD_DELIM_FN     -> Filter.wordDelimiter(preserveOriginal = true),
           STEM_RU_FN        -> Filter.stemmer( "russian" ),
           STEM_EN_FN        -> Filter.stemmer( "english" ),
-          EDGE_NGRAM_FN_1   -> Filter.edgeNGram(minGram = 1, maxGram = 10, side = "front"),
+          EDGE_NGRAM_FN_1   -> Filter.edgeNGram(minGram = 1, maxGram = MAX_NGRAM_LEN, side = "front"),
           //EDGE_NGRAM_FN_2   -> Filter.edgeNGram(minGram = 2, maxGram = 10, side = "front"),
         ),
         tokenizers = Map(
@@ -128,11 +133,11 @@ object SioEsUtil {
           ),
           /*FTS_NOSTOP_AN -> Analyzer.custom(
             tokenizer = STD_TN,
-            filters   = STD_FN :: WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
+            filters   = WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
           ),*/
           /*ENGRAM1_NOSTOP_AN -> Analyzer.custom(
             tokenizer = STD_TN,
-            filters   = STD_FN :: WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
+            filters   = WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
           )*/
         ),
       )

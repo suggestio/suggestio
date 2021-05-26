@@ -8,7 +8,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
  * Created: 08.12.14 10:42
  * Description: Поиск/фильтрация по списку допустимых значений _id.
  */
-trait WithIds extends DynSearchArgs with IEsTypes {
+trait WithIds extends DynSearchArgs {
 
   /** Искать только результаты, имеющие указанные _id. */
   def withIds: Seq[String] = Nil
@@ -22,7 +22,7 @@ trait WithIds extends DynSearchArgs with IEsTypes {
 
     } else {
       val idf = QueryBuilders
-        .idsQuery( esTypes: _* )
+        .idsQuery()
         .addIds( _withIds: _* )
       qbOpt0.map { qb =>
         QueryBuilders.boolQuery()

@@ -19,15 +19,15 @@ trait DocHashSumsAggScripts extends IAggScripts {
   import DocHashSumsAggScripts._
 
   override def initScript: Script = {
-    new Script(s"$PARAMS.$AGG.$HASHES = []")
+    new Script(s"$STATE.$HASHES = []")
   }
 
   override def combineScript: Script = {
-    new Script(s"int xsum = 0; for (h in $PARAMS.$AGG.$HASHES) { xsum += h } return xsum")
+    new Script(s"int xsum = 0; for (h in $STATE.$HASHES) { xsum += h } return xsum")
   }
 
   override def reduceScript: Script = {
-    new Script(s"int asum = 0; for (a in $PARAMS.$AGGS) { asum += a } return asum")
+    new Script(s"int asum = 0; for (a in $STATES) { asum += a } return asum")
   }
 
 }
@@ -52,7 +52,7 @@ case class FieldsHashSumsAggScripts(
       .iterator
       .map { fieldPrefix + _ + fieldSuffix }
       .mkString(" + ")
-    new Script(s"$PARAMS.$AGG.$HASHES.add( $fieldsFormula )")
+    new Script(s"$STATE.$HASHES.add( $fieldsFormula )")
   }
 
 }

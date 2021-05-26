@@ -8,7 +8,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
  * Created: 05.12.14 22:34
  * Description: Отрицательная фильтрация es-документов по их _id.
  */
-trait WithoutIds extends DynSearchArgs with IEsTypes {
+trait WithoutIds extends DynSearchArgs {
 
   /** Отбрасывать документы, имеющие указанные id'шники. */
   def withoutIds: Seq[String] = Nil
@@ -23,7 +23,7 @@ trait WithoutIds extends DynSearchArgs with IEsTypes {
         .must(query3)
         .mustNot {
           QueryBuilders
-            .idsQuery(esTypes: _*)
+            .idsQuery()
             .addIds(withoutIds: _*)
         }
     } else {

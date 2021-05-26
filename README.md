@@ -1,4 +1,4 @@
-# Suggest.io -- Abstract physical infospace
+# Suggest.io: Your offer may be here
 
 Suggest.io is concept solution to simplify create rich eye-candy content, attached to regions on the geo-map or
 Bluetooth (and possibly others) physical radio-beacons.
@@ -45,9 +45,9 @@ Server-side code based on [Play! framework](https://playframework.com/).
 
 ### Runtime
 TODO Pre-build images/binaries not-yet ready, so see [Development](#development).
-- Java 8+
+- Java 8-15
 - sbt 1.3+
-- ElasticSearch 5.x (Distibuted primary storage. Upgrading to 7.x in progress)
+- ElasticSearch 6.x - Distibuted primary storage. (Upgrading to 7.x in progress)
 - PostgreSQL (Used for billing)
 - SeaWeedFS (Distributed storage for pictures and other files)
 - ImageMagick
@@ -59,7 +59,7 @@ TODO Pre-build images/binaries not-yet ready, so see [Development](#development)
 
 ## Getting started
 0. Install needed system packages:
-  - `pikaur -Sy jdk11-openjdk imagemagick sbt elasticsearch postgresql seaweedfs`
+  - `pikaur -Sy jdk-openjdk imagemagick sbt elasticsearch postgresql seaweedfs`
 1. Ensure elasticsearch, postgresql, seaweedfs master and volumes started.
 2. Go to main server sub-directory:
   - `cd src1/server/www`

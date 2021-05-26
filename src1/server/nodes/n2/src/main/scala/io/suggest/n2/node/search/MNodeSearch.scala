@@ -36,7 +36,3 @@ class MNodeSearch
   with Offset
   with DateCreatedSort
   with ContractIdSearch
-{
-  override final def esTypes = MNodeFields.ES_TYPE_NAME :: Nil
-}
-

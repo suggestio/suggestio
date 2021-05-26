@@ -84,7 +84,7 @@ class RcvrsMapNodesHashSumAggScripts extends DocHashSumsAggScripts {
       |  }
       |}
       |
-      |$PARAMS.$AGG.$HASHES.add(hh);
+      |$STATE.$HASHES.add(hh);
     """.stripMargin
 
     new Script(code)

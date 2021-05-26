@@ -20,7 +20,6 @@ import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.{Bill2UtilJmx, BillDebugUtilJmx, TfDailyUtilJmx}
 import util.billing.cron.ReActivateCurrentAdvsJmx
-import util.compat.{AdvAlwaysOpenedFlagIntoFlagsJmx, CalendarsToNodesJmx}
 import util.es.SiowebEsModelJmx
 import util.img.{DynImgUtilJmx, ImgMaintainUtilJmx}
 
@@ -54,8 +53,6 @@ case class JmxImpl @Inject() (
                                nodesUtilJmx                  : NodesUtilJmx,
                                imgMaintainUtilJmx            : ImgMaintainUtilJmx,
                                lifecycle                     : ApplicationLifecycle,
-                               advAlwaysOpenedFlagIntoFlagsJmx: AdvAlwaysOpenedFlagIntoFlagsJmx,
-                               calendarsToNodesJmx           : CalendarsToNodesJmx,
                                sioMainEsIndexJmx             : SioMainEsIndexJmx,
                                implicit private val ec       : ExecutionContext,
                              )

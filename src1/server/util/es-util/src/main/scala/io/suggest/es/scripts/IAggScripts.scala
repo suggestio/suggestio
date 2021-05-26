@@ -11,16 +11,13 @@ import org.elasticsearch.script.Script
 object IAggScripts {
 
   /** Константы скриптов аггрегации. */
-  def PARAMS = "params"
+  final def PARAMS = "params"
 
-  /** Название agg-контекста внутри params. */
-  def AGG =  "_agg"
-
-  /** Название aggs-контекста внутри params. */
-  def AGGS = AGG + "s"
+  final def STATE = "state"
+  final def STATES = STATE + "s"
 
   /** Название source-контекста внутри params. */
-  def SOURCE = "_source"
+  final def SOURCE = "_source"
 
 }
 

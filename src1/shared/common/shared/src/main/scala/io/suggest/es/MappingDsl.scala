@@ -317,13 +317,15 @@ final class MappingDsl { dsl =>
     implicit lazy val indexSettingsJson: OFormat[IndexSettings] = (
       (__ \ "number_of_shards").formatNullable[Int] and
       (__ \ "number_of_replicas").formatNullable[Int] and
-      (__ \ "analysis").format[IndexSettingsAnalysis]
+      (__ \ "analysis").format[IndexSettingsAnalysis] and
+      (__ \ "max_ngram_diff").formatNullable[Int]
     )(apply, unlift(unapply))
   }
   case class IndexSettings(
                             shards        : Option[Int],
                             replicas      : Option[Int],
                             analysis      : IndexSettingsAnalysis   = IndexSettingsAnalysis(),
+                            maxNGramDiff  : Option[Int],
                           )
 
 

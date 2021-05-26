@@ -1,5 +1,6 @@
 package io.suggest.es.search
 
+import io.suggest.es.util.SioEsUtil
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -28,6 +29,7 @@ trait RandomSort extends DynSearchArgs {
       // Можно рандомно сортировать с учётом generation.
       val scoreFun = ScoreFunctionBuilders
         .randomFunction()
+        .setField( SioEsUtil.StandardFieldNames.ID )
         .seed( rs.generation )
 
       // Нормировать рандомное значение. Оно гуляет до Int.MaxValue (2.14e9), а такой разбег может навредить

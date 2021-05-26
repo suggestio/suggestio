@@ -7,7 +7,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
-import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic, EsTypesFilter}
+import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
 import io.suggest.es.util.{IEsClient, SioEsUtil}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
@@ -44,7 +44,7 @@ import org.elasticsearch.search.sort.SortBuilders
 import play.api.inject.Injector
 import play.api.libs.json.{JsObject, Json}
 
-import scala.collection.immutable.{ArraySeq, HashMap}
+import scala.collection.immutable.HashMap
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
@@ -2168,7 +2168,7 @@ sealed trait EsModelJmxMBean {
   def createIndexByNameShardsReplicas(name: String, shards: Int, replicas: Int): String
   def deleteIndex(name: String): String
   def ensureSioMainIndexByNameSharesReplicase(name: String, shards: Int, replicas: Int): String
-  def reindexDataFromToTypes(from: String, to: String, types: String): String
+  def reindexDataFromTo(from: String, to: String): String
   def resetAliasToIndex(aliasName: String, indexName: String): String
   def getAliasedIndexName(aliasName: String): String
   def optimize(indexName: String): String
@@ -2218,20 +2218,11 @@ final class EsModelJmx @Inject() (
     JmxBase.awaitString( fut )
   }
 
-  override def reindexDataFromToTypes(from: String, to: String, types: String): String = {
+  override def reindexDataFromTo(from: String, to: String): String = {
     val fut = esModel
       .reindexData(
         fromIndex = from,
         toIndex = to,
-        filter = {
-          if (types.isEmpty)
-            QueryBuilders.matchAllQuery()
-          else
-            (new EsTypesFilter {
-              override val esTypes = ArraySeq.unsafeWrapArray( types.split("[,;\\s]+") )
-            })
-              .toEsQuery
-        },
       )
       .map { bulkResp =>
         s"Done, ${bulkResp.getTotal} total, ${bulkResp.getBulkFailures.size()} failures, more details in logs."

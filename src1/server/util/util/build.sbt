@@ -8,9 +8,6 @@ version := "2.0.1"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-// FIXME Какая-то непонятная проблема с shaded-oauth. Исправляется этим резолвером:
-//resolvers += ("typesafe-releases" at "http://central.maven.org/maven2").withAllowInsecureProtocol(true)
-
 libraryDependencies ++= {
   val slf4jVsn      = Common.Vsn.SLF4J 
   Seq(
