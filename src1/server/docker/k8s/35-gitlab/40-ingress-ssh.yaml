@@ -7,6 +7,8 @@
 ##
 ## If pod shows no ports on node available, delete old pod manually:
 ## kubectl delete pod -n ingress-nginx ingress-nginx-controller-769b74758f-kz4bn
+## https://github.com/kubernetes/ingress-nginx/issues/4626
+##
 apiVersion: v1
 kind: ConfigMap
 metadata:

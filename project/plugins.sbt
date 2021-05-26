@@ -5,7 +5,7 @@ credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 resolvers := Seq(
   Resolver.url("sbt-plugin-releases-art",    url("https://dl.bintray.com/sbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),
   ("typesafe-releases-art"                   at "https://repo.typesafe.com/typesafe/releases/"),
-  ("bintray-nitram509-jbrotli"               at "https://dl.bintray.com/nitram509/jbrotli")
+  ("bintray-nitram509-jbrotli"               at "http://ci.suggest.io/artifactory/bintray-nitram509-jbrotli").withAllowInsecureProtocol(true),
 )
 
 // Для ускорения update на куче subprojects.

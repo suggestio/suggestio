@@ -381,7 +381,9 @@ object Common {
     def APACHE_RELEASES_URL           = "https://repository.apache.org/content/repositories/releases/"
 
     val JROPER_MAVEN_REPO             = "https://dl.bintray.com/jroper/maven/"
-    def JBROTLI                       = "https://dl.bintray.com/nitram509/jbrotli"
+
+    // jbrotli: "https://dl.bintray.com/nitram509/jbrotli" => 403
+    def JBROTLI                       = "http://ci.suggest.io/artifactory/bintray-nitram509-jbrotli"
 
   }
 
