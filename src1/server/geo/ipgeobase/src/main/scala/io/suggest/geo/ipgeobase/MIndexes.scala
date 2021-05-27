@@ -2,6 +2,7 @@ package io.suggest.geo.ipgeobase
 
 import javax.inject.Inject
 import io.suggest.es.model._
+import io.suggest.es.util.SioEsUtil
 import io.suggest.util.logs.MacroLogsDyn
 import org.elasticsearch.common.settings.Settings
 import play.api.{Configuration, Environment, Mode}
@@ -42,7 +43,7 @@ final class MIndexes @Inject() (
       .getOrElse {
         val _isProd = injector.instanceOf[Environment].mode == Mode.Prod
         val r = if (_isProd) {
-          2   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.
+          SioEsUtil.REPLICAS_COUNT
         } else {
           0   // Нет дела до реплик на тестовой или dev-базе.
         }

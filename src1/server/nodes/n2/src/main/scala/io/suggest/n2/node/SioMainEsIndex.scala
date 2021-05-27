@@ -114,7 +114,6 @@ final class SioMainEsIndex @Inject() (
       val isCurrentIndexHasBeenCreatedFut = _esModel.ensureSioMainIndex(
         indexName = currentIndexName,
         shards    = EsModelUtil.SHARDS_COUNT_DFLT,
-        replicas  = EsModelUtil.REPLICAS_COUNT_DFLT,
       )
 
       isCurrentIndexHasBeenCreatedFut

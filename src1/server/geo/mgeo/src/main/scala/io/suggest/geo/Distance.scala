@@ -46,7 +46,7 @@ object Distance {
 
 
 /** Описание дистанции. */
-case class Distance(distance: Double, units: DistanceUnit) {
+final case class Distance(distance: Double, units: DistanceUnit) {
 
   override def toString = units.toString(distance)
 
@@ -70,7 +70,7 @@ trait IToEsQueryFn {
 
 
 /** Описание того, как надо фильтровать по дистанции относительно какой-то точки на поверхности планеты. */
-case class GeoDistanceQuery(
+final case class GeoDistanceQuery(
   center      : MGeoPoint,
   distanceMax : Distance
 )
@@ -80,7 +80,11 @@ case class GeoDistanceQuery(
   def outerCircle = CircleGs(center, radiusM = distanceMax.meters)
 
   override def toEsQuery(fn: String): QueryBuilder = {
-    QueryBuilders.geoShapeQuery( fn, GeoShapeJvm.toEsShapeBuilder( outerCircle ).buildGeometry() )
+    val geom = GeoShapeJvm
+      .toEsShapeBuilder( outerCircle )
+      .buildGeometry()
+
+    QueryBuilders.geoShapeQuery( fn, geom )
     // util:2a9e4a872bff До 2016.jan.14 здесь жил ни разу не тестированный код вырезания inner-круга, т.е. distanceMin.
     // Он был удалён, т.к. был завязан на N2-утиль, которая должна жить в отдельном проекте. Да и он просто мертвый был.
   }

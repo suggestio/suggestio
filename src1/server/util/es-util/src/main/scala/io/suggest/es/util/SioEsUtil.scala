@@ -55,6 +55,7 @@ object SioEsUtil {
     */
   final def DOC_VSN_0     = 1L
 
+  final def REPLICAS_COUNT = 1
 
   /**
    * Сборка индекса по архитектуре второго поколения: без повсеместного edgeNgram, который жрёт как не в себя.
@@ -64,7 +65,7 @@ object SioEsUtil {
    * @param replicas Кол-во реплик.
    * @return XCB с сеттингами.
    */
-  def getIndexSettingsV2(shards: Int, replicas: Int = 1)(implicit dsl: MappingDsl): dsl.IndexSettings = {
+  def getIndexSettingsV2(shards: Int, replicas: Int = REPLICAS_COUNT)(implicit dsl: MappingDsl): dsl.IndexSettings = {
     import dsl.{TokenCharTypes => TCT, _}
 
     val chFilters = "html_strip" :: Nil

@@ -29,7 +29,7 @@ trait EsmV2Deserializer extends EsModelCommonStaticT with IMacroLogs {
       .validate(reader)
 
     if (parseResult.isError)
-      LOGGER.error(s"Failed to parse JSON of $ES_TYPE_NAME/${ev.idOrNull(doc)}:\n ${ev.bodyAsString(doc)}\n $parseResult")
+      LOGGER.error(s"Failed to parse JSON of $ES_INDEX_NAME/${ev.idOrNull(doc)}:\n ${ev.bodyAsString(doc)}\n $parseResult")
     // Надо бы предусмотреть возможность ошибки десериализации...
     parseResult.get
   }

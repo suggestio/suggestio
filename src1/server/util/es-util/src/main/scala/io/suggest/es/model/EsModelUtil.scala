@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import io.suggest.es.util.SioEsUtil
 import japgolly.univeq._
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
@@ -32,7 +33,7 @@ object EsModelUtil {
 
 
   def SHARDS_COUNT_DFLT   = 5
-  def REPLICAS_COUNT_DFLT = 1
+  def REPLICAS_COUNT_DFLT = SioEsUtil.REPLICAS_COUNT
 
 
   object Settings {

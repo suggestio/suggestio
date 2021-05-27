@@ -178,7 +178,10 @@ final class EsModel @Inject()(
         prepareSearchViaClient(esClient)
 
       def prepareDeleteBase(id: String) = {
-        val req = esClient.prepareDelete(model.ES_INDEX_NAME, model.ES_TYPE_NAME, id)
+        val req = esClient
+          .prepareDelete()
+          .setIndex( model.ES_INDEX_NAME )
+          .setId( id )
         val rk = model.getRoutingKey(id)
         if (rk.isDefined)
           req.setRouting(rk.get)
@@ -191,10 +194,11 @@ final class EsModel @Inject()(
       }
 
       def prepareGet(id: String) = {
-        val req = esClient.prepareGet(model.ES_INDEX_NAME, model.ES_TYPE_NAME, id)
-        val rk = model.getRoutingKey(id)
-        if (rk.isDefined)
-          req.setRouting(rk.get)
+        val req = esClient.prepareGet
+          .setIndex( model.ES_INDEX_NAME )
+          .setId( id )
+        for (rk <- model.getRoutingKey(id))
+          req.setRouting( rk )
         req
       }
 
@@ -441,12 +445,15 @@ final class EsModel @Inject()(
       }
 
       def prepareIndexNoVsnUsingClient(m: T1, client: Client): IndexRequestBuilder = {
-        val idOrNull = m.idOrNull
-        val json = model.toJson(m)
-        //LOGGER.trace(s"prepareIndexNoVsn($indexName/$typeName/$idOrNull): $json")
-        client
-          .prepareIndex(model.ES_INDEX_NAME, model.ES_TYPE_NAME, idOrNull)
-          .setSource(json, XContentType.JSON)
+        val req = client
+          .prepareIndex()
+          .setIndex( model.ES_INDEX_NAME )
+          .setSource( model.toJson(m), XContentType.JSON )
+
+        for (_id <- m.id)
+          req.setId( _id )
+
+        req
       }
 
       /**
@@ -979,7 +986,6 @@ final class EsModel @Inject()(
           .prepareMultiGet()
           .setRealtime(true)
         val indexName = model.ES_INDEX_NAME
-        val typeName = model.ES_TYPE_NAME
         for (id <- ids) {
           val item = new Item( indexName, id )
           for (sf <- options.sourceFiltering)
@@ -1380,7 +1386,7 @@ final class EsModel @Inject()(
             .flatMap( mapSearchResp )
 
           // Логгируем всё вместе с es-индексом и типом, чтобы облегчить curl-отладку на основе залоггированного.
-          LOGGER.trace(s"dynSearch2.run($args): Will search on ${model.ES_INDEX_NAME}/${model.ES_TYPE_NAME}\n Compiled request = \n${srb.toString}")
+          LOGGER.trace(s"dynSearch2.run($args): Will search on index ${model.ES_INDEX_NAME}\n Compiled request = \n${srb.toString}")
 
           fut
         }
@@ -1654,7 +1660,8 @@ final class EsModel @Inject()(
     * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
     *         Если индекс уже существует, то false.
     */
-  def ensureSioMainIndex(indexName: String, shards: Int = 5, replicas: Int = 1)(implicit dsl: MappingDsl): Future[Boolean] = {
+  def ensureSioMainIndex(indexName: String, shards: Int = 5, replicas: Int = SioEsUtil.REPLICAS_COUNT)
+                        (implicit dsl: MappingDsl): Future[Boolean] = {
     lazy val logPrefix = s"ensureSioMainIndex($indexName, ${shards}x${replicas}):"
 
     for {
@@ -1907,38 +1914,6 @@ final class EsModel @Inject()(
   }
 
 
-  /** Сгенерить InternalError, если хотя бы две es-модели испрользуют одно и тоже хранилище для данных.
-    * В сообщении экзепшена будут перечислены конфликтующие модели. */
-  def errorIfIncorrectModels(allModels: Iterable[EsModelCommonStaticT]): Unit = {
-    // Запускаем проверку, что в моделях не используются одинаковые типы в одинаковых индексах.
-    def esModelId(esModel: EsModelCommonStaticT): String =
-      s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
-
-    val uniqModelsCnt = allModels.iterator
-      .map(esModelId)
-      .toSet
-      .size
-
-    if (uniqModelsCnt < allModels.size) {
-      // Найдены модели, которые испрользуют один и тот же индекс+тип. Нужно вычислить их и вернуть в экзепшене.
-      val errModelsStr = (for {
-        v <- allModels
-          .map { m =>
-            esModelId(m) -> m.getClass.getName
-          }
-          .groupBy(_._1)
-          .valuesIterator
-        if v.sizeIs > 1
-      } yield {
-        v.mkString(", ")
-      })
-        .mkString("\n")
-
-      throw new InternalError("Two or more es models using same index+type for data store:\n" + errModelsStr)
-    }
-  }
-
-
   /** Отправить маппинги всех моделей в ES. */
   def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false)(implicit dsl: MappingDsl): Future[Boolean] = {
     import api._
@@ -1959,7 +1934,7 @@ final class EsModel @Inject()(
               if (isOk) LOGGER.trace(s"$logPrefix -> OK" )
               else LOGGER.warn(s"$logPrefix NOT ACK!!! Possibly out-of-sync.")
             case Failure(ex)    =>
-              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping().toString()}\n-------------\n", ex)
+              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}:\n-------------\n${esModelStatic.generateMapping().toString()}\n-------------\n", ex)
           }
           fut
 
@@ -2172,7 +2147,7 @@ case object EsSaveOpts {
 sealed trait EsModelJmxMBean {
   def createIndexByNameShardsReplicas(name: String, shards: Int, replicas: Int): String
   def deleteIndex(name: String): String
-  def ensureSioMainIndexByNameSharesReplicase(name: String, shards: Int, replicas: Int): String
+  def ensureSioMainIndexByNameSharesReplicas(name: String, shards: Int, replicas: Int): String
   def reindexDataFromTo(from: String, to: String): String
   def resetAliasToIndex(aliasName: String, indexName: String): String
   def getAliasedIndexName(aliasName: String): String
@@ -2213,7 +2188,7 @@ final class EsModelJmx @Inject() (
     JmxBase.awaitString( fut )
   }
 
-  override def ensureSioMainIndexByNameSharesReplicase(name: String, shards: Int, replicas: Int): String = {
+  override def ensureSioMainIndexByNameSharesReplicas(name: String, shards: Int, replicas: Int): String = {
     val fut = esModel
       .ensureSioMainIndex(name, shards = shards, replicas = replicas)( MappingDsl.Implicits.mkNewDsl )
       .map { isCreated =>

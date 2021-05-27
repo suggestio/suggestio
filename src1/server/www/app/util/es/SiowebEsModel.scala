@@ -53,11 +53,6 @@ final class SiowebEsModel @Inject() (
     LazyList.empty
   }
 
-  /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
-  def maybeErrorIfIncorrectModels(): Unit = {
-    if (configuration.getOptional[Boolean]("es.mapping.model.conflict.check.enabled").getOrElseTrue)
-      esModel.errorIfIncorrectModels(ES_MODELS)
-  }
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT])(implicit dsl: MappingDsl): Future[Boolean] = {
@@ -128,7 +123,6 @@ final class SiowebEsModel @Inject() (
    */
   def initializeEsModels(triedIndexUpdate: Boolean = false): Future[_] = {
     val startedAtMs = System.currentTimeMillis()
-    maybeErrorIfIncorrectModels()
 
     val esModels = ES_MODELS
     lazy val logPrefix = s"initializeEsModels($triedIndexUpdate, [${esModels.length}]):"

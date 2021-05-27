@@ -14,8 +14,6 @@ trait EsModelStaticMapping {
 
   def ES_INDEX_NAME: String
   def ES_TYPE_NAME: String
-  def SHARDS_COUNT    = EsModelUtil.SHARDS_COUNT_DFLT
-  def REPLICAS_COUNT  = EsModelUtil.REPLICAS_COUNT_DFLT
 
   /** Сборка маппинга индекса по новому формату. */
   def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping

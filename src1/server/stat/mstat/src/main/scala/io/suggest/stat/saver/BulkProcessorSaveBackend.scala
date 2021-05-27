@@ -8,24 +8,24 @@ import io.suggest.stat.m.{MStat, MStats}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
+import play.api.inject.Injector
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /** BulkProcessor backend накапливает очередь и отправляет всё индексацию разом. */
 @Singleton
-class BulkProcessorSaveBackend @Inject() (
-                                           esModel                 : EsModel,
-                                           mStats                  : MStats,
-                                           asyncUtil               : AsyncUtil,
-                                           esClientP               : IEsClient,
-                                           implicit private val ec : ExecutionContext,
-                                         )
+final class BulkProcessorSaveBackend @Inject() (
+                                                 injector                : Injector,
+                                               )
   extends StatSaverBackend
   with MacroLogsImpl
 {
 
-  import esClientP.esClient
-  import esModel.api._
+  private def esModel = injector.instanceOf[EsModel]
+  private def mStats = injector.instanceOf[MStats]
+  private def asyncUtil = injector.instanceOf[AsyncUtil]
+  private def esClientP = injector.instanceOf[IEsClient]
+
 
   /** Не хранить в очереди дольше указанного интервала (в секундах). */
   def FLUSH_INTERVAL_SECONDS: Long = {
@@ -43,19 +43,15 @@ class BulkProcessorSaveBackend @Inject() (
   protected val bp: BulkProcessor = {
     val logPrefix = "statSaver:"
     val listener = new BulkProcessor.Listener {
-      override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
+      override def beforeBulk(executionId: Long, request: BulkRequest): Unit =
         LOGGER.trace(s"$logPrefix [$executionId] Will bulk save stats with ${request.numberOfActions} actions")
-      }
-
       override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {}
-
-      override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
+      override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit =
         LOGGER.error(s"$logPrefix [$executionId] error occured while bulk-saving ${request.numberOfActions} actions", failure)
-      }
     }
     BulkProcessor
       .builder(
-        esClient.bulk(_, _),
+        esClientP.esClient.bulk(_, _),
         listener,
         getClass.getSimpleName,
       )
@@ -71,9 +67,13 @@ class BulkProcessorSaveBackend @Inject() (
   override def save(stat: MStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
     _asyncSafe {
+      val _esModel = esModel
+      import _esModel.api._
+
       val irb = mStats
         .prepareIndex(stat)
         .request()
+
       bp.add(irb)
       None    // Не возвращать инстанс BP наружу, пусть лучше будет какой-нибудь мусор.
     }
