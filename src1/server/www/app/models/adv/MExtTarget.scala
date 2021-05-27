@@ -90,31 +90,33 @@ class MExtTargets
   }
 
   /** JSON deserializer. */
-  override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
-    for (et <- DATA_FORMAT) yield {
-      et.copy(
-        id          = meta.id,
-        versionOpt  = meta.version,
-      )
-    }
+  override protected def esDocReads(meta: EsDocMeta): Reads[T] = {
+    DATA_FORMAT.map( withDocMeta(_, meta) )
   }
 
   override def esDocWrites = DATA_FORMAT
+
+  override def withDocMeta(m: MExtTarget, docMeta: EsDocMeta): MExtTarget = {
+    m.copy(
+      id          = docMeta.id,
+      versioning  = docMeta.version,
+    )
+  }
 
 }
 
 
 case class MExtTarget(
-  url           : String,
-  service       : MExtService,
-  adnId         : String,
-  name          : Option[String]    = None,
-  dateCreated   : OffsetDateTime    = OffsetDateTime.now,
-  versionOpt    : Option[Long]      = None,
-  id            : Option[String]    = None
+                       override val url          : String,
+                       service                   : MExtService,
+                       adnId                     : String,
+                       override val name         : Option[String]    = None,
+                       dateCreated               : OffsetDateTime    = OffsetDateTime.now,
+                       override val versioning   : EsDocVersion      = EsDocVersion.empty,
+                       override val id           : Option[String]    = None,
 )
   extends EsModelT
-    with IExtTarget
+  with IExtTarget
 
 
 // Поддержка JMX для ES-модели.

@@ -16,11 +16,11 @@ trait EsmV2Deserializer extends EsModelCommonStaticT with IMacroLogs {
    * @param meta Метаданные ES-документа, необходимые для сборки моделей.
    * @return Инстанс Reads[T]
    */
-  protected def esDocReads(meta: IEsDocMeta): Reads[T]
+  protected def esDocReads(meta: EsDocMeta): Reads[T]
 
   override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
     // Готовим метаданные документа для вызова сборки и исполнения Reads-десериализатора.
-    val meta = EsDocMeta(doc)
+    val meta = EsDocMeta.from(doc)
     // Получаем десериализатор.
     val reader = esDocReads(meta)
 

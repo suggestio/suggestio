@@ -64,7 +64,7 @@
       @mnode.guessDisplayNameOrId
     </strong>
 
-    @for(vsn <- mnode.versionOpt) {
+    @for(vsn <- mnode.versioning.version) {
       <span class="ft-XS" title="Версия: @vsn">
         v@vsn
       </span>

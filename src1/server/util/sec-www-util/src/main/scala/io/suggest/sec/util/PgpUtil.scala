@@ -136,8 +136,7 @@ final class PgpUtil @Inject() (
       .map( _.get )
       .recoverWith { case _: NoSuchElementException =>
         val k = genNewNormalKey()
-        for (id <- mNodes.save(k)) yield
-          k.copy(id = Some(id))
+        mNodes.saveReturning(k)
       }
     for (ex <- fut.failed) {
       LOGGER.error("Failed to initialize server's PGP key", ex)

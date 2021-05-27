@@ -34,7 +34,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
     *
-    * @param idOrNull id или null, если id отсутствует.
+    * @param idOrNull String id or null.
     * @return None если routing не требуется, иначе Some(String).
     */
   def getRoutingKey(idOrNull: String): Option[String] = None
@@ -55,8 +55,15 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
 
+  /** Update _id, _version and possibly other fields.
+    *
+    * @param m Instance.
+    * @param docMeta New ES document metadata.
+    * @return Updated instance.
+    */
+  def withDocMeta(m: T, docMeta: EsDocMeta): T
 
-  def _save(m: T)(f: () => Future[String]): Future[String] =
+  def _save(m: T)(f: () => Future[EsDocMeta]): Future[EsDocMeta] =
     f()
 
 
@@ -73,10 +80,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     implicit def mockPlayDocRespEv: IEsDoc[T] = new IEsDoc[T] {
       override def id(v: T): Option[String] =
         v.id
-      override def version(v: T): Option[Long] =
-        v.versionOpt
-      override def rawVersion(v: T): Long =
-        v.versionOpt.getOrElse(-1)
+      override def version(v: T): EsDocVersion =
+        v.versioning
       override def bodyAsString(v: T): String =
         toJson(v)
       override def idOrNull(v: T): String =
@@ -110,7 +115,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 trait EsModelCommonT extends OptStrId {
 
   /** Модели, желающие версионизации, должны перезаписать это поле. */
-  def versionOpt: Option[Long]
+  def versioning: EsDocVersion
 
 }
 

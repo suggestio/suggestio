@@ -189,9 +189,8 @@ class ExtRscUtil @Inject()(
             )
             val irb = mNodes.prepareIndex( mnode0 )
             bulk.add( irb.request )
-            val mnode1 = (MNode.versionOpt set Some(SioEsUtil.DOC_VSN_0))(mnode0)
 
-            (nodeId -> mnode1) :: acc0
+            (nodeId -> mnode0) :: acc0
         }
 
         // Запускаем сохранение новых узлов в БД.

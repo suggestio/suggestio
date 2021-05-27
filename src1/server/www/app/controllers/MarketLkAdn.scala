@@ -289,16 +289,18 @@ final class MarketLkAdn @Inject() (
 
                   // Сохранение данных.
                   for {
-                    personId <- mNodes.save(mperson0)
+                    meta <- mNodes.save( mperson0 )
                   } yield {
-                    Some(personId)
+                    meta.id
                   }
                 } else {
                   Future.successful( None )
                 }
               }
 
-              personId = personIdOpt.orElse(request.user.personIdOpt).get
+              personId = personIdOpt
+                .orElse(request.user.personIdOpt)
+                .get
 
               _ <- {
                 val nodeOwnedByPersonId = {

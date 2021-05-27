@@ -43,6 +43,7 @@ import org.elasticsearch.search.aggregations.metrics.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
 import play.api.inject.Injector
 import play.api.libs.json.{JsObject, Json}
+import scalaz.Need
 
 import scala.collection.immutable.HashMap
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -182,9 +183,7 @@ final class EsModel @Inject()(
           .prepareDelete()
           .setIndex( model.ES_INDEX_NAME )
           .setId( id )
-        val rk = model.getRoutingKey(id)
-        if (rk.isDefined)
-          req.setRouting(rk.get)
+        model.getRoutingKey( id ) foreach req.setRouting
         req
       }
 
@@ -197,8 +196,7 @@ final class EsModel @Inject()(
         val req = esClient.prepareGet
           .setIndex( model.ES_INDEX_NAME )
           .setId( id )
-        for (rk <- model.getRoutingKey(id))
-          req.setRouting( rk )
+        model.getRoutingKey(id) foreach req.setRouting
         req
       }
 
@@ -431,16 +429,16 @@ final class EsModel @Inject()(
 
       def prepareIndex(m: T1): IndexRequestBuilder = {
         val irb = prepareIndexNoVsn(m)
-        if (m.versionOpt.isDefined)
-          irb.setVersion(m.versionOpt.get)
+
+        m.versioning.seqNo foreach irb.setIfSeqNo
+        m.versioning.primaryTerm foreach irb.setIfPrimaryTerm
+
         irb
       }
 
       def prepareIndexNoVsn(m: T1): IndexRequestBuilder = {
         val irb = prepareIndexNoVsnUsingClient(m, esClient)
-        val rkOpt = model.getRoutingKey(m.idOrNull)
-        if (rkOpt.isDefined)
-          irb.setRouting(rkOpt.get)
+        model.getRoutingKey(m.idOrNull) foreach irb.setRouting
         irb
       }
 
@@ -462,9 +460,7 @@ final class EsModel @Inject()(
         * @return Фьючерс с новым/текущим id
         *         VersionConflictException если транзакция в текущем состоянии невозможна.
         */
-      def save(m: T1): Future[String] =
-        save(m, EsSaveOpts.empty)
-      def save(m: T1, opts: EsSaveOpts): Future[String] = {
+      def save(m: T1, opts: EsSaveOpts = EsSaveOpts.empty): Future[EsDocMeta] = {
         model._save(m) { () =>
           val reqB = prepareIndex(m)
 
@@ -475,8 +471,19 @@ final class EsModel @Inject()(
 
           reqB
             .executeFut()
-            .map { _.getId }
+            .map { resp =>
+              EsDocMeta(
+                id            = Option( resp.getId ),
+                versionNeed   = Need( EsDocVersion.fromRawValues(resp.getVersion, resp.getSeqNo, resp.getPrimaryTerm) ),
+              )
+            }
         }
+      }
+
+
+      def saveReturning(m: T1, opts: EsSaveOpts = EsSaveOpts.empty): Future[T1] = {
+        for (meta <- save(m, opts)) yield
+          model.withDocMeta(m, meta)
       }
 
 
@@ -488,6 +495,7 @@ final class EsModel @Inject()(
           .setSize(maxResults)
           .setFrom(offset)
           .setVersion(withVsn)
+          .seqNoAndPrimaryTerm(withVsn)
       }
 
       /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
@@ -625,7 +633,7 @@ final class EsModel @Inject()(
       }
 
       /** Общий код моделей, которые занимаются resave'ом. */
-      def resaveBase( getFut: Future[Option[T1]] ): Future[Option[String]] = {
+      def resaveBase( getFut: Future[Option[T1]] ): Future[Option[EsDocMeta]] = {
         getFut.flatMap { getResOpt =>
           FutureUtil.optFut2futOpt(getResOpt) { e =>
             model.save(e)
@@ -639,8 +647,8 @@ final class EsModel @Inject()(
         import SioEsUtil.StandardFieldNames._
 
         var kvs = List[String] (s""" "$SOURCE": ${model.toJson(e)}""")
-        if (e.versionOpt.isDefined)
-          kvs ::= s""" "$VERSION": ${e.versionOpt.get}"""
+        for (version <- e.versioning.version)
+          kvs ::= s""" "$VERSION": $version"""
         if (e.id.isDefined)
           kvs ::= s""" "$ID": "${e.id.get}" """
         kvs.mkString("{",  ",",  "}")
@@ -834,9 +842,7 @@ final class EsModel @Inject()(
         */
       def deleteRequestBuilder(id: String): DeleteRequestBuilder = {
         val req = prepareDelete(id)
-        val rk = model.getRoutingKey(id)
-        if (rk.isDefined)
-          req.setRouting(rk.get)
+        model.getRoutingKey(id) foreach req.setRouting
         req
       }
 
@@ -874,11 +880,6 @@ final class EsModel @Inject()(
       }
 
 
-      /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
-      class TryUpdateData(override val _saveable: T1) extends ITryUpdateData[T1, TryUpdateData] {
-        override def _instance(m: T1) = new TryUpdateData(m)
-      }
-
       /** Вместо TryUpdateData.apply(). */
       def tryUpdateData(inst: T1) = {
         new TryUpdateData(inst)
@@ -897,7 +898,7 @@ final class EsModel @Inject()(
       def tryUpdate(inst0: T1, retry: Int = 0)(updateF: T1 => T1): Future[T1] = {
         // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
         val data0 = tryUpdateData(inst0)
-        val data2Fut = tryUpdateM[T1, TryUpdateData](model, data0, model.UPDATE_RETRIES_MAX) { data =>
+        val data2Fut = tryUpdateM[T1, TryUpdateData[T1]](model, data0, model.UPDATE_RETRIES_MAX) { data =>
           val data1 = tryUpdateData(
             updateF(data._saveable)
           )
@@ -1086,7 +1087,7 @@ final class EsModel @Inject()(
       }
 
 
-      def resave(id: String): Future[Option[String]] = {
+      def resave(id: String): Future[Option[EsDocMeta]] = {
         model.resaveBase( getById(id) )
       }
 
@@ -1128,10 +1129,11 @@ final class EsModel @Inject()(
           if countExisting ==* 0L
 
           // Сохраняем.
-          savedId <- model.save( newInstance, EsSaveOpts(
+          savedMeta <- model.save( newInstance, EsSaveOpts(
             // Вместо ручного рефреша - дожидаемся общего рефреша по таймеру, чтобы нельзя было искусственно/случайно cпровоцировать refresh-флуд:
             refreshPolicy = Some( RefreshPolicy.WAIT_UNTIL ),
           ))
+          savedId = savedMeta.id.get
 
           // И снова подсчёт текущего кол-ва элементов, удовлетворяющих условию уникальности:
           countExisting2 <- {
@@ -1867,6 +1869,7 @@ final class EsModel @Inject()(
         Option(maybeResult)
       }
       .recover { case ex: IndexNotFoundException =>
+        LOGGER.trace("getIndexMeta(): No such index", ex)
         None
       }
   }
@@ -2014,37 +2017,38 @@ final class EsModel @Inject()(
     val data1Fut = updateF(data0)
 
     if (data1Fut == null) {
-      LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update")
+      LOGGER.debug(s"$logPrefix updateF() returned `null`, leaving update")
       Future.successful(data0)
 
     } else {
       data1Fut.flatMap { data1 =>
         val m2 = data1._saveable
         if (m2 == null) {
-          LOGGER.debug(logPrefix + " updateF() data with `null`-saveable, leaving update")
+          LOGGER.debug(s"$logPrefix updateF() data with `null`-saveable, leaving update")
           Future.successful(data1)
         } else {
-          // TODO Спилить обращение к companion, принимать статическую модель в аргументах
           companion
-            .save(m2)
-            .map { _ => data1 }
+            .saveReturning(m2)
+            .map { m3 =>
+              data1._instance(m3)
+            }
             .recoverWith {
               case ex if ex.getCause.isInstanceOf[VersionConflictEngineException] || ex.isInstanceOf[VersionConflictEngineException] =>
                 if (maxRetries > 0) {
-                  val n1 = maxRetries - 1
-                  LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
+                  val maxRetries2 = maxRetries - 1
+                  LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($maxRetries2)...")
                   companion
                     .reget( data1._saveable )
                     .flatMap { opt =>
                       val data2  = data1._instance(opt.get)
-                      tryUpdateM[X, D](companion, data2, n1)(updateF)
+                      tryUpdateM[X, D](companion, data2, maxRetries2)(updateF)
                     }
                 } else {
                   val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", ex)
                   Future.failed(ex2)
                 }
               case ex: Exception =>
-                LOGGER.error(s"Xynta occured: ${ex.getClass.getSimpleName}, ${ex.getCause.getClass.getSimpleName}")
+                LOGGER.error(s"$logPrefix Unknown error occured", ex)
                 throw ex
             }
         }

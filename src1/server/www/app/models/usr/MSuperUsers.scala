@@ -165,10 +165,10 @@ final class MSuperUsers @Inject()(
           )
 
           for {
-            personId <- mNodes.save(mperson0)
+            meta <- mNodes.save( mperson0 )
           } yield {
-            LOGGER.info(s"$logPrefix New superuser created as node#$personId\n *** login: $email\n *** password: $password")
-            Some( personId )
+            LOGGER.info(s"$logPrefix New superuser created as node#${meta.id.orNull}\n *** login: $email\n *** password: $password")
+            meta.id
           }
 
         } else {

@@ -13,8 +13,8 @@ object IEsDoc {
 
   /** Эксрактор для посковых результатов (/_search). */
   implicit object EsSearchHitEv extends IEsDoc[SearchHit] {
-    override def rawVersion(v: SearchHit): Long =
-      v.getVersion
+    override def version(v: SearchHit): EsDocVersion =
+      EsDocVersion.fromRawValues( v.getVersion, v.getSeqNo, v.getPrimaryTerm )
     override def idOrNull(v: SearchHit): String =
       v.getId
     override def bodyAsString(v: SearchHit): String =
@@ -24,8 +24,8 @@ object IEsDoc {
 
   /** Экстрактор для GET by id результатов. */
   implicit object EsGetRespEv extends IEsDoc[GetResponse] {
-    override def rawVersion(v: GetResponse): Long =
-      v.getVersion
+    override def version(v: GetResponse): EsDocVersion =
+      EsDocVersion.fromRawValues( v.getVersion, v.getSeqNo, v.getPrimaryTerm )
     override def idOrNull(v: GetResponse): String =
       v.getId
     override def bodyAsString(v: GetResponse): String =
@@ -38,12 +38,7 @@ object IEsDoc {
 /** Интерфейс typeclass'ов. */
 trait IEsDoc[-T] {
 
-  def rawVersion(v: T): Long
-
-  def version(v: T): Option[Long] = {
-    val vraw = rawVersion(v)
-    Option.unless( vraw < 0L )(vraw)
-  }
+  def version(v: T): EsDocVersion
 
   def idOrNull(v: T): String
 

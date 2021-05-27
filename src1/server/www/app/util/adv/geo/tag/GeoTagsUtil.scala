@@ -177,19 +177,12 @@ class GeoTagsUtil @Inject() (
         LOGGER.trace(s"$logPrefix Tag not exists, creating new one: $tagNode0")
 
         // Запустить сохранение нового узла.
-        val saveFut = mNodes.save(tagNode0)
-
-        saveFut.onComplete {
-          case Success(nodeId) => LOGGER.info(s"$logPrefix Created NEW node[$nodeId] for tag")
-          case Failure(ex)     => LOGGER.error(s"$logPrefix Unable to create tag-node", ex)
-        }
-
-        for (tagId <- saveFut) yield {
-          tagNode0.copy(
-            id          = Some(tagId),
-            versionOpt  = Some( SioEsUtil.DOC_VSN_0 )
-          )
-        }
+        mNodes
+          .saveReturning(tagNode0)
+          .andThen {
+            case Success(nodeId) => LOGGER.info(s"$logPrefix Created NEW node[$nodeId] for tag")
+            case Failure(ex)     => LOGGER.error(s"$logPrefix Unable to create tag-node", ex)
+          }
       }
   }
 

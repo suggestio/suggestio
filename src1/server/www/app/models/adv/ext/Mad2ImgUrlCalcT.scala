@@ -74,7 +74,7 @@ trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
       OneAdQsArgs(
         adId    = adId,
         szMult  = mri.szMult,
-        vsnOpt  = mad.versionOpt,
+        vsnOpt  = mad.versioning.version,
         imgFmt  = serviceHelper.imgFmt,
         wideOpt = mri.wide
       )

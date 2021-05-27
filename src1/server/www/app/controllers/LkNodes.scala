@@ -539,9 +539,9 @@ final class LkNodes @Inject() (
 
 
             // Запустить сохранение нового узла, если id позволяет:
-            val newNodeIdFut = nodeWithIdNotExistsFut.flatMap { _ =>
+            val mnode2Fut = nodeWithIdNotExistsFut.flatMap { _ =>
               LOGGER.trace(s"$logPrefix Node id ${addNodeInfo.id} looks free. Creating new node...")
-              mNodes.save( newNode )
+              mNodes.saveReturning( newNode )
             }
 
             // В фоне собрать инфу по тарифу текущему.
@@ -549,8 +549,7 @@ final class LkNodes @Inject() (
 
             // Дождаться окончания сохранения нового узла.
             val respFut = for {
-              newNodeId     <- newNodeIdFut
-              mnode2 = (MNode.id set Some(newNodeId))(newNode)
+              mnode2        <- mnode2Fut
               tfDailyInfo   <- tfDailyInfoFut
             } yield {
               val someTrue = OptionUtil.SomeBool.someTrue
@@ -686,7 +685,7 @@ final class LkNodes @Inject() (
               mnode         <- updateFut
               tfDailyInfo   <- tfDailyInfoFut
             } yield {
-              LOGGER.debug(s"$logPrefix Ok, nodeVsn => ${mnode.versionOpt.orNull}")
+              LOGGER.debug(s"$logPrefix Ok, nodeVersion => ${mnode.versioning.version.orNull}")
               val someTrue = OptionUtil.SomeBool.someTrue
               val m = _mkLknNode(
                 mnode,

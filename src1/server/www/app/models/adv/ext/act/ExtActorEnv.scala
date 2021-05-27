@@ -89,7 +89,7 @@ trait ExtTargetActorEnv
 
   /** Генерация имени файла для отрендеренной карточки. */
   def ad2imgFileName: String = {
-    args.qs.adId + "-" + args.request.mad.versionOpt.getOrElse(0L) + "." + serviceHelper.imgFmt.name
+    args.qs.adId + "-" + args.request.mad.versioning.version.getOrElse(0L) + "." + serviceHelper.imgFmt.name
   }
 
 }

@@ -1,14 +1,14 @@
 package util.adn
 
 import java.time.OffsetDateTime
-
 import akka.stream.scaladsl.Sink
+
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.{EsModel, MEsNestedSearch}
+import io.suggest.es.model.{EsDocVersion, EsModel, MEsNestedSearch}
 import io.suggest.ext.svc.MExtServices
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
@@ -161,7 +161,7 @@ final class NodesUtil @Inject() (
         name    = Some( messages(svc.iAtServiceI18N) )
       )
     }
-    Future.traverse(targetsIter)(mExtTargets.save)
+    Future.traverse( targetsIter )( mExtTargets.save(_) )
   }
 
   /**
@@ -176,17 +176,9 @@ final class NodesUtil @Inject() (
       nameOpt     = Some(name),
       personIdOpt = Some(personId)
     )
-    for {
-      nodeId        <- mNodes.save(inst)
-      // TODO Нужно инсталлить jd-карточки, а не этот старый хлам
-      //madsCreateFut = installDfltMads(nodeId)
-      // TODO Выключено, т.к. adv-ext не пашет, и надо его перепиливать капитально.
-      //_             <- createExtDfltTargets(nodeId)
-      //_             <- madsCreateFut
-    } yield {
-      MNode.id
-        .set( Some(nodeId) )(inst)
-    }
+    mNodes.saveReturning( inst )
+    // TODO Нужно инсталлить jd-карточки, а не этот старый хлам
+    //madsCreateFut <- installDfltMads(nodeId)
   }
 
 
@@ -239,7 +231,7 @@ final class NodesUtil @Inject() (
           // Создать новую карточку на базе текущей.
           val mad1 = mad0.copy(
             id = None,
-            versionOpt = None,
+            versioning = EsDocVersion.empty,
             meta = mad0.meta.copy(
               basic = mad0.meta.basic.copy(
                 dateCreated = OffsetDateTime.now(),
@@ -269,7 +261,9 @@ final class NodesUtil @Inject() (
           )
 
           // Запустить сохранение сгенеренной карточки.
-          mNodes.save(mad1)
+          mNodes
+            .save(mad1)
+            .map(_.id.get)
         }
       }
       // Если не было adnId узлов-источников, то

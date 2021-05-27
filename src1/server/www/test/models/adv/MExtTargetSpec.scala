@@ -23,7 +23,7 @@ class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         service     = MExtServices.VKontakte,
         adnId       = "235434553aASDGg",
         id          = Some("asdasdasdasdasd"),
-        versionOpt  = Some(123L)
+        versioning  = Some(123L)
       )
 
       mExtTargets.deserializeOne2(mes) mustBe mes

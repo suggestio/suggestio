@@ -2,7 +2,7 @@ package io.suggest.geo.ipgeobase
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.{EsModel, EsModelJMXBaseImpl, EsModelJMXMBeanI, EsModelJmxDi, EsModelJsonWrites, EsModelStatic, EsModelT, EsmV2Deserializer, IEsDocMeta}
+import io.suggest.es.model.{EsDocVersion, EsModel, EsModelJMXBaseImpl, EsModelJMXMBeanI, EsModelJmxDi, EsModelJsonWrites, EsModelStatic, EsModelT, EsmV2Deserializer, EsDocMeta}
 import io.suggest.geo.MGeoPoint
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import japgolly.univeq._
@@ -78,12 +78,12 @@ object MIpgbItem {
   *
   * @param payload Data.
   * @param id ES _id.
-  * @param versionOpt ES _version.
+  * @param versioning ES _version.
   */
 final case class MIpgbItem(
                             payload                   : MIpgbItemPayload,
                             override val id           : Option[String],
-                            override val versionOpt   : Option[Long]            = None,
+                            override val versioning   : EsDocVersion            = EsDocVersion.empty,
                           )
   extends EsModelT
 
@@ -103,7 +103,7 @@ final case class MIpgbItems (
 
   override def ES_TYPE_NAME = "items"
 
-  override protected def esDocReads(meta: IEsDocMeta): Reads[MIpgbItem] = {
+  override protected def esDocReads(meta: EsDocMeta): Reads[MIpgbItem] = {
     implicitly[Reads[MIpgbItemPayload]]
       .map[MIpgbItem] {
         MIpgbItem(_, meta.id, meta.version)
@@ -124,6 +124,9 @@ final case class MIpgbItems (
       }
     )
   }
+
+  override def withDocMeta(m: MIpgbItem, docMeta: EsDocMeta): MIpgbItem =
+    m.copy(id = docMeta.id, versioning = docMeta.version)
 
 }
 object MIpgbItems {

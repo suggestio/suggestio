@@ -136,12 +136,8 @@ class MImgs3 @Inject() (
     }
 
     // Запустить сохранение, вернуть экземпляр MNode.
-    for {
-      mnode <- mnodeFut
-      _     <- mNodes.save(mnode)
-    } yield {
-      mnode
-    }
+    mnodeFut
+      .flatMap( mNodes.saveReturning(_) )
   }
 
   protected def _doSaveToPermanent(mimg: MImgT): Future[_] = {
@@ -220,11 +216,12 @@ class MImgs3 @Inject() (
             isDependent   = true,
           )
         )
-        mediaId2    <- mNodes.save( mnode )
+        mediaMeta2    <- mNodes.save( mnode )
       } yield {
-        assert( mnode.id contains[String] mediaId2 )
+        val metaId = mediaMeta2.id.get
+        assert( mnode.id contains[String] metaId )
         mNodes.putToCache( mnode )
-        LOGGER.info(s"$logPrefix Saved to permanent: media#$mediaId2")
+        LOGGER.info(s"$logPrefix Saved to permanent: media#$metaId")
         mnode
       }
     }

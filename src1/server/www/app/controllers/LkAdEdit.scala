@@ -280,10 +280,8 @@ final class LkAdEdit @Inject() (
                 )
               )
             )
-            for (adId <- mNodes.save( mad0 )) yield {
-              LOGGER.trace(s"$logPrefix Created new ad#$adId")
-              MNode.id.set( Some(adId) )(mad0)
-            }
+            LOGGER.trace(s"$logPrefix Creating new ad...")
+            mNodes.saveReturning( mad0 )
 
           } { mad00 =>
             LOGGER.trace(s"$logPrefix Will update existing ad: ${mad00.idOrNull}")

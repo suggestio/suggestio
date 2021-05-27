@@ -98,6 +98,11 @@ trait ITryUpdateData[T <: EsModelCommonT, TU <: ITryUpdateData[T, TU]] {
 
 }
 
+/** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
+class TryUpdateData[T <: EsModelCommonT](override val _saveable: T) extends ITryUpdateData[T, TryUpdateData[T]] {
+  override def _instance(m: T) = new TryUpdateData(m)
+}
+
 
 /**
  * Результаты работы метода Model.copyContent() возвращаются в этом контейнере.

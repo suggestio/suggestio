@@ -1,11 +1,12 @@
 package util.acl
 
-import io.suggest.es.model.{EsModel, MEsNestedSearch}
+import io.suggest.es.model.{EsDocVersion, EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -107,8 +108,8 @@ final class CanRecoverPw @Inject() (
                       )
                     )
                   ),
-                  // Защита от ошибочного сохранения узла в СУБД:
-                  versionOpt = Some(-1L),
+                  // Защита от возможного логически-ошибочного сохранения mocked-узла в СУБД:
+                  versioning = EsDocVersion.notSaveable,
                   id = Some("")
                 )
                 runF( mockedMnode )

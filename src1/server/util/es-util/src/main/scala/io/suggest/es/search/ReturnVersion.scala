@@ -12,18 +12,24 @@ import org.elasticsearch.action.search.SearchRequestBuilder
 trait ReturnVersion extends DynSearchArgs {
 
   /** Возвращать ли _version в результатах? */
-  def returnVersion: Option[Boolean]
+  def returnVersion: Option[Boolean] = None
 
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
-    if (returnVersion.isDefined)
-      srb1.setVersion(returnVersion.get)
+
+    for (isReturnVersion <- returnVersion) {
+      srb
+        .setVersion( isReturnVersion )
+        .seqNoAndPrimaryTerm( isReturnVersion )
+    }
+
     srb1
   }
 
   override def toStringBuilder: StringBuilder = {
     fmtColl2sb("retVsn", returnVersion, super.toStringBuilder)
   }
+
   override def sbInitSize: Int = {
     val l0 = super.sbInitSize
     val rv = returnVersion
@@ -33,9 +39,5 @@ trait ReturnVersion extends DynSearchArgs {
       l0
     }
   }
-}
 
-
-trait ReturnVersionDflt extends ReturnVersion {
-  override def returnVersion: Option[Boolean] = None
 }

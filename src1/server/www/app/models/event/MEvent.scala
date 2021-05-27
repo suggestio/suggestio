@@ -67,20 +67,23 @@ class MEvents
   override def toJson(m: MEvent): String =
     _throwDeprecated
 
+  override def withDocMeta(m: MEvent, docMeta: EsDocMeta): MEvent =
+    m.copy(id = docMeta.id, versioning = docMeta.version)
+
 }
 
 
 /** Класс-экземпляр одной нотификации. */
 case class MEvent(
-  etype         : MEventType,
-  ownerId       : String,
-  argsInfo      : ArgsInfo        = MEvent.argsDflt,
-  dateCreated   : OffsetDateTime  = MEvent.dateCreatedDflt,
-  isCloseable   : Boolean         = MEvent.isCloseableDflt,
-  isUnseen      : Boolean         = true,
-  ttlDays       : Option[Int]     = Some(MEvent.TTL_DAYS_UNSEEN),
-  id            : Option[String]  = None,
-  versionOpt    : Option[Long]    = None
+                   etype         : MEventType,
+                   ownerId       : String,
+                   argsInfo      : ArgsInfo        = MEvent.argsDflt,
+                   dateCreated   : OffsetDateTime  = MEvent.dateCreatedDflt,
+                   isCloseable   : Boolean         = MEvent.isCloseableDflt,
+                   isUnseen      : Boolean         = true,
+                   ttlDays       : Option[Int]     = Some(MEvent.TTL_DAYS_UNSEEN),
+                   id            : Option[String]  = None,
+                   versioning    : EsDocVersion    = EsDocVersion.empty,
 )
   extends EsModelT
     with IMEvent

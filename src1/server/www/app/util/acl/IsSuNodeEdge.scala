@@ -69,9 +69,9 @@ final class IsSuNodeEdge @Inject() (
 
             // Сверить es-версию узла:
             if {
-              val r = mnode.versionOpt contains[Long] qs.nodeVsn
+              val r = mnode.versioning.version contains[Long] qs.nodeVsn
               if (!r) {
-                LOGGER.debug(s"$logPrefix node version invalid. Expected=${qs.nodeVsn}, real=${mnode.versionOpt}")
+                LOGGER.debug(s"$logPrefix node version invalid. Expected=${qs.nodeVsn}, real=${mnode.versioning}")
                 throw HttpResultingException( nodeVsnInvalid(nodeReq()) )
               } else {
                 r

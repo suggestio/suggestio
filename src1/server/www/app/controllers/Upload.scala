@@ -12,7 +12,6 @@ import io.suggest.ctx.MCtxId
 import io.suggest.err.HttpResultingException
 import HttpResultingException._
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
-import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
 import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, MDsReadParams, WriteRequest}
 import io.suggest.i18n.MMessage
@@ -368,7 +367,7 @@ final class Upload @Inject()(
                           .set( false )
                       )
                     } yield {
-                      LOGGER.info(s"$logPrefix Updated node#$existNodeId v=${existNode2.versionOpt.orNull} for chunked uploading")
+                      LOGGER.info(s"$logPrefix Updated node#$existNodeId v=${existNode2.versioning.version.orNull} for chunked uploading")
                       existNode2
                     }
                   }
@@ -802,8 +801,7 @@ final class Upload @Inject()(
               }
 
               mNodes.tryUpdate( mnode0 )(modF)
-                // Версия потом иногда отправляется в system-extra, поэтому инкрементим её:
-                .map( MNode.versionOpt.modify(_.map(_ + 1)) )
+              // mnode2.version: Версия потом иногда отправляется в system-extra, а tryUpdate() как раз теперь проставляет нормальные версии в инстанс:
             }
 
             // При ошибке сохранения узла надо удалить файл из saveFileToShardFut
@@ -911,7 +909,7 @@ final class Upload @Inject()(
 
                   mmedia2OptFut.onComplete {
                     case Success(res) =>
-                      LOGGER.debug(s"$logPrefix Updated MNode#$mnodeId with $colorsCount main colors, v=${res.versionOpt.orNull}.")
+                      LOGGER.debug(s"$logPrefix Updated MNode#$mnodeId with $colorsCount main colors, v=${res.versioning.version.orNull}.")
                     case Failure(ex) =>
                       LOGGER.error(s"$logPrefix Failed to update MMedia#$mnodeId with main colors", ex)
                   }
@@ -999,7 +997,7 @@ final class Upload @Inject()(
               val edgeExtra = MEdgeWithId(
                 edgeId = MNodeEdgeIdQs(
                   nodeId  = mnode1.id.get,
-                  nodeVsn = mnode1.versionOpt.get,
+                  nodeVsn = mnode1.versioning.version.get,
                   edgeId = Some {
                     mnode1.edges.out
                       .zipWithIndex
@@ -1257,7 +1255,7 @@ final class Upload @Inject()(
           }
 
         } yield {
-          LOGGER.debug(s"$logPrefix Chunk processed ok, node#${mnode2.id.orNull} v=${mnode2.versionOpt.getOrElse(-1L)} updated with edge#${chunkQs.chunkNumber} $sliceEdge")
+          LOGGER.debug(s"$logPrefix Chunk processed ok, node#${mnode2.id.orNull} v=${mnode2.versioning.version.map(_.toString).orNull} updated with edge#${chunkQs.chunkNumber} $sliceEdge")
           Ok
         })
           .recoverHttpResEx
@@ -1515,15 +1513,7 @@ final class Upload @Inject()(
       ),
     )
 
-    for {
-      mnodeId <- mNodes.save( mnode0 )
-    } yield {
-      LOGGER.debug(s"_createFileNode(id#$mnodeId type#$nodeType): Created, techNode=''$techName''")
-      (
-        (MNode.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
-        (MNode.id set Some(mnodeId))
-      )(mnode0)
-    }
+    mNodes.saveReturning( mnode0 )
   }
 
   private def _renderHashesHex(iter: IterableOnce[MFileMetaHash]): String = {

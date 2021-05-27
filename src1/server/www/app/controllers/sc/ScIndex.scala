@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.es.model.{EsModelDi, IMust, MEsNestedSearch}
+import io.suggest.es.model.{EsDocMeta, EsDocVersion, EsModelDi, IMust, MEsNestedSearch}
 import io.suggest.es.search.MSubSearch
 import io.suggest.geo._
 import io.suggest.i18n.MsgCodes
@@ -283,10 +283,7 @@ trait ScIndex
         val mnode = mnodeOpt.get
         LOGGER.trace(s"$logPrefix Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
         MIndexNodeInfo(
-          mnode = mnode.copy(
-            id = None,
-            versionOpt = None
-          ),
+          mnode = mNodes.withDocMeta(mnode, EsDocMeta(None, EsDocVersion.notSaveable)),
           isRcvr = false
         ) :: Nil
       }

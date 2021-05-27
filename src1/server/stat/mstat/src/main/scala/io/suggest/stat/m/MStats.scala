@@ -195,7 +195,7 @@ final class MStatsModel @Inject()(
 }
 
 /** Абстрактная модель статистики для всеобщих нужд корме обновления индекса. */
-abstract class MStatsAbstract
+sealed abstract class MStatsAbstract
   extends EsModelStatic
   with MacroLogsImplLazy
   with EsmV2Deserializer
@@ -235,8 +235,10 @@ abstract class MStatsAbstract
     )
   }
 
-  override protected def esDocReads(meta: IEsDocMeta) = implicitly[Reads[MStat]]
+  override protected def esDocReads(meta: EsDocMeta) = implicitly[Reads[MStat]]
   override def esDocWrites = implicitly[Writes[MStat]]
+
+  override def withDocMeta(m: MStat, docMeta: EsDocMeta) = m
 
 }
 
@@ -269,7 +271,7 @@ final case class MStat(
 {
 
   // write-only модель, на всякие вторичные мета-поля можно забить.
-  override def versionOpt : Option[Long]    = None
+  override def versioning = EsDocVersion.empty
   override def id         : Option[String]  = None
 
   override def toString: String = {

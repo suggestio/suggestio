@@ -104,9 +104,9 @@ final class MNodes @Inject() (
     }
   )
 
-  override protected def esDocReads(dmeta: IEsDocMeta): Reads[MNode] = {
+  override protected def esDocReads(dmeta: EsDocMeta): Reads[MNode] = {
     DATA_FORMAT
-      .map { _.withDocMeta(dmeta) }
+      .map { withDocMeta(_, dmeta) }
   }
 
   /** Сериализация в JSON. */
@@ -214,14 +214,14 @@ final class MNodes @Inject() (
    *
    * @return Фьючерс с новым/текущим id.
    */
-  override def _save(m: MNode)(f: () => Future[String]): Future[String] = {
+  override def _save(m: MNode)(f: () => Future[EsDocMeta]): Future[EsDocMeta] = {
     // Запретить сохранять узел без id, если его тип не подразумевает генерацию рандомных id.
     if (m.id.isEmpty && !m.common.ntype.randomIdAllowed) {
       throw new IllegalArgumentException(s"id == None, but node type [${m.common.ntype}] does NOT allow random ids.")
     } else {
       val saveFut = super._save(m)(f)
-      for (adnId <- saveFut) {
-        val mnode2 = m.copy(id = Option(adnId))
+      for (docMeta <- saveFut) {
+        val mnode2 = withDocMeta( m, docMeta )
         val evt = MNodeSaved(mnode2, isCreated = m.id.isEmpty)
         sn.publish(evt)
       }
@@ -229,31 +229,31 @@ final class MNodes @Inject() (
     }
   }
 
+  override def withDocMeta(m: MNode, docMeta: EsDocMeta): MNode = {
+    m.copy(
+      id = docMeta.id,
+      versioning = docMeta.version,
+    )
+  }
+
 }
 
 
 /** Класс-реализация модели узла графа N2. */
 final case class MNode(
-  common                      : MNodeCommon,
-  meta                        : MMeta           = MMeta(),
-  extras                      : MNodeExtras     = MNodeExtras.empty,
-  edges                       : MNodeEdges      = MNodeEdges.empty,
-  // TODO ad - Удалить: это остатки старого рендера, который зависит от непортированных на jd-ads кусков кода в www (рендер, MAdAi, etc)
-  @deprecated("Use extras.doc with jd-format", "2019")
+                        common                      : MNodeCommon,
+                        meta                        : MMeta           = MMeta(),
+                        extras                      : MNodeExtras     = MNodeExtras.empty,
+                        edges                       : MNodeEdges      = MNodeEdges.empty,
+                        // TODO ad - Удалить: это остатки старого рендера, который зависит от непортированных на jd-ads кусков кода в www (рендер, MAdAi, etc)
+                        @deprecated("Use extras.doc with jd-format", "2019")
   ad                          : MNodeAd         = MNodeAd.empty,
-  billing                     : MNodeBilling    = MNodeBilling.empty,
-  override val id             : Option[String]  = None,
-  override val versionOpt     : Option[Long]    = None
+                        billing                     : MNodeBilling    = MNodeBilling.empty,
+                        override val id             : Option[String]  = None,
+                        override val versioning     : EsDocVersion    = EsDocVersion.empty,
 )
   extends EsModelT
 {
-
-  def withDocMeta(dmeta: IEsDocMeta): MNode = {
-    copy(
-      id = dmeta.id,
-      versionOpt = dmeta.version
-    )
-  }
 
   lazy val guessDisplayName: Option[String] = {
     meta.basic
@@ -345,7 +345,7 @@ object MNode {
   def edges   = GenLens[MNode](_.edges)
   def billing = GenLens[MNode](_.billing)
   def id      = GenLens[MNode](_.id)
-  def versionOpt = GenLens[MNode](_.versionOpt)
+  def versionOpt = GenLens[MNode](_.versioning)
 
 
   def node_meta_basic_dateEdited_RESET = {

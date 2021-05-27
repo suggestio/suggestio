@@ -52,7 +52,7 @@
     Отрендерить карточку в
     <ul>
       @defining( 1.0F ) { szMult =>
-      @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versionOpt, MImgFormats.JPEG) ) { qsArgs =>
+      @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versioning.version, MImgFormats.JPEG) ) { qsArgs =>
         <li>
            - <a href="@controllers.sc.routes.ScOnlyOneAd.onlyOneAd(qsArgs)">HTML x@szMult</a>
            или <a href="@routes.SysAd.showOneAdForm(args.mad.id.get, ToHtml)">кастомно</a>.

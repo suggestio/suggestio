@@ -390,9 +390,10 @@ final class LkAdvExt @Inject() (
         },
         {case (tg, ret) =>
           import esModel.api._
-          for (tgId <- mExtTargets.save(tg)) yield {
+          for {
+            tg2 <- mExtTargets.saveReturning(tg)
+          } yield {
             // Вернуть форму с выставленным id.
-            val tg2 = tg.copy(id = Some(tgId))
             val form = request.newTgForm fill (tg2, ret)
             Ok(_targetFormTpl(adnId, form, Some(tg2)))
           }

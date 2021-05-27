@@ -2,7 +2,6 @@ package controllers
 
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
-
 import javax.inject.Inject
 import io.suggest.auth.{AuthenticationException, AuthenticationResult}
 import io.suggest.captcha.MCaptchaCheckReq
@@ -861,13 +860,12 @@ final class Ident @Inject() (
               )
               // Создать узел для юзера:
               for {
-                savedId <- DBIO.from {
+                docMetaSaved <- DBIO.from {
                   mNodes.save( mperson0 )
                 }
               } yield {
-                LOGGER.info(s"$logPrefix Created new user#$savedId for cred[$regCreds]")
-                MNode.id
-                  .set( Some(savedId) )(mperson0)
+                LOGGER.info(s"$logPrefix Created new user#${docMetaSaved.id.orNull} for cred[$regCreds]")
+                mNodes.withDocMeta( mperson0, docMetaSaved )
               }
 
             } { personNode0 =>
@@ -915,13 +913,7 @@ final class Ident @Inject() (
                 }( personNode0 )
 
               DBIO.from {
-                for (_ <- mNodes.save( mnode1 ))
-                yield (
-                  MNode.versionOpt
-                    .modify { vOpt =>
-                      Some( vOpt.fold(1L)(_ + 1L) )
-                    }
-                )(mnode1)
+                mNodes.saveReturning( mnode1 )
               }
             }
           }
@@ -1432,12 +1424,9 @@ final class Ident @Inject() (
                   }
                 )
               )
-              for {
-                personId <- mNodes.save(mperson0)
-              } yield {
-                LOGGER.debug(s"$logPrefix Registered new user#${personId} via service#${extService}:\n $profile")
-                MNode.id.set( Some(personId) )(mperson0)
-              }
+
+              LOGGER.debug(s"$logPrefix Registering new user via service#${extService}:\n $profile ...")
+              mNodes.saveReturning(mperson0)
 
             } { knownPerson0 =>
               // Юзер с таким id уже найден.
