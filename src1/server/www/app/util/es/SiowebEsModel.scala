@@ -131,20 +131,15 @@ final class SiowebEsModel @Inject() (
 
     for {
       // Do main index initialization:
-      _ <- sioMainEsIndex.doInit()
+      isIndexCreated <- sioMainEsIndex.doInit()
       // Do needed mappings initializations:
       _ <- putAllMappings( esModels )
-      _ <- sioMainEsIndex.doReindex()
-      /*
-      // Some old-code for possible update of index settings:
-      .recoverWith {
-        case ex: MapperException if !triedIndexUpdate =>
-          info("Trying to update main index to v2.1 settings...")
-          SioEsUtil.updateIndex2_1To2_2(EsModelUtil.DFLT_INDEX) flatMap { _ =>
-            initializeEsModels(triedIndexUpdate = true)
-          }
+      _ <- {
+        if (isIndexCreated)
+          sioMainEsIndex.doReindex()
+        else
+          Future.successful(())
       }
-      */
 
     } yield {
       LOGGER.trace(s"$logPrefix Done, took ${System.currentTimeMillis() - startedAtMs}ms")

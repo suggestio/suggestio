@@ -47,7 +47,7 @@ Server-side code based on [Play! framework](https://playframework.com/).
 TODO Pre-build images/binaries not-yet ready, so see [Development](#development).
 - Java 8-15
 - sbt 1.3+
-- ElasticSearch 6.x - Distibuted primary storage. (Upgrading to 7.x in progress)
+- ElasticSearch 7 - Distibuted primary storage.
 - PostgreSQL (Used for billing)
 - SeaWeedFS (Distributed storage for pictures and other files)
 - ImageMagick
@@ -59,7 +59,7 @@ TODO Pre-build images/binaries not-yet ready, so see [Development](#development)
 
 ## Getting started
 0. Install needed system packages:
-  - `pikaur -Sy jdk-openjdk imagemagick sbt elasticsearch postgresql seaweedfs`
+  - `pikaur -Sy jdk-openjdk imagemagick sbt elasticsearch-xpack postgresql seaweedfs`
 1. Ensure elasticsearch, postgresql, seaweedfs master and volumes started.
 2. Go to main server sub-directory:
   - `cd src1/server/www`

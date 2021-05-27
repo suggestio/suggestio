@@ -93,7 +93,7 @@ final class SioMainEsIndex @Inject() (
   }
 
   /** Start main index ensuring/initialization. */
-  def doInit(force: Boolean = false)(implicit dsl: MappingDsl): Future[_] = {
+  def doInit(force: Boolean = false)(implicit dsl: MappingDsl): Future[Boolean] = {
     lazy val loggerInst = LOGGER
 
     // Check about currently used settings.
@@ -104,7 +104,7 @@ final class SioMainEsIndex @Inject() (
 
     if (!isUpdateOldIndex) {
       loggerInst.trace("Old sio-main index migrate is disabled in config.")
-      Future.successful()
+      Future.successful( false )
 
     } else {
       // Check if current sio-main index exists:

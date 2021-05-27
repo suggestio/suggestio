@@ -51,19 +51,10 @@ libraryDependencies ++= Seq(
   
   // Капчевание:
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
-  //"com.nappin" %% "play-recaptcha" % "2.4sio",
 
   "org.postgresql" % "postgresql" % "42.+",
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
-  // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
-  //"org.clapper" %% "scalasti" % "2.+",
-
-  // Для будущей работы с файлами добавлено вот это:
-  //"com.github.pathikrit" %% "better-files"       % Common.Vsn.BETTER_FILES,
-
-  // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
-  //"com.wix"      %% "accord-core"     % Common.wixAccordVsn,
 
   // Поддержка JsMessages для client-side локализации сообщений
   "org.julienrf" %% "play-jsmessages" % "5.0.0",

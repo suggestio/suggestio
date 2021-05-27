@@ -18,20 +18,20 @@ object SioEsUtil {
   // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name
 
   // Имена стеммеров
-  def STEM_EN_FN    = "fStemEN"
-  def STEM_RU_FN    = "fStemRU"
+  def STEM_EN_FN    = "f_stem_en"
+  def STEM_RU_FN    = "f_stem_ru"
 
   // Имена stopwords-фильтров.
-  def STOP_EN_FN    = "fStopEN"
-  def STOP_RU_FN    = "fStopRU"
+  def STOP_EN_FN    = "f_stop_en"
+  def STOP_RU_FN    = "f_stop_ru"
 
   //def EDGE_NGRAM_FN_2 = "fEdgeNgram2"
-  def EDGE_NGRAM_FN_1 = "fEdgeNgram1"
-  def LOWERCASE_FN  = "fLowercase"
-  def WORD_DELIM_FN = "fWordDelim"
+  def EDGE_NGRAM_FN_1 = "f_engram1"
+  def LOWERCASE_FN  = "lowercase"
+  def WORD_DELIM_FN = "f_word_delim"
 
-  def STD_TN        = "tStd"
-  def DEEP_NGRAM_TN = "deepNgramTn"
+  def STD_TN        = "t_std"
+  def DEEP_NGRAM_TN = "t_deep_ngram"
 
   /** Стандартные имена полей ES. */
   object StandardFieldNames {
@@ -81,10 +81,9 @@ object SioEsUtil {
       maxNGramDiff = Some( MAX_NGRAM_LEN ),
       analysis = IndexSettingsAnalysis(
         filters = Map(
-          LOWERCASE_FN      -> Filter.lowerCase,
           STOP_RU_FN        -> Filter.stopWords( "_russian_" :: Nil ),
           STOP_EN_FN        -> Filter.stopWords( "_english_" :: Nil ),
-          WORD_DELIM_FN     -> Filter.wordDelimiter(preserveOriginal = true),
+          WORD_DELIM_FN     -> Filter.wordDelimiterGraph(preserveOriginal = true),
           STEM_RU_FN        -> Filter.stemmer( "russian" ),
           STEM_EN_FN        -> Filter.stemmer( "english" ),
           EDGE_NGRAM_FN_1   -> Filter.edgeNGram(minGram = 1, maxGram = MAX_NGRAM_LEN, side = "front"),

@@ -9,54 +9,35 @@ package io.suggest.util
 
 object SioConstants {
 
-  // Имена полей, используемых в sio-маппингах
-  def FIELD_URL           = "url"
-  def FIELD_LANGUAGE      = "lang"
-  def FIELD_TITLE         = "title"
-  def FIELD_CONTENT_TEXT  = "contentText"
-  def FIELD_IMAGE_ID      = "imageId"
-  def FIELD_DATE_KILOSEC  = "dateKs"
-  def FIELD_DATE          = "date"
-  def FIELD_PAGE_TAGS     = "pageTags"
-  def FIELD_DKEY          = "dkey"
-
-
-  def CURRENCY_CODE_DFLT  = "RUB"
-
   // Названия анализаторов. А зачем они тут, если относятся только к SioEsUtil?
   /** Минимальный анализатор, без излишеств. */
-  def MINIMAL_AN        = "aMinimal"
+  def MINIMAL_AN        = "a_minimal"
 
   /** Делает n-граммы с первой буквы. */
-  def ENGRAM_AN_1       = "aEdgeNgram1"
+  def ENGRAM_AN_1       = "a_engram1"
   
   /** Аналайзер для генерации edge-ngram с 1-й буквы, но без языковой обработки типа стемминга и  */
-  def ENGRAM1_NOSTOP_AN = ENGRAM_AN_1 + "NoStop"
+  def ENGRAM1_NOSTOP_AN = ENGRAM_AN_1 + "_nostop"
 
   /** Делает n-граммы со второй буквы. */
-  def ENGRAM_AN_2       = "aEdgeNgram2"
+  def ENGRAM_AN_2       = "a_engram2"
 
   /** Дробит тексты и слова для обычной индексации. */
-  def FTS_RU_AN         = "aFtsRu"
+  def FTS_RU_AN         = "a_fts_ru"
 
   /** deep ngram: дробить на ngram'мы по максимуму. Полезно для списка комбинируемых флагов. */
-  def DEEP_NGRAM_AN     = "deepNgram"
+  def DEEP_NGRAM_AN     = "a_deep_ngram"
 
   /** keyword tokenizer */
-  def KEYWORD_TN        = "kw"
+  def KEYWORD_TN        = "t_keyword"
 
   /** KeyWord LowerCase ANalyzer. Для целостной индексации тегов узлов ADN. */
-  def KW_LC_AN          = "tag"
+  def KW_LC_AN          = "a_keyword_lc"
 
   /** Полнотекстовый поиск по [коротким] тегам, без фильтрации стоп-слов. */
-  def FTS_NOSTOP_AN     = "ftsNoStop"
+  def FTS_NOSTOP_AN     = "a_fts_nostop"
 
   /** id дефолтового анализатора. */
-  def DFLT_AN           = "default"
-
-
-  //v1: Суффиксы multi-полей
-  def SUBFIELD_ENGRAM     = "gram"
-  def SUBFIELD_FTS        = "fts"
+  def DFLT_AN           = "a_default"
 
 }

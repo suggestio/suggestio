@@ -143,19 +143,21 @@ final class MappingDsl { dsl =>
                 tokenizer: String,
                 filters : Seq[String] = Nil,
               ) = apply(
+      typ         = Some("custom"),
       charFilters = charFilters,
       tokenizer   = Some(tokenizer),
       filters     = filters,
     )
 
     implicit lazy val analyzerJson: OFormat[Analyzer] = (
-      (__ \ "char_filters").formatNullable[Seq[String]]
+      (__ \ "type").formatNullable[String] and
+      (__ \ "char_filter").formatNullable[Seq[String]]
         .inmap[Seq[String]](
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { chFs => Option.when(chFs.nonEmpty)(chFs) }
         ) and
       (__ \ "tokenizer").formatNullable[String] and
-      (__ \ "filters").formatNullable[Seq[String]]
+      (__ \ "filter").formatNullable[Seq[String]]
         .inmap[Seq[String]](
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { chFs => Option.when(chFs.nonEmpty)(chFs) }
@@ -164,7 +166,7 @@ final class MappingDsl { dsl =>
 
   }
   case class Analyzer private(
-                               // analyzer.type = custom
+                               typ          : Option[String]    = None,
                                charFilters  : Seq[String]       = Nil,
                                tokenizer    : Option[String]    = None,
                                filters      : Seq[String]       = Nil,
@@ -181,9 +183,9 @@ final class MappingDsl { dsl =>
 
     def nGram( minGram    : Int,
                maxGram    : Int,
-               tokenChars : Seq[TokenCharType] = Seq.empty
+               tokenChars : Seq[TokenCharType] = Nil,
              ): Tokenizer = apply(
-      typ         = "nGram",
+      typ         = "ngram",
       minGram     = Some(minGram),
       maxGram     = Some(maxGram),
       tokenChars  = tokenChars,
@@ -250,8 +252,14 @@ final class MappingDsl { dsl =>
       stopWords = Some( stopWords ),
     )
 
+    @deprecated("Use worldDelimiterGraph()", "ES 7.x")
     def wordDelimiter( preserveOriginal: Boolean ) = apply(
       typ = "word_delimiter",
+      preserveOriginal = Some( preserveOriginal ),
+    )
+
+    def wordDelimiterGraph( preserveOriginal: Boolean ) = apply(
+      typ = "word_delimiter_graph",
       preserveOriginal = Some( preserveOriginal ),
     )
 
@@ -280,7 +288,7 @@ final class MappingDsl { dsl =>
                    maxGram : Int,
                    side : String = "front"
                  ) = apply(
-      typ = "edgeNGram",
+      typ = "edge_ngram",
       minGram = Some(minGram),
       maxGram = Some(maxGram),
       side    = Some(side),
@@ -289,7 +297,7 @@ final class MappingDsl { dsl =>
     def nGram( minGram: Int,
                maxGram: Int,
              ) = apply(
-      typ = "nGram",
+      typ = "ngram",
       minGram = Some(minGram),
       maxGram = Some(maxGram),
     )

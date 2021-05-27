@@ -87,12 +87,13 @@ final class TransportEsClient @Inject() (
     */
   def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
     val settingsBuilder = Settings.builder()
-    //.classLoader(classOf[Settings].getClassLoader)
+
     clusterName.fold {
       settingsBuilder.put("client.transport.ignore_cluster_name", true)
     } { _clusterName =>
       settingsBuilder.put("cluster.name", _clusterName)
     }
+
     val settings = settingsBuilder.build()
     new PreBuiltTransportClient(settings)
       .addTransportAddresses(addrs : _*)
