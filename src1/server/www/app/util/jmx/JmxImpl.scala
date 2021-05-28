@@ -3,7 +3,7 @@ package util.jmx
 import io.suggest.es.model.EsModelJmx
 
 import javax.inject.Inject
-import io.suggest.n2.node.{MNodesJmx, SioMainEsIndexJmx}
+import io.suggest.n2.node.{MNodesJmx, MainEsIndexJmx}
 import models.adv.MExtTargetsJmx
 
 import java.lang.management.ManagementFactory
@@ -53,7 +53,7 @@ case class JmxImpl @Inject() (
                                nodesUtilJmx                  : NodesUtilJmx,
                                imgMaintainUtilJmx            : ImgMaintainUtilJmx,
                                lifecycle                     : ApplicationLifecycle,
-                               sioMainEsIndexJmx             : SioMainEsIndexJmx,
+                               mainEsIndexJmx                : MainEsIndexJmx,
                                implicit private val ec       : ExecutionContext,
                              )
   extends MacroLogsImplLazy

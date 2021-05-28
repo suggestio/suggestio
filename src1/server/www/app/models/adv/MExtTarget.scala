@@ -21,7 +21,7 @@ import models.adv.ext.MExtTargetSearchArgs
  * Он содержит целевую ссылку, id обнаруженного сервиса, дату добавление и прочее.
  */
 
-// TODO Модель следует объеденить с MNode. JsExtTarget вынести в отдельную модель.
+// TODO Модель следует объеденить с MNode.
 
 object MExtTargetFields {
 

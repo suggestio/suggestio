@@ -3,7 +3,7 @@ package util.ext
 import java.net.URL
 
 import io.suggest.es.model.EsModel
-import io.suggest.es.util.{IEsClient, SioEsUtil}
+import io.suggest.es.util.IEsClient
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.extra.MNodeExtras
 import io.suggest.n2.extra.rsc.{MHostNameIndexed, MRscExtra}

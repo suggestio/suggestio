@@ -2,7 +2,6 @@ package util.adv.geo.tag
 
 import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.{Keep, Sink}
-import io.suggest.es.util.SioEsUtil
 import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -18,6 +17,7 @@ import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.MCtxOuter
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import io.suggest.es.EsConstants
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import models.mcron.MCronTask
 import models.mproj.ICommonDi

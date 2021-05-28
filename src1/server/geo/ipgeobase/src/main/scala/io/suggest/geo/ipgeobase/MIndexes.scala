@@ -2,10 +2,9 @@ package io.suggest.geo.ipgeobase
 
 import javax.inject.Inject
 import io.suggest.es.model._
-import io.suggest.es.util.SioEsUtil
 import io.suggest.util.logs.MacroLogsDyn
 import org.elasticsearch.common.settings.Settings
-import play.api.{Configuration, Environment, Mode}
+import play.api.Configuration
 import play.api.inject.Injector
 
 /**
@@ -29,6 +28,7 @@ final class MIndexes @Inject() (
   extends MacroLogsDyn
 {
 
+  private def esModelConfig = injector.instanceOf[EsModelConfig]
 
   /**
     * Кол-во реплик для ES-индекса БД IPGeoBase.
@@ -41,14 +41,9 @@ final class MIndexes @Inject() (
       .instanceOf[Configuration]
       .getOptional[Int]("loc.geo.ipgeobase.index.replicas_count")
       .getOrElse {
-        val _isProd = injector.instanceOf[Environment].mode == Mode.Prod
-        val r = if (_isProd) {
-          SioEsUtil.REPLICAS_COUNT
-        } else {
-          0   // Нет дела до реплик на тестовой или dev-базе.
-        }
-        LOGGER.trace(s"REPLICAS_COUNT => $r, isProd = ${_isProd}")
-        r
+        val replicasCount = esModelConfig.ES_INDEX_REPLICAS_COUNT
+        LOGGER.trace(s"REPLICAS_COUNT => $replicasCount")
+        replicasCount
       }
   }
 
@@ -63,12 +58,11 @@ final class MIndexes @Inject() (
   }
 
   /** Сгенерить настройки для индекса. */
-  def indexSettingsAfterBulk: Option[Settings] = {
-    val settings = Settings.builder()
+  def indexSettingsAfterBulk: Settings = {
+    Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
       .put("index.number_of_replicas", REPLICAS_COUNT)
       .build()
-    Some(settings)
   }
 
 }

@@ -8,7 +8,7 @@ import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
 import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
-import io.suggest.es.util.{IEsClient, SioEsUtil}
+import io.suggest.es.util.IEsClient
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -18,7 +18,7 @@ import io.suggest.util.JmxBase
 import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
-import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
+import org.elasticsearch.action.delete.DeleteRequestBuilder
 import org.elasticsearch.action.get.MultiGetRequest.Item
 import org.elasticsearch.action.get.MultiGetResponse
 import org.elasticsearch.client.Client
@@ -55,24 +55,26 @@ import scala.jdk.CollectionConverters._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.10.15 18:32
- * Description: Файл содержит трейты для базовой сборки типичных ES-моделей, без parent-child и прочего.
+ * Description: Implicit APIs container for elasticsearch modelling.
  */
 @Singleton
 final class EsModel @Inject()(
-                               esScrollPublisherFactory   : EsScrollPublisherFactory,
-                               cache                      : AsyncCacheApi,
-                             )(implicit
-                               ec           : ExecutionContext,
-                               esClientP    : IEsClient,
-                               mat          : Materializer,
+                               injector: Injector,
                              )
   extends MacroLogsImpl
 { esModel =>
 
+  private def esScrollPublisherFactory = injector.instanceOf[EsScrollPublisherFactory]
+  private def asyncCacheApi = injector.instanceOf[AsyncCacheApi]
+  implicit private def mat = injector.instanceOf[Materializer]
+
+  private val esClientP = injector.instanceOf[IEsClient]
+  implicit private val ec = injector.instanceOf[ExecutionContext]
+
   import esClientP.esClient
 
 
-  /** По аналогии со slick, тут собраны методы для es-моделей.
+/** По аналогии со slick, тут собраны методы для es-моделей.
     *
     * Позволяет использовать статические методы для унифицированного управления ES-моделями.
     * {{{
@@ -100,7 +102,7 @@ final class EsModel @Inject()(
             val doneAtMs = System.currentTimeMillis()
             p.success(response)
             val tookMs = doneAtMs - startedAtMs
-            if (tookMs > SioEsUtil.ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS) {
+            if (tookMs > EsModelUtil.ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS) {
               val logPrefix = s"executeFut()#$startedAtMs:"
               LOGGER.info(s"$logPrefix ES-request took ${tookMs}ms")
               // Бывают ложные срабатывания, например при запуске, когда большая параллельная нагрузка.
@@ -124,27 +126,22 @@ final class EsModel @Inject()(
     implicit final class EsModelStaticMappingOps( model: EsModelStaticMapping ) {
 
       /** Отправить маппинг в elasticsearch. */
-      def putMapping()(implicit dsl: MappingDsl): Future[Boolean] = {
-        val indexName = model.ES_INDEX_NAME
-        val typeName = model.ES_TYPE_NAME
-        lazy val logPrefix = s"$model.putMapping($indexName/$typeName)[${System.currentTimeMillis()}]:"
-        LOGGER.trace(s"$logPrefix $indexName/$typeName")
-
+      def putMapping(indexName: String = model.ES_INDEX_NAME)(implicit dsl: MappingDsl): Future[Boolean] = {
+        lazy val logPrefix = s"$model.putMapping($indexName)[${System.currentTimeMillis()}]:"
         val mappingJson = model.generateMapping()
+        val mappingJsonMin = mappingJson.toString()
+        LOGGER.trace( s"$logPrefix Will PUT mapping:\n $mappingJsonMin" )
 
-        val fut = esClient.admin().indices()
-          .preparePutMapping(indexName)
-          .setType(typeName)
-          .setSource( mappingJson.toString(), XContentType.JSON )
+        esClient.admin().indices()
+          .preparePutMapping( indexName )
+          .setType( model.ES_TYPE_NAME )
+          .setSource( mappingJsonMin, XContentType.JSON )
           .executeFut()
           .map( _.isAcknowledged )
-
-        fut.onComplete {
-          case Success(res) => LOGGER.trace(s"$logPrefix Done, ack=$res")
-          case Failure(ex)  => LOGGER.error(s"$logPrefix Failed put mapping:\n-----------------------------------\n ${Json.prettyPrint(mappingJson)}\n ---------------------------------", ex)
-        }
-
-        fut
+          .andThen {
+            case Success(res) => LOGGER.trace(s"$logPrefix Done, ack=$res")
+            case Failure(ex)  => LOGGER.error(s"$logPrefix Failed put mapping:\n-----------------------------------\n ${Json.prettyPrint(mappingJson)}\n ---------------------------------", ex)
+          }
       }
 
       /** Рефреш всего индекса, в котором живёт эта модель. */
@@ -231,7 +228,7 @@ final class EsModel @Inject()(
         srb
           .setScroll(keepAlive)
           // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
-          .addSort( SortBuilders.fieldSort( SioEsUtil.StandardFieldNames.DOC ) )
+          .addSort( SortBuilders.fieldSort( EsModelUtil.StandardFieldNames.DOC ) )
       }
 
       /** Прочитать маппинг текущей ES-модели из ES. */
@@ -644,7 +641,7 @@ final class EsModel @Inject()(
 
       /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
       def toEsJsonDoc(e: T1): String = {
-        import SioEsUtil.StandardFieldNames._
+        import EsModelUtil.StandardFieldNames._
 
         var kvs = List[String] (s""" "$SOURCE": ${model.toJson(e)}""")
         for (version <- e.versioning.version)
@@ -855,7 +852,7 @@ final class EsModel @Inject()(
       def deleteById(id: String): Future[Boolean] = {
         val fut = deleteRequestBuilder(id)
           .executeFut()
-          .map { EsModelStaticT.delResp2isDeleted }
+          .map( _.getResult ==* Result.DELETED )
         model._deleteById(id)(fut)
       }
 
@@ -1183,7 +1180,7 @@ final class EsModel @Inject()(
 
       def getByIdFromCache(id: String)(implicit classTag: ClassTag[T1]): Future[Option[T1]] = {
         val ck = model.cacheKey(id)
-        cache.get[T1](ck)
+        asyncCacheApi.get[T1](ck)
       }
 
       /**
@@ -1194,7 +1191,7 @@ final class EsModel @Inject()(
       def getByIdCache(id: String)(implicit classTag: ClassTag[T1]): Future[Option[T1]] = {
         // 2014.nov.24: Форсируем полный асинхрон при работе с кешем.
         val ck = model.cacheKey(id)
-        cache.get[T1](ck)
+        asyncCacheApi.get[T1](ck)
           .filter { _.isDefined }
           .recoverWith { case _: NoSuchElementException =>
             LOGGER.trace(s"getById($id): Not found $id in cache")
@@ -1285,19 +1282,19 @@ final class EsModel @Inject()(
 
       def multiGetMapCache(ids: Iterable[String])(implicit classTag: ClassTag[T1]): Future[HashMap[String, T1]] = {
         multiGetCache(ids)
-          .map { resultsToMap }
+          .map( resultsToMap )
       }
 
 
       def cacheThat(result: T1): Unit = {
         val id = result.id.get
         val ck = model.cacheKey(id)
-        cache.set(ck, result, model.EXPIRE)
+        asyncCacheApi.set(ck, result, model.EXPIRE)
       }
 
       def deleteFromCache(id: String): Future[_] = {
         val ck = model.cacheKey(id)
-        cache.remove( ck )
+        asyncCacheApi.remove( ck )
       }
 
       def cacheThese(results: T1*): Unit =
@@ -1336,7 +1333,7 @@ final class EsModel @Inject()(
         for (adnnOpt <- resultFut) {
           // TODO Кэш для None надо держать? Можно короткий EXPIRE организовать, просто для защиты от атак.
           for (adnn <- adnnOpt)
-            cache.set(ck, adnn, model.EXPIRE)
+            asyncCacheApi.set(ck, adnn, model.EXPIRE)
         }
         resultFut
       }
@@ -1344,7 +1341,7 @@ final class EsModel @Inject()(
 
       def putToCache(value: T1): Future[_] = {
         val ck = model.cacheKey( value.id.get )
-        cache.set(ck, value, model.EXPIRE)
+        asyncCacheApi.set(ck, value, model.EXPIRE)
       }
 
 
@@ -1593,7 +1590,7 @@ final class EsModel @Inject()(
   val api = new Api
   import api._
 
-  /** Сконвертить распарсенные результаты в карту. */
+  /** Convert parsed results to map by id. */
   private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): HashMap[String, T] = {
     results
       .zipWithIdIter[String]
@@ -1633,28 +1630,34 @@ final class EsModel @Inject()(
   }
 
   /** Логика удаления старого ненужного индекса. */
-  def deleteIndex(oldIndexName: String): Future[_] = {
-    val fut: Future[_] = esClient.admin().indices()
-      .prepareDelete(oldIndexName)
+  def deleteIndex( indexNames: String* ): Future[Boolean] = {
+    lazy val logPrefix = s"deleteIndex[${indexNames.length}](${indexNames.mkString(" ")}):"
+
+    esClient.admin().indices()
+      .prepareDelete(indexNames: _*)
       .executeFut()
-      .map { _.isAcknowledged }
-
-    val logPrefix = s"deleteIndex($oldIndexName):"
-
-    // Отрабатывать ситуацию, когда индекс не найден.
-    val fut1 = fut.recover { case ex: ResourceNotFoundException =>
-      LOGGER.debug(s"$logPrefix Looks like, index not exist, already deleted?", ex)
-      false
-    }
-
-    // Логгировать завершение команды.
-    fut1.onComplete {
-      case Success(res) => LOGGER.debug(s"$logPrefix Index deleted ok: $res")
-      case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to delete index", ex)
-    }
-
-    fut1
+      .map( _.isAcknowledged )
+      .recover { case ex if ex.isInstanceOf[ResourceNotFoundException] || ex.isInstanceOf[IndexNotFoundException] =>
+        LOGGER.debug(s"$logPrefix Looks like, indices not exist, already deleted?", ex)
+        false
+      }
+      .andThen {
+        case Success(res) => LOGGER.debug(s"$logPrefix Index deleted ok: $res")
+        case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to delete index", ex)
+      }
   }
+
+
+  def isIndexExists(indexNames: String*): Future[Boolean] = {
+    if (indexNames.isEmpty)
+      throw new IllegalArgumentException("isIndexExists(): Index names must be non-empty.")
+
+    esClient.admin().indices()
+      .prepareExists( indexNames: _* )
+      .executeFut()
+      .map( _.isExists )
+  }
+
 
   /**
     * Убедиться, что индекс существует.
@@ -1662,27 +1665,26 @@ final class EsModel @Inject()(
     * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
     *         Если индекс уже существует, то false.
     */
-  def ensureSioMainIndex(indexName: String, shards: Int = 5, replicas: Int = SioEsUtil.REPLICAS_COUNT)
-                        (implicit dsl: MappingDsl): Future[Boolean] = {
-    lazy val logPrefix = s"ensureSioMainIndex($indexName, ${shards}x${replicas}):"
+  def ensureIndex[S](indexName: String, settings: => S)
+                    (implicit toSettings: IEsSettingsMake[S]): Future[Boolean] = {
+    lazy val logPrefix = s"ensureIndex($indexName):"
 
     for {
-      existsResp <- esClient.admin().indices()
-        .prepareExists(indexName)
-        .executeFut()
+      isMainIndexExists <- isIndexExists( indexName )
 
-      res <- if (existsResp.isExists) {
+      res <- if (isMainIndexExists) {
+        LOGGER.debug(s"$logPrefix Index exists.")
         Future.successful(false)
       } else {
-        val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
-        val indexSettingsPlayJson = Json.toJson( indexSettings )
-        LOGGER.trace(s"$logPrefix Index settings:\n---------------------------------------\n${Json.prettyPrint(indexSettingsPlayJson)}\n---------------------------------")
-        val settingsJson = indexSettingsPlayJson.toString()
-        esClient.admin().indices()
-          .prepareCreate( indexName )
-          .setSettings( settingsJson, XContentType.JSON )
-          .executeFut()
-          .map { _ => true }
+        for {
+          _ <- createIndex(
+            newIndexName = indexName,
+            settings = settings,
+          )
+        } yield {
+          LOGGER.info(s"$logPrefix Created new index.")
+          true
+        }
       }
 
     } yield {
@@ -1721,7 +1723,7 @@ final class EsModel @Inject()(
     lazy val logPrefix = s"resetIndexAliasTo(index[$indexName] alias[$aliasName])[${System.currentTimeMillis()}]:"
     LOGGER.info(s"$logPrefix Starting, alias = $aliasName")
 
-    val fut = esClient.admin().indices()
+    esClient.admin().indices()
       .prepareAliases()
       // Удалить все алиасы с необходимым именем.
       .removeAlias("*", aliasName)
@@ -1729,20 +1731,16 @@ final class EsModel @Inject()(
       .addAlias(indexName, aliasName)
       .executeFut()
       .map( _.isAcknowledged )
-
-    // Подключить логгирование к работе...
-    fut.onComplete {
-      case Success(r)  => LOGGER.debug(s"$logPrefix OK, ack=$r")
-      case Failure(ex) => LOGGER.error(s"$logPrefix Failed to update index alias $aliasName", ex)
-    }
-
-    fut
+      .andThen {
+        case Success(r)  => LOGGER.debug(s"$logPrefix OK, ack=$r")
+        case Failure(ex) => LOGGER.error(s"$logPrefix Failed to update index alias $aliasName", ex)
+      }
   }
 
 
   /** Узнать имя индекса, сокрытого за алиасом. */
   def getAliasedIndexName(aliasName: String): Future[Set[String]] = {
-    def logPrefix = "getAliasesIndexName():"
+    lazy val logPrefix = s"getAliasesIndexName($aliasName):"
     esClient.admin().indices()
       .prepareGetAliases( aliasName )
       .executeFut()
@@ -1760,44 +1758,40 @@ final class EsModel @Inject()(
       }
   }
 
+  def updateIndexSettings[S](indexName: String, settings: S)(implicit settingsMaker: IEsSettingsMake[S]): Future[Boolean] = {
+    lazy val logPrefix = s"updateIndexSettings($indexName):"
 
-  /** Когда заливка данных закончена, выполнить подготовку индекса к эсплуатации.
-    * elasticsearch 2.0+: переименовали операцию optimize в force merge. */
-  def optimizeAfterBulk(indexName: String, indexSettingsAfterBulk: Option[Settings] = None): Future[_] = {
-    val startedAt = System.currentTimeMillis()
+    val esSettings = settingsMaker( settings )
+    LOGGER.trace(s"$logPrefix Starting with settings:\n${esSettings.toDelimitedString('\n')}")
 
-    // Запустить оптимизацию всего ES-индекса.
-    val inxOptFut: Future[_] = {
-      esClient.admin().indices()
-        .prepareForceMerge(indexName)
-        .setMaxNumSegments(1)
-        .setFlush(true)
-        .executeFut()
-    }
-
-    lazy val logPrefix = s"optimizeAfterBulk($indexName):"
-
-    // Потом нужно выставить не-bulk настройки для готового к работе индекса.
-    val inxSettingsFut = inxOptFut.flatMap { _ =>
-      val updInxSettingsAt = System.currentTimeMillis()
-
-      val fut2: Future[_] = indexSettingsAfterBulk.fold[Future[_]] {
-        Future.successful(None)
-      } { settings2 =>
-        esClient.admin().indices()
-          .prepareUpdateSettings(indexName)
-          .setSettings( settings2 )
-          .executeFut()
+    esClient.admin().indices()
+      .prepareUpdateSettings( indexName )
+      .setSettings( settings )
+      .executeFut()
+      .map { response =>
+        val res = response.isAcknowledged
+        LOGGER.trace(s"updateIndexSettings($indexName): Done")
+        res
       }
+  }
 
-      LOGGER.trace(s"$logPrefix Optimize took ${updInxSettingsAt - startedAt} ms")
-      for (_ <- fut2)
-        LOGGER.trace(s"$logPrefix Update index settings took ${System.currentTimeMillis() - updInxSettingsAt} ms.")
 
-      fut2
-    }
-
-    inxSettingsFut
+  /** Run forceMerge operation for some index. */
+  def forceMerge(indexNames: String*): Future[_] = {
+    val startedAt = System.currentTimeMillis()
+    lazy val logPrefix = s"forceMerge[${indexNames.length}](${indexNames.mkString(" ")}):"
+    LOGGER.trace(s"$logPrefix Started")
+    esClient.admin().indices()
+      .prepareForceMerge(indexNames: _*)
+      .setMaxNumSegments(1)
+      .setFlush(true)
+      .executeFut()
+      .andThen {
+        case Success(response) =>
+          LOGGER.debug(s"$logPrefix Took ${System.currentTimeMillis() - startedAt}ms\n for ${response.getSuccessfulShards}/${response.getTotalShards} shards.")
+          for (fail <- response.getShardFailures)
+            LOGGER.error(s"$logPrefix Failed shard#${fail.shardId()}: ${fail.status()}: ${fail.reason()}")
+      }
   }
 
 
@@ -1917,40 +1911,6 @@ final class EsModel @Inject()(
   }
 
 
-  /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false)(implicit dsl: MappingDsl): Future[Boolean] = {
-    import api._
-
-    Future.traverse(models) { esModelStatic =>
-      val logPrefix = s"${esModelStatic.getClass.getSimpleName}.putMapping():"
-      val imeFut = if (ignoreExists) {
-        Future.successful(false)
-      } else {
-        esModelStatic.isMappingExists()
-      }
-      imeFut.flatMap {
-        case false =>
-          LOGGER.trace(s"$logPrefix Trying to push mapping for model...")
-          val fut = esModelStatic.putMapping()
-          fut.onComplete {
-            case Success(isOk)  =>
-              if (isOk) LOGGER.trace(s"$logPrefix -> OK" )
-              else LOGGER.warn(s"$logPrefix NOT ACK!!! Possibly out-of-sync.")
-            case Failure(ex)    =>
-              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}:\n-------------\n${esModelStatic.generateMapping().toString()}\n-------------\n", ex)
-          }
-          fut
-
-        case true =>
-          LOGGER.trace(s"$logPrefix Mapping already exists in index. Skipping...")
-          Future successful true
-      }
-    }.map {
-      _.reduceLeft { _ && _ }
-    }
-  }
-
-
   /** Рекурсивная асинхронная сверстка скролл-поиска в ES.
     * Перед вызовом функции надо выпонить начальный поисковый запрос, вызвав с setScroll() и,
     * по возможности, включив SCAN.
@@ -2058,18 +2018,11 @@ final class EsModel @Inject()(
 
 }
 
+
 trait EsModelDi {
   val esModel: EsModel
 }
 
-
-object EsModelStaticT {
-
-  def delResp2isDeleted(dr: DeleteResponse): Boolean = {
-    dr.getResult ==* Result.DELETED
-  }
-
-}
 
 /** Базовый шаблон для статических частей ES-моделей, НЕ имеющих _parent'ов. Применяется в связке с [[EsModelT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
@@ -2151,7 +2104,6 @@ case object EsSaveOpts {
 sealed trait EsModelJmxMBean {
   def createIndexByNameShardsReplicas(name: String, shards: Int, replicas: Int): String
   def deleteIndex(name: String): String
-  def ensureSioMainIndexByNameSharesReplicas(name: String, shards: Int, replicas: Int): String
   def reindexDataFromTo(from: String, to: String): String
   def resetAliasToIndex(aliasName: String, indexName: String): String
   def getAliasedIndexName(aliasName: String): String
@@ -2192,16 +2144,6 @@ final class EsModelJmx @Inject() (
     JmxBase.awaitString( fut )
   }
 
-  override def ensureSioMainIndexByNameSharesReplicas(name: String, shards: Int, replicas: Int): String = {
-    val fut = esModel
-      .ensureSioMainIndex(name, shards = shards, replicas = replicas)( MappingDsl.Implicits.mkNewDsl )
-      .map { isCreated =>
-        s"Ensured ok. isCreated?$isCreated"
-      }
-
-    JmxBase.awaitString( fut )
-  }
-
   override def reindexDataFromTo(from: String, to: String): String = {
     val fut = esModel
       .reindexData(
@@ -2237,7 +2179,7 @@ final class EsModelJmx @Inject() (
 
   override def optimize(indexName: String): String = {
     val fut = esModel
-      .optimizeAfterBulk( indexName )
+      .forceMerge( indexName )
       .map { res =>
         s"Done\n$res"
       }

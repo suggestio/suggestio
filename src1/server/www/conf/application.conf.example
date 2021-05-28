@@ -40,13 +40,6 @@ es {
   ## Unicast allows to specify elasticsearch cluster nodes hostname:port.
   ## If omitted, suggest.io will try to connect to defaults host:port (localhost:9300).
   #unicast.hosts = ["localhost:9300"]
-
-  ## Update all ElasticSearch mappings on start.
-  ## - true enought for all cases.
-  ## - false for possible debugging purposes.
-  ##   If false for long time, it may cause schema errors:
-  ##   When new fields added to models, schema mapping will not be configured properly and automatically.
-  mapping.model.ignore_exist = true
 }
 
 

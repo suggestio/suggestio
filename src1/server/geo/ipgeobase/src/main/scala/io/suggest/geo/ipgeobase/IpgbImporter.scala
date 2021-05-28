@@ -201,7 +201,7 @@ final class IpgbImporter @Inject() (
     implicit val dsl = MappingDsl.Implicits.mkNewDsl
 
     // Теперь большой for, описывающий асинхронную логику заливки данных в базу.
-    val doFut = for {
+    (for {
       // Дождаться успешной распаковки скачанного архива...
       unpackedDir <- unpackedDirFut
 
@@ -229,7 +229,8 @@ final class IpgbImporter @Inject() (
       }(asyncUtil.singleThreadIoContext)
 
       // Привести индекс к рабочему состоянию.
-      optimizeFut      = esModel.optimizeAfterBulk(newIndexName, mIndexes.indexSettingsAfterBulk)
+      optimizeFut      = esModel.forceMerge( newIndexName )
+      _                <- esModel.updateIndexSettings( newIndexName, mIndexes.indexSettingsAfterBulk )
 
       // Параллельно: узнать имя старого индекса (старых индексов)
       oldIndexNamesFut = esModel.getAliasedIndexName( MIndexes.INDEX_ALIAS_NAME )
@@ -245,29 +246,25 @@ final class IpgbImporter @Inject() (
       )
 
       // Удалить старые индексы, если есть.
-      _             <- Future.traverse(oldIndexNames)(esModel.deleteIndex)
+      _             <- esModel.deleteIndex( oldIndexNames.toSeq: _* )
     } yield {
       LOGGER.info(logPrefix + s"Done, took = ${System.currentTimeMillis - startedAtMs} ms.")
-    }
+    })
+      .andThen { case tryRes =>
+        // Delete temporary directory, when everything is completed.
+        for (unpackedDir <- unpackedDirFut) {
+          if (unpackedDir.exists()) {
+            LOGGER.trace(s"$logPrefix Deleting temporary unpacked dir ${unpackedDir.getAbsolutePath} ...")
+            FileUtils.deleteDirectory(unpackedDir)
+          }
+        }
 
-    // Удалить временную директорию, когда всё будет закончено (не важно, ошибка или всё ок).
-    doFut.onComplete { _ =>
-      for (unpackedDir <- unpackedDirFut) {
-        if (unpackedDir.exists()) {
-          LOGGER.trace(s"$logPrefix Deleting temporary unpacked dir ${unpackedDir.getAbsolutePath} ...")
-          FileUtils.deleteDirectory(unpackedDir)
+        // If exception occured, also delete newly created ES-index:
+        for (ex <- tryRes.failed) {
+          LOGGER.error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
+          esModel.deleteIndex( newIndexName )
         }
       }
-    }
-
-    // Если была ошибка во время doFut, то удалить новый индекс.
-    for (ex <- doFut.failed) {
-      LOGGER.error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
-      esModel.deleteIndex( newIndexName )
-    }
-
-    // Вернуть основной фьючерс.
-    doFut
   }
 
 

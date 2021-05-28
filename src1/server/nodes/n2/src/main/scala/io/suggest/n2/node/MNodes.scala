@@ -25,6 +25,7 @@ import monocle.macros.GenLens
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import play.api.inject.Injector
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.std.option._
@@ -50,11 +51,7 @@ import scala.concurrent.duration._
 
 @Singleton
 final class MNodes @Inject() (
-                               esModel    : EsModel,
-                               sioMainEsIndex: SioMainEsIndex,
-                             )(implicit
-                               ec         : ExecutionContext,
-                               sn         : SioNotifierStaticClientI,
+                               injector: Injector,
                              )
   extends EsModelStatic
   with EsmV2Deserializer
@@ -64,14 +61,18 @@ final class MNodes @Inject() (
   with EsModelStaticCacheableT
 {
 
+  private def esModel = injector.instanceOf[EsModel]
+  implicit private def sioNotifierClient = injector.instanceOf[SioNotifierStaticClientI]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
+
   // cache
   override val EXPIRE = 60.seconds
   override val CACHE_KEY_SUFFIX = ".nc"
 
   override type T = MNode
 
-  override def ES_TYPE_NAME = MNodeFields.ES_TYPE_NAME
-  override def ES_INDEX_NAME = sioMainEsIndex.getMainIndexName()
+  override def ES_TYPE_NAME = "n2"
+  override def ES_INDEX_NAME = MainEsIndex.getMainIndexName()
 
   @inline def Fields = MNodeFields
 
@@ -140,7 +141,8 @@ final class MNodes @Inject() (
    * @return Карта, где ключ -- тип узла, а значение -- кол-во результатов в индексе.
    */
   def ntypeStats(dsa: MNodeSearch = null): Future[Map[MNodeType, Long]] = {
-    import esModel.api._
+    val _esModel = esModel
+    import _esModel.api._
 
     val aggName = "ntypeAgg"
     Option( dsa )
@@ -197,7 +199,7 @@ final class MNodes @Inject() (
 
   private def _afterDelete(id: String, isDeleted: Boolean = true): Unit = {
     val evt = MNodeDeleted(id, isDeleted)
-    sn.publish(evt)
+    sioNotifierClient.publish(evt)
   }
 
   override def _deleteByIds(ids: Iterable[String])(fut: Future[Option[BulkResponse]]): Future[Option[BulkResponse]] = {
@@ -223,7 +225,7 @@ final class MNodes @Inject() (
       for (docMeta <- saveFut) {
         val mnode2 = withDocMeta( m, docMeta )
         val evt = MNodeSaved(mnode2, isCreated = m.id.isEmpty)
-        sn.publish(evt)
+        sioNotifierClient.publish(evt)
       }
       saveFut
     }

@@ -42,7 +42,6 @@ trait EsModelJMXMBeanCommonI {
   def getRoutingKey(idOrNull: String): String
 
   def esIndexName: String
-  def esTypeName: String
 
   /**
    * Выдать сколько-то id'шников в алфавитном порядке.
@@ -154,7 +153,6 @@ trait EsModelCommonJMXBase extends JmxBase with EsModelJMXMBeanCommonI with Macr
     awaitString(fut)
   }
 
-  override def esTypeName = companion.ES_TYPE_NAME
   override def esIndexName = companion.ES_INDEX_NAME
 
   override def countAll(): String = {

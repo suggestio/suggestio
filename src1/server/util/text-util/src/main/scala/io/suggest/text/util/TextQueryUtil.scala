@@ -1,6 +1,6 @@
 package io.suggest.text.util
 
-import io.suggest.util.SioConstants._
+import io.suggest.es.EsConstants
 import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -70,7 +70,7 @@ object TextQueryV2Util {
         // Генерим базовый engram-запрос
         var queries1 = List(
           QueryBuilders.matchQuery(fn, engramQS)
-            .analyzer(MINIMAL_AN)
+            .analyzer( EsConstants.MINIMAL_ANALYZER )
             .fuzziness(Fuzziness.AUTO)
         )
         // Если чел уже набрал достаточное кол-во символов, то искать парралельно в fts

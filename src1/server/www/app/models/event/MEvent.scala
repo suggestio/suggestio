@@ -3,11 +3,8 @@ package models.event
 import java.time.OffsetDateTime
 
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import javax.inject.Singleton
 import io.suggest.es.model._
 import io.suggest.primo.id.OptStrId
-import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.es.MappingDsl
 
 // TODO Модель оставлена тут только для совместимости с legacy-кодом из lk-adv-ext.
 
@@ -47,32 +44,6 @@ object MEvent {
 }
 
 
-@Singleton
-class MEvents
-  extends EsModelStatic
-  with MacroLogsImpl
-{
-
-  override type T = MEvent
-  override def ES_TYPE_NAME = "ntf"
-  override def ES_INDEX_NAME = ???
-
-  private def _throwDeprecated =
-    throw new UnsupportedOperationException("MEvent deprecated")
-  /** Сборка маппинга индекса по новому формату. */
-  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping =
-    _throwDeprecated
-  override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): MEvent =
-    _throwDeprecated
-  override def toJson(m: MEvent): String =
-    _throwDeprecated
-
-  override def withDocMeta(m: MEvent, docMeta: EsDocMeta): MEvent =
-    m.copy(id = docMeta.id, versioning = docMeta.version)
-
-}
-
-
 /** Класс-экземпляр одной нотификации. */
 case class MEvent(
                    etype         : MEventType,
@@ -86,7 +57,7 @@ case class MEvent(
                    versioning    : EsDocVersion    = EsDocVersion.empty,
 )
   extends EsModelT
-    with IMEvent
+  with IMEvent
 
 
 

@@ -1,9 +1,9 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil
 import japgolly.univeq._
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
+import org.elasticsearch.index.mapper.{IdFieldMapper, RoutingFieldMapper, SourceFieldMapper, VersionFieldMapper}
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
@@ -20,6 +20,12 @@ object EsModelUtil {
   /** Сколько раз по дефолту повторять попытку update при конфликте версий. */
   def UPDATE_RETRIES_MAX_DFLT = 5
 
+  /** Special use_field_mapping format tells Elasticsearch to use the format from the mapping.
+    *
+    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-docvalue-fields.html]]
+    */
+  final def USE_FIELD_MAPPING = "use_field_mapping"
+
 
   def MAX_RESULTS_DFLT = 100
   def OFFSET_DFLT = 0
@@ -31,9 +37,17 @@ object EsModelUtil {
   /** number of actions, после которого bulk processor делает flush. */
   def BULK_PROCESSOR_BULK_SIZE_DFLT = 100
 
+  def ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS = 1000
 
-  def SHARDS_COUNT_DFLT   = 5
-  def REPLICAS_COUNT_DFLT = SioEsUtil.REPLICAS_COUNT
+
+  /** Стандартные имена полей ES. */
+  object StandardFieldNames {
+    def SOURCE        = SourceFieldMapper.NAME
+    def ROUTING       = RoutingFieldMapper.NAME
+    def ID            = IdFieldMapper.NAME
+    def VERSION       = VersionFieldMapper.NAME
+    def DOC           = "_doc"
+  }
 
 
   object Settings {
@@ -99,7 +113,7 @@ trait ITryUpdateData[T <: EsModelCommonT, TU <: ITryUpdateData[T, TU]] {
 }
 
 /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
-class TryUpdateData[T <: EsModelCommonT](override val _saveable: T) extends ITryUpdateData[T, TryUpdateData[T]] {
+final class TryUpdateData[T <: EsModelCommonT](override val _saveable: T) extends ITryUpdateData[T, TryUpdateData[T]] {
   override def _instance(m: T) = new TryUpdateData(m)
 }
 
@@ -110,4 +124,4 @@ class TryUpdateData[T <: EsModelCommonT](override val _saveable: T) extends ITry
  * @param success Кол-во успешных документов, т.е. для которых выполнена чтене и запись.
  * @param failed Кол-во обломов.
  */
-case class CopyContentResult(success: Long, failed: Long)
+final case class CopyContentResult(success: Long, failed: Long)

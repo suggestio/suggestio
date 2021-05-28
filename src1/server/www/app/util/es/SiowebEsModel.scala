@@ -1,9 +1,9 @@
 package util.es
 
 import javax.inject.Inject
-import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT}
+import io.suggest.es.model.{CopyContentResult, EsModel}
 import io.suggest.es.util.{EsClientUtil, IEsClient, TransportEsClient}
-import io.suggest.n2.node.{MNodes, SioMainEsIndex}
+import io.suggest.n2.node.{MNodes, MainEsIndex}
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import org.elasticsearch.common.transport.TransportAddress
@@ -27,11 +27,11 @@ final class SiowebEsModel @Inject() (
   extends MacroLogsImplLazy
 {
 
-
-  private val configuration = injector.instanceOf[Configuration]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
-  private lazy val esModel = injector.instanceOf[EsModel]
-  private lazy val sioMainEsIndex = injector.instanceOf[SioMainEsIndex]
+  private def configuration = injector.instanceOf[Configuration]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
+  private def esModel = injector.instanceOf[EsModel]
+  private def mainEsIndex = injector.instanceOf[MainEsIndex]
+  private def mNodes = injector.instanceOf[MNodes]
 
 
   // Устанавливать ES-mapping'и сразу при запуске? [true]
@@ -43,44 +43,14 @@ final class SiowebEsModel @Inject() (
   }
 
 
-  /**
-   * Список моделей, которые должны быть проинициалированы при старте.
-   *
-   * @return Список EsModelMinimalStaticT.
-   */
-  def ES_MODELS: Seq[EsModelCommonStaticT] = {
-    injector.instanceOf[MNodes] #::
-    LazyList.empty
-  }
-
-
-  /** Отправить маппинги всех моделей в хранилище. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT])(implicit dsl: MappingDsl): Future[Boolean] = {
-    lazy val logPrefix = s"putAllMappings(${models.length}):"
-    val ignoreExist = configuration
-      .getOptional[Boolean]("es.mapping.model.ignore_exist")
-      .getOrElseFalse
-    LOGGER.trace(s"$logPrefix ignoreExists = $ignoreExist\n models = [${models.mkString(", ")}]")
-
-    val resFut = esModel.putAllMappings( models, ignoreExist )
-
-    resFut.onComplete {
-      case Success(_)  => LOGGER.info(s"$logPrefix Finishied successfully.")
-      case Failure(ex) => LOGGER.error(s"$logPrefix Failure", ex)
-    }
-
-    resFut
-  }
-
-
   /** Запуск импорта данных ES-моделей из удалённого источника (es-кластера) в текущий.
     * Для подключения к стороннему кластеру будет использоваться transport client, не подключающийся к кластеру. */
-  def importModelsFromRemote(addrs: Seq[TransportAddress], esModels: Seq[EsModelCommonStaticT] = ES_MODELS): Future[CopyContentResult] = {
-    import esModel.api._
+  def importModelsFromRemote(addrs: Seq[TransportAddress]): Future[CopyContentResult] = {
+    val _esModel = esModel
+    import _esModel.api._
 
-    val logPrefix = "importModelsFromRemote():"
-    val esModelsCount = esModels.size
-    LOGGER.trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
+    val logPrefix = s"importModelsFromRemote(${addrs.mkString(" ")}):"
+    LOGGER.trace(s"$logPrefix starting")
 
     val fromClient = try {
       injector
@@ -88,32 +58,21 @@ final class SiowebEsModel @Inject() (
         .newTransportClient( addrs, clusterName = None )
     } catch {
       case ex: Throwable =>
-        LOGGER.error(s"Failed to create transport client: addrs=$addrs", ex)
+        LOGGER.error(s"$logPrefix Failed to create transport client: addrs=$addrs", ex)
         throw ex
     }
 
     val toClient = injector.instanceOf[IEsClient].esClient
 
-    val resultFut = Future.traverse(esModels) { esM =>
-      val copyResultFut = esM.copyContent(fromClient, toClient)
-      copyResultFut.onComplete {
+    val model = mNodes
+    model
+      .copyContent(fromClient, toClient)
+      .andThen {
         case Success(result) =>
-          LOGGER.info(s"$logPrefix Copy finished for model ${esM.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
+          LOGGER.info(s"$logPrefix Copy finished for model ${model.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
         case Failure(ex) =>
-          LOGGER.error(s"$logPrefix Copy failed for model ${esM.getClass.getSimpleName}", ex)
+          LOGGER.error(s"$logPrefix Copy failed for model ${model.getClass.getSimpleName}", ex)
       }
-      copyResultFut
-    }
-
-    for (results <- resultFut) yield {
-      val result = CopyContentResult(
-        success = results.iterator.map(_.success).sum,
-        failed  = results.iterator.map(_.failed).sum
-      )
-      import result._
-      LOGGER.info(s"$logPrefix Copy of all $esModelsCount es-models finished. Total=${success + failed} success=$success failed=$failed")
-      result
-    }
   }
 
 
@@ -122,23 +81,49 @@ final class SiowebEsModel @Inject() (
    * @param triedIndexUpdate Флаг того, была ли уже попытка обновления индекса на последнюю версию.
    */
   def initializeEsModels(triedIndexUpdate: Boolean = false): Future[_] = {
-    val startedAtMs = System.currentTimeMillis()
+    val _esModel = esModel
+    import _esModel.api._
 
-    val esModels = ES_MODELS
-    lazy val logPrefix = s"initializeEsModels($triedIndexUpdate, [${esModels.length}]):"
+    val startedAtMs = System.currentTimeMillis()
+    lazy val logPrefix = s"initializeEsModels($triedIndexUpdate):"
 
     implicit val dsl = MappingDsl.Implicits.mkNewDsl
 
+    val _sioMainEsIndex = mainEsIndex
     for {
       // Do main index initialization:
-      isIndexCreated <- sioMainEsIndex.doInit()
+      isIndexCreated <- _sioMainEsIndex.doInit()
+
       // Do needed mappings initializations:
-      _ <- putAllMappings( esModels )
       _ <- {
-        if (isIndexCreated)
-          sioMainEsIndex.doReindex()
-        else
-          Future.successful(())
+        val processDataFut = for {
+          _ <- mNodes.putMapping(
+            indexName = _sioMainEsIndex.CURR_INDEX_NAME,
+          )
+          _ <- {
+            if (isIndexCreated)
+              _sioMainEsIndex.doReindex()
+            else
+              Future.successful(())
+          }
+        } yield {
+          isIndexCreated
+        }
+
+        if (isIndexCreated) {
+          for (_ <- processDataFut.failed) {
+            val createdIndexName = _sioMainEsIndex.CURR_INDEX_NAME
+            LOGGER.warn(s"$logPrefix Failed to init es models. Will delete newly-created index $createdIndexName")
+            esModel
+              .deleteIndex( createdIndexName )
+              .recover { case deleteEx =>
+                LOGGER.warn(s"$logPrefix Cannot delete newly created index $createdIndexName", deleteEx)
+                false
+              }
+          }
+        }
+
+        processDataFut
       }
 
     } yield {
@@ -151,7 +136,6 @@ final class SiowebEsModel @Inject() (
 
 /** Интерфейс для JMX-бина.  */
 trait SiowebEsModelJmxMBean {
-  def importModelFromRemote(modelStr: String, remotes: String): String
   def importModelsFromRemote(remotes: String): String
 }
 
@@ -171,27 +155,15 @@ final class SiowebEsModelJmx @Inject() (
 
   override def _jmxType = Types.ELASTICSEARCH
 
-  override def importModelFromRemote(modelStr: String, remotes: String): String = {
-    val modelStr1 = modelStr.trim
-    val model = siowebEsModel.ES_MODELS
-      .find( _.getClass.getSimpleName.equalsIgnoreCase(modelStr1) )
-      .get
-    val fut = _importModelsFromRemote(remotes, Seq(model))
-    for (ex <- fut.failed) {
-      LOGGER.error(s"importModelsFromRemote($modelStr, $remotes): Failed", ex)
-    }
-    awaitString(fut)
-  }
-
   override def importModelsFromRemote(remotes: String): String = {
-    val fut = _importModelsFromRemote(remotes, siowebEsModel.ES_MODELS)
+    val fut = _importModelsFromRemote( remotes )
     for (ex <- fut.failed) {
       LOGGER.error(s"importModelsFromRemote($remotes): Failed", ex)
     }
     awaitString(fut)
   }
 
-  protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelCommonStaticT]): Future[String] = {
+  protected def _importModelsFromRemote(remotes: String): Future[String] = {
     val addrs = remotes
       .split("[\\s,]+")
       .iterator
@@ -200,7 +172,9 @@ final class SiowebEsModelJmx @Inject() (
         new TransportAddress(sockAddr)
       }
       .toSeq
-    for (result <- siowebEsModel.importModelsFromRemote(addrs, models)) yield {
+    for {
+      result <- siowebEsModel.importModelsFromRemote( addrs )
+    } yield {
       import result._
       s"Total=${success + failed} success=$success failed=$failed"
     }

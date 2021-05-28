@@ -1,15 +1,13 @@
 package io.suggest.n2.edge
 
 import java.time.OffsetDateTime
-
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.dev.MOsFamily
-import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.es.{IEsMappingProps, MappingDsl, EsConstants}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevel}
 import io.suggest.model.PrefixedFn
 import io.suggest.text.StringUtil
-import io.suggest.util.SioConstants
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
@@ -140,13 +138,13 @@ object MEdgeInfo
       // Теги
       F.TAGS_FN -> FText(
         index           = someTrue,
-        analyzer        = Some( SioConstants.ENGRAM_AN_1 ),
-        searchAnalyzer  = Some( SioConstants.DFLT_AN ),
+        analyzer        = Some( EsConstants.ENGRAM_1LETTER_ANALYZER ),
+        searchAnalyzer  = Some( EsConstants.DEFAULT_ANALYZER ),
         fields = Some( Json.obj(
           // При поиске тегов надо игнорить регистр:
           F.Tags.RAW_FN -> FText(
             index = someTrue,
-            analyzer = Some( SioConstants.KW_LC_AN ),
+            analyzer = Some( EsConstants.KEYWORD_LOWERCASE_ANALYZER ),
             // TODO Нужна поддержка аггрегации тут: нужен какой-то параметр тут + переиндексация. И можно удалить KW_FN.
           ),
           // Для аггрегации нужно keyword-термы. Они позволят получать необрезанные слова.

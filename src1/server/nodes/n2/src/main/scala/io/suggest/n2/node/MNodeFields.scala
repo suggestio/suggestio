@@ -20,8 +20,6 @@ import io.suggest.n2.node.meta.MMeta
 
 object MNodeFields {
 
-  val ES_TYPE_NAME = "n2"
-
   /** Абсолютные имена ES-полей в .common */
   object Common extends PrefixedFn {
     def COMMON_FN = "c"

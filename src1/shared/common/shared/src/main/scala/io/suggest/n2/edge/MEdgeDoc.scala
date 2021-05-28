@@ -1,7 +1,7 @@
 package io.suggest.n2.edge
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
-import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.es.{IEsMappingProps, MappingDsl, EsConstants}
 import io.suggest.primo.id.OptId
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
@@ -9,7 +9,6 @@ import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.util.SioConstants
 
 /**
   * Suggest.io
@@ -32,31 +31,15 @@ object MEdgeDoc
 
   /** Список имён полей модели [[MEdgeDoc]]. */
   object Fields {
-
     val UID_FN = "i"
-
     val TEXT_FN = "t"
-
   }
 
   /** Поддержка play-json. */
   implicit val edgeDocJson: OFormat[MEdgeDoc] = {
     (
-      (__ \ Fields.UID_FN).formatNullable[EdgeUid_t] and {
-        val textPath = (__ \ Fields.TEXT_FN)
-        // TODO После resaveMany() заменить это всё на (__ \ Fields.TEXT_FN).formatNullable[String]
-        // До 2020-03-05 тут был массив строк ["ads"] с одной строкой внутри.
-        val textReadsCompat = textPath
-          .read[String]
-          .map( Option.apply )
-          .orElse {
-            textPath
-              .readNullable[Seq[String]]
-              .map( _.flatMap(_.headOption) )
-          }
-        val textWrites = textPath.writeNullable[String]
-        OFormat( textReadsCompat, textWrites )
-      }
+      (__ \ Fields.UID_FN).formatNullable[EdgeUid_t] and
+      (__ \ Fields.TEXT_FN).formatNullable[String]
     )(apply, unlift(unapply))
   }
 
@@ -78,8 +61,8 @@ object MEdgeDoc
       F.TEXT_FN -> FText(
         index = someTrue,
         // Скопипасчено с MNode._all. Начиная с ES-6.0, поле _all покидает нас, поэтому тут свой индекс.
-        analyzer = Some(SioConstants.ENGRAM_AN_1),
-        searchAnalyzer = Some(SioConstants.DFLT_AN),
+        analyzer = Some( EsConstants.ENGRAM_1LETTER_ANALYZER ),
+        searchAnalyzer = Some( EsConstants.DEFAULT_ANALYZER ),
       ),
     )
   }
