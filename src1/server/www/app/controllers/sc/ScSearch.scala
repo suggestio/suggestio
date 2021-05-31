@@ -55,9 +55,8 @@ trait ScSearch
 
     def nodesSearch: Future[MNodeSearch] = {
       mGeoLocOptFut.flatMap { mGeoLocOpt2 =>
-        val msearch = scSearchUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
-        LOGGER.trace(s"$logPrefix geoLoc2 = ${mGeoLocOpt2.orNull}\n msearch = $msearch")
-        msearch
+        LOGGER.trace(s"$logPrefix geoLoc = ${mGeoLocOpt2.orNull}")
+        scSearchUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
       }
     }
 

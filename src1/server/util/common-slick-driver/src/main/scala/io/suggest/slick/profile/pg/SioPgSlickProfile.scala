@@ -21,16 +21,9 @@ trait SioPgSlickProfileT
   /** Реализация API расширенного slick-pg-драйвера. */
   trait ExPgApiT
     extends API
-    // slick-pg: Plain-импорты для sql-интерполятора, просто import'ы для lifted api.
-    with ArrayImplicits with SimpleArrayPlainImplicits
+    with SimpleArrayPlainImplicits
     with DateTimeImplicits
   {
-
-    protected val _strArrayTypeMapper = new SimpleArrayJdbcType[String]("text")
-
-    //implicit val strListTypeMapper    = _strArrayTypeMapper.to(_.toList)
-    implicit val strSeqTypeMapper     = _strArrayTypeMapper.to(_.toSeq)
-
 
     /** Костыли для SqlAction */
     implicit class SqlActionPgExtensionMethods[R, S <: NoStream, E <: Effect.Read](val a: SqlAction[R, S, E]) {

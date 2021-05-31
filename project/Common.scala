@@ -34,12 +34,12 @@ object Common {
     val GUICE = "4.+"
 
     /** Версия typesafe slick. */
-    val SLICK        = "3.3.+"
+    val SLICK        = "3.3.2"
 
     /** Версия slick-pg.
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
-    val SLICK_PG     = "0.19.+"
+    val SLICK_PG     = "0.19.3"
 
     /** Версия play-slick прослойки. */
     val PLAY_SLICK   = "5.+"

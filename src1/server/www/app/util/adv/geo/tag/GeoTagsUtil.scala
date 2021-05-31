@@ -17,7 +17,6 @@ import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.MCtxOuter
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
-import io.suggest.es.EsConstants
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import models.mcron.MCronTask
 import models.mproj.ICommonDi
@@ -180,7 +179,7 @@ class GeoTagsUtil @Inject() (
         mNodes
           .saveReturning(tagNode0)
           .andThen {
-            case Success(nodeId) => LOGGER.info(s"$logPrefix Created NEW node[$nodeId] for tag")
+            case Success(tagNode) => LOGGER.info(s"$logPrefix Created NEW node#${tagNode.idOrNull} for tag#${tagFace}")
             case Failure(ex)     => LOGGER.error(s"$logPrefix Unable to create tag-node", ex)
           }
       }
