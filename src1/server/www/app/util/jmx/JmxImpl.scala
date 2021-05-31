@@ -13,7 +13,7 @@ import io.suggest.stat.inx.StatIndexUtilJmx
 import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
-import play.api.inject.ApplicationLifecycle
+import play.api.inject.{ApplicationLifecycle, Injector}
 import util.adn.NodesUtilJmx
 import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.AdvGeoRcvrsUtilJmx
@@ -33,6 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 case class JmxImpl @Inject() (
+                               injector                      : Injector,
                                esModelJmx                    : EsModelJmx,
                                siowebEsModelJmx              : SiowebEsModelJmx,
                                advRcvrsUtilJmx               : AdvRcvrsUtilJmx,
@@ -52,12 +53,12 @@ case class JmxImpl @Inject() (
                                tfDailyUtilJmx                : TfDailyUtilJmx,
                                nodesUtilJmx                  : NodesUtilJmx,
                                imgMaintainUtilJmx            : ImgMaintainUtilJmx,
-                               lifecycle                     : ApplicationLifecycle,
                                mainEsIndexJmx                : MainEsIndexJmx,
-                               implicit private val ec       : ExecutionContext,
                              )
   extends MacroLogsImplLazy
 {
+
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private def JMX_MODELS = {
@@ -73,7 +74,7 @@ case class JmxImpl @Inject() (
   registerAll()
 
   // Destructor
-  lifecycle.addStopHook { () =>
+  injector.instanceOf[ApplicationLifecycle].addStopHook { () =>
     Future {
       unregisterAll()
     }

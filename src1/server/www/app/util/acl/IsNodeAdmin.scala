@@ -338,8 +338,3 @@ final class IsNodeAdmin @Inject()(
   }
 
 }
-
-/** Интерфейс для поля c DI-инстансом [[IsNodeAdmin]]. */
-trait IIsNodeAdmin {
-  val isNodeAdmin: IsNodeAdmin
-}

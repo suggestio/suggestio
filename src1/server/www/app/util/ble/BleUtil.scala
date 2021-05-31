@@ -102,9 +102,3 @@ class BleUtil {
   }
 
 }
-
-
-/** Интерфейс для поля с инжектируемым инстансом [[BleUtil]]. */
-trait IBleUtilDi {
-  def bleUtil: BleUtil
-}

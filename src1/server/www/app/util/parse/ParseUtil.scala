@@ -25,27 +25,3 @@ object SaxParseUtil {
   }
 
 }
-
-
-
-object TikaParseUtil {
-
-  /**
-   * Привести HTTP-хидеры ответа к метаданным tika.
-   * @param respHeaders Заголовки ответа, если есть.
-   * @param urlOpt Исходная ссылка, если есть.
-   * @param meta Необязательный исходный аккамулятор метаданных tika.
-   * @return Экземпляр Metadata.
-   */
-  def httpHeaders2meta(respHeaders: Map[String, Seq[String]], urlOpt: Option[String], meta: Metadata = new Metadata): Metadata = {
-    respHeaders
-      .iterator
-      .flatMap { case (k, vs) => vs.iterator.map(v => (k, v)) }
-      // TODO Выверять названия хидеров. Они могут приходить в нижнем регистре.
-      .foreach { case (k, v) => meta.add(k, v) }
-    if (urlOpt.isDefined)
-      meta.add(TikaMetadataKeys.RESOURCE_NAME_KEY, urlOpt.get)
-    meta
-  }
-
-}

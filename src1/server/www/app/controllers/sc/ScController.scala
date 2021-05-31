@@ -1,5 +1,6 @@
 package controllers.sc
 
+import io.suggest.es.model.EsModel
 import io.suggest.sc.sc3.MSc3RespAction
 
 import javax.inject.{Inject, Singleton}
@@ -8,7 +9,6 @@ import models.mproj.IMCommonDi
 import models.req.IReq
 import util.acl.SioControllerApi
 import util.cdn.ICdnUtilDi
-import util.di.ILogoUtilDi
 import util.stat.{IStatUtil, StatUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -74,11 +74,11 @@ final class ScCtlApi @Inject()(
 trait ScController
   extends IMCommonDi
   with ICdnUtilDi
-  with ILogoUtilDi
   with IStatUtil
 {
 
   val sioControllerApi: SioControllerApi
+  val esModel: EsModel
 
   import sioControllerApi.request2Messages
   import mCommonDi.ec

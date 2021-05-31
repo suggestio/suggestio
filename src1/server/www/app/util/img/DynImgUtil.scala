@@ -680,11 +680,6 @@ final class DynImgUtil @Inject() (
 
 }
 
-/** Интерфейс для доступа к DI-полю с утилью для DynImg. */
-trait IDynImgUtil {
-  def dynImgUtil: DynImgUtil
-}
-
 
 /** Интерфейс поддержки JMX для [[DynImgUtil]]. */
 trait DynImgUtilJmxMBean {

@@ -10,7 +10,6 @@ import io.suggest.n2.node.MNode
 import io.suggest.proto.http.HttpConst
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
-import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import models.mctx.{Context, ContextUtil}
@@ -35,7 +34,6 @@ import scala.util.Try
   * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
   */
 final class StatUtil @Inject()(
-                                statCookiesUtil         : StatCookiesUtil,
                                 playStatSaver           : PlayStatSaver,
                                 contextUtil             : ContextUtil,
                                 geoIpUtil               : GeoIpUtil,
@@ -156,12 +154,6 @@ final class StatUtil @Inject()(
         .flatten
     }
 
-    def clUidOpt: Option[String] = {
-      statCookiesUtil
-        .getFromRequest(ctx.request)
-        .map { UuidUtil.uuidToBase64 }
-    }
-
 
     /** stat action для описания текущего юзера. Можно получить его через userSaOptFut() или userSaOptFutFromRequest(). */
     def userSaOpt: Option[MAction]
@@ -260,7 +252,6 @@ final class StatUtil @Inject()(
       MCommonStat(
         components      = MComponents.Sc :: components,
         ip              = Some( remoteAddr.remoteAddr ),
-        clientUid       = clUidOpt,
         uri             = uri,
         domain3p        = domain3p,
         isLocalClient   = Some(isLocalClient),

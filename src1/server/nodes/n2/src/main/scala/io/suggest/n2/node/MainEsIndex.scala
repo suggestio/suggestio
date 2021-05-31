@@ -52,8 +52,8 @@ object MainEsIndex {
   * Primarily created for index upgrading between major ES updates.
   */
 final class MainEsIndex @Inject()(
-                                       injector: Injector,
-                                     )
+                                   injector: Injector,
+                                 )
   extends MacroLogsImpl
 {
 

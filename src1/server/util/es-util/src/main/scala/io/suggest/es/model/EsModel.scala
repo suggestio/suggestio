@@ -2019,11 +2019,6 @@ final class EsModel @Inject()(
 }
 
 
-trait EsModelDi {
-  val esModel: EsModel
-}
-
-
 /** Базовый шаблон для статических частей ES-моделей, НЕ имеющих _parent'ов. Применяется в связке с [[EsModelT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
 trait EsModelStaticT extends EsModelCommonStaticT {

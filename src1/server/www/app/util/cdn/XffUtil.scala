@@ -4,8 +4,8 @@ import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import play.api.mvc._
-
 import play.api.http.HeaderNames._
+import play.api.inject.Injector
 import util.acl.AclUtil
 
 /**
@@ -18,12 +18,14 @@ import util.acl.AclUtil
  */
 
 class DumpXffHeaders @Inject() (
-  configuration             : Configuration,
-  aclUtil                   : AclUtil
-)
+                                 injector                  : Injector,
+                                 aclUtil                   : AclUtil
+                               )
   extends EssentialFilter
   with MacroLogsImpl
 {
+
+  private def configuration = injector.instanceOf[Configuration]
 
   /** Какие заголовки дампить? Если фильтр отключён, то эта настройка всё равно прочитается. */
   lazy val DUMP_HEADER_NAMES: Seq[String] = {

@@ -1,7 +1,6 @@
 package controllers.sc
 
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import io.suggest.es.model.EsModelDi
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{IMNodes, MNode}
@@ -12,7 +11,7 @@ import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
 import util.geo.IGeoIpUtilDi
-import util.showcase.IScTagsUtilDi
+import util.showcase.ScSearchUtil
 import util.stat.IStatUtil
 import japgolly.univeq._
 import util.adv.geo.IAdvGeoRcvrsUtilDi
@@ -28,13 +27,13 @@ import scala.concurrent.Future
 trait ScSearch
   extends ScController
   with IMNodes
-  with IScTagsUtilDi
   with IGeoIpUtilDi
   with IStatUtil
   with IMacroLogs
   with IAdvGeoRcvrsUtilDi
-  with EsModelDi
 {
+
+  def scSearchUtil: ScSearchUtil
 
   import mCommonDi._
   import esModel.api._
@@ -56,7 +55,7 @@ trait ScSearch
 
     def nodesSearch: Future[MNodeSearch] = {
       mGeoLocOptFut.flatMap { mGeoLocOpt2 =>
-        val msearch = scTagsUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
+        val msearch = scSearchUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
         LOGGER.trace(s"$logPrefix geoLoc2 = ${mGeoLocOpt2.orNull}\n msearch = $msearch")
         msearch
       }

@@ -4,7 +4,7 @@ import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
-import io.suggest.es.model.{EsModelDi, MEsInnerHitsInfo, MEsNestedSearch, MEsUuId}
+import io.suggest.es.model.{MEsInnerHitsInfo, MEsNestedSearch, MEsUuId}
 import io.suggest.es.search.MRandomSortData
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.tags.JdTag
@@ -50,7 +50,6 @@ trait ScAdsTile
   with IStatUtil
   with IJdAdUtilDi
   with INodesUtil
-  with EsModelDi
 {
 
   import mCommonDi._

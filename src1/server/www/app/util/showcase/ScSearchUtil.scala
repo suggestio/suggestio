@@ -2,7 +2,6 @@ package util.showcase
 
 import io.suggest.common.empty.OptionUtil
 
-import javax.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.es.model.{IMust, MEsNestedSearch}
 import io.suggest.geo.{CircleGs, GeoShapeJvm, MGeoLoc, MNodeGeoLevels}
@@ -20,7 +19,6 @@ import scala.concurrent.Future
   * Created: 04.10.16 15:51
   * Description: Утиль для поиска тегов в выдаче.
   */
-@Singleton
 final class ScSearchUtil {
 
   /** Дефолтовое значение limit, если не указано или некорректно. */
@@ -131,9 +129,4 @@ final class ScSearchUtil {
     Future.successful(r)
   }
 
-}
-
-/** Интерфейс для DI-поля с инстансом [[ScSearchUtil]]. */
-trait IScTagsUtilDi {
-  def scTagsUtil: ScSearchUtil
 }

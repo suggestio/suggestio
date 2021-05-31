@@ -12,6 +12,8 @@ import io.suggest.es.MappingDsl
 trait EsModelStaticMapping {
 
   def ES_INDEX_NAME: String
+
+  /** Deprecated in ES-6, removed in ES-7, but needed only for PUT Mapping API via ES java transport client. */
   def ES_TYPE_NAME: String
 
   /** Generate ES index mapping (internal DSL). */

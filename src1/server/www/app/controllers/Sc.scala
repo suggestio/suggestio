@@ -16,7 +16,7 @@ import util.geo.GeoIpUtil
 import util.img.{DynImgUtil, IImgMaker, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase._
-import util.stat.{StatCookiesUtil, StatUtil}
+import util.stat.StatUtil
 
 
 /**
@@ -32,7 +32,6 @@ final class Sc @Inject() (
                      override val welcomeUtil        : WelcomeUtil,
                      override val bleUtil            : BleUtil,
                      override val statUtil           : StatUtil,
-                     override val statCookiesUtil    : StatCookiesUtil,
                      override val mNodes             : MNodes,
                      override val scUtil             : ShowcaseUtil,
                      override val cdnUtil            : CdnUtil,
@@ -46,7 +45,7 @@ final class Sc @Inject() (
                      override val nodesUtil          : NodesUtil,
                      override val isNodeAdmin        : IsNodeAdmin,
                      override val canEditAd          : CanEditAd,
-                     override val scTagsUtil         : ScSearchUtil,
+                     override val scSearchUtil       : ScSearchUtil,
                      override val geoIpUtil          : GeoIpUtil,
                      override val corsUtil           : CorsUtil,
                      override val esModel            : EsModel,

@@ -22,6 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Утиль для akka streams.
   */
 class StreamsUtil @Inject() (
+                            // TODO Injector, inject everything lazily.
                               implicit private val ec   : ExecutionContext,
                               implicit private val mat  : Materializer
                             ) { outer =>
@@ -261,8 +262,4 @@ class StreamsUtil @Inject() (
       .via( Compression.gzip )
   }
 
-}
-
-trait IStreamsUtilDi {
-  val streamsUtil: StreamsUtil
 }

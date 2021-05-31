@@ -1,13 +1,12 @@
 package util.billing.cron
 
 import java.time.OffsetDateTime
-
-import io.suggest.es.model.EsModelDi
+import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
 import io.suggest.n2.node.{IMNodes, MNode}
-import io.suggest.streams.IStreamsUtilDi
+import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, MCtxOuter, TryUpdateBuilder}
 import models.mproj.IMCommonDi
@@ -48,9 +47,10 @@ abstract class AdvsUpdate
   with AdvBuilderFactoryDi
   with IMItems
   with IMNodes
-  with IStreamsUtilDi
-  with EsModelDi
 {
+
+  val esModel: EsModel
+  val streamsUtil: StreamsUtil
 
   import streamsUtil.Implicits._
   import mCommonDi._

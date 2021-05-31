@@ -3,7 +3,6 @@ package controllers.sc
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
-import io.suggest.es.model.EsModelDi
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.n2.node.search.MNodeSearch
@@ -39,7 +38,6 @@ trait ScFocusedAds
   with ICanEditAdDi
   with IStatUtil
   with IJdAdUtilDi
-  with EsModelDi
 {
 
   import mCommonDi._

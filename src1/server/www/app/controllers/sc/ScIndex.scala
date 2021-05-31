@@ -1,13 +1,12 @@
 package controllers.sc
 
-import _root_.util.di._
 import io.suggest.adn.MAdnRights
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.es.model.{EsDocMeta, EsDocVersion, EsModelDi, IMust, MEsNestedSearch}
+import io.suggest.es.model.{EsDocMeta, EsDocVersion, IMust, MEsNestedSearch}
 import io.suggest.es.search.MSubSearch
 import io.suggest.geo._
 import io.suggest.i18n.MsgCodes
@@ -28,10 +27,10 @@ import models.mwc.MWelcomeRenderArgs
 import models.req.IReq
 import util.acl._
 import util.adn.INodesUtil
-import util.ble.IBleUtilDi
+import util.ble.BleUtil
 import util.geo.IGeoIpUtilDi
-import util.img.IDynImgUtil
-import util.stat.{IStatCookiesUtilDi, IStatUtil}
+import util.img.{DynImgUtil, LogoUtil, WelcomeUtil}
+import util.stat.IStatUtil
 import util.showcase.IScUtil
 import japgolly.univeq._
 
@@ -47,18 +46,18 @@ import scala.concurrent.Future
 trait ScIndex
   extends ScController
   with IMacroLogs
-  with IStatCookiesUtilDi
   with IMNodes
   with INodesUtil
-  with IWelcomeUtil
   with IScUtil
   with IGeoIpUtilDi
   with IStatUtil
-  with IBleUtilDi
-  with IDynImgUtil
-  with IIsNodeAdmin
-  with EsModelDi
 {
+
+  def welcomeUtil: WelcomeUtil
+  def bleUtil: BleUtil
+  def isNodeAdmin: IsNodeAdmin
+  def dynImgUtil: DynImgUtil
+  def logoUtil: LogoUtil
 
   import mCommonDi._
   import esModel.api._

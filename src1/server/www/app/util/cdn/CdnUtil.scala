@@ -20,6 +20,7 @@ import io.suggest.n2.node.MNode
 import io.suggest.proto.http.HttpConst
 import util.up.UploadUtil
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,15 +35,17 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 @Singleton
 class CdnUtil @Inject() (
-                          corsUtil                  : CorsUtil,
-                          configuration             : Configuration,
+                          injector                  : Injector,
                           iMediaStorages            : IMediaStorages,
-                          uploadUtil                : UploadUtil,
-                          swfsVolumeCache           : SwfsVolumeCache,
                           implicit private val ec   : ExecutionContext
                         )
   extends MacroLogsImpl
 {
+
+  private def configuration = injector.instanceOf[Configuration]
+  private def uploadUtil = injector.instanceOf[UploadUtil]
+  private def corsUtil = injector.instanceOf[CorsUtil]
+  private def swfsVolumeCache = injector.instanceOf[SwfsVolumeCache]
 
   /** Прочитать из конфига список CDN-хостов для указанного протокола. */
   def getCdnHostsForProto(proto: String): List[String] = {
