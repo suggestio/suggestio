@@ -1,6 +1,5 @@
 package io.suggest.es.model
 
-import io.suggest.es.EsConstants
 import japgolly.univeq.UnivEq
 import org.apache.commons.collections4.IteratorUtils
 import org.elasticsearch.index.query.InnerHitBuilder

@@ -75,7 +75,7 @@ object MNodeAd extends IEmpty {
   }
 
   /** Пустой экземпляр модели, расшарен между кучей инстансов [[io.suggest.n2.node.MNode]]. */
-  override val empty = MNodeAd()
+  override def empty = MNodeAd()
 
 }
 

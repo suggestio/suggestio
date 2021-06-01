@@ -24,7 +24,7 @@ object Common {
 
     /** Apache Tika.
       * @see [[https://mvnrepository.com/artifact/org.apache.tika/tika-core]]
-      * tika 1.25+ - требуется play-2.8.8+, иначе конфликт версий jackson
+      * tika 1.25+ - need play-2.8.8++, overwise conflicting jackson-databind versions with akka right after [www] run.
       */
     val TIKA = "1.24"
 
@@ -33,10 +33,14 @@ object Common {
 
     val GUICE = "4.+"
 
-    /** Версия typesafe slick. */
+    /** Typesafe slick version.
+      * v3.3.3 - fails to execute query in GeoTagsUtil.rebuildTag() due to issue [[https://github.com/slick/slick/issues/2246]]
+      */
     val SLICK        = "3.3.2"
 
-    /** Версия slick-pg.
+    /** slick-pg version.
+      * 0.19.3 => slick-3.3.2
+      * 0.19.4+ needs slick-3.3.3 => failing (see SLICK comment above).
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
     val SLICK_PG     = "0.19.3"
@@ -71,8 +75,6 @@ object Common {
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
     val THREETEN_EXTRA = "1.5.+"
-
-
 
 
     val REACT_IMAGE_GALLERY = "1.0.8"

@@ -20,6 +20,7 @@ import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.jd.MJdEdgeId
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.json.PlayJsonUtil
 import monocle.Traversal
 import monocle.macros.GenLens
 import org.elasticsearch.action.bulk.BulkResponse
@@ -247,15 +248,16 @@ final case class MNode(
                         meta                        : MMeta           = MMeta(),
                         extras                      : MNodeExtras     = MNodeExtras.empty,
                         edges                       : MNodeEdges      = MNodeEdges.empty,
-                        // TODO ad - Удалить: это остатки старого рендера, который зависит от непортированных на jd-ads кусков кода в www (рендер, MAdAi, etc)
-                        @deprecated("Use extras.doc with jd-format", "2019")
-  ad                          : MNodeAd         = MNodeAd.empty,
                         billing                     : MNodeBilling    = MNodeBilling.empty,
                         override val id             : Option[String]  = None,
                         override val versioning     : EsDocVersion    = EsDocVersion.empty,
-)
+                      )
   extends EsModelT
 {
+
+  // TODO ad - Delete. Rest parts of ancient rendering format, not used anymore.
+  @deprecated("Use extras.doc with jd-format", "2019")
+  def ad = MNodeAd.empty
 
   lazy val guessDisplayName: Option[String] = {
     meta.basic

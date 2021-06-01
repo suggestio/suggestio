@@ -1,6 +1,6 @@
 package io.suggest.xplay.json
 
-import play.api.libs.json.{Format, JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, Json, Reads, Writes}
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -90,6 +90,25 @@ object PlayJsonUtil {
   def prettify(jsonStr: String): String = {
     val parsed = Json.parse(jsonStr)
     Json.prettyPrint( parsed )
+  }
+
+
+  /** Make JSON Format with fallback field name for Reads. */
+  def fallbackPathFormat[A: Format](path: String, fallbackPath: String): OFormat[A] = {
+    val fmt0 = (__ \ path).format[A]
+    val readsWithFallback = fmt0.orElse {
+      (__ \ fallbackPath).read[A]
+    }
+    OFormat( readsWithFallback, fmt0 )
+  }
+
+  /** Make JSON Format with fallback field name for Reads. */
+  def fallbackPathFormatNullable[A: Format](path: String, fallbackPath: String): OFormat[Option[A]] = {
+    val fmt0 = (__ \ path).formatNullable[A]
+    val readsWithFallback = fmt0.orElse {
+      (__ \ fallbackPath).readNullable[A]
+    }
+    OFormat( readsWithFallback, fmt0 )
   }
 
 }
