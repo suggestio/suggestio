@@ -20,7 +20,6 @@ import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.primo.id._
 import models.mctx.Context
 import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
 import models.req.{BfpArgs, IReq}

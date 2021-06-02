@@ -80,8 +80,8 @@ trait ScController
   val sioControllerApi: SioControllerApi
   val esModel: EsModel
 
-  import sioControllerApi.request2Messages
   import mCommonDi.ec
+  import sioControllerApi.request2Messages
 
 
   /** Быстренькое добавление поля lazy val ctx в код sc-логики. */

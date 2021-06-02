@@ -6,6 +6,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -23,7 +24,7 @@ object MMeta extends IEsMappingProps {
   object Fields {
 
     object Basic extends PrefixedFn {
-      val BASIC_FN            = "b"
+      val BASIC_FN            = "basic"
       override protected def _PARENT_FN = BASIC_FN
 
       import MBasicMeta.{Fields => F}
@@ -33,19 +34,19 @@ object MMeta extends IEsMappingProps {
     }
 
     object Person {
-      val PERSON_FN     = "p"
+      val PERSON_FN     = "person"
     }
 
     object Address {
-      val ADDRESS_FN    = "a"
+      val ADDRESS_FN    = "address"
     }
 
     object Business {
-      val BUSINESS_FN   = "u"
+      val BUSINESS_FN   = "business"
     }
 
     object Colors extends PrefixedFn {
-      val COLORS_FN     = "c"
+      val COLORS_FN     = "colors"
       override protected def _PARENT_FN = COLORS_FN
 
       def BG_CODE_FN = _fullFn( MColors.Fields.Bg.BG_CODE_FN )
@@ -63,29 +64,23 @@ object MMeta extends IEsMappingProps {
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MMeta] = (
-    // На момент разработки (около 2015.sep.25) модели были в базе экземпляры без этих метаданных.
-    // TODO Потом (после наверное 2015.nov) можно будет "Nullable" удалить у basic meta.
-    (__ \ BASIC_FN).formatNullable[MBasicMeta]
-      .inmap[MBasicMeta](
-        opt2ImplEmpty1F( MBasicMeta() ),
-        someF
-      ) and
-    (__ \ PERSON_FN).formatNullable[MPersonMeta]
+    PlayJsonUtil.fallbackPathFormat[MBasicMeta]( BASIC_FN, "b" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[MPersonMeta]( PERSON_FN, "p" )
       .inmap[MPersonMeta] (
         opt2ImplMEmptyF ( MPersonMeta ),
         implEmpty2OptF
       ) and
-    (__ \ ADDRESS_FN).formatNullable[MAddress]
+    PlayJsonUtil.fallbackPathFormatNullable[MAddress]( ADDRESS_FN, "a" )
       .inmap [MAddress] (
         opt2ImplMEmptyF( MAddress ),
         implEmpty2OptF
       ) and
-    (__ \ BUSINESS_FN).formatNullable[MBusinessInfo]
+    PlayJsonUtil.fallbackPathFormatNullable[MBusinessInfo]( BUSINESS_FN, "u" )
       .inmap[MBusinessInfo](
         opt2ImplMEmptyF( MBusinessInfo ),
         implEmpty2OptF
       ) and
-    (__ \ COLORS_FN).formatNullable[MColors]
+    PlayJsonUtil.fallbackPathFormatNullable[MColors]( COLORS_FN, "c" )
       .inmap[MColors](
         opt2ImplMEmptyF( MColors ),
         implEmpty2OptF

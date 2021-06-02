@@ -2,6 +2,7 @@ package io.suggest.n2.bill.tariff.daily
 
 import io.suggest.bill.Amount_t
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.xplay.json.PlayJsonUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -20,28 +21,19 @@ object MDayClause
 {
 
   object Fields {
-    val NAME_FN   = "n"
-    private[MDayClause] val DOUBLE_AMOUNT_FN = "am"
-    val AMOUNT_FN = "m"
-    val CAL_ID_FN = "cal"
+    val NAME_FN = "name"
+    val AMOUNT_FN = "amount"
+    val CALENDAR_ID_FN = "calendarId"
   }
 
 
   import Fields._
 
   implicit val FORMAT: Format[MDayClause] = {
-    val amountFmt = (__ \ AMOUNT_FN).format[Amount_t]
-    // Изначально, суммы были в double, поэтому тут FALLBACK: TODO Удалить FALLBACK после resaveMany().
-    val amountFallbackReads = amountFmt.orElse {
-      (__ \ DOUBLE_AMOUNT_FN).read[Double]
-        .map { x => (x * 100).toLong }
-    }
-    val amountFmt2 = OFormat( amountFallbackReads, amountFmt)
-
     (
-      (__ \ NAME_FN).format[String] and
-      amountFmt2 and
-      (__ \ CAL_ID_FN).formatNullable[String]
+      PlayJsonUtil.fallbackPathFormat[String]( NAME_FN, "n" ) and
+      PlayJsonUtil.fallbackPathFormat[Amount_t]( AMOUNT_FN, "m" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[String]( CALENDAR_ID_FN, "cal" )
     )(apply, unlift(unapply))
   }
 
@@ -77,7 +69,7 @@ object MDayClause
         typ   = DocFieldTypes.Long,
         index = someFalse,
       ),
-      F.CAL_ID_FN -> FKeyWord.indexedJs,
+      F.CALENDAR_ID_FN -> FKeyWord.indexedJs,
     )
   }
 

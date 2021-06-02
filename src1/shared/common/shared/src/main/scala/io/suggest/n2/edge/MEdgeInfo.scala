@@ -3,7 +3,7 @@ package io.suggest.n2.edge
 import java.time.OffsetDateTime
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.dev.MOsFamily
-import io.suggest.es.{IEsMappingProps, MappingDsl, EsConstants}
+import io.suggest.es.{EsConstants, IEsMappingProps, MappingDsl}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevel}
 import io.suggest.model.PrefixedFn
@@ -14,6 +14,7 @@ import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.xplay.json.PlayJsonUtil
 
 /**
  * Suggest.io
@@ -38,16 +39,16 @@ object MEdgeInfo
   /** Модель названий полей модели [[MEdgeInfo]]. */
   object Fields {
 
-    val DATE_FN           = "dt"
-    val DATE_NI_FN        = "dtni"
-    val COMMENT_NI_FN     = "coni"
+    val DATE_FN           = "date"
+    val DATE_NI_FN        = "dateNoInx"
+    val COMMENT_NI_FN     = "comment"
     val FLAG_FN           = "flag"
-    val FLAGS_FN          = "f"
-    val GEO_SHAPES_FN     = "gss"
+    val FLAGS_FN          = "edgeFlags"
+    val GEO_SHAPES_FN     = "geoShapes"
     val TAGS_FN           = "tags"
-    val GEO_POINT_FN      = "gpt"
-    val EXT_SERVICE_FN    = "xs"
-    val OS_FAMILY_FN      = "os"
+    val GEO_POINT_FN      = "geoPoints"
+    val EXT_SERVICE_FN    = "externalService"
+    val OS_FAMILY_FN      = "osFamily"
 
     /** Поле тегов внутри является multi-field. Это нужно для аггрегации, например. */
     object Tags extends PrefixedFn {
@@ -70,7 +71,7 @@ object MEdgeInfo
       import MEdgeGeoShape.{Fields => Fs}
 
       def GS_GLEVEL_FN                    = _fullFn( Fs.GLEVEL_FN )
-      def GS_GJSON_COMPAT_FN              = _fullFn( Fs.GJSON_COMPAT_FN )
+      def GS_GJSON_COMPAT_FN              = _fullFn( Fs.GEO_JSON_COMPAT_FN )
       def GS_SHAPE_FN(ngl: MNodeGeoLevel) = _fullFn( Fs.SHAPE_FN(ngl) )
 
     }
@@ -90,11 +91,11 @@ object MEdgeInfo
   implicit val mEdgeInfoFormat: Format[MEdgeInfo] = {
     val F = Fields
     (
-      (__ \ F.DATE_FN).formatNullable[OffsetDateTime] and
-      (__ \ F.DATE_NI_FN).formatNullable[OffsetDateTime] and
-      (__ \ F.COMMENT_NI_FN).formatNullable[String] and
+      PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( F.DATE_FN, "dt" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( F.DATE_NI_FN, "dtni" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[String]( F.COMMENT_NI_FN, "coni" ) and
       (__ \ F.FLAG_FN).formatNullable[Boolean] and
-      (__ \ F.FLAGS_FN).formatNullable[Iterable[MEdgeFlagData]]
+      PlayJsonUtil.fallbackPathFormatNullable[Iterable[MEdgeFlagData]]( F.FLAGS_FN, "flags" )
         .inmap[Iterable[MEdgeFlagData]](
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { flags => if (flags.isEmpty) None else Some(flags) }
@@ -104,18 +105,18 @@ object MEdgeInfo
           EmptyUtil.opt2ImplEmptyF( Set.empty ),
           { tags => if (tags.nonEmpty) Some(tags) else None }
         ) and
-      (__ \ F.GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
+      PlayJsonUtil.fallbackPathFormatNullable[List[MEdgeGeoShape]]( F.GEO_SHAPES_FN, "gss" )
         .inmap [List[MEdgeGeoShape]] (
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { geos => if (geos.nonEmpty) Some(geos) else None }
         ) and
-      (__ \ F.GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
+      PlayJsonUtil.fallbackPathFormatNullable[Seq[MGeoPoint]]( F.GEO_POINT_FN, "gpt" )
         .inmap [Seq[MGeoPoint]] (
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { gps => if (gps.nonEmpty) Some(gps) else None }
         ) and
-      (__ \ F.EXT_SERVICE_FN).formatNullable[MExtService] and
-      (__ \ F.OS_FAMILY_FN).formatNullable[MOsFamily]
+      PlayJsonUtil.fallbackPathFormatNullable[MExtService]( F.EXT_SERVICE_FN, "xs" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[MOsFamily]( F.OS_FAMILY_FN, "os" )
     )(apply, unlift(unapply))
   }
 

@@ -79,19 +79,19 @@ final class MNodes @Inject() (
 
   /** Почти-собранный play.json.Format. */
   private val DATA_FORMAT: OFormat[MNode] = (
-    (__ \ Fields.Common.COMMON_FN).format[MNodeCommon] and
-    (__ \ Fields.Meta.META_FN).format[MMeta] and
-    (__ \ Fields.Extras.EXTRAS_FN).formatNullable[MNodeExtras]
+    PlayJsonUtil.fallbackPathFormat[MNodeCommon]( Fields.Common.COMMON_FN, "c" ) and
+    PlayJsonUtil.fallbackPathFormat[MMeta]( Fields.Meta.META_FN, "m" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[MNodeExtras]( Fields.Extras.EXTRAS_FN, "x" )
       .inmap [MNodeExtras] (
         opt2ImplMEmptyF( MNodeExtras ),
         implEmpty2OptF
       ) and
-    (__ \ Fields.Edges.EDGES_FN).formatNullable[MNodeEdges]
+    PlayJsonUtil.fallbackPathFormatNullable[MNodeEdges]( Fields.Edges.EDGES_FN, "e" )
       .inmap [MNodeEdges] (
         opt2ImplMEmptyF( MNodeEdges ),
         implEmpty2OptF
     ) and
-    (__ \ Fields.Billing.BILLING_FN).formatNullable[MNodeBilling]
+    PlayJsonUtil.fallbackPathFormatNullable[MNodeBilling]( Fields.Billing.BILLING_FN, "b" )
       .inmap [MNodeBilling] (
         opt2ImplMEmptyF( MNodeBilling ),
         implEmpty2OptF

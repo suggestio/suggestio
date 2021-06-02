@@ -14,7 +14,6 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Validation, ValidationNel}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import scalaz._
 import scalaz.syntax.apply._
 
 /**

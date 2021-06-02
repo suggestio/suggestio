@@ -1,6 +1,7 @@
 package io.suggest.xplay.json
 
 import play.api.libs.json._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -95,6 +96,7 @@ object PlayJsonUtil {
 
   /** Make JSON Format with fallback field name for Reads. */
   def fallbackPathFormat[A: Format](path: String, fallbackPath: String): OFormat[A] = {
+    assert( path !=* fallbackPath )
     val fmt0 = (__ \ path).format[A]
     val readsWithFallback = fmt0.orElse {
       (__ \ fallbackPath).read[A]
@@ -104,10 +106,13 @@ object PlayJsonUtil {
 
   /** Make JSON Format with fallback field name for Reads. */
   def fallbackPathFormatNullable[A: Format](path: String, fallbackPath: String): OFormat[Option[A]] = {
+    assert( path !=* fallbackPath )
     val fmt0 = (__ \ path).formatNullable[A]
-    val readsWithFallback = fmt0.orElse {
-      (__ \ fallbackPath).readNullable[A]
-    }
+    val readsWithFallback = fmt0
+      .filter(_.nonEmpty)
+      .orElse {
+        (__ \ fallbackPath).readNullable[A]
+      }
     OFormat( readsWithFallback, fmt0 )
   }
 

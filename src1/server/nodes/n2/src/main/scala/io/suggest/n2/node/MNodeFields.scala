@@ -22,17 +22,19 @@ object MNodeFields {
 
   /** Абсолютные имена ES-полей в .common */
   object Common extends PrefixedFn {
-    def COMMON_FN = "c"
+    def COMMON_FN = "common"
     override protected def _PARENT_FN = COMMON_FN
-    def NODE_TYPE_FN      = _fullFn( MNodeCommon.NODE_TYPE_FN )
-    def IS_ENABLED_FN     = _fullFn( MNodeCommon.IS_ENABLED_FN )
-    def IS_DEPENDENT_FN   = _fullFn( MNodeCommon.IS_DEPEND_FN )
+
+    import MNodeCommon.{Fields => F}
+    def NODE_TYPE_FN      = _fullFn( F.NODE_TYPE_FN )
+    def IS_ENABLED_FN     = _fullFn( F.IS_ENABLED_FN )
+    def IS_DEPENDENT_FN   = _fullFn( F.IS_DEPEND_FN )
   }
 
   /** Абсолютные имена ES-полей в .meta */
   object Meta extends PrefixedFn {
     /** Имя поля на стороне ES, куда скидываются все метаданные. */
-    def META_FN                     = "m"
+    def META_FN                     = "meta"
     override protected def _PARENT_FN = META_FN
 
     import MMeta.{Fields => F}
@@ -48,7 +50,7 @@ object MNodeFields {
   /** Абсолютные имена ES-полей в .extras */
   object Extras extends PrefixedFn {
 
-    def EXTRAS_FN  = "x"
+    def EXTRAS_FN               = "extras"
     override protected def _PARENT_FN = EXTRAS_FN
 
     import MNodeExtras.{Fields => F}
@@ -56,10 +58,6 @@ object MNodeFields {
     def ADN_IS_TEST_FN          = _fullFn( F.Adn.IS_TEST_FN )
     def ADN_RIGHTS_FN           = _fullFn( F.Adn.RIGHTS_FN )
     def ADN_SHOWN_TYPE_FN       = _fullFn( F.Adn.SHOWN_TYPE_FN )
-
-    def BEACON_UUID_FN          = _fullFn( F.Beacon.UUID_FN )
-    def BEACON_MAJOR_FN         = _fullFn( F.Beacon.MAJOR_FN )
-    def BEACON_MINOR_FN         = _fullFn( F.Beacon.MINOR_FN )
 
     def DOMAIN_FN               = _fullFn( F.Domain.DOMAIN_FN )
     def DOMAIN_DKEY_FN          = _fullFn( F.Domain.DKEY_FN )
@@ -70,7 +68,7 @@ object MNodeFields {
   /** Абсолютные имена ES-полей в .edges */
   object Edges extends PrefixedFn {
 
-    def EDGES_FN = "e"
+    def EDGES_FN = "edges"
     override protected def _PARENT_FN = EDGES_FN
 
     /** Адрес nested-объектов, хранящих данные по эджам. */
@@ -132,7 +130,7 @@ object MNodeFields {
   object Billing extends PrefixedFn {
 
     /** Название корневого поля биллинга. */
-    def BILLING_FN = "b"
+    def BILLING_FN = "billing"
     override protected def _PARENT_FN = BILLING_FN
 
     def TARIFFS_DAILY_CURRENCY_FN       = _fullFn( MNodeTariffs.Fields.Daily.CURRENCY_FN )

@@ -36,14 +36,14 @@ object Common {
     /** Typesafe slick version.
       * v3.3.3 - fails to execute query in GeoTagsUtil.rebuildTag() due to issue [[https://github.com/slick/slick/issues/2246]]
       */
-    val SLICK        = "3.3.2"
+    val SLICK        = "3.3.+"
 
     /** slick-pg version.
       * 0.19.3 => slick-3.3.2
       * 0.19.4+ needs slick-3.3.3 => failing (see SLICK comment above).
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
-    val SLICK_PG     = "0.19.3"
+    val SLICK_PG     = "0.19.+"
 
     /** Версия play-slick прослойки. */
     val PLAY_SLICK   = "5.+"
@@ -256,6 +256,7 @@ object Common {
     val FLOW_JS = "2.14.1"
 
 
+    // 5.0.0-alpha.35 - removed core/styles and etc. Breaks mui-treasury 1.13.1.
     val MATERIAL_UI = "5.0.0-alpha.34"
     val MATERIAL_UI_ICONS = "5.0.0-alpha.34"
 
@@ -271,6 +272,9 @@ object Common {
 
     /** material-ui-color зачем-то зависит от styled-components. */
     val STYLED_COMPONENTS = "5.2.2"
+
+    /** @see [[https://github.com/siriwatknp/mui-treasury]] */
+    val MUI_TREASURY = "1.13.1"
 
   }
 

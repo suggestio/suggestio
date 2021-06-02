@@ -84,9 +84,9 @@ class DateParseUtilSpec extends AnyFlatSpec {
 
   it should "generate valid month names for RUSSIAN" in {
     val f = monthNamesLocalized(_:Short, locale_ru)
-    f(1) shouldEqual List("января", "янв")
-    f(2) shouldEqual List("февраля", "фев")
-    f(9) shouldEqual List("сентября", "сен")
+    f(1) shouldEqual List("января", "янв.")
+    f(2) shouldEqual List("февраля", "фев.")
+    f(9) shouldEqual List("сентября", "сен.")
   }
 
 

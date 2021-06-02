@@ -7,7 +7,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-mui-treasury"
 
-version := "1.13.0"
+version := Common.Vsn.MUI_TREASURY
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -18,7 +18,7 @@ libraryDependencies ++= Seq(
 )
 
 npmDependencies in Compile += (
-  "@mui-treasury/styles" -> "1.8.0"
+  "@mui-treasury/styles" -> version.value
 )
 
 useYarn := true

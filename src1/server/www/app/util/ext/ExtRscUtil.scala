@@ -1,7 +1,6 @@
 package util.ext
 
 import java.net.URL
-
 import io.suggest.es.model.EsModel
 import io.suggest.es.util.IEsClient
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
@@ -13,8 +12,9 @@ import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.vid.ext.{MVideoExtInfo, VideoExtUrlParsers}
-import javax.inject.{Inject, Singleton}
+import play.api.inject.Injector
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -25,18 +25,17 @@ import scala.util.{Failure, Success}
   * Description: Утиль для работы с внешними информационными ресурсами.
   * (которые можно встраивать в рекламные карточки через фрейм).
   */
-@Singleton
-class ExtRscUtil @Inject()(
-                            esModel   : EsModel,
-                            mNodes    : MNodes,
-                            implicit private val ec: ExecutionContext,
-                            esClientP: IEsClient,
-                          )
+final class ExtRscUtil @Inject()(
+                                  injector  : Injector,
+                                )
   extends MacroLogsImpl
 {
 
-  import esClientP.esClient
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val esClientP = injector.instanceOf[IEsClient]
+
 
   /** Взять ссылки, вернуть узлы для ссылок.
     * Все операции пакетные для ускорения при множестве результатов.
@@ -122,6 +121,8 @@ class ExtRscUtil @Inject()(
 
     LOGGER.trace(s"$logPrefix Detected ${rscNodeId2UrlsMap.size} ext-videos from ${videoUrls.size} video URLs")
 
+    import esModel.api._
+
     // Запустить поиск узлов, хранящих данные по запрошенным видео.
     val existVideoExtNodesSearch = new MNodeSearch {
       override def withIds    = rscNodeId2UrlsMap.keySet.toSeq
@@ -161,7 +162,7 @@ class ExtRscUtil @Inject()(
         }
 
 
-        val bulk = esClient.prepareBulk()
+        val bulk = esClientP.esClient.prepareBulk()
         val newNodesByIdAcc = missingVideoExtNodes.foldLeft( List.empty[(String, MNode)] ) {
           case (acc0, (nodeId, infos)) =>
             // Дедубликация кода извлечения первого заданного поля из списка RscInfo.

@@ -2,6 +2,7 @@ package io.suggest.n2.node.meta
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.xplay.json.PlayJsonUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -19,10 +20,10 @@ object MPersonMeta
   override type T = MPersonMeta
 
   object Fields {
-    val NAME_FIRST_FN   = "f"
-    val NAME_LAST_FN    = "l"
-    val EXT_AVA_URL_FN  = "a"
-    val EMAIL_FN        = "e"
+    val NAME_FIRST_FN   = "firstName"
+    val NAME_LAST_FN    = "lastName"
+    val EXT_AVA_URL_FN  = "avatarUrl"
+    val EMAIL_FN        = "email"
   }
 
   /** Вернуть пустой экземпляр модели, используется очень часто. */
@@ -37,14 +38,14 @@ object MPersonMeta
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MPersonMeta] = (
-    (__ \ NAME_FIRST_FN).formatNullable[String] and
-    (__ \ NAME_LAST_FN).formatNullable[String] and
-    (__ \ EXT_AVA_URL_FN).formatNullable[List[String]]
+    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_FIRST_FN, "f" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_LAST_FN, "l" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[List[String]]( EXT_AVA_URL_FN, "a" )
       .inmap[List[String]](
         { _ getOrElse Nil },
         { urls => if (urls.isEmpty) None else Some(urls) }
       ) and
-    (__ \ EMAIL_FN).formatNullable[List[String]]
+    PlayJsonUtil.fallbackPathFormatNullable[List[String]]( EMAIL_FN, "e" )
       .inmap [List[String]] (
         _ getOrElse Nil,
         { emails => if (emails.isEmpty) None else Some(emails) }

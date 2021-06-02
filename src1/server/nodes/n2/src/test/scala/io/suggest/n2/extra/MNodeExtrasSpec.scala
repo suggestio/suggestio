@@ -1,7 +1,5 @@
 package io.suggest.n2.extra
 
-import java.util.UUID
-
 import io.suggest.n2.extra.domain.{MDomainExtra, MDomainModes}
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.flatspec.AnyFlatSpec
@@ -27,11 +25,6 @@ class MNodeExtrasSpec extends AnyFlatSpec with PlayJsonTestUtil {
         adn = Some(MAdnExtra(
           testNode  = true,
           isUser    = true
-        )),
-        beacon = Some(MBeaconExtra(
-          uuidStr = UUID.randomUUID().toString,
-          major   = 35666,
-          minor   = 65354
         )),
         domains = Seq(
           MDomainExtra(

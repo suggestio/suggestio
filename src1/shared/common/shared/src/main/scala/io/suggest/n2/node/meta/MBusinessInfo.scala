@@ -1,11 +1,12 @@
 package io.suggest.n2.node.meta
 
-import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.err.ErrorConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.proto.http.HttpConst
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -25,35 +26,21 @@ object MBusinessInfo extends IEmpty with IEsMappingProps {
   override type T = MBusinessInfo
 
   object Fields {
-    val SITE_URL_FN             = "su"
-    val AUDIENCE_DESCR_FN       = "ad"
-    val HUMAN_TRAFFIC_INT_FN    = "ht"
-    val HUMAN_TRAFFIC_FN        = "hu"
-    /** Имя поля для описания серьезного бизнеса: Business DESCRiption. */
-    val BDESCR_FN               = "bd"
+    val SITE_URL_FN             = "siteUrl"
+    val AUDIENCE_DESCR_FN       = "audience"
+    val HUMAN_TRAFFIC_FN        = "humanTraffic"
+    val INFO_FN                 = "info"
   }
 
   /** Поддержка JSON. */
   implicit val MBUSINESS_INFO_FORMAT: OFormat[MBusinessInfo] = {
     val F = Fields
-    // TODO 2018-04-06 Удалить потом. Миграция с Int на String-поле
-    val humanTrafficFormat0 = {
-      val pathStr = (__ \ F.HUMAN_TRAFFIC_FN)
-      val r = pathStr.read[String]
-        .map( EmptyUtil.someF )
-        .orElse {
-          (__ \ F.HUMAN_TRAFFIC_INT_FN).readNullable[Int]
-            .map(_.map(_.toString))
-        }
-      val w = pathStr.writeNullable[String]
-      OFormat( r, w )
-    }
 
     (
-      (__ \ F.SITE_URL_FN).formatNullable[String] and
-      (__ \ F.AUDIENCE_DESCR_FN).formatNullable[String] and
-      humanTrafficFormat0 and
-      (__ \ F.BDESCR_FN).formatNullable[String]
+      PlayJsonUtil.fallbackPathFormatNullable[String]( F.SITE_URL_FN, "su" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[String]( F.AUDIENCE_DESCR_FN, "ad" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[String]( F.HUMAN_TRAFFIC_FN, "hu") and
+      PlayJsonUtil.fallbackPathFormatNullable[String]( F.INFO_FN, "bd")
     )(apply, unlift(unapply))
   }
 
@@ -68,14 +55,11 @@ object MBusinessInfo extends IEmpty with IEsMappingProps {
         boost = Some(0.33)
       ),
       F.AUDIENCE_DESCR_FN -> FText( index = someTrue ),
-      F.HUMAN_TRAFFIC_INT_FN -> FNumber(
-        typ   = DocFieldTypes.Integer,
-        index = someTrue,
-      ),
-      F.BDESCR_FN -> FText(
+      F.HUMAN_TRAFFIC_FN -> FText.notIndexedJs,
+      F.INFO_FN -> FText(
         index = someTrue,
         boost = Some(0.1)
-      )
+      ),
     )
   }
 
@@ -87,25 +71,24 @@ object MBusinessInfo extends IEmpty with IEsMappingProps {
 
   def validateSiteUrl(siteUrl: Option[String]): StringValidationNel[Option[String]] = {
     ScalazUtil.liftNelOpt(siteUrl) { url =>
-      val urlPrefix = "url."
       (
-        UrlUtil2.validateUrl(url, urlPrefix + ErrorConstants.Words.INVALID) |@|
+        UrlUtil2.validateUrl(url, Fields.SITE_URL_FN + " " + ErrorConstants.Words.INVALID) |@|
         Validation.liftNel(url)(
           u => !u.startsWith( HttpConst.Proto.HTTP ),
-          urlPrefix + HttpConst.Proto.HTTP + ErrorConstants.Words.EXPECTED
+          Fields.SITE_URL_FN + HttpConst.Proto.HTTP + " " + ErrorConstants.Words.EXPECTED
         )
       ) { (u2, _) => u2 }
     }
   }
 
   def validateInfo(info: Option[String]): StringValidationNel[Option[String]] =
-    ScalazUtil.validateTextOpt(info, maxLen = 1000, "info")
+    ScalazUtil.validateTextOpt(info, maxLen = 1000, Fields.INFO_FN)
 
   def validateAudienceDescr(audienceDescr: Option[String]): StringValidationNel[Option[String]] =
-    ScalazUtil.validateTextOpt(audienceDescr, maxLen = 300, "audsc")
+    ScalazUtil.validateTextOpt(audienceDescr, maxLen = 300, Fields.AUDIENCE_DESCR_FN)
 
   def validateHumanTraffic(humanTraffic: Option[String]): StringValidationNel[Option[String]] =
-    ScalazUtil.validateTextOpt(humanTraffic, maxLen = 120, "htraf")
+    ScalazUtil.validateTextOpt(humanTraffic, maxLen = 120, Fields.HUMAN_TRAFFIC_FN)
 
   def validate(mbi: MBusinessInfo): ValidationNel[String, MBusinessInfo] = {
     (

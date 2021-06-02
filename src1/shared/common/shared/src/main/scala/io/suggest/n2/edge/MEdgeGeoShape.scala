@@ -1,10 +1,10 @@
 package io.suggest.n2.edge
 
 import java.time.OffsetDateTime
-
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -27,10 +27,10 @@ object MEdgeGeoShape
   /** Названия полей модели на стороне ElasticSearch. */
   object Fields {
 
-    val GLEVEL_FN                   = "l"
-    val GJSON_COMPAT_FN             = "gjc"
-    val FROM_URL_FN                 = "url"
-    val DATE_EDITED_FN              = "dt"
+    val GLEVEL_FN                   = "precisionLevel"
+    val GEO_JSON_COMPAT_FN          = "geoJsonCompat"
+    val SOURCE_URL_FN               = "sourceUrl"
+    val DATE_EDITED_FN              = "dateEdited"
     val ID_FN                       = "id"
 
     /** Название поля на стороне ES для самого шейпа в каком-то масштабе индексации. */
@@ -49,10 +49,10 @@ object MEdgeGeoShape
     import Fields._
     import io.suggest.dt.CommonDateTimeUtil.Implicits._
 
-    val GLEVEL_FORMAT       = (__ \ GLEVEL_FN).format[MNodeGeoLevel]
-    val GJC_FORMAT          = (__ \ GJSON_COMPAT_FN).format[Boolean]
-    val FROM_URL_FORMAT     = (__ \ FROM_URL_FN).formatNullable[String]
-    val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime]
+    val GLEVEL_FORMAT       = PlayJsonUtil.fallbackPathFormat[MNodeGeoLevel](GLEVEL_FN, "l")
+    val GJC_FORMAT          = PlayJsonUtil.fallbackPathFormat[Boolean]( GEO_JSON_COMPAT_FN, "gjc" )
+    val FROM_URL_FORMAT     = PlayJsonUtil.fallbackPathFormatNullable[String]( SOURCE_URL_FN, "url" )
+    val DATE_EDITED_FORMAT  = PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( DATE_EDITED_FN, "dt" )
     val ID_FORMAT           = (__ \ ID_FN).format[Int]
 
     def _shapeFormat(ngl: MNodeGeoLevel): OFormat[IGeoShape] = {
@@ -141,8 +141,8 @@ object MEdgeGeoShape
 
     val fields2 = Json.obj(
       F.GLEVEL_FN       -> FKeyWord( index = someTrue, store = someTrue ),
-      F.GJSON_COMPAT_FN -> FBoolean.indexedJs,
-      F.FROM_URL_FN     -> FText.notIndexedJs,
+      F.GEO_JSON_COMPAT_FN -> FBoolean.indexedJs,
+      F.SOURCE_URL_FN     -> FText.notIndexedJs,
       F.DATE_EDITED_FN  -> FDate.notIndexedJs,
       F.ID_FN           -> FNumber(
         typ = DocFieldTypes.Integer,

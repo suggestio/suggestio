@@ -69,7 +69,7 @@ class PriceParsersSpec extends AnyFlatSpec {
   private def rpF(p: pp.PriceP_t, currencyCode: String, lag: Double = 0.02) = {
     (s: String, result: Float) =>
       val pres = pp.parse(p, s: String)
-      pres.successful shouldBe true
+      assert( pres.successful, pres )
       val ParsedPrice(price2, currencyCode2) = pres.get
       currencyCode2 shouldBe currencyCode
       price2 shouldBe result +- 0.02F

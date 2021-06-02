@@ -2,6 +2,7 @@ package io.suggest.n2.extra.rsc
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.xplay.json.PlayJsonUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -17,9 +18,9 @@ object MRscExtra
 {
 
   object Fields {
-    val URL_FN = "u"
-    val HOST_NAMES_FN = "hn"
-    val HOST_TOKENS_FN = "ht"
+    val URL_FN = "url"
+    val HOST_NAMES_FN = "hostNames"
+    val HOST_TOKENS_FN = "hostTokens"
   }
 
 
@@ -39,13 +40,13 @@ object MRscExtra
   implicit def mRscExtraJson: OFormat[MRscExtra] = {
     val F = Fields
     (
-      (__ \ F.URL_FN).format[String] and
-      (__ \ F.HOST_NAMES_FN).formatNullable[Seq[MHostNameIndexed]]
+      PlayJsonUtil.fallbackPathFormat[String]( F.URL_FN, "u" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[Seq[MHostNameIndexed]]( F.HOST_NAMES_FN, "hn" )
         .inmap[Seq[MHostNameIndexed]](
           EmptyUtil.opt2ImplEmpty1F(Nil),
           hosts => if (hosts.isEmpty) None else Some(hosts)
         ) and
-      (__ \ F.HOST_TOKENS_FN).formatNullable[Set[String]]
+      PlayJsonUtil.fallbackPathFormatNullable[Set[String]]( F.HOST_TOKENS_FN, "ht" )
         .inmap[Set[String]](
           EmptyUtil.opt2ImplEmptyF( Set.empty ),
           hToks => if (hToks.isEmpty) None else Some(hToks)

@@ -4,6 +4,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.model.PrefixedFn
 import io.suggest.n2.media.storage.MStorageInfo
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -28,17 +29,18 @@ object MEdgeMedia
   object Fields {
 
     /** Имя поля базовых метаданных файла. Модель [[MFileMeta]]. */
-    val FILE_META_FN    = "fm"
-
-    /** Поля [[MPictureMeta]] */
-    val PICTURE_META_FN = "pm"
+    val FILE_FN    = "file"
 
     /** Поля [[io.suggest.n2.media.storage.MStorages]]. */
-    val STORAGE_FN      = "o"
+    val STORAGE_FN      = "storage"
+
+    /** Поля [[MPictureMeta]] */
+    val PICTURE_FN = "picture"
+
 
     /** Поля [[MFileMeta]] */
     object FileMeta extends PrefixedFn {
-      override protected def _PARENT_FN = FILE_META_FN
+      override protected def _PARENT_FN = FILE_FN
 
       import MFileMeta.{Fields => F}
 
@@ -71,7 +73,7 @@ object MEdgeMedia
 
     object Picture extends PrefixedFn {
       import MPictureMeta.Fields.{Wh => F}
-      override protected def _PARENT_FN = PICTURE_META_FN
+      override protected def _PARENT_FN = PICTURE_FN
       def WH_WIDTH_FN = _fullFn( F.WIDTH_FN )
       def WH_HEIGHT_FN = _fullFn( F.HEIGHT_FN )
     }
@@ -83,9 +85,9 @@ object MEdgeMedia
   implicit def edgeMediaJson: OFormat[MEdgeMedia] = {
     val F = Fields
     (
-      (__ \ F.STORAGE_FN).formatNullable[MStorageInfo] and
-      (__ \ F.FILE_META_FN).format[MFileMeta] and
-      (__ \ F.PICTURE_META_FN).formatNullable[MPictureMeta]
+      PlayJsonUtil.fallbackPathFormat[MFileMeta]( F.FILE_FN, "fm" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[MStorageInfo]( F.STORAGE_FN, "o" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[MPictureMeta]( F.PICTURE_FN, "pm" )
         .inmap[MPictureMeta](
           EmptyUtil.opt2ImplMEmptyF(MPictureMeta),
           EmptyUtil.implEmpty2OptF[MPictureMeta]
@@ -97,9 +99,9 @@ object MEdgeMedia
     import dsl._
     val F = Fields
     Json.obj(
-      F.FILE_META_FN -> FObject.plain( MFileMeta ),
+      F.FILE_FN -> FObject.plain( MFileMeta ),
       F.STORAGE_FN   -> FObject.plain( MStorageInfo ),
-      F.PICTURE_META_FN -> FObject.plain( MPictureMeta ),
+      F.PICTURE_FN -> FObject.plain( MPictureMeta ),
     )
   }
 
@@ -119,9 +121,9 @@ object MEdgeMedia
   * @param picture Метаданные картинки, если это картинка.
   */
 final case class MEdgeMedia(
-                             storage          : Option[MStorageInfo] = None,
                              file             : MFileMeta,
-                             picture          : MPictureMeta        = MPictureMeta.empty,
+                             storage          : Option[MStorageInfo]  = None,
+                             picture          : MPictureMeta          = MPictureMeta.empty,
                            ) {
 
   override def toString: String = {

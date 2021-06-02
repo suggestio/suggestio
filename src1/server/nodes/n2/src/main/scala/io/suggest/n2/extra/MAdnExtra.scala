@@ -10,6 +10,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -26,11 +27,11 @@ object MAdnExtra
   /** В качестве эксперимента, имена полей этой модели являются отдельной моделью. */
   object Fields {
 
-    val RES_VIEW_FN         = "r"
-    val RIGHTS              = "g"
-    val IS_BY_USER          = "u"
-    val SHOWN_TYPE          = "s"
-    val IS_TEST             = "t"
+    val RES_VIEW_FN         = "resView"
+    val RIGHTS              = "rights"
+    val IS_BY_USER          = "isUser"
+    val SHOWN_TYPE          = "shownType"
+    val IS_TEST             = "isTestNode"
 
   }
 
@@ -39,23 +40,23 @@ object MAdnExtra
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MAdnExtra] = (
-    (__ \ RES_VIEW_FN).formatNullable[MAdnResView]
+    PlayJsonUtil.fallbackPathFormatNullable[MAdnResView]( RES_VIEW_FN, "r" )
       .inmap[MAdnResView](
         EmptyUtil.opt2ImplMEmptyF( MAdnResView ),
         EmptyUtil.implEmpty2OptF
       ) and
-    (__ \ RIGHTS).formatNullable[Set[MAdnRight]]
+    PlayJsonUtil.fallbackPathFormatNullable[Set[MAdnRight]]( RIGHTS, "g" )
       .inmap [Set[MAdnRight]] (
         EmptyUtil.opt2ImplEmptyF( Set.empty ),
         { rights => if (rights.isEmpty) None else Some(rights) }
       ) and
-    (__ \ IS_BY_USER).formatNullable[Boolean]
+    PlayJsonUtil.fallbackPathFormatNullable[Boolean]( IS_BY_USER, "u" )
       .inmap [Boolean] (
         _.getOrElseFalse,
         someF
       ) and
-    (__ \ SHOWN_TYPE).formatNullable[String] and
-    (__ \ IS_TEST).formatNullable[Boolean]
+    PlayJsonUtil.fallbackPathFormatNullable[String]( SHOWN_TYPE, "s" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[Boolean]( IS_TEST, "t" )
       .inmap [Boolean] (
         _.getOrElseFalse,
         someF

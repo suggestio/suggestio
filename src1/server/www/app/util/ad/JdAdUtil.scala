@@ -1,6 +1,6 @@
 package util.ad
 
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.Inject
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
@@ -24,13 +24,15 @@ import models.im._
 import models.mctx.Context
 import play.api.mvc.Call
 import util.cdn.CdnUtil
-import util.img.{DynImgUtil, IImgMaker}
+import util.img.DynImgUtil
 import monocle.Traversal
+import play.api.inject.Injector
 import util.showcase.ScWideMaker
 import scalaz.std.option._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Tree
+import util.blocks.BlkImgMaker
 import util.ext.ExtRscUtil
 
 /**
@@ -39,21 +41,20 @@ import util.ext.ExtRscUtil
   * Created: 01.11.17 18:52
   * Description: Утиль для рекламных карточек в jd-формате.
   */
-@Singleton
-class JdAdUtil @Inject()(
-                          esModel                     : EsModel,
-                          @Named("blk") blkImgMaker   : IImgMaker,
-                          wideImgMaker                : ScWideMaker,
-                          mNodes                      : MNodes,
-                          dynImgUtil                  : DynImgUtil,
-                          cdnUtil                     : CdnUtil,
-                          extRscUtil                  : ExtRscUtil,
-                          implicit private val ec     : ExecutionContext
-                        )
+final class JdAdUtil @Inject()(
+                                injector                    : Injector,
+                              )
   extends MacroLogsImpl
 {
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val blkImgMaker = injector.instanceOf[BlkImgMaker]
+  private lazy val wideImgMaker = injector.instanceOf[ScWideMaker]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  private lazy val extRscUtil = injector.instanceOf[ExtRscUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** img-предикат, используемый в jd-карточках. */
   def imgPredicate = MPredicates.JdContent.Image
@@ -89,6 +90,8 @@ class JdAdUtil @Inject()(
                         otherEdges: (MNodeType, Seq[MEdge])*
                        ): Future[Map[String, MNode]] = {
 
+    import esModel.api._
+
     val allNodeIds = (
       // Перечисляем все интересующие img-ноды:
       ( imgsEdges
@@ -106,12 +109,8 @@ class JdAdUtil @Inject()(
       .flatten
       .toSet
 
-    //for {
-    //  allNodesMap <-
     mNodes.multiGetMapCache( allNodeIds )
-    //} yield {
-      // TODO Нужно сверить ожидаемые типы узлов:
-    //}
+    // TODO Нужно сверить ожидаемые типы узлов с полученными:
   }
 
 
@@ -589,6 +588,8 @@ class JdAdUtil @Inject()(
 
       /** Нужно собрать все MMedia из имеющихся: помимо оригиналов надо и скомпиленные картинки. */
       override def mediasForMediaHostsFut: Future[Iterable[MNode]] = {
+        import esModel.api._
+
         val _origMediasForMediaHostsFut = super.mediasForMediaHostsFut
         for {
           renderedImgs <- renderAdDocImgsFut

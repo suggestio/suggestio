@@ -125,7 +125,7 @@ object Mui {
   // TODO /core/styles becoming /styles from alpha to alpha. Need to port it from JSS to styles/styled (emotion).
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   @js.native @JSImport("@material-ui/styles/StylesProvider", JSImport.Default) object StylesProvider extends js.Any
-  @js.native @JSImport("@material-ui/core/StyledEngineProvider", JSImport.Default) object StyledEngineProvider extends js.Any
+  @js.native @JSImport("@material-ui/core/styles", "StyledEngineProvider") object StyledEngineProvider extends js.Any
   val SvgIcons = MuiSvgIcons
 
 }

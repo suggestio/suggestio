@@ -1,14 +1,15 @@
 package util.blocks
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.{MPxRatio, MPxRatios}
 import models.blk.{SzMult_t, szMulted}
 import models.im._
 import models.im.make.{MImgMakeArgs, MakeResult}
+import play.api.inject.Injector
 import util.img.{IImgMaker, ImgMakerUtil}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -19,17 +20,17 @@ import scala.concurrent.{ExecutionContext, Future}
  *
  * 2017-11-01 (после f328488a592a): Убрана любая корректировка szMult, упрощён и почищен код.
  */
-@Singleton
-class BlkImgMaker @Inject() (
-                              imgMakerUtil              : ImgMakerUtil,
-                              implicit private val ec   : ExecutionContext
-                            )
+final class BlkImgMaker @Inject() (
+                                    injector: Injector,
+                                  )
   extends IImgMaker
 {
 
+  private lazy val imgMakerUtil = injector.instanceOf[ImgMakerUtil]
+
 
   /**
-   * Вычислить размер картинки для рендера на основе размера блока и параметрах экрана.
+    * Вычислить размер картинки для рендера на основе размера блока и параметрах экрана.
    * @param szMult Желаемый контроллером множитель размера картинки.
    * @param blockMeta Целевой размер. В частности - метаданные блока.
    * @return Параметры для картинки.

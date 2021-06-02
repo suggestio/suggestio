@@ -6,6 +6,7 @@ import play.api.libs.json._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -16,27 +17,33 @@ import monocle.macros.GenLens
  */
 object MNodeCommon extends IEsMappingProps {
 
-  val NODE_TYPE_FN          = "t"
-  val IS_DEPEND_FN          = "d"
-  val IS_ENABLED_FN         = "e"
-  val DISABLE_REASON_FN     = "r"
+  object Fields {
+    val NODE_TYPE_FN          = "nodeType"
+    val IS_DEPEND_FN          = "dependent"
+    val IS_ENABLED_FN         = "enabled"
+    val DISABLE_REASON_FN     = "disableReason"
+  }
 
   /** Сериализация и десериализация JSON. */
-  implicit val FORMAT: OFormat[MNodeCommon] = (
-    (__ \ NODE_TYPE_FN).format[MNodeType] and
-    (__ \ IS_DEPEND_FN).format[Boolean] and
-    (__ \ IS_ENABLED_FN).formatNullable[Boolean]
-      .inmap [Boolean] (_.getOrElseTrue, someF) and
-    (__ \ DISABLE_REASON_FN).formatNullable[String]
-  )(apply, unlift(unapply))
+  implicit val nodeCommonJson: OFormat[MNodeCommon] = {
+    val F = Fields
+    (
+      PlayJsonUtil.fallbackPathFormat[MNodeType]( F.NODE_TYPE_FN, "t" ) and
+      PlayJsonUtil.fallbackPathFormat[Boolean]( F.IS_DEPEND_FN, "d" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[Boolean]( F.IS_ENABLED_FN, "e" )
+        .inmap [Boolean] (_.getOrElseTrue, someF) and
+      PlayJsonUtil.fallbackPathFormatNullable[String]( F.DISABLE_REASON_FN, "r" )
+    )(apply, unlift(unapply))
+  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._
+    val F = Fields
     Json.obj(
-      NODE_TYPE_FN -> FKeyWord.indexedJs,
-      IS_DEPEND_FN -> FBoolean.indexedJs,
-      IS_ENABLED_FN -> FBoolean.indexedJs,
-      DISABLE_REASON_FN -> FText.notIndexedJs,
+      F.NODE_TYPE_FN -> FKeyWord.indexedJs,
+      F.IS_DEPEND_FN -> FBoolean.indexedJs,
+      F.IS_ENABLED_FN -> FBoolean.indexedJs,
+      F.DISABLE_REASON_FN -> FText.notIndexedJs,
     )
   }
 
@@ -57,5 +64,6 @@ case class MNodeCommon(
   ntype             : MNodeType,
   isDependent       : Boolean,
   isEnabled         : Boolean               = true,
+  // TODO disableReason already in moderation edges info.text. Deprecate/delete it here?
   disableReason     : Option[String]        = None
 )

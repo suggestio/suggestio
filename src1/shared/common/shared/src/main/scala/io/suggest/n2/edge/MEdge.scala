@@ -6,6 +6,7 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.MNodeGeoLevel
 import io.suggest.model.PrefixedFn
 import io.suggest.n2.media.MEdgeMedia
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -33,12 +34,12 @@ object MEdge
   /** Контейнер имён полей. */
   object Fields {
 
-    val PREDICATE_FN  = "p"
-    val NODE_ID_FN    = "i"
-    val ORDER_FN      = "o"
-    val INFO_FN       = "n"
-    val DOC_FN        = "d"
-    val MEDIA_FN      = "m"
+    val PREDICATE_FN  = "predicate"
+    val NODE_ID_FN    = "ids"
+    val ORDER_FN      = "order"
+    val INFO_FN       = "info"
+    val DOCUMENT_FN   = "document"
+    val MEDIA_FN      = "media"
 
 
     object Media extends PrefixedFn {
@@ -112,7 +113,7 @@ object MEdge
     object DocFns extends PrefixedFn {
 
       import MEdgeDoc.{Fields => F}
-      override protected def _PARENT_FN = DOC_FN
+      override protected def _PARENT_FN = DOCUMENT_FN
 
       def TEXT_FN = _fullFn( F.TEXT_FN )
       def UID_FN  = _fullFn( F.UID_FN )
@@ -126,24 +127,24 @@ object MEdge
 
   /** Поддержка JSON. */
   implicit val edgeJson: OFormat[MEdge] = (
-    (__ \ PREDICATE_FN).format(MPredicate.MPREDICATE_DEEP_FORMAT) and
-    (__ \ NODE_ID_FN).formatNullable[Set[String]]
+    PlayJsonUtil.fallbackPathFormat( PREDICATE_FN, "p" )(MPredicate.MPREDICATE_DEEP_FORMAT) and
+    PlayJsonUtil.fallbackPathFormatNullable[Set[String]]( NODE_ID_FN, "i" )
       .inmap [Set[String]] (
         EmptyUtil.opt2ImplEmptyF(Set.empty),
         nodeIds => if (nodeIds.nonEmpty) Some(nodeIds) else None
       ) and
-    (__ \ ORDER_FN).formatNullable[Int] and
-    (__ \ INFO_FN).formatNullable[MEdgeInfo]
+    PlayJsonUtil.fallbackPathFormatNullable[Int]( ORDER_FN, "o" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[MEdgeInfo]( INFO_FN, "n" )
       .inmap [MEdgeInfo] (
         opt2ImplMEmptyF( MEdgeInfo ),
         implEmpty2OptF
       ) and
-    (__ \ DOC_FN).formatNullable[MEdgeDoc]
+    PlayJsonUtil.fallbackPathFormatNullable[MEdgeDoc]( DOCUMENT_FN, "d" )
       .inmap [MEdgeDoc] (
         opt2ImplMEmptyF( MEdgeDoc ),
         implEmpty2OptF
       ) and
-    (__ \ MEDIA_FN).formatNullable[MEdgeMedia]
+    PlayJsonUtil.fallbackPathFormatNullable[MEdgeMedia]( MEDIA_FN, "m" )
   )(apply, unlift(unapply))
 
 
@@ -166,7 +167,7 @@ object MEdge
         index = someTrue,
       ),
       F.INFO_FN -> FObject.plain( MEdgeInfo ),
-      F.DOC_FN -> FObject.plain( MEdgeDoc ),
+      F.DOCUMENT_FN -> FObject.plain( MEdgeDoc ),
       F.MEDIA_FN -> FObject.plain( MEdgeMedia ),
     )
   }

@@ -16,6 +16,7 @@ scalacOptions += "-feature"
 
 npmDependencies in Compile ++= Seq(
   "@material-ui/core"  -> version.value,
+  //"@material-ui/styles" -> version.value,   // since 5.0.0-alpha.35
   "@material-ui/lab"   -> version.value,
   "@material-ui/icons" -> Common.Vsn.MATERIAL_UI_ICONS,
   "@emotion/react"     -> Common.Vsn.EMOTION_REACT,

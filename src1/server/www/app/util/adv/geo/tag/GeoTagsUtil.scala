@@ -281,8 +281,9 @@ class GeoTagsUtil @Inject() (
       .stream {
         basicQuery
           .filter(_.geoShapeStrOpt.nonEmpty)
+          // https://github.com/slick/slick/issues/2246#issuecomment-853378559
+          .distinctOn( _.geoShapeStrOpt )
           .map(_.geoShapeOpt)
-          .distinct
           .result
           .forPgStreaming(10)
       }

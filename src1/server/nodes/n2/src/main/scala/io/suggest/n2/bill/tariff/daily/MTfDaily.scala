@@ -5,6 +5,7 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.model.PrefixedFn
+import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -20,13 +21,13 @@ object MTfDaily
   /** Названия полей. */
   object Fields {
 
-    val CURRENCY_FN     = "cc"
-    val CLAUSES_FN      = "cl"
-    val COMISSION_PC_FN = "com"
+    val CURRENCY_FN     = "currency"
+    val CLAUSES_FN      = "clauses"
+    val COMISSION_PC_FN = "comission"
 
     object Clauses extends PrefixedFn {
       override protected def _PARENT_FN = CLAUSES_FN
-      def CAL_ID_FN = _fullFn( MDayClause.Fields.CAL_ID_FN )
+      def CAL_ID_FN = _fullFn( MDayClause.Fields.CALENDAR_ID_FN )
     }
 
   }
@@ -35,13 +36,13 @@ object MTfDaily
   import Fields._
 
   implicit val FORMAT: OFormat[MTfDaily] = (
-    (__ \ CURRENCY_FN).format[MCurrency] and
-    (__ \ CLAUSES_FN).format[Seq[MDayClause]]
+    PlayJsonUtil.fallbackPathFormat[MCurrency]( CURRENCY_FN, "cc" ) and
+    PlayJsonUtil.fallbackPathFormat[Seq[MDayClause]]( CLAUSES_FN, "cl" )
       .inmap [Map[String, MDayClause]] (
         _.iterator.map { v => v.name -> v }.toMap,
         _.valuesIterator.toSeq
       ) and
-    (__ \ COMISSION_PC_FN).formatNullable[Double]
+    PlayJsonUtil.fallbackPathFormatNullable[Double]( COMISSION_PC_FN, "com" )
   )(apply, unlift(unapply))
 
 

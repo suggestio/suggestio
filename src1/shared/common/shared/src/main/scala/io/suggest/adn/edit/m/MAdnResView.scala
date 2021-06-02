@@ -7,6 +7,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.jd.{MJdEdgeId, MJdEdgeVldInfo}
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
+import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -30,17 +31,17 @@ object MAdnResView extends IEmpty {
   override def empty = apply()
 
   object Fields {
-    val LOGO_FN = "l"
-    val WC_FG_FN = "w"
-    val GAL_IMGS_FN = "g"
+    val LOGO_FN = "logo"
+    val WELCOME_FG_FN = "welcomeForeground"
+    val GALLERY_IMGS_FN = "gallery"
   }
 
   implicit def mAdnImgsFormat: OFormat[MAdnResView] = {
     val F = Fields
     (
-      (__ \ F.LOGO_FN).formatNullable[MJdEdgeId] and
-      (__ \ F.WC_FG_FN).formatNullable[MJdEdgeId] and
-      (__ \ F.GAL_IMGS_FN).formatNullable[Seq[MJdEdgeId]]
+      PlayJsonUtil.fallbackPathFormatNullable[MJdEdgeId]( F.LOGO_FN, "l" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[MJdEdgeId]( F.WELCOME_FG_FN, "w" ) and
+      PlayJsonUtil.fallbackPathFormatNullable[Seq[MJdEdgeId]]( F.GALLERY_IMGS_FN, "g" )
         .inmap[Seq[MJdEdgeId]](
           EmptyUtil.opt2ImplEmptyF(Nil),
           galImgs => Option.when(galImgs.nonEmpty)(galImgs)

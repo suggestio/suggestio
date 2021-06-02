@@ -1,9 +1,9 @@
 package io.suggest.n2.node.meta
 
 import java.time.OffsetDateTime
-
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.model.PrefixedFn
+import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -21,20 +21,20 @@ object MBasicMeta extends IEsMappingProps {
 
   object Fields {
 
-    val NAME_FN             = "n"
+    val NAME_FN               = "name"
 
     object NameShort extends PrefixedFn {
-      val NAME_SHORT_FN       = "ns"
+      val NAME_SHORT_FN       = "shortName"
       override protected def _PARENT_FN = NAME_SHORT_FN
-      def NOTOK_SUF           = "nt"
+      def NOTOK_SUF           = "noTok"
       def NAME_SHORT_NOTOK_FN = _fullFn( NOTOK_SUF )
     }
 
-    val HIDDEN_DESCR_FN       = "hd"
-    val TECHNICAL_NAME_FN     = "tn"
-    val DATE_CREATED_FN       = "dci"
-    val DATE_EDITED_FN        = "de"
-    val LANGS_ESFN            = "l"
+    val TECHNICAL_NAME_FN     = "techName"
+    val HIDDEN_DESCR_FN       = "hiddenDescr"
+    val DATE_CREATED_FN       = "dateCreated"
+    val DATE_EDITED_FN        = "dateEdited"
+    val LANGS_FN              = "language"
   }
 
 
@@ -43,13 +43,13 @@ object MBasicMeta extends IEsMappingProps {
 
   /** Поддержка JSON в модели. */
   implicit val FORMAT: OFormat[MBasicMeta] = (
-    (__ \ NAME_FN).formatNullable[String] and
-    (__ \ NAME_SHORT_FN).formatNullable[String] and
-    (__ \ TECHNICAL_NAME_FN).formatNullable[String] and
-    (__ \ HIDDEN_DESCR_FN).formatNullable[String] and
-    (__ \ DATE_CREATED_FN).format[OffsetDateTime] and
-    (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime] and
-    (__ \ LANGS_ESFN).formatNullable[List[String]]
+    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_FN, "n" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_SHORT_FN, "ns" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[String]( TECHNICAL_NAME_FN, "tn" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[String]( HIDDEN_DESCR_FN, "hd" ) and
+    PlayJsonUtil.fallbackPathFormat[OffsetDateTime]( DATE_CREATED_FN, "dci" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( DATE_EDITED_FN, "de" ) and
+    PlayJsonUtil.fallbackPathFormatNullable[List[String]]( LANGS_FN, "l" )
       .inmap[List[String]](
         { _ getOrElse Nil },
         {ls => if (ls.isEmpty) None else Some(ls)}
