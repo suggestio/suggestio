@@ -6,7 +6,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -64,23 +63,23 @@ object MMeta extends IEsMappingProps {
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MMeta] = (
-    PlayJsonUtil.fallbackPathFormat[MBasicMeta]( BASIC_FN, "b" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MPersonMeta]( PERSON_FN, "p" )
+    (__ \ BASIC_FN).format[MBasicMeta] and
+    (__ \ PERSON_FN).formatNullable[MPersonMeta]
       .inmap[MPersonMeta] (
         opt2ImplMEmptyF ( MPersonMeta ),
         implEmpty2OptF
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MAddress]( ADDRESS_FN, "a" )
+    (__ \ ADDRESS_FN).formatNullable[MAddress]
       .inmap [MAddress] (
         opt2ImplMEmptyF( MAddress ),
         implEmpty2OptF
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MBusinessInfo]( BUSINESS_FN, "u" )
+    (__ \ BUSINESS_FN).formatNullable[MBusinessInfo]
       .inmap[MBusinessInfo](
         opt2ImplMEmptyF( MBusinessInfo ),
         implEmpty2OptF
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MColors]( COLORS_FN, "c" )
+    (__ \ COLORS_FN).formatNullable[MColors]
       .inmap[MColors](
         opt2ImplMEmptyF( MColors ),
         implEmpty2OptF

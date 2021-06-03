@@ -20,7 +20,6 @@ import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.jd.MJdEdgeId
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.xplay.json.PlayJsonUtil
 import monocle.Traversal
 import monocle.macros.GenLens
 import org.elasticsearch.action.bulk.BulkResponse
@@ -67,8 +66,8 @@ final class MNodes @Inject() (
   implicit private def ec = injector.instanceOf[ExecutionContext]
 
   // cache
-  override val EXPIRE = 60.seconds
-  override val CACHE_KEY_SUFFIX = ".nc"
+  override def EXPIRE = 60.seconds
+  override def CACHE_KEY_SUFFIX = ".nc"
 
   override type T = MNode
 
@@ -78,33 +77,37 @@ final class MNodes @Inject() (
   @inline def Fields = MNodeFields
 
   /** Почти-собранный play.json.Format. */
-  private val DATA_FORMAT: OFormat[MNode] = (
-    PlayJsonUtil.fallbackPathFormat[MNodeCommon]( Fields.Common.COMMON_FN, "c" ) and
-    PlayJsonUtil.fallbackPathFormat[MMeta]( Fields.Meta.META_FN, "m" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MNodeExtras]( Fields.Extras.EXTRAS_FN, "x" )
-      .inmap [MNodeExtras] (
-        opt2ImplMEmptyF( MNodeExtras ),
-        implEmpty2OptF
-      ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MNodeEdges]( Fields.Edges.EDGES_FN, "e" )
-      .inmap [MNodeEdges] (
-        opt2ImplMEmptyF( MNodeEdges ),
-        implEmpty2OptF
-    ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MNodeBilling]( Fields.Billing.BILLING_FN, "b" )
-      .inmap [MNodeBilling] (
-        opt2ImplMEmptyF( MNodeBilling ),
-        implEmpty2OptF
-      )
-  )(
-    {(common, meta, extras, edges, billing) =>
-      MNode(common, meta, extras, edges, billing = billing)
-    },
-    {mnode =>
-      import mnode._
-      (common, meta, extras, edges, billing)
-    }
-  )
+  private val DATA_FORMAT: OFormat[MNode] = {
+    val F = Fields
+    (
+      (__ \ F.Common.COMMON_FN).format[MNodeCommon] and
+      (__ \ F.Meta.META_FN).format[MMeta] and
+      (__ \ F.Extras.EXTRAS_FN).formatNullable[MNodeExtras]
+        .inmap [MNodeExtras] (
+          opt2ImplMEmptyF( MNodeExtras ),
+          implEmpty2OptF
+        ) and
+      (__ \ F.Edges.EDGES_FN).formatNullable[MNodeEdges]
+        .inmap [MNodeEdges] (
+          opt2ImplMEmptyF( MNodeEdges ),
+          implEmpty2OptF
+        ) and
+      (__ \ F.Billing.BILLING_FN).formatNullable[MNodeBilling]
+        .inmap [MNodeBilling] (
+          opt2ImplMEmptyF( MNodeBilling ),
+          implEmpty2OptF
+        )
+    )(
+      {(common, meta, extras, edges, billing) =>
+        MNode(common, meta, extras, edges, billing = billing)
+      },
+      {mnode =>
+        import mnode._
+        (common, meta, extras, edges, billing)
+      }
+    )
+  }
+
 
   override protected def esDocReads(dmeta: EsDocMeta): Reads[MNode] = {
     DATA_FORMAT

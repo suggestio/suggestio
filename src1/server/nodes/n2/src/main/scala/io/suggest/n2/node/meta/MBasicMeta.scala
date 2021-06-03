@@ -43,13 +43,13 @@ object MBasicMeta extends IEsMappingProps {
 
   /** Поддержка JSON в модели. */
   implicit val FORMAT: OFormat[MBasicMeta] = (
-    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_FN, "n" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_SHORT_FN, "ns" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[String]( TECHNICAL_NAME_FN, "tn" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[String]( HIDDEN_DESCR_FN, "hd" ) and
-    PlayJsonUtil.fallbackPathFormat[OffsetDateTime]( DATE_CREATED_FN, "dci" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( DATE_EDITED_FN, "de" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[List[String]]( LANGS_FN, "l" )
+    (__ \ NAME_FN).formatNullable[String] and
+    (__ \ NAME_SHORT_FN).formatNullable[String] and
+    (__ \ TECHNICAL_NAME_FN).formatNullable[String] and
+    (__ \ HIDDEN_DESCR_FN).formatNullable[String] and
+    (__ \ DATE_CREATED_FN).format[OffsetDateTime] and
+    (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime] and
+    (__ \ LANGS_FN).formatNullable[List[String]]
       .inmap[List[String]](
         { _ getOrElse Nil },
         {ls => if (ls.isEmpty) None else Some(ls)}

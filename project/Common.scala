@@ -34,13 +34,10 @@ object Common {
     val GUICE = "4.+"
 
     /** Typesafe slick version.
-      * v3.3.3 - fails to execute query in GeoTagsUtil.rebuildTag() due to issue [[https://github.com/slick/slick/issues/2246]]
       */
     val SLICK        = "3.3.+"
 
     /** slick-pg version.
-      * 0.19.3 => slick-3.3.2
-      * 0.19.4+ needs slick-3.3.3 => failing (see SLICK comment above).
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
     val SLICK_PG     = "0.19.+"

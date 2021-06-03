@@ -2,7 +2,6 @@ package io.suggest.n2.node.meta
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.xplay.json.PlayJsonUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -38,14 +37,14 @@ object MPersonMeta
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MPersonMeta] = (
-    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_FIRST_FN, "f" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[String]( NAME_LAST_FN, "l" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[List[String]]( EXT_AVA_URL_FN, "a" )
+    (__ \ NAME_FIRST_FN).formatNullable[String] and
+    (__ \ NAME_LAST_FN).formatNullable[String] and
+    (__ \ EXT_AVA_URL_FN).formatNullable[List[String]]
       .inmap[List[String]](
         { _ getOrElse Nil },
         { urls => if (urls.isEmpty) None else Some(urls) }
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[List[String]]( EMAIL_FN, "e" )
+    (__ \ EMAIL_FN).formatNullable[List[String]]
       .inmap [List[String]] (
         _ getOrElse Nil,
         { emails => if (emails.isEmpty) None else Some(emails) }

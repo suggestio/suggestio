@@ -2,7 +2,6 @@ package io.suggest.n2.extra.domain
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.text.util.UrlUtil
-import io.suggest.xplay.json.PlayJsonUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -35,8 +34,8 @@ object MDomainExtra
   implicit val domainExtraJson: OFormat[MDomainExtra] = {
     val F = Fields
     (
-      PlayJsonUtil.fallbackPathFormat[String]( F.DOMAIN_KEY_FN, "d" ) and
-      PlayJsonUtil.fallbackPathFormat[MDomainMode]( F.MODE_FN, "m" )
+      (__ \ F.DOMAIN_KEY_FN).format[String] and
+      (__ \ F.MODE_FN).format[MDomainMode]
     )(apply, unlift(unapply))
   }
 

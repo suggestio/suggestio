@@ -2,7 +2,6 @@ package io.suggest.n2.bill.tariff.daily
 
 import io.suggest.bill.Amount_t
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.xplay.json.PlayJsonUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -31,9 +30,9 @@ object MDayClause
 
   implicit val FORMAT: Format[MDayClause] = {
     (
-      PlayJsonUtil.fallbackPathFormat[String]( NAME_FN, "n" ) and
-      PlayJsonUtil.fallbackPathFormat[Amount_t]( AMOUNT_FN, "m" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[String]( CALENDAR_ID_FN, "cal" )
+      (__ \ NAME_FN).format[String] and
+      (__ \ AMOUNT_FN).format[Amount_t] and
+      (__ \ CALENDAR_ID_FN).formatNullable[String]
     )(apply, unlift(unapply))
   }
 

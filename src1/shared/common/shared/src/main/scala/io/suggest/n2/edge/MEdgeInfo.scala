@@ -14,7 +14,6 @@ import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.xplay.json.PlayJsonUtil
 
 /**
  * Suggest.io
@@ -91,11 +90,11 @@ object MEdgeInfo
   implicit val mEdgeInfoFormat: Format[MEdgeInfo] = {
     val F = Fields
     (
-      PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( F.DATE_FN, "dt" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( F.DATE_NI_FN, "dtni" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[String]( F.COMMENT_NI_FN, "coni" ) and
+      (__ \ F.DATE_FN).formatNullable[OffsetDateTime] and
+      (__ \ F.DATE_NI_FN).formatNullable[OffsetDateTime] and
+      (__ \ F.COMMENT_NI_FN).formatNullable[String] and
       (__ \ F.FLAG_FN).formatNullable[Boolean] and
-      PlayJsonUtil.fallbackPathFormatNullable[Iterable[MEdgeFlagData]]( F.FLAGS_FN, "flags" )
+      (__ \ F.FLAGS_FN).formatNullable[Iterable[MEdgeFlagData]]
         .inmap[Iterable[MEdgeFlagData]](
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { flags => if (flags.isEmpty) None else Some(flags) }
@@ -105,18 +104,18 @@ object MEdgeInfo
           EmptyUtil.opt2ImplEmptyF( Set.empty ),
           { tags => if (tags.nonEmpty) Some(tags) else None }
         ) and
-      PlayJsonUtil.fallbackPathFormatNullable[List[MEdgeGeoShape]]( F.GEO_SHAPES_FN, "gss" )
+      (__ \ F.GEO_SHAPES_FN).formatNullable[List[MEdgeGeoShape]]
         .inmap [List[MEdgeGeoShape]] (
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { geos => if (geos.nonEmpty) Some(geos) else None }
         ) and
-      PlayJsonUtil.fallbackPathFormatNullable[Seq[MGeoPoint]]( F.GEO_POINT_FN, "gpt" )
+      (__ \ F.GEO_POINT_FN).formatNullable[Seq[MGeoPoint]]
         .inmap [Seq[MGeoPoint]] (
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { gps => if (gps.nonEmpty) Some(gps) else None }
         ) and
-      PlayJsonUtil.fallbackPathFormatNullable[MExtService]( F.EXT_SERVICE_FN, "xs" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[MOsFamily]( F.OS_FAMILY_FN, "os" )
+      (__ \ F.EXT_SERVICE_FN).formatNullable[MExtService] and
+      (__ \ F.OS_FAMILY_FN).formatNullable[MOsFamily]
     )(apply, unlift(unapply))
   }
 

@@ -8,7 +8,6 @@ import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.model.PrefixedFn
-import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -42,8 +41,8 @@ object MNodeBilling
 
   /** Поддержка двустороннего json-маппинга. */
   implicit val FORMAT: Format[MNodeBilling] = (
-    PlayJsonUtil.fallbackPathFormatNullable[Gid_t]( CONTRACT_ID_FN, "ct" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MNodeTariffs]( TARIFFS_FN, "tfs" )
+    (__ \ CONTRACT_ID_FN).formatNullable[Gid_t] and
+    (__ \ TARIFFS_FN).formatNullable[MNodeTariffs]
       .inmap [MNodeTariffs] (
         opt2ImplMEmptyF(MNodeTariffs),
         implEmpty2OptF

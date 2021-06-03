@@ -6,7 +6,6 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.proto.http.HttpConst
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
-import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -37,10 +36,10 @@ object MBusinessInfo extends IEmpty with IEsMappingProps {
     val F = Fields
 
     (
-      PlayJsonUtil.fallbackPathFormatNullable[String]( F.SITE_URL_FN, "su" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[String]( F.AUDIENCE_DESCR_FN, "ad" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[String]( F.HUMAN_TRAFFIC_FN, "hu") and
-      PlayJsonUtil.fallbackPathFormatNullable[String]( F.INFO_FN, "bd")
+      (__ \ F.SITE_URL_FN).formatNullable[String] and
+      (__ \ F.AUDIENCE_DESCR_FN).formatNullable[String] and
+      (__ \ F.HUMAN_TRAFFIC_FN).formatNullable[String] and
+      (__ \ F.INFO_FN).formatNullable[String]
     )(apply, unlift(unapply))
   }
 

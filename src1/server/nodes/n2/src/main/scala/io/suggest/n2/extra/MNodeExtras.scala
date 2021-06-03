@@ -7,7 +7,6 @@ import io.suggest.n2.extra.doc.MNodeDoc
 import io.suggest.n2.extra.domain.MDomainExtra
 import io.suggest.n2.extra.rsc.MRscExtra
 import io.suggest.vid.ext.MVideoExtInfo
-import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
@@ -92,19 +91,22 @@ object MNodeExtras
 
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
-  implicit val nodeExtrasJson: OFormat[MNodeExtras] = (
-    PlayJsonUtil.fallbackPathFormatNullable[MAdnExtra]( Fields.Adn.ADN_FN, "a" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[Seq[MDomainExtra]]( Fields.Domain.DOMAIN_FN, "d" )
-      .inmap [Seq[MDomainExtra]] (
-        EmptyUtil.opt2ImplEmptyF(Nil),
-        { domains => if (domains.isEmpty) None else Some(domains) }
-      ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MNodeDoc]( Fields.Doc.DOCUMENT_FN, "o" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MVideoExtInfo]( Fields.VideoExt.VIDEO_EXT_FN, "v" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MRscExtra]( Fields.Resource.RESOURCE_FN, "r" ) and
-    (__ \ Fields.Calendar.CALENDAR_FN).formatNullable[MNodeCalendar] and
-    (__ \ Fields.CryptoKey.CRYPTO_KEY_FN).formatNullable[MNodeCryptoKey]
-  )(apply, unlift(unapply))
+  implicit val nodeExtrasJson: OFormat[MNodeExtras] = {
+    val F = Fields
+    (
+      (__ \ F.Adn.ADN_FN).formatNullable[MAdnExtra] and
+      (__ \ F.Domain.DOMAIN_FN).formatNullable[Seq[MDomainExtra]]
+        .inmap [Seq[MDomainExtra]] (
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          { domains => if (domains.isEmpty) None else Some(domains) }
+        ) and
+      (__ \ F.Doc.DOCUMENT_FN).formatNullable[MNodeDoc] and
+      (__ \ F.VideoExt.VIDEO_EXT_FN).formatNullable[MVideoExtInfo] and
+      (__ \ F.Resource.RESOURCE_FN).formatNullable[MRscExtra] and
+      (__ \ Fields.Calendar.CALENDAR_FN).formatNullable[MNodeCalendar] and
+      (__ \ Fields.CryptoKey.CRYPTO_KEY_FN).formatNullable[MNodeCryptoKey]
+    )(apply, unlift(unapply))
+  }
 
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {

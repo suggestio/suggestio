@@ -40,23 +40,23 @@ object MAdnExtra
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MAdnExtra] = (
-    PlayJsonUtil.fallbackPathFormatNullable[MAdnResView]( RES_VIEW_FN, "r" )
+    (__ \ RES_VIEW_FN).formatNullable[MAdnResView]
       .inmap[MAdnResView](
         EmptyUtil.opt2ImplMEmptyF( MAdnResView ),
         EmptyUtil.implEmpty2OptF
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[Set[MAdnRight]]( RIGHTS, "g" )
+    (__ \ RIGHTS).formatNullable[Set[MAdnRight]]
       .inmap [Set[MAdnRight]] (
         EmptyUtil.opt2ImplEmptyF( Set.empty ),
         { rights => if (rights.isEmpty) None else Some(rights) }
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[Boolean]( IS_BY_USER, "u" )
+    (__ \ IS_BY_USER).formatNullable[Boolean]
       .inmap [Boolean] (
         _.getOrElseFalse,
         someF
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[String]( SHOWN_TYPE, "s" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[Boolean]( IS_TEST, "t" )
+    (__ \ SHOWN_TYPE).formatNullable[String] and
+    (__ \ IS_TEST).formatNullable[Boolean]
       .inmap [Boolean] (
         _.getOrElseFalse,
         someF

@@ -6,7 +6,6 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.MNodeGeoLevel
 import io.suggest.model.PrefixedFn
 import io.suggest.n2.media.MEdgeMedia
-import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -127,24 +126,24 @@ object MEdge
 
   /** Поддержка JSON. */
   implicit val edgeJson: OFormat[MEdge] = (
-    PlayJsonUtil.fallbackPathFormat( PREDICATE_FN, "p" )(MPredicate.MPREDICATE_DEEP_FORMAT) and
-    PlayJsonUtil.fallbackPathFormatNullable[Set[String]]( NODE_ID_FN, "i" )
+    (__ \ PREDICATE_FN).format( MPredicate.MPREDICATE_DEEP_FORMAT ) and
+    (__ \ NODE_ID_FN).formatNullable[Set[String]]
       .inmap [Set[String]] (
         EmptyUtil.opt2ImplEmptyF(Set.empty),
         nodeIds => if (nodeIds.nonEmpty) Some(nodeIds) else None
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[Int]( ORDER_FN, "o" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MEdgeInfo]( INFO_FN, "n" )
+    (__ \ ORDER_FN).formatNullable[Int] and
+    (__ \ INFO_FN).formatNullable[MEdgeInfo]
       .inmap [MEdgeInfo] (
         opt2ImplMEmptyF( MEdgeInfo ),
         implEmpty2OptF
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MEdgeDoc]( DOCUMENT_FN, "d" )
+    (__ \ DOCUMENT_FN).formatNullable[MEdgeDoc]
       .inmap [MEdgeDoc] (
         opt2ImplMEmptyF( MEdgeDoc ),
         implEmpty2OptF
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[MEdgeMedia]( MEDIA_FN, "m" )
+    (__ \ MEDIA_FN).formatNullable[MEdgeMedia]
   )(apply, unlift(unapply))
 
 

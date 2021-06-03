@@ -5,7 +5,6 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.model.PrefixedFn
-import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -36,13 +35,13 @@ object MTfDaily
   import Fields._
 
   implicit val FORMAT: OFormat[MTfDaily] = (
-    PlayJsonUtil.fallbackPathFormat[MCurrency]( CURRENCY_FN, "cc" ) and
-    PlayJsonUtil.fallbackPathFormat[Seq[MDayClause]]( CLAUSES_FN, "cl" )
+    (__ \ CURRENCY_FN).format[MCurrency] and
+    (__ \ CLAUSES_FN).format[Seq[MDayClause]]
       .inmap [Map[String, MDayClause]] (
         _.iterator.map { v => v.name -> v }.toMap,
         _.valuesIterator.toSeq
       ) and
-    PlayJsonUtil.fallbackPathFormatNullable[Double]( COMISSION_PC_FN, "com" )
+    (__ \ COMISSION_PC_FN).formatNullable[Double]
   )(apply, unlift(unapply))
 
 

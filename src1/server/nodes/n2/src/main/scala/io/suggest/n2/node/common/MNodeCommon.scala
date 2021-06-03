@@ -6,7 +6,6 @@ import play.api.libs.json._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.xplay.json.PlayJsonUtil
 import monocle.macros.GenLens
 
 /**
@@ -28,11 +27,11 @@ object MNodeCommon extends IEsMappingProps {
   implicit val nodeCommonJson: OFormat[MNodeCommon] = {
     val F = Fields
     (
-      PlayJsonUtil.fallbackPathFormat[MNodeType]( F.NODE_TYPE_FN, "t" ) and
-      PlayJsonUtil.fallbackPathFormat[Boolean]( F.IS_DEPEND_FN, "d" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[Boolean]( F.IS_ENABLED_FN, "e" )
+      (__ \ F.NODE_TYPE_FN).format[MNodeType] and
+      (__ \ F.IS_DEPEND_FN).format[Boolean] and
+      (__ \ F.IS_ENABLED_FN).formatNullable[Boolean]
         .inmap [Boolean] (_.getOrElseTrue, someF) and
-      PlayJsonUtil.fallbackPathFormatNullable[String]( F.DISABLE_REASON_FN, "r" )
+      (__ \ F.DISABLE_REASON_FN).formatNullable[String]
     )(apply, unlift(unapply))
   }
 

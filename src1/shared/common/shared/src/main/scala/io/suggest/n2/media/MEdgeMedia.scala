@@ -4,7 +4,6 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.model.PrefixedFn
 import io.suggest.n2.media.storage.MStorageInfo
-import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -85,9 +84,9 @@ object MEdgeMedia
   implicit def edgeMediaJson: OFormat[MEdgeMedia] = {
     val F = Fields
     (
-      PlayJsonUtil.fallbackPathFormat[MFileMeta]( F.FILE_FN, "fm" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[MStorageInfo]( F.STORAGE_FN, "o" ) and
-      PlayJsonUtil.fallbackPathFormatNullable[MPictureMeta]( F.PICTURE_FN, "pm" )
+      (__ \ F.FILE_FN).format[MFileMeta] and
+      (__ \ F.STORAGE_FN).formatNullable[MStorageInfo] and
+      (__ \ F.PICTURE_FN).formatNullable[MPictureMeta]
         .inmap[MPictureMeta](
           EmptyUtil.opt2ImplMEmptyF(MPictureMeta),
           EmptyUtil.implEmpty2OptF[MPictureMeta]

@@ -3,7 +3,6 @@ package io.suggest.n2.node.meta
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
-import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -28,10 +27,13 @@ object MAddress extends IEmpty with IEsMappingProps {
 
   import Fields._
 
-  implicit val MADDRESS_FORMAT: OFormat[MAddress] = (
-    PlayJsonUtil.fallbackPathFormatNullable[String]( TOWN_FN, "t" ) and
-    PlayJsonUtil.fallbackPathFormatNullable[String]( ADDRESS_FN, "a")
-  )(apply, unlift(unapply))
+  implicit val MADDRESS_FORMAT: OFormat[MAddress] = {
+    val F = Fields
+    (
+      (__ \ F.TOWN_FN).formatNullable[String] and
+      (__ \ F.ADDRESS_FN).formatNullable[String]
+    )(apply, unlift(unapply))
+  }
 
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {

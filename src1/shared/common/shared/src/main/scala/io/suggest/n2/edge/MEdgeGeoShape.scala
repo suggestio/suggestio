@@ -49,10 +49,10 @@ object MEdgeGeoShape
     import Fields._
     import io.suggest.dt.CommonDateTimeUtil.Implicits._
 
-    val GLEVEL_FORMAT       = PlayJsonUtil.fallbackPathFormat[MNodeGeoLevel](GLEVEL_FN, "l")
-    val GJC_FORMAT          = PlayJsonUtil.fallbackPathFormat[Boolean]( GEO_JSON_COMPAT_FN, "gjc" )
-    val FROM_URL_FORMAT     = PlayJsonUtil.fallbackPathFormatNullable[String]( SOURCE_URL_FN, "url" )
-    val DATE_EDITED_FORMAT  = PlayJsonUtil.fallbackPathFormatNullable[OffsetDateTime]( DATE_EDITED_FN, "dt" )
+    val GLEVEL_FORMAT       = (__ \ GLEVEL_FN).format[MNodeGeoLevel]
+    val GJC_FORMAT          = (__ \ GEO_JSON_COMPAT_FN).format[Boolean]
+    val FROM_URL_FORMAT     = (__ \ SOURCE_URL_FN).formatNullable[String]
+    val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime]
     val ID_FORMAT           = (__ \ ID_FN).format[Int]
 
     def _shapeFormat(ngl: MNodeGeoLevel): OFormat[IGeoShape] = {
