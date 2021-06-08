@@ -265,4 +265,6 @@ object ErrorMsgs {
 
   def PERMISSION_REQUEST_TIMEOUT = "Permission.request.timeout"
 
+  def NFC_API_ERROR = "Nfc.api.error"
+
 }

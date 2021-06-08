@@ -101,7 +101,7 @@ trait INfc extends js.Object {
                          error: js.Function1[js.Any, Unit] = js.native,
                        ): Unit = js.native
 
-  def scanNdef(): js.Promise[NfcEventTag] = js.native
+  def scanNdef(options: ScanNdefOpts = js.native): js.Promise[NfcEventTag] = js.native
   def scanTag(): js.Promise[NfcEventTag] = js.native
   def cancelScan(): js.Promise[_] = js.native
 
@@ -196,3 +196,6 @@ object INfc {
 @JSGlobal("nfc")    // window.nfc
 object Nfc extends INfc
 
+trait ScanNdefOpts extends js.Object {
+  val keepSessionOpen: js.UndefOr[Boolean] = js.undefined
+}

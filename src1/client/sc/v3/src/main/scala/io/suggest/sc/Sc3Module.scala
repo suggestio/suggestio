@@ -21,6 +21,11 @@ import io.suggest.lk.m.{CsrfTokenEnsure, SessionSet}
 import io.suggest.lk.nodes.form.LkNodesModuleBase
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
+import io.suggest.nfc.INfcApi
+import io.suggest.nfc.cdv.CordovaNfcApi
+import io.suggest.nfc.web.WebNfcApi
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReqData, IMHttpClientConfig}
 import io.suggest.routes.IJsRouter
@@ -55,6 +60,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -67,7 +74,7 @@ object Sc3Module {
   var ref: Sc3Module = null
 }
 
-class Sc3Module { outer =>
+class Sc3Module extends Log { outer =>
 
   import io.suggest.jd.render.JdRenderModule._
   import io.suggest.ReactCommonModule._
@@ -379,6 +386,29 @@ class Sc3Module { outer =>
     wire[ScLoginR]
   }
 
+  /** Make instance for NFC API, used by ShowCase. */
+  lazy val nfcApiOpt: Option[INfcApi] = {
+    val isCordova = CordovaConstants.isCordovaPlatform()
+    val tryRes = Try {
+      (if (isCordova) {
+        // Cordova API:
+        sc3Circuit.platformRW
+          .value.osFamily
+          .map ( CordovaNfcApi.apply )
+      } else {
+        // Try Web NFC in browser:
+        Option( new WebNfcApi )
+      })
+        .filter(_.isApiAvailable())
+    }
+
+    for (ex <- tryRes.failed)
+      logger.error( ErrorMsgs.NFC_API_ERROR, ex, isCordova )
+
+    tryRes
+      .toOption
+      .flatten
+  }
 
   /** Поддержка lk-nodes. */
   object ScNodesFormModule
@@ -432,6 +462,7 @@ class Sc3Module { outer =>
         ).toEffectPure
         OnlineCheckConn.toEffectPure + retryFx
       }
+      override def nfcApi = nfcApiOpt
     }
   }
   def getNodesFormCircuit = () => ScNodesFormModule.lkNodesFormCircuit

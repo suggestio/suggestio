@@ -2,6 +2,8 @@ package io.suggest.lk.nodes.form.m
 
 import diode.{ActionResult, Effect}
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
+import io.suggest.nfc.INfcApi
+import io.suggest.nfc.web.WebNfcApi
 import io.suggest.proto.http.model.IMHttpClientConfig
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.vdom.html_<^._
@@ -42,6 +44,9 @@ trait NodesDiConf extends IMHttpClientConfig {
     */
   def retryErrorFx(effect: Effect): Effect
 
+  /** Define NFC API for use. */
+  def nfcApi: Option[INfcApi]
+
 }
 
 
@@ -57,6 +62,11 @@ object NodesDiConf {
     override def needLogInVdom(chs: VdomNode*) = EmptyVdom
     override def withBleBeacons = false
     override def retryErrorFx(effect: Effect) = effect
+    override lazy val nfcApi = {
+      // Standard WebNFC API will is tried automatically.
+      val webNfc = new WebNfcApi
+      Option.when( webNfc.isApiAvailable() )( webNfc )
+    }
   }
 
 }

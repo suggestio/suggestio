@@ -27,6 +27,10 @@ import scala.util.Try
   */
 object Html5PermissionApi extends Log {
 
+  object PermissionName {
+    final def NFC = "nfc".asInstanceOf[PermissionName]
+  }
+
   /** Безопасная проверка наличия HTML5 Permissions API в текущем User-Agent. */
   def isApiAvail(): Boolean = {
     val tryResOpt = Try {
@@ -54,16 +58,13 @@ object Html5PermissionApi extends Log {
     * @param permName id пермишшена.
     * @return Фьючерс с результатом.
     */
-  def getPermissionState(permName: PermissionName ): Future[IPermissionState] = {
+  def getPermissionState( permName: PermissionName ): Future[IPermissionState] = {
     try {
+
       dom.window.navigator
         // TODO Проверять, доступен ли HTML5 Permissions API вообще. В iOS Safari - его нет.
         .permissions
-        .query {
-          new PermissionDescriptor {
-            override val name = permName
-          }
-        }
+        .query( PermissionDescriptor( permName ) )
         .toFuture
         .map( Html5PermissionState.apply )
     } catch {
