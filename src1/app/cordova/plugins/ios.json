@@ -60,6 +60,9 @@
     },
     "cordova.plugins.diagnostic": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-deeplinks": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

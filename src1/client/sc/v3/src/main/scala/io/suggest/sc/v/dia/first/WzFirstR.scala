@@ -77,6 +77,8 @@ class WzFirstR(
                       Mui.SvgIcons.BluetoothSearching -> MsgCodes.`Bluetooth`
                     case MWzPhases.NotificationPerm =>
                       Mui.SvgIcons.Notifications -> crCtx.messages( MsgCodes.`Notifications` )
+                    //case MWzPhases.Nfc =>
+                    //  Mui.SvgIcons.NfcRounded -> MsgCodes.`NFC`
                     case _ =>
                       Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
                   }
@@ -124,6 +126,8 @@ class WzFirstR(
                             Some( MsgCodes.`0.uses.bt.to.find.ads.indoor` )
                           case MWzPhases.NotificationPerm =>
                             Some( MsgCodes.`Notify.about.offers.nearby` )
+                          //case MWzPhases.Nfc =>
+                          //  Some( MsgCodes.`Read.radio.tags.on.tap` )
                           case _ =>
                             None
                         }
@@ -142,6 +146,8 @@ class WzFirstR(
                               Right( MsgCodes.`Bluetooth` )
                             case MWzPhases.NotificationPerm =>
                               Right( crCtx.messages(MsgCodes.`Notifications`) )
+                            //case MWzPhases.Nfc =>
+                            //  Right( MsgCodes.`NFC` )
                             case MWzPhases.Finish =>
                               val msg = crCtx.messages( MsgCodes.`Settings.done.0.ready.for.using`, MsgCodes.`Suggest.io` )
                               Left( msg )

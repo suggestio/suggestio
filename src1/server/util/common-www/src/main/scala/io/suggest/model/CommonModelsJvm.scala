@@ -645,11 +645,11 @@ object CommonModelsJvm extends MacroLogsDyn {
       override def unbind(key: String, value: SioPages.Sc3): String = {
         _mergeUnbinded1(
           strOptB.unbind( NODE_ID_FN, value.nodeId ),
+          geoPointOptB.unbind( LOC_ENV_FN, value.locEnv ),
           boolOrFalseB.unbind( SEARCH_OPENED_FN, value.searchOpened ),
           boolOrFalseB.unbind( MENU_OPENED_FN, value.menuOpened ),
           longOptB.unbind( GENERATION_FN, value.generation ),
           strOptB.unbind( TAG_NODE_ID_FN, value.tagNodeId ),
-          geoPointOptB.unbind( LOC_ENV_FN, value.locEnv ),
           strOptB.unbind( FOCUSED_AD_ID_FN, value.focusedAdId ),
           boolOrFalseB.unbind( FIRST_RUN_OPEN_FN, value.firstRunOpen ),
           boolOrFalseB.unbind( DL_APP_OPEN_FN, value.dlAppOpen ),

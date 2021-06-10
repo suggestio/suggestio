@@ -84,6 +84,8 @@ final class ScSite @Inject() (
     /** Сюда передаются исходные параметры запроса сайта (qs). */
     def _siteQsArgs: SiteQsArgs
 
+    def _mainScreen: SioPages.Sc3
+
     /** Исходный http-реквест. */
     implicit def _request: IReq[_]
 
@@ -212,6 +214,7 @@ final class ScSite @Inject() (
           apiVsn      = _siteQsArgs.apiVsn,
           jsStateOpt  = _customScStateOpt,
           syncRender  = _syncRender,
+          mainScreen  = _mainScreen,
         )
       }
     }
@@ -406,6 +409,7 @@ final class ScSite @Inject() (
         val logic = new SiteScriptLogicV3 {
           override implicit def _request = request
           override def _siteQsArgs = siteArgs
+          override def _mainScreen = mainScreen
         }
         _geoSiteResult(logic)
 

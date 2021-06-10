@@ -23,6 +23,9 @@ object MWzPhases extends Enum[MWzPhase] {
   /** Пермишшен нотификации. */
   case object NotificationPerm extends MWzPhase
 
+  /** Near-field communication phase. */
+  //case object Nfc extends MWzPhase
+
   /** Писулька с окончанием писанины и кнопкой завершения настройки. */
   case object Finish extends MWzPhase
 

@@ -105,6 +105,7 @@ class Sc3Circuit(
                   scStuffApi                : => IScStuffApi,
                   csrfTokenApi              : => ICsrfTokenApi,
                   geoLocApis                : () => LazyList[GeoLocApi],
+                  //nfcApiOpt                 : => Option[INfcApi],
                   mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
                 )
   extends CircuitLog[MScRoot]
@@ -320,7 +321,6 @@ class Sc3Circuit(
 
   private def gridRW              = mkLensRootZoomRW(this, MScRoot.grid)
   private def gridCoreRW          = mkLensZoomRW( gridRW, MGridS.core )
-  private def gridAdsRW           = mkLensZoomRW( gridCoreRW, MGridCoreS.ads )( FastEqUtil.AnyRefFastEq )
   private def jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
 
   private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
@@ -578,6 +578,7 @@ class Sc3Circuit(
     hasBleRO      = hasBleRO,
     modelRW       = firstRunDiaRW,
     dispatcher    = this,
+    //nfcApi        = nfcApiOpt,
   )
 
   private def bootAh = new BootAh(
@@ -701,6 +702,9 @@ class Sc3Circuit(
   private def jsRouterInitAh = new JsRouterInitAh(
     modelRW = jsRouterRW
   )
+
+  //private def nfcAh = new NfcAh(
+  //)
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 

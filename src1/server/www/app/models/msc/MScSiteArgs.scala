@@ -24,6 +24,7 @@ final case class MScSiteArgs(
                               apiVsn        : MScApiVsn,
                               override val jsStateOpt: Option[SioPages.Sc3] = None,
                               override val syncRender: Boolean,
+                              mainScreen    : SioPages.Sc3,
                             )
   extends SyncRenderInfoDflt
 {

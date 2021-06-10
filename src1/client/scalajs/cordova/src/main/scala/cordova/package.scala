@@ -37,6 +37,8 @@ sealed trait DomWindow_CordovaExt extends js.Object {
 
   val plugins: DomWindow_CdvPlugins = js.native
 
+  var handleOpenURL: js.UndefOr[js.Function1[String, _]] = js.native
+
 }
 
 

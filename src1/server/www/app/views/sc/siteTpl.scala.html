@@ -31,10 +31,17 @@
 
   <meta name="viewport" content="width=320,height=device-height,initial-scale=1,user-scalable=no,maximum-scale=1,minimal-ui,viewport-fit=cover" />
 
-  @for(jsState <- args.jsStateOpt) {
+  @for( jsState <- args.jsStateOpt ) {
     <link rel="canonical"
           href="@args.nodeOpt.flatMap(n2NodesUtil.urlPrefixOf).getOrElse(ctxUtil.SC_URL_PREFIX)@controllers.sc.routes.ScSite.geoSite(jsState)" />
   }
+
+  @* Link page to android mobile app: https://github.com/vnc-biz/cordova-plugin-deeplinks#modify-web-pages
+     TODO Need to handle 3p-domains here in domain path-token.
+  *@
+  <link rel="alternate"
+        href="android-app://io.suggest.appsuggest/https/suggest.io@controllers.sc.routes.ScSite.geoSite( args.mainScreen )" />
+
   @if(!args.syncRender) {
     @* Раскомментить, когда будет рабочий SyncSite для новой выдачи.
     <meta name="fragment" content="!"/>

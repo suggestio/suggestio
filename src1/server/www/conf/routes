@@ -332,6 +332,10 @@ GET  /privacy                           @controllers.Static.privacyPolicy()
 GET  /st/popup/check                    @controllers.Static.popupCheckContent()
 POST /_/csp/report                      @controllers.Static.handleCspReport()
 
+## https://github.com/vnc-biz/cordova-plugin-deeplinks#cordova-config-preferences
+GET  /.well-known/assetlinks.json       @controllers.Assets.at( path = ASSETS_PUBLIC_ROOT, file = "json/app/android/assetlinks.json" )
+GET  /apple-app-site-association        @controllers.Assets.at( path = ASSETS_PUBLIC_ROOT, file = "json/app/ios/site-assoc.json" )
+
 ## Rare non-versioned access to assets.
 GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
 GET  /assets/*file                      @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file)

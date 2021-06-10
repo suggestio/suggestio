@@ -147,5 +147,13 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "cordova-plugin-deeplinks": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-deeplinks@^1.1.1"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

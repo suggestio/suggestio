@@ -32,6 +32,12 @@
     <preference name="StatusBarBackgroundColor" value="#2d3d4e" />
     <preference name="AutoHideSplashScreen" value="true" />
     <preference name="SplashScreenDelay" value="2000" />
+    <universal-links>
+	<ios-team-id value="6L9CMLV68T" />
+	<host scheme="https" name="suggest.io" >
+	    <path url="/" />
+	</host>
+    </universal-links>
     <platform name="android">
         <preference name="android-targetSdkVersion" value="29" />
         <allow-intent href="market:*" />
@@ -62,6 +68,7 @@
         </config-file>
         <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.AUTHENTICATE_ACCOUNTS']" />
 	<custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" />
+	<preference name="AndroidLaunchMode" value="singleInstance" />
 	<!--
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
           <application android:usesCleartextTraffic="true" />

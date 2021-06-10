@@ -1,6 +1,7 @@
 package io.suggest.sc.c.dev
 
 import cordova.Cordova
+import cordova.plugins.deeplinks.{IUniversalLinks, UniversalLinks}
 import diode.data.Pot
 import diode.Implicits._
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
@@ -16,7 +17,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.index.MScIndexArgs
@@ -27,7 +28,7 @@ import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
-import io.suggest.spa.{DiodeUtil, DoNothing, HwBackBtn}
+import io.suggest.spa.{DiodeUtil, DoNothing, HwBackBtn, SioPagesUtil}
 import io.suggest.spa.DiodeUtil.Implicits._
 import org.scalajs.dom
 import org.scalajs.dom.Event
@@ -345,6 +346,19 @@ final class PlatformAh[M](
 
           // Определить платформу cordova, если она не была правильно определена на предыдущем шаге.
           if (v0.isCordova) {
+
+            // Subscribe to UniversalLinks events:
+            fxAcc ::= Effect.action {
+              if (IUniversalLinks.isAvailable()) {
+                Try( UniversalLinks.unsubscribeF() )
+                UniversalLinks.subscribeF() { eventData =>
+                  val sc3Page = SioPagesUtil.parseSc3FromQsTokens( eventData.params )
+                  dispatcher.dispatch( RouteTo( sc3Page ) )
+                }
+              }
+              DoNothing
+            }
+
             Try( Cordova.platformId )
               .fold[Unit](
                 {ex =>

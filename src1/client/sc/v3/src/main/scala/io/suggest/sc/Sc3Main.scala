@@ -2,6 +2,7 @@ package io.suggest.sc
 
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.log.buffered.BufLogAppender
 import io.suggest.log.filter.SevereFilter
@@ -26,6 +27,7 @@ import org.scalajs.dom
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+import io.suggest.spa.DiodeUtil.Implicits.CircuitOpsExt
 import io.suggest.xplay.json.PlayJsonSjsUtil
 
 import scala.util.Try

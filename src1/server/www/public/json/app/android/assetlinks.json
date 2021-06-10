@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : {
+      "namespace": "android_app",
+      "package_name": "io.suggest.appsuggest",
+      "sha256_cert_fingerprints": ["98:A6:BD:C1:D5:CB:D3:D6:87:15:44:D8:F9:F8:E0:B1:33:94:47:C7:48:BF:C6:C8:68:C6:67:74:9A:9F:16:6B"]
+  }
+}]

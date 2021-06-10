@@ -507,4 +507,7 @@ object MsgCodes {
   val `Events` = "Events"
   val `Action` = "Action"
 
+  val `NFC` = "NFC"
+  val `Read.radio.tags.on.tap` = "Read.radio.tags.on.tap"
+
 }

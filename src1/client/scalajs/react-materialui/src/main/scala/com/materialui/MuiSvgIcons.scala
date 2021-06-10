@@ -897,8 +897,10 @@ object MuiSvgIcons {
   object DeviceNetworkCell extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/network-wifi", JSImport.Default)
   object DeviceNetworkWifi extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/nfc", JSImport.Default)
-  object DeviceNfc extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Nfc", JSImport.Default)
+  object Nfc extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NfcRounded", JSImport.Default)
+  object NfcRounded extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/screen-lock-landscape", JSImport.Default)
   object DeviceScreenLockLandscape extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/screen-lock-portrait", JSImport.Default)

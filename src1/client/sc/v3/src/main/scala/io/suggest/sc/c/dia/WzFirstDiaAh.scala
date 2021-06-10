@@ -17,6 +17,7 @@ import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPe
 import io.suggest.sc.m.{GeoLocOnOff, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.dia.first._
 import io.suggest.log.Log
+import io.suggest.nfc.{INfcApi, NfcScan}
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -611,7 +612,7 @@ class WzFirstDiaAh[M](
       override def isSupported() = hasBleRO()
       override def readPermissionState() =
         CordovaDiagonsticPermissionUtil.getBlueToothState()
-      override def requestPermissionFx: Effect = {
+      override def requestPermissionFx = Effect.action {
         BtOnOff(
           isEnabled = OptionUtil.SomeBool.someTrue,
           opts = MBeaconerOpts(
@@ -619,7 +620,7 @@ class WzFirstDiaAh[M](
             askEnableBt = true,
             oneShot     = false,
           ),
-        ).toEffectPure
+        )
       }
 
     } #:: new IPermissionSpec {
@@ -650,7 +651,19 @@ class WzFirstDiaAh[M](
       override def requestPermissionFx: Effect =
         NotificationPermAsk( isVisible = true ).toEffectPure
       override def onGrantedByDefault = None
-    } #:: LazyList.empty[IPermissionSpec]
+
+    } #:: /*new IPermissionSpec {
+      // NFC
+      override def phase = MWzPhases.Nfc
+      override def isSupported(): Boolean = {
+        // TODO NFC Fully disabled (only dev mode) until it will be fully implemented.
+        scalajs.LinkingInfo.developmentMode && nfcApi.exists(_.isApiAvailable())
+      }
+      override def readPermissionState(): Future[IPermissionState] =
+        nfcApi.get.readPermissionState()
+      override def requestPermissionFx =
+        NfcScan( enabled = true ).toEffectPure
+    } #:: */ LazyList.empty[IPermissionSpec]
   }
 
 }
