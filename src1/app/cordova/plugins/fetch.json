@@ -155,5 +155,13 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "com-darryncampbell-cordova-plugin-intent": {
+    "source": {
+      "type": "registry",
+      "id": "com-darryncampbell-cordova-plugin-intent@1.3.0"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

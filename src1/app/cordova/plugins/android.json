@@ -68,6 +68,9 @@
     },
     "cordova-plugin-deeplinks": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "com-darryncampbell-cordova-plugin-intent": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

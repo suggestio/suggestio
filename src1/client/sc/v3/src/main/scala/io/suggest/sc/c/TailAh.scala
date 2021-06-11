@@ -38,7 +38,6 @@ import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
 
-import java.net.URI
 import scala.util.{Success, Try}
 
 /**

@@ -2,6 +2,7 @@ package io.suggest.sc.c.dev
 
 import cordova.Cordova
 import cordova.plugins.deeplinks.{IUniversalLinks, UniversalLinks}
+import cordova.plugins.intent.{CdvIntentShim, ICdvIntentShim, Intent}
 import diode.data.Pot
 import diode.Implicits._
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
@@ -20,6 +21,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
+import io.suggest.sc.c.android.{HandleIntent, ScIntentsAh}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
 import io.suggest.sc.m.inx.{MScSideBar, MScSideBars, MScSwitchCtx, SideBarOpenClose}
@@ -36,6 +38,7 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 
 import scala.concurrent.duration.DurationInt
+import scala.scalajs.js.JSON
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -348,16 +351,26 @@ final class PlatformAh[M](
           if (v0.isCordova) {
 
             // Subscribe to UniversalLinks events:
-            fxAcc ::= Effect.action {
-              if (IUniversalLinks.isAvailable()) {
+            if (IUniversalLinks.isAvailable()) {
+              fxAcc ::= Effect.action {
                 Try( UniversalLinks.unsubscribeF() )
                 UniversalLinks.subscribeF() { eventData =>
-                  val sc3Page = SioPagesUtil.parseSc3FromQsTokens( eventData.params )
-                  dispatcher.dispatch( RouteTo( sc3Page ) )
+                  try {
+                    val sc3Page = SioPagesUtil.parseSc3FromQsTokens( eventData.params )
+                    logger.log(s"Universal link found:\n url: ${eventData.url}\n qs = ${JSON.stringify(eventData.params)}\n parsed => $sc3Page")
+                    dispatcher.dispatch( RouteTo( sc3Page ) )
+                  } catch {
+                    case ex: Throwable =>
+                      logger.error( ErrorMsgs.URL_PARSE_ERROR, ex, eventData.url )
+                  }
                 }
+                DoNothing
               }
-              DoNothing
             }
+
+            // Subscribe to android-intent events:
+            if (ICdvIntentShim.isApiAvailable())
+              fxAcc ::= ScIntentsAh.subscribeIntentsFx( dispatcher )
 
             Try( Cordova.platformId )
               .fold[Unit](

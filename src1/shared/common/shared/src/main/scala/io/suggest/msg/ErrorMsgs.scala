@@ -267,4 +267,7 @@ object ErrorMsgs {
 
   def NFC_API_ERROR = "Nfc.api.error"
 
+  def UNKNOWN_INTENT = "Unknown.intent"
+  def INTENT_ACTION_UNKNOWN = "Intent.action.unknown"
+
 }

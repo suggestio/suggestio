@@ -65,15 +65,26 @@
             <uses-permission android:name="android.permission.INTERNET" />
             <uses-permission android:name="android.permission.NETWORK_ACCESS" />
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	    <uses-permission android:name="android.permission.NFC" />
+	    <uses-feature android:name="android.hardware.nfc" android:required="true" />
         </config-file>
         <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.AUTHENTICATE_ACCOUNTS']" />
-	<custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" />
-	<preference name="AndroidLaunchMode" value="singleInstance" />
-	<!--
+        <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" />
+        <preference name="AndroidLaunchMode" value="singleInstance" />
+         <!--
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
           <application android:usesCleartextTraffic="true" />
         </edit-config>
-	-->
+        -->
+        <config-file target="AndroidManifest.xml" platform="android" parent="/manifest/application/activity" mode="merge">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+		<category android:name="android.intent.category.DEFAULT"/>
+		<data android:scheme="https"
+                      android:host="suggest.io"
+		      android:pathPrefix="/" />
+            </intent-filter>
+        </config-file>
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />

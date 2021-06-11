@@ -72,6 +72,7 @@ import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.IOsNotifyAction
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.react.r.ComponentCatch
+import io.suggest.sc.c.android.{IIntentAction, ScIntentsAh}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
 import io.suggest.sc.m.dia.first.IWz1Action
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
@@ -703,6 +704,10 @@ class Sc3Circuit(
     modelRW = jsRouterRW
   )
 
+  private def scIntentsAh = new ScIntentsAh(
+    modelRW = rootRW,
+  )
+
   //private def nfcAh = new NfcAh(
   //)
 
@@ -733,6 +738,7 @@ class Sc3Circuit(
       case _: IScAppAction              => dlAppAh
       case _: IScSettingsAction         => scSettingsDiaAh
       case _: IScDaemonAction           => scDaemonAh
+      case _: IIntentAction             => scIntentsAh
       case _: IDaemonAction             => daemonBgModeAh
       case _: IDaemonSleepAction        => daemonSleepTimerAh
       case _: IHwBtnAction              => tailAh

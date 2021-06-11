@@ -1,6 +1,7 @@
 import cordova.plugins.appminimize.CdvAppMinimize
 import cordova.plugins.background.fetch.CordovaBackgroundFetch
 import cordova.plugins.background.timer.CordovaBackgroundTimer
+import cordova.plugins.intent.CdvIntentShim
 import cordova.plugins.statusbar.CdvStatusBar
 import org.scalajs.dom.Window
 
@@ -44,5 +45,9 @@ sealed trait DomWindow_CordovaExt extends js.Object {
 
 @js.native
 sealed trait DomWindow_CdvPlugins extends js.Object {
+
   val appMinimize: CdvAppMinimize.type = js.native
+
+  val intentShim: CdvIntentShim.type = js.native
+
 }
