@@ -78,8 +78,8 @@
         -->
         <config-file target="AndroidManifest.xml" platform="android" parent="/manifest/application/activity" mode="merge">
             <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
-		<category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+		<category android:name="android.intent.category.DEFAULT" />
 		<data android:scheme="https"
                       android:host="suggest.io"
 		      android:pathPrefix="/" />

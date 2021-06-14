@@ -2,7 +2,7 @@ package io.suggest.sc.c.dev
 
 import cordova.Cordova
 import cordova.plugins.deeplinks.{IUniversalLinks, UniversalLinks}
-import cordova.plugins.intent.{CdvIntentShim, ICdvIntentShim, Intent}
+import cordova.plugins.intent.ICdvIntentShim
 import diode.data.Pot
 import diode.Implicits._
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
@@ -21,7 +21,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
-import io.suggest.sc.c.android.{HandleIntent, ScIntentsAh}
+import io.suggest.sc.c.android.ScIntentsAh
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
 import io.suggest.sc.m.inx.{MScSideBar, MScSideBars, MScSwitchCtx, SideBarOpenClose}

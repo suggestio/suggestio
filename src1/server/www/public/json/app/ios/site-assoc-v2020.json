@@ -1,0 +1,28 @@
+{
+  "applinks": {
+    "webcredentials": {
+      "apps": ["6L9CMLV68T.io.suggest.appsuggest"]
+    },
+    "details": [
+      {
+        "appIDs": ["6L9CMLV68T.io.suggest.appsuggest"],
+        "components": [
+	  {
+	      "/": "/*",
+	      "comment": "Showcase"
+	  },
+	  {
+	      "/": "/id",
+	      "exclude": true,
+	      "comment": "Login/signup"
+	  },
+	  {
+	      "/": "/lk",
+	      "exclude": true,
+	      "comment": "Private cabinet is browser-only, by now"
+	  }
+        ]
+      }
+    ]
+  }
+}
