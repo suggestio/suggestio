@@ -29,7 +29,7 @@ final class ScIntentsAh[M](
     case m: HandleIntent =>
       var fxAcc = List.empty[Effect]
 
-      if (m.intent.action contains[String] AndroidConst.Intent.Action.NFC_NDEF_DISCOVERED) {
+      if (m.intent.action contains[String] AndroidConst.Intent.Action.NDEF_DISCOVERED) {
         // NDEF discovered, related to intent-filter in cordova config.xml. URL should be attached here in .data field.
         for {
           url <- m.intent.data.toOption
@@ -40,14 +40,18 @@ final class ScIntentsAh[M](
           val parsed = SioPagesUtil.parseSc3FromQs( qs )
           fxAcc ::= RouteTo( parsed ).toEffectPure
         }
+
+      } else if (m.intent.action contains[String] AndroidConst.Intent.Action.MAIN) {
+        // Do nothing
+
       } else {
-        logger.warn( ErrorMsgs.INTENT_ACTION_UNKNOWN, msg = (m.intent.action, AndroidConst.Intent.Action.NFC_NDEF_DISCOVERED) )
+        logger.log( ErrorMsgs.INTENT_ACTION_UNKNOWN, msg = JSON.stringify(m.intent) )
       }
 
       fxAcc
         .mergeEffects
         .fold {
-          logger.warn( ErrorMsgs.UNKNOWN_INTENT, msg = (m, JSON.stringify(m.intent)) )
+          //logger.log( ErrorMsgs.UNKNOWN_INTENT, msg = (m, JSON.stringify(m.intent)) )
           noChange
         }( effectOnly )
 

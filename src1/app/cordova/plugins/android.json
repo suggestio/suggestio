@@ -18,6 +18,9 @@
       "CONTENT_AUTHORITY": "$PACKAGE_NAME",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
+    "com-darryncampbell-cordova-plugin-intent": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-custom-config": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -31,6 +34,9 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-ble-central": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-deeplinks": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-fetch": {
@@ -64,12 +70,6 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-deeplinks": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "com-darryncampbell-cordova-plugin-intent": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
