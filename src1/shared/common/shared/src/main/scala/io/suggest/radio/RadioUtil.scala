@@ -1,4 +1,4 @@
-package io.suggest.common.radio
+package io.suggest.radio
 
 import japgolly.univeq._
 
@@ -64,33 +64,14 @@ object RadioUtil {
     }
   }
 
-  def calculateAccuracy(signal: IDistantRadioSignal): Option[Double] = {
+  def calculateAccuracy(signal: MRadioSignal): Option[Double] = {
     calculateAccuracy(
-      distance0m  = signal.distance0m,
-      rssi0       = signal.rssi0,
+      distance0m  = signal.typ.distance0m.get,
+      rssi0       = signal.rssi0
+        .orElse( signal.typ.rssi0 )
+        .get,
       rssiOpt     = signal.rssi,
     )
   }
-
-}
-
-
-/** Интерфейс для моделей данных абстрактных радиосигналов. */
-trait IRadioSignal {
-
-  /** Текущая мощность сигнала в децибелах. */
-  def rssi: Option[Int]
-
-}
-
-
-/** Интерфейс моделей инфы по какому-то радио-сигналу, для которого можно посчитать расстояние до источника. */
-trait IDistantRadioSignal extends IRadioSignal {
-
-  /** Нормальная мощность сигнала в децибелах на некоем известном расстоянии. */
-  def rssi0: Int
-
-  /** Нормальное расстояние до излучателя, на котором известна нормальная мощность сигнала. */
-  def distance0m: Int
 
 }

@@ -43,11 +43,26 @@ object ScalazUtil {
   }
 
 
-  def liftNelOptMust[E, T](opt: Option[T], mustBeSome: Boolean, errMsg: => E)(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
-    if (mustBeSome && opt.isDefined)
-      liftNelSome(opt, errMsg)(f)
-    else
-      liftNelNone(opt, errMsg)
+  /** Validate optional value in different ways.
+    *
+    * @param opt Source optional value.
+    * @param mustBeSome To use Some or None validation?
+    * @param reallyMust Value must (only Some) or may (Some or None) be defined..
+    *                   If false (should) optional validation will be used.
+    *                   If true, Some-validation will be used.
+    * @param error On error message.
+    * @param f Inner value validation function.
+    * @tparam E Error type.
+    * @tparam T Inner value type.
+    * @return Validation result.
+    */
+  def liftNelOptMust[E, T](opt: Option[T], mustBeSome: Boolean, reallyMust: Boolean = true, error: => E)
+                          (f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
+    if (mustBeSome && opt.isDefined) {
+      if (reallyMust) liftNelSome(opt, error)(f)
+      else liftNelOpt(opt)(f)
+    } else
+      liftNelNone(opt, error)
   }
 
   /** Приведение функции валидации к опциональной ипостаси.

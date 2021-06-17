@@ -1,8 +1,8 @@
 package io.suggest.sc
 
-import io.suggest.ble.BeaconDetected
-import io.suggest.ble.eddystone.MEddyStoneUid
+import io.suggest.ble.beaconer.RadioSignalsDetected
 import io.suggest.log.Log
+import io.suggest.radio.{MRadioSignal, MRadioSignalJs, MRadioSignalTypes}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.{SetDebug, UpdateUnsafeScreenOffsetBy}
 import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx, UnIndex}
@@ -87,12 +87,15 @@ object Sc3JsApi extends Log {
           val tailId = 100000000000L + rnd.nextLong(1000000000L) + i
           val bcnUid = "bb112233445566778899-" + tailId.toString
           val ivlId = DomQuick.setInterval( 800 + rnd.nextInt(800) ) { () =>
-            val action = BeaconDetected(
-              signal = MEddyStoneUid(
-                rssi    = Some( -30 - rnd.nextInt(70) ),
-                txPower = bcnTxPower,
-                uid     = bcnUid,
-              ),
+            val action = RadioSignalsDetected(
+              signals = MRadioSignalJs(
+                signal = MRadioSignal(
+                  rssi          = Some( -30 - rnd.nextInt(70) ),
+                  rssi0         = Some( bcnTxPower ),
+                  factoryUid    = Some( bcnUid ),
+                  typ     = MRadioSignalTypes.BluetoothEddyStone,
+                )
+              ) :: Nil,
             )
             _d( action )
           }

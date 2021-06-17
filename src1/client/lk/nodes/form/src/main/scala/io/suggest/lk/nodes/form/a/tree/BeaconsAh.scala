@@ -2,7 +2,6 @@ package io.suggest.lk.nodes.form.a.tree
 
 import diode._
 import diode.data.Pot
-import io.suggest.ble.BeaconDetected
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknConf, MLknNode}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
@@ -16,6 +15,7 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import scalaz.{Tree, TreeLoc}
 
+import java.time.Instant
 import scala.collection.immutable.HashMap
 import scala.util.Success
 
@@ -76,7 +76,7 @@ class BeaconsAh[M](
 
         } { bcnsGroupLoc0 =>
           // Нужно пройти текущую группу, обновив инфу в уже отрендеренных маячках.
-          lazy val bcnSignalNow = BeaconDetected.seenNowMs()
+          lazy val now = Instant.now()
 
           val nodesAppend2 = (for {
             treeKeySubtree0 <- bcnsGroupLoc0
@@ -92,7 +92,7 @@ class BeaconsAh[M](
             bcnSignal2 <- bcnSignalOpt2 orElse mns0.beacon.map(_.data)
             bcnState2 = MNodeBeaconState(
               data      = bcnSignal2,
-              isVisible = bcnSignalOpt2.nonEmpty || bcnSignal2.detect.isStillVisibleNow( bcnSignalNow ),
+              isVisible = bcnSignalOpt2.nonEmpty || bcnSignal2.signal.isStillVisibleNow( now ),
             )
             mns2 = (MNodeState.beacon set Some(bcnState2))(mns0)
           } yield {
@@ -125,7 +125,7 @@ class BeaconsAh[M](
                 role = MTreeRoles.BeaconSignal,
                 beacon = Some( MNodeBeaconState(bcnSignal) ),
                 // Порыться в кэше на предмет серверной инфы по маячку:
-                infoPot = bcnSignal.detect.signal.beaconUid
+                infoPot = bcnSignal.signal.signal.factoryUid
                   .flatMap( v0.tree.nodesMap.get )
                   .fold( Pot.empty[MLknNode] )( _.infoPot ),
               )
@@ -203,7 +203,7 @@ class BeaconsAh[M](
           (for {
             mns <- mnsOpt
             beacon <- mns.beacon
-            bUid <- beacon.data.detect.signal.beaconUid
+            bUid <- beacon.data.signal.signal.factoryUid
           } yield {
             bUid
           })

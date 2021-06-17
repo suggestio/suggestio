@@ -106,7 +106,8 @@ object MJdEdge {
       val nodeIdVld = ScalazUtil.liftNelOptMust(
         e.nodeId,
         mustBeSome = isFile || (e.predicate ==>> P.Ad),
-        errMsg = errMsgF( eNodeId + ErrorConstants.Words.MISSING ),
+        reallyMust = true,
+        error = errMsgF( eNodeId + ErrorConstants.Words.MISSING ),
       ) { nodeId =>
         Validation.liftNel(nodeId)(
           !_.matches("^[a-z0-9A-Z_-]{10,50}$"),

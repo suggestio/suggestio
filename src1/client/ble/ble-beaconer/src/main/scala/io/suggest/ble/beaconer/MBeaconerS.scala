@@ -6,6 +6,7 @@ import io.suggest.ble.{BeaconsNearby_t, MUidBeacon}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.html.HtmlConstants
+import io.suggest.radio.MRadioData
 import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -34,7 +35,8 @@ object MBeaconerS {
         (a.gcIntervalId ===* b.gcIntervalId) &&
         (a.envFingerPrint ===* b.envFingerPrint) &&
         (a.bleBeaconsApi ===* b.bleBeaconsApi) &&
-        (a.opts ==* b.opts)
+        (a.opts ==* b.opts) &&
+        (a.wifiScanTimer ===* b.wifiScanTimer)
     }
   }
 
@@ -46,6 +48,7 @@ object MBeaconerS {
   def nearbyReport = GenLens[MBeaconerS](_.nearbyReport)
   def opts = GenLens[MBeaconerS]( _.opts )
   def hasBle = GenLens[MBeaconerS]( _.hasBle )
+  def wifiScanTimer = GenLens[MBeaconerS]( _.wifiScanTimer )
 
 }
 
@@ -71,18 +74,20 @@ object MBeaconerS {
   *               Pot.empty - not checked, by now.
   *               Ready(true|false) - Detected bluetooth support.
   *               failed(ex) - Detection failed.
+  * @param wifiScanTimer Timer id for periodical wifi networks scanner.
   */
 case class MBeaconerS(
                        isEnabled            : Pot[Boolean]               = Pot.empty,
                        afterOnOff           : Option[Effect]             = None,
                        notifyAllTimer       : Option[MTsTimerId]         = None,
-                       beacons              : Map[String, MBeaconData]   = Map.empty,
+                       beacons              : Map[String, MRadioData]   = Map.empty,
                        nearbyReport         : BeaconsNearby_t            = Nil,
                        gcIntervalId         : Option[Int]                = None,
                        envFingerPrint       : Option[Int]                = None,
                        bleBeaconsApi        : Pot[IBleBeaconsApi]        = Pot.empty,
                        opts                 : MBeaconerOpts              = MBeaconerOpts.default,
                        hasBle               : Pot[Boolean]               = Pot.empty,
+                       wifiScanTimer        : Pot[Int]                   = Pot.empty,
                      )
   extends EmptyProduct
 {

@@ -73,7 +73,7 @@ class BeaconInfoR(
 
           // Инфа по маячку от сервера.
           (for {
-            bcnUid <- bcnState.data.detect.signal.beaconUid
+            bcnUid <- bcnState.data.signal.signal.factoryUid
             if s.infoOpt
               // TODO Вернуть exists(), когда будут запросы на сервер за данными по видимым маячкам.
               .fold(true)/*.exists*/( _.ntype.isEmpty )

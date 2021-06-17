@@ -3,13 +3,13 @@ package io.suggest.ble.api.cordova.ble
 import com.apple.ios.core.bluetooth.CBAdvData
 import com.github.don.cordova.plugin.ble.central.BtDevice
 import io.suggest.ble.api.cordova.ble.BtAdvData.ScanRecordToken
-import io.suggest.ble.eddystone.{MEddyStoneUid, MFrameTypes}
-import io.suggest.common.radio.RadioUtil
+import io.suggest.ble.eddystone.MFrameTypes
 import io.suggest.common.uuid.LowUuidUtil
 import io.suggest.js.JsTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.JsBinaryUtil
 import io.suggest.log.Log
+import io.suggest.radio.{MRadioSignal, MRadioSignalTypes, RadioUtil}
 import japgolly.univeq._
 
 import scala.scalajs.js
@@ -67,7 +67,7 @@ case class EddyStoneParser(override val dev: BtDevice)
   with Log
 {
 
-  override type T = MEddyStoneUid
+  override type T = MRadioSignal
 
   /**
     * Extract EddyStone frame from bluetooth adv. data.
@@ -143,19 +143,23 @@ case class EddyStoneParser(override val dev: BtDevice)
         frameCode ==* MFrameTypes.UID.frameCode &&
           esAdBytes.byteLength >= MFrameTypes.UID.frameMinByteLen
       ) {
-        val euid = MEddyStoneUid(
+        val signal = MRadioSignal(
           rssi    = dev.rssi
             // Filter signal RSSI to valid value. Filter out dev.rssi=127, officially meaning None.
             .filter( RadioUtil.isRssiValid )
             .toOption,
-          txPower = JsBinaryUtil.littleEndianToInt8(esAdBytes, 1),
-          uid     = LowUuidUtil.hexStringToEddyUid(
-            JsBinaryUtil.typedArrayToHexString(
-              esAdBytes.subarray(2, MFrameTypes.UID.frameMinByteLen)
+          rssi0 = Some( JsBinaryUtil.littleEndianToInt8(esAdBytes, 1) ),
+          factoryUid     = Some {
+            LowUuidUtil.hexStringToEddyUid(
+              JsBinaryUtil.typedArrayToHexString(
+                esAdBytes.subarray(2, MFrameTypes.UID.frameMinByteLen)
+              )
             )
-          )
+          },
+          typ = MRadioSignalTypes.BluetoothEddyStone,
         )
-        Right(euid)
+
+        Right( signal )
 
       } else {
         Left(frameCode)

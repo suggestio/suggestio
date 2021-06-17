@@ -1,11 +1,13 @@
 package io.suggest.ble.api.cordova.ble
 
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
-import io.suggest.ble.{BeaconDetected, BleConstants}
+import io.suggest.ble.BleConstants
 import io.suggest.ble.api.IBleBeaconsApi
+import io.suggest.ble.beaconer.RadioSignalsDetected
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
+import io.suggest.radio.MRadioSignalJs
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -109,19 +111,15 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
   /** Detected an BLE advertisement data from 0xFEAA device.
     * Next, it need to be parsed into beacon data or filtered out.
     */
-  def _handleDeviceFound(dev: BtDevice, listener: Function1[BeaconDetected, Unit]): Unit = {
-    // Try parse function.
-    val f = { parserFactory: BeaconParserFactory =>
-      parserFactory(dev).tryParse()
-    }
-
+  def _handleDeviceFound(dev: BtDevice, listener: Function1[RadioSignalsDetected, Unit]): Unit = {
     for {
       parserFactory <- _BEACON_PARSERS.iterator
       parseRes <- parserFactory(dev).tryParse()
-      beaconData <- parseRes.toOption
+      radioSignal <- parseRes.toOption
     } {
       // Ok, parsed. Call side-effecting listener with result...
-      val e = BeaconDetected( beaconData )
+      val signalJs = MRadioSignalJs( radioSignal )
+      val e = RadioSignalsDetected( signalJs :: Nil )
       listener(e)
     }
   }

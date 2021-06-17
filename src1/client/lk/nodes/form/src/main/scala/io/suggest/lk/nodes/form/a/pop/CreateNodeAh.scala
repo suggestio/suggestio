@@ -8,6 +8,7 @@ import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -167,7 +168,8 @@ class CreateNodeAh[M](
             id = {
               val id = cs.id.value
               Option.when( id.nonEmpty )(id)
-            }
+            },
+            nodeType = MNodeTypes.BleBeacon,
           )
           api
             .createSubNodeSubmit( parentRk, req )

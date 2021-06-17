@@ -1,10 +1,10 @@
 package io.suggest.ble.api.cordova.ble
 
 import com.github.don.cordova.plugin.ble.central.BtDevice
-import io.suggest.ble.IBeaconSignal
 import io.suggest.msg.ErrorMsg_t
 import io.suggest.primo.{IApply1, TypeT}
 import io.suggest.log.Log
+import io.suggest.radio.MRadioSignal
 
 import scala.scalajs.js.JSON
 import scala.util.Try
@@ -17,11 +17,8 @@ import scala.util.Try
   */
 trait BeaconParser extends TypeT with Log {
 
-  /** Beacon parsing success result type. */
-  override type T <: IBeaconSignal
-
   /** Beacon parsing result type. */
-  type ParseRes_t = Option[Either[Any, T]]
+  type ParseRes_t = Option[Either[Any, MRadioSignal]]
 
 
   /** Incoming cordova-ble device info. */

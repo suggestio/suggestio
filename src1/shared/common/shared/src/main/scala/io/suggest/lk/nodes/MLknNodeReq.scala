@@ -1,79 +1,96 @@
 package io.suggest.lk.nodes
 
 import io.suggest.adn.edit.NodeEditConstants
-import io.suggest.ble.eddystone.EddyStoneUtil
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.netif.NetworkingUtil
+import io.suggest.radio.MRadioSignal
+import io.suggest.scalaz.ScalazUtil
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.{Validation, ValidationNel}
-import scalaz.Validation.FlatMap._
 import scalaz.syntax.apply._
-import scalaz.std.option.optionSyntax._
+import scalaz.syntax.validation._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 06.03.17 18:49
-  * Description: Модель тела запроса создания/редактирования узла в списке узлов.
+  * Description: Model of LkNodes Node form request body. Request used for creation/editing of single node.
   */
 object MLknNodeReq {
 
-  def validateReq(req: MLknNodeReq, isEdit: Boolean): ValidationNel[String, MLknNodeReq] = {
-    if (isEdit) {
-      MLknNodeReq.validateEditReq(req)
-    } else {
-      MLknNodeReq.validateCreateReq(req)
-    }
+  /** Do validation for MLknNodeReq.
+    *
+    * @param req Form data.
+    * @param isEdit It is edit or create new?
+    * @return Validation result with validated instance.
+    */
+  def validate(req: MLknNodeReq, isEdit: Boolean): ValidationNel[String, MLknNodeReq] = {
+    (
+      // no String.trim(), because everything should be already sanitized and trimmed.
+      NodeEditConstants.Name.validateNodeName( req.name ) |@|
+      ScalazUtil
+        // First, ensure optional id is mandatory for node editing:
+        .liftNelOptMust( req.id, mustBeSome = isEdit, reallyMust = false, error = "For editing, NodeID must present" )( _.successNel )
+        // Do node-type-dependend checks:
+        .andThen { idOpt =>
+          req.nodeType match {
+            case MNodeTypes.BleBeacon =>
+              ScalazUtil.liftNelSome( idOpt, "EddyStone-UID expected" )( MRadioSignal.validateEddyStoneNodeId )
+            case MNodeTypes.WifiAP =>
+              ScalazUtil.liftNelSome( idOpt, "MAC-address expected" )( NetworkingUtil.validateMacAddress )
+            case _ =>
+              "ID validation unsupported for current node-type".failureNel[Option[String]]
+          }
+        } |@|
+      Validation.liftNel( req.nodeType )(
+        MNodeTypes.lkNodesUserCanCreate.contains[MNodeType],
+        "Node-type unexpected"
+      )
+    )( apply )
   }
 
-  def validateEditReq(req: MLknNodeReq): ValidationNel[String, MLknNodeReq] = {
-    val nameV = NodeEditConstants.Name.validateNodeName( req.name )
-    // Нельзя редактировать id, хотя в модели запроса это поле присутствует.
-    val nodeIdV = Validation.liftNel(req.id)( _.nonEmpty, "e.node.id.edit.not.impl" )
-    (nameV |@| nodeIdV) { (_, _) => req }
-  }
-
-  def validateCreateReq(req: MLknNodeReq): ValidationNel[String, MLknNodeReq] = {
-    val nameV = NodeEditConstants.Name.validateNodeName( req.name )
-    val idV = req.id
-      // На первом этапе можно добавлять только маячки, а они только с id.
-      .toSuccessNel("e.node.id.missing")
-      .flatMap { EddyStoneUtil.validateEddyStoneNodeId }
-    (nameV |@| idV) { (_,_) => req }
-  }
 
   @inline implicit def univEq: UnivEq[MLknNodeReq] = UnivEq.derive
 
   object Fields {
     def NAME = "n"
     def ID = "i"
+    def NODE_TYPE = "nodeType"
   }
 
-  implicit def mLknNodeReqFormat: OFormat[MLknNodeReq] = (
+  implicit def mLknNodeReqJson: OFormat[MLknNodeReq] = (
     (__ \ Fields.NAME).format[String] and
-    (__ \ Fields.ID).formatNullable[String]
+    (__ \ Fields.ID).formatNullable[String] and
+    (__ \ Fields.NODE_TYPE).formatNullable[MNodeType]
+      .inmap[MNodeType]( _ getOrElse MNodeTypes.BleBeacon, Some.apply )
   )(apply, unlift(unapply))
 
 }
 
 
-/**
-  * Класс модели реквеста добавления узла.
+/** Class-container for model data of creation/editing single node inside LkNodes form.
   *
-  * @param name Имя узла.
-  * @param id Идентификатор узла, если задан.
+  * @param name Node name.
+  * @param id Node uid, if needed (usually - must be defined).
+  * @param nodeType Node type.
+  *                 Some() for creation. Defaulted to BleBeacon.
+  *                 Ignored for editing.
   */
-case class MLknNodeReq(
-                        name     : String,
-                        id       : Option[String]
-                      ) {
+final case class MLknNodeReq(
+                              name          : String,
+                              id            : Option[String],
+                              nodeType      : MNodeType,
+                            ) {
 
   override def toString: String = {
     StringUtil.toStringHelper( this, 128 ) { renderF =>
       val F = MLknNodeReq.Fields
-      renderF( F.NAME )(name)
+      renderF( "" )( nodeType )
       id foreach renderF( F.ID )
+      renderF( F.NAME )(name)
     }
   }
 

@@ -1,6 +1,6 @@
 package io.suggest.common.radio
 
-import minitest._
+import io.suggest.radio.RadioUtil
 
 /**
   * Suggest.io

@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.m
 
-import io.suggest.ble.beaconer.MBeaconData
+import io.suggest.radio.MRadioData
 import japgolly.univeq._
 import monocle.macros.GenLens
 
@@ -11,7 +11,7 @@ import monocle.macros.GenLens
   * Description: LkNodes-состояние обнаружения одного маячка.
   */
 case class MNodeBeaconState(
-                             data         : MBeaconData,
+                             data         : MRadioData,
                              isVisible    : Boolean             = true,
                            )
 

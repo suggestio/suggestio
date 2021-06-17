@@ -1,16 +1,18 @@
 package io.suggest.ble.beaconer
 
+import cordova.plugins.wifi.wizard2.CdvWifiWizard2
 import diode._
 import diode.data.Pot
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.{BeaconDetected, BeaconUtil, BeaconsNearby_t, MUidBeacon}
+import io.suggest.ble.{BeaconUtil, BeaconsNearby_t, MUidBeacon}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.common.radio.RadioUtil
 import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.radio.{MRadioData, MRadioSignal, MRadioSignalJs, MRadioSignalTypes, RadioUtil}
+import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -19,6 +21,7 @@ import io.suggest.stat.RunningAverage
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
+import java.time.Instant
 import scala.concurrent.{Future, Promise}
 import scala.util.{Success, Try}
 
@@ -41,16 +44,20 @@ object BleBeaconerAh extends Log {
 
   /**
     * Forget about the beacon if it is not heard for more than a specified period of time.
-    * On test beacons, 5000ms was not enough, there were false positives.
-    * 9000ms turned out to be not enough on android at the end of 2020y - the card disappeared & appeared.
+    * On test beacons, "5 seconds" was not enough, there were false positives.
+    * "9 seconds" turned out to be not enough on android at the end of 2020y - the card disappeared & appeared.
     */
-  private def FORGET_UNSEEN_AFTER = 15000
+  private def FORGET_UNSEEN_AFTER_SECONDS = 15
 
   /** How many milliseconds after receiving a notification from the beacon, to start checking the beacon map to
     * look for changes in the environment of the surrounding beacons?
     * The timer is needed to smooth out possible fluctuations at a high density of beacons and to reduce the load on the devices.
     */
   private def CHECK_BEACONS_DIRTY_AFTER_MS = 300
+
+  /** Every N seconds passively scan WI-FI BSS.
+    * Also check if WI-FI is enabled. */
+  private def WIFI_SCAN_PASSIVE_EVERY_SECONDS = 20
 
 
 
@@ -61,14 +68,13 @@ object BleBeaconerAh extends Log {
     */
   // TODO Delete beacons nearby stuff? Current reaction defined via callback in BleBeaconerAh constructor.
   //      Here is no filtering/sorting, so this function is closer to ~map view.
-  def beaconsNearby(beacons: Iterable[(String, MBeaconData)]) : Seq[(String, MUidBeacon)] = {
+  def beaconsNearby(beacons: Map[String, MRadioData]) : Seq[(String, MUidBeacon)] = {
     beacons
       .iterator
       .flatMap { case (k, v) =>
         val res = for {
-          uid           <- v.detect.signal.beaconUid
-          accuracyCmD   <- v.accuracies/*.stripExtemes()*/.average
-          accuracyCm = accuracyCmD.toInt
+          uid           <- v.signal.signal.factoryUid
+          accuracyCm    <- v.accuracy
         } yield {
           (k, MUidBeacon(uid, Some(accuracyCm) ))
         }
@@ -153,7 +159,7 @@ object BleBeaconerAh extends Log {
     * @return Optional new timer data with effect.
     */
   private def ensureNotifyAllDirtyTimer(notifyAllTimer: Option[MTsTimerId],
-                                        beacons2: Map[String, MBeaconData],
+                                        beacons2: Map[String, MRadioData],
                                         envFingerPrintOld: Option[Int] ): (Option[MTsTimerId], Option[Effect]) = {
     if (notifyAllTimer.isEmpty) {
       // Calculate fingerpring hash of updated beacons list.
@@ -187,10 +193,66 @@ class BleBeaconerAh[M](
 
   private def _getListenOpts(opts: MBeaconerOpts) = {
     IBleBeaconsApi.ListenOptions(
-      onBeacon = dispatcher(_: BeaconDetected),
+      onBeacon = dispatcher(_: RadioSignalsDetected),
       scanMode = opts.scanMode,
     )
   }
+
+
+  /** Grab latest scan results from Wi-Fi manager. */
+  private def _wifiScanPassiveFx(): Effect = Effect {
+    val now = Instant.now()
+    for {
+      isWifiEnabled <- CdvWifiWizard2.isWifiEnabled().toFuture
+
+      signals <- {
+        if (!isWifiEnabled) {
+          Future.successful( List.empty[MRadioSignalJs] )
+        } else {
+          CdvWifiWizard2
+            .getScanResults()
+            .toFuture
+            .map { scanResults =>
+              // Convert timestamp (since device OS boot) to nearest j.t.Instant via comparing with current Instant.
+              // This is totally unprecise, but enought for current usage.
+              scanResults
+                .iterator
+                .map( _.timestamp )
+                .maxOption
+                .fold[Seq[MRadioSignalJs]]( Nil ) { latestTstampD =>
+                  // Guessing: latestTimestamp == now. TODO Increase precision of timestamp convertion.
+                  val latestTstamp = latestTstampD.toLong
+
+                  scanResults
+                    .iterator
+                    .map { wifi =>
+                      MRadioSignalJs(
+                        signal = MRadioSignal(
+                          factoryUid  = Option( wifi.BSSID )
+                            // Remove delimiters from MAC-address to make it short for URL query-string:
+                            .map( _.replaceAll("[:-]+", "") ),
+                          customName  = Option( wifi.SSID ),
+                          rssi        = Some( wifi.level ),
+                          typ         = MRadioSignalTypes.WiFi,
+                        ),
+                        seenAt = {
+                          val wifiTstamp = wifi.timestamp.toLong
+                          if (wifiTstamp ==* latestTstamp) now
+                          else now.minusMillis( latestTstamp - wifiTstamp )
+                        },
+                      )
+                    }
+                    .to( LazyList )
+                }
+            }
+        }
+      }
+
+    } yield {
+      RadioSignalsDetected( signals )
+    }
+  }
+
 
   /** Make effect for detect and activate BLE scanning API.
     * @param opts Beaconer options.
@@ -348,56 +410,88 @@ class BleBeaconerAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // API says, beacon signal detected...
-    case m: BeaconDetected =>
+    // Radio APIs saying about radio-signals detection.
+    case m: RadioSignalsDetected =>
       val v0 = value
 
-      if (v0.isEnabled contains[Boolean] false) {
+      if (!(v0.isEnabled contains[Boolean] true)) {
         logger.info( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
 
+      } else if (m.signals.isEmpty) {
+        logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
+        noChange
+
       } else {
-        // Beacon signal, as expected.
-        m.signal.beaconUid
-          .filter(_.nonEmpty)
-          // Only beacons wuth UID is interested.
-          .fold {
-            logger.warn(ErrorMsgs.BLE_BEACON_EMPTY_UID, msg = m)
-            noChange
-          } { bUid =>
-            val distanceOptM = RadioUtil.calculateAccuracy(m.signal)
+        val beacons2 = m.signals
+          .foldLeft( v0.beacons ) { (beaconsMap0, signalJs) =>
+            (for {
+              beaconUid <- signalJs.signal.factoryUid
+            } yield {
+              val distanceOptM = RadioUtil.calculateAccuracy( signalJs.signal )
 
-            val distanceM: Double = distanceOptM getOrElse {
-              logger.log(ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.signal)
-              99
-            }
-            // Distance in centimeters is much simpler and integer.
-            val distanceCm = (distanceM * 100).toInt
+              val distanceM: Double = distanceOptM getOrElse {
+                logger.log(ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = signalJs)
+                99
+              }
+              // Distance in centimeters is much simpler and integer.
+              val distanceCm = (distanceM * 100).toInt
 
-            val beaconDataOpt0 = v0.beacons.get( bUid )
-            val accuracies2 = beaconDataOpt0
-              .fold( RunningAverage[Int](6, knownLen = Some(0)) )( _.accuracies )
-              .push( distanceCm )
+              val beaconDataOpt0 = beaconsMap0.get( beaconUid )
+              val accuracies2 = beaconDataOpt0
+                .fold( RunningAverage[Int](6, knownLen = Some(0)) )( _.accuracies )
+                .push( distanceCm )
 
-            val beaconData1 = beaconDataOpt0
-              .fold( MBeaconData.apply _ )( _.copy )
-              .apply( m, accuracies2 )
+              val beaconData1 = beaconDataOpt0
+                .fold( MRadioData.apply _ )( _.copy )
+                .apply( signalJs, accuracies2 )
 
-            val beacons2 = v0.beacons + ((bUid, beaconData1))
-
-            // If no notify timer created, do it.
-            val (notifyAllTimerOpt2, notifyFxOpt) = BleBeaconerAh.ensureNotifyAllDirtyTimer( v0.notifyAllTimer, beacons2, v0.envFingerPrint )
-
-            // Ensure GC-timer created:
-            val gcIvl2 = ensureGcInterval( beacons2.isEmpty, v0.gcIntervalId )
-
-            val v2 = v0.copy(
-              notifyAllTimer  = notifyAllTimerOpt2,
-              beacons         = beacons2,
-              gcIntervalId    = gcIvl2
-            )
-            ah.optionalResult( Some(v2), notifyFxOpt, silent = bcnsIsSilentRO.value )
+              beaconsMap0 + ((beaconUid, beaconData1))
+            })
+              .getOrElse( beaconsMap0 )
           }
+
+        // If no notify timer created, do it.
+        val (notifyAllTimerOpt2, notifyFxOpt) = BleBeaconerAh.ensureNotifyAllDirtyTimer( v0.notifyAllTimer, beacons2, v0.envFingerPrint )
+
+        // Ensure GC-timer created:
+        val gcIvl2 = ensureGcInterval( beacons2.isEmpty, v0.gcIntervalId )
+
+        val v2 = v0.copy(
+          notifyAllTimer  = notifyAllTimerOpt2,
+          beacons         = beacons2,
+          gcIntervalId    = gcIvl2,
+          // If wifi is pending, and wifi-results received, reset pending state.
+          wifiScanTimer   = {
+            if (
+              v0.wifiScanTimer.isPending &&
+              m.signals
+                .headOption
+                .exists( _.signal.typ ==* MRadioSignalTypes.WiFi )
+            ) {
+              // Reset wifi "pending" state back to ready.
+              v0.wifiScanTimer.unPending
+            } else {
+              v0.wifiScanTimer
+            }
+          },
+        )
+
+        ah.optionalResult( Some(v2), notifyFxOpt, silent = bcnsIsSilentRO.value )
+      }
+
+
+    // Get wifi passive scan results.
+    case m @ WifiScanPassiveTimer =>
+      val v0 = value
+      if (v0.wifiScanTimer.isPending || !(v0.isEnabled contains[Boolean] true)) {
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.wifiScanTimer) )
+        noChange
+
+      } else {
+        val fx = _wifiScanPassiveFx()
+        val v2 = MBeaconerS.wifiScanTimer.modify(_.pending())(v0)
+        updatedSilent( v2, fx )
       }
 
 
@@ -412,14 +506,14 @@ class BleBeaconerAh[M](
         updated(v2)
 
       } else {
-        val ttl = BleBeaconerAh.FORGET_UNSEEN_AFTER
-        val now = System.currentTimeMillis()
+        val ttlSeconds = BleBeaconerAh.FORGET_UNSEEN_AFTER_SECONDS
+        val nowSeconds = Instant.now().getEpochSecond
 
         // Collect beacon ids for deletion:
         val keys2delete = (for {
           (k, mbd) <- v0.beacons.iterator
           if {
-            val isOk = now - mbd.detect.seenAtMs < ttl
+            val isOk = (nowSeconds - mbd.signal.seenAt.getEpochSecond) < ttlSeconds
             val isToDelete = !isOk
             isToDelete
           }
@@ -571,7 +665,18 @@ class BleBeaconerAh[M](
         // To activate BleBeaconer: start API scanning subscription:
 
         // Beacon scan API subscription Effect:
-        val apiActFx = startApiActivation( m.opts, _getListenOpts(m.opts) )
+        var fx: Effect = startApiActivation( m.opts, _getListenOpts(m.opts) )
+
+        // Start wifi timer, if possible.
+        val isWifiAvail = JsApiUtil.isDefinedSafe( CdvWifiWizard2 )
+        if (isWifiAvail) {
+          fx += Effect.action {
+            DomQuick.setInterval( BleBeaconerAh.WIFI_SCAN_PASSIVE_EVERY_SECONDS * 1000 ) { () =>
+              dispatcher.dispatch(WifiScanPassiveTimer)
+            }
+            DoNothing
+          }
+        }
 
         val v2 = v0.copy(
           isEnabled     = v0.isEnabled
@@ -582,19 +687,25 @@ class BleBeaconerAh[M](
           gcIntervalId  = ensureGcInterval( v0.beacons.isEmpty, v0.gcIntervalId ),
           opts          = m.opts,
           hasBle        = hasBle2,
+          wifiScanTimer = {
+            if (isWifiAvail) v0.wifiScanTimer.pending()
+            else v0.wifiScanTimer
+          },
         )
-        updated( v2, apiActFx )
+        updated( v2, fx )
 
       } else if (isEnabledNow && isDisabled2) {
         // Stop notify timer TODO Wrap into effect.
         for (timerInfo <- v0.notifyAllTimer)
           DomQuick.clearTimeout( timerInfo.timerId )
 
+        var fxAcc = List.empty[Effect]
+
         // Stop BleBeaconer: shut down API, stop other timers, etc.
-        val apiStopFxOpt = for {
+        for {
           bbApi <- v0.bleBeaconsApi.toOption
-        } yield {
-          Effect {
+        } {
+          fxAcc ::= Effect {
             bbApi
               .unListenAllBeacons()
               .transform { tryRes =>
@@ -608,7 +719,17 @@ class BleBeaconerAh[M](
           }
         }
 
-        val beacons2: Map[String, MBeaconData] = {
+        // Stop wifi timer, if any
+        for {
+          timerId <- v0.wifiScanTimer
+        } {
+          fxAcc ::= Effect.action {
+            DomQuick.clearInterval( timerId )
+            DoNothing
+          }
+        }
+
+        val beacons2: Map[String, MRadioData] = {
           Map.empty
         }
         val bcnsNearby2 = BleBeaconerAh.beaconsNearby( beacons2 )
@@ -627,9 +748,10 @@ class BleBeaconerAh[M](
           nearbyReport      = bcnsNearby2.map(_._2),
           beacons           = beacons2,
           hasBle            = hasBle2,
+          wifiScanTimer     = Pot.empty,
         )
 
-        ah.updatedMaybeEffect( v2, apiStopFxOpt )
+        ah.updatedMaybeEffect( v2, fxAcc.mergeEffects )
 
       } else {
         // Already enabled, or already disabled, or m.isEnabled == None.
@@ -680,7 +802,7 @@ class BleBeaconerAh[M](
         m.listenTryRes.fold(
           {ex =>
             // API activation error.
-            val beacons2 = Map.empty[String, MBeaconData]
+            val beacons2 = Map.empty[String, MRadioData]
             val gcTimer2 = ensureGcInterval(beacons2.isEmpty, v0.gcIntervalId)
             logger.error(ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, ex = ex, msg = m)
 

@@ -1,7 +1,7 @@
 package io.suggest.ble.api
 
-import io.suggest.ble.BeaconDetected
 import io.suggest.ble.api.cordova.ble.CordovaBleApi
+import io.suggest.ble.beaconer.RadioSignalsDetected
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
@@ -59,7 +59,7 @@ trait IBleBeaconsApi {
 object IBleBeaconsApi extends Log {
 
   case class ListenOptions(
-                            onBeacon          : BeaconDetected => Unit,
+                            onBeacon          : RadioSignalsDetected => Unit,
                             scanMode          : ScanMode,
                           )
   object ListenOptions {

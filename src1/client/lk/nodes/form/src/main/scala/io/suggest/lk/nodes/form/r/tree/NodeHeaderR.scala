@@ -5,7 +5,6 @@ import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
-import io.suggest.ble.BeaconDetected
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants

@@ -1,6 +1,5 @@
-package io.suggest.ble.beaconer
+package io.suggest.radio
 
-import io.suggest.ble.BeaconDetected
 import io.suggest.stat.RunningAverage
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -11,26 +10,33 @@ import monocle.macros.GenLens
   * Created: 05.06.18 17:45
   * Description: Модель накопленных данных по одному радио-маячку.
   */
-object MBeaconData {
+object MRadioData {
 
-  @inline implicit def univEq: UnivEq[MBeaconData] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MRadioData] = UnivEq.force
 
-  def beacon = GenLens[MBeaconData](_.detect)
-  def accuracies = GenLens[MBeaconData](_.accuracies)
+  def signal = GenLens[MRadioData](_.signal)
+  def accuracies = GenLens[MRadioData](_.accuracies)
 
 }
 
 
 /** Состояние по одному маячку. */
-case class MBeaconData(
-                        detect      : BeaconDetected,
-                        accuracies  : RunningAverage[Int],
-                      ) {
+case class MRadioData(
+                       signal      : MRadioSignalJs,
+                       accuracies  : RunningAverage[Int],
+                     ) {
 
   /** Приведение к инстансу MBeaconSignal. */
   lazy val distanceCm = accuracies
     .average
     .map(_.toInt)
+
+  lazy val accuracy: Option[Int] = {
+    accuracies/*.stripExtemes()*/
+      .average
+      .map( _.toInt )
+  }
+
 
   def lastDistanceCm = accuracies.queue.lastOption
 

@@ -3,8 +3,7 @@ package io.suggest.sc
 import diode.{Effect, FastEq, ModelRW}
 import diode.data.Pot
 import diode.react.ReactConnector
-import io.suggest.ble.IBleBeaconAction
-import io.suggest.ble.beaconer.{BleBeaconerAh, MBeaconerS}
+import io.suggest.ble.beaconer.{BleBeaconerAh, IBleBeaconAction, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh

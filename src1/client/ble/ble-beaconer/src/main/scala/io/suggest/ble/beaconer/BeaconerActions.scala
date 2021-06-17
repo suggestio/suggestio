@@ -1,8 +1,9 @@
 package io.suggest.ble.beaconer
 
 import diode.data.Pot
-import io.suggest.ble.IBleBeaconAction
 import io.suggest.ble.api.IBleBeaconsApi
+import io.suggest.radio.MRadioSignalJs
+import io.suggest.spa.DAction
 
 import scala.util.Try
 
@@ -13,6 +14,20 @@ import scala.util.Try
   * Description: Actions foc controlling BeaconerAh.
   */
 
+/** Interface for signals, for beaconer FSM. */
+sealed trait IBleBeaconAction extends DAction
+
+
+/** Detected useful radio-signals. */
+case class RadioSignalsDetected(
+                                 signals       : Seq[MRadioSignalJs],
+                               )
+  extends IBleBeaconAction
+
+
+private[beaconer] case object WifiScanPassiveTimer extends IBleBeaconAction
+
+
 /** Start/stop or alter options of bluetooth BeaconerAh.
   *
   * @param isEnabled New state (on/off)
@@ -21,6 +36,7 @@ import scala.util.Try
   */
 case class BtOnOff(isEnabled: Option[Boolean],
                    opts: MBeaconerOpts = MBeaconerOpts.default) extends IBleBeaconAction
+
 
 /** Result of subscription for IBleBeaconsApi events. */
 private[beaconer] case class HandleListenRes( listenTryRes: Try[IBleBeaconsApi] ) extends IBleBeaconAction

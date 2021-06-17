@@ -138,7 +138,12 @@ object MJdHtmlAttrValue {
       )
       .andThen { _ =>
         (
-          ScalazUtil.liftNelOptMust( attrValue.value, mustBeSome = predicate.isEmpty, ErrorConstants.Words.UNEXPECTED ) { valueStr =>
+          ScalazUtil.liftNelOptMust(
+            attrValue.value,
+            mustBeSome = predicate.isEmpty,
+            reallyMust = true,
+            error = ErrorConstants.Words.UNEXPECTED,
+          ) { valueStr =>
             MathConst.Counts.validateMinMax( valueStr.length, 0, 128, ErrorConstants.Words.TOO_MANY + "[" + valueStr.length + "]: " + valueStr )
               .map( _ => valueStr )
           } |@|

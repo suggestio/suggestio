@@ -120,7 +120,8 @@ class NameEditAh[M](
           val fx = Effect {
             val req = MLknNodeReq(
               name  = name2,
-              id    = None
+              id    = None,
+              nodeType = info.ntype.get,
             )
             val nodeId = info.id
             api

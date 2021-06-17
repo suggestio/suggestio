@@ -17,7 +17,6 @@
         "cordova-plugin-device": "^2.0.3",
         "cordova-plugin-local-notification": "git+https://github.com/Steffaan/cordova-plugin-local-notifications.git",
         "cordova-plugin-localization-strings": "3.2.1",
-        "cordova-plugin-network-information": "^2.0.2",
         "cordova-plugin-splashscreen": "^5.0.2",
         "cordova-plugin-statusbar": "git+https://github.com/apache/cordova-plugin-statusbar.git",
         "cordova-plugin-whitelist": "1.3.4",
@@ -35,7 +34,6 @@
             "cordova-plugin-statusbar": {},
             "cordova-plugin-background-mode": {},
             "cordova-plugin-appminimize": {},
-            "cordova-plugin-network-information": {},
             "cordova-plugin-localization-strings": {
                 "TRANSLATION_PATH": "translations/app/"
             },
@@ -59,7 +57,9 @@
                 "GPS_REQUIRED": "true"
             },
             "cordova-plugin-deeplinks": {},
-            "com-darryncampbell-cordova-plugin-intent": {}
+            "com-darryncampbell-cordova-plugin-intent": {},
+            "cordova-plugin-network-information": {},
+            "wifiwizard2": {}
         },
         "platforms": [
             "ios",
@@ -76,6 +76,9 @@
         "cordova-plugin-deeplinks": "^1.1.1",
         "cordova-plugin-fetch": "file:../../../../../../../../home/user/projects/repo/cordova-plugin-fetch",
         "cordova-plugin-geolocation": "^4.1.0",
-        "cordova-plugin-inappbrowser": "^4.0.0"
+        "cordova-plugin-inappbrowser": "^4.0.0",
+        "cordova-plugin-network-information": "^3.0.0",
+        "cordova-plugin-wifiwizard2": "github:VijayVaveHealth/WifiWizard2",
+        "es6-promise-plugin": "^4.1.0"
     }
 }

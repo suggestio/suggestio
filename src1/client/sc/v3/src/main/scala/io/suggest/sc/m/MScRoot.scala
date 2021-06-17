@@ -78,14 +78,14 @@ case class MScRoot(
   }
 
   def locEnvBleBeacons = {
-    val nr0 = dev.beaconer.nearbyReport
+    val nearbyReport0 = dev.beaconer.nearbyReport
     internals.info.currRoute
       .filter(_.virtBeacons.nonEmpty)
-      .fold( nr0 ) { mainScreen =>
+      .fold( nearbyReport0 ) { mainScreen =>
         mainScreen
           .virtBeacons
           .iterator
-          .map( MUidBeacon(_) ) ++: nr0
+          .map( MUidBeacon(_) ) ++: nearbyReport0
       }
   }
   def locEnvMap: MLocEnv = {

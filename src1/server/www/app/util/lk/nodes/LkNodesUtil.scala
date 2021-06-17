@@ -46,7 +46,7 @@ final class LkNodesUtil {
       name  = FormUtil.strTrimSanitizeF(nodeInfo.name),
       id    = nodeInfo.id.map( FormUtil.strTrimSanitizeLowerF )
     )
-    MLknNodeReq.validateReq( nodeInfo1, isEdit )
+    MLknNodeReq.validate( nodeInfo1, isEdit )
   }
 
 }

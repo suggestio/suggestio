@@ -73,10 +73,15 @@ object MNodeTypes extends StringEnum[MNodeType] {
   /** Crypto.key type - storing key material inside node. */
   case object CryptoKey extends MNodeType("cryptoKey")
 
+  case object WifiAP extends MNodeType( "wifi")
 
   override def values = findValues
 
   def adnTreeMemberTypes: List[MNodeType] = AdnNode :: Ad :: BleBeacon :: Nil
+
+  /** Normal user can create nodes of these types (via lk-nodes): */
+  def lkNodesUserCanCreate: List[MNodeType] =
+    BleBeacon :: WifiAP :: Nil
 
 }
 
