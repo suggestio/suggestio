@@ -321,8 +321,8 @@ object MuiSvgIcons {
   object ActionSettingsCell extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/settings-ethernet", JSImport.Default)
   object ActionSettingsEthernet extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/settings-input-antenna", JSImport.Default)
-  object ActionSettingsInputAntenna extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SettingsInputAntenna", JSImport.Default)
+  object SettingsInputAntenna extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/settings-input-component", JSImport.Default)
   object ActionSettingsInputComponent extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/settings-input-composite", JSImport.Default)
@@ -944,26 +944,26 @@ object MuiSvgIcons {
   object DeviceSignalCellularNull extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/signal-cellular-off", JSImport.Default)
   object DeviceSignalCellularOff extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-0-bar", JSImport.Default)
-  object DeviceSignalWifi0Bar extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-1-bar-lock", JSImport.Default)
-  object DeviceSignalWifi1BarLock extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-1-bar", JSImport.Default)
-  object DeviceSignalWifi1Bar extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-2-bar-lock", JSImport.Default)
-  object DeviceSignalWifi2BarLock extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-2-bar", JSImport.Default)
-  object DeviceSignalWifi2Bar extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-3-bar-lock", JSImport.Default)
-  object DeviceSignalWifi3BarLock extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-3-bar", JSImport.Default)
-  object DeviceSignalWifi3Bar extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-4-bar-lock", JSImport.Default)
-  object DeviceSignalWifi4BarLock extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-4-bar", JSImport.Default)
-  object DeviceSignalWifi4Bar extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/signal-wifi-off", JSImport.Default)
-  object DeviceSignalWifiOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi0Bar", JSImport.Default)
+  object SignalWifi0Bar extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi1BarLock", JSImport.Default)
+  object SignalWifi1BarLock extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi1Bar", JSImport.Default)
+  object SignalWifi1Bar extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi2BarLock", JSImport.Default)
+  object SignalWifi2BarLock extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi2Bar", JSImport.Default)
+  object SignalWifi2Bar extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi3BarLock", JSImport.Default)
+  object SignalWifi3BarLock extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi3Bar", JSImport.Default)
+  object SignalWifi3Bar extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi4BarLock", JSImport.Default)
+  object SignalWifi4BarLock extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifi4Bar", JSImport.Default)
+  object SignalWifi4Bar extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SignalWifiOff", JSImport.Default)
+  object SignalWifiOff extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Storage", JSImport.Default)
   object Storage extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/usb", JSImport.Default)
@@ -972,10 +972,10 @@ object MuiSvgIcons {
   object DeviceWallpaper extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/widgets", JSImport.Default)
   object DeviceWidgets extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/wifi-lock", JSImport.Default)
-  object DeviceWifiLock extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/wifi-tethering", JSImport.Default)
-  object DeviceWifiTethering extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/WifiLock", JSImport.Default)
+  object WifiLock extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/WifiTethering", JSImport.Default)
+  object WifiTethering extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/AttachFile", JSImport.Default)
   object AttachFile extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/FileCopy", JSImport.Default)
@@ -1875,8 +1875,8 @@ object MuiSvgIcons {
   object NotificationVpnLock extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/notification/wc", JSImport.Default)
   object NotificationWc extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/notification/wifi", JSImport.Default)
-  object NotificationWifi extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Wifi", JSImport.Default)
+  object Wifi extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/AcUnit", JSImport.Default)
   object PlacesAcUnit extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/places/airport-shuttle", JSImport.Default)

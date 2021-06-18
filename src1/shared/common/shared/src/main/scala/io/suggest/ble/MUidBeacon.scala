@@ -41,7 +41,7 @@ final case class MUidBeacon(
 {
 
   override def toString: String = {
-    "B(" + id + "," + distanceCm.fold("")(_ + "cm") + ")"
+    "B(" + id + "," + distanceCm.fold("")(_.toString + "cm") + ")"
   }
 
 }

@@ -37,10 +37,10 @@ object MLknNodeReq {
         // Do node-type-dependend checks:
         .andThen { idOpt =>
           req.nodeType match {
-            case MNodeTypes.BleBeacon =>
-              ScalazUtil.liftNelSome( idOpt, "EddyStone-UID expected" )( MRadioSignal.validateEddyStoneNodeId )
             case MNodeTypes.WifiAP =>
               ScalazUtil.liftNelSome( idOpt, "MAC-address expected" )( NetworkingUtil.validateMacAddress )
+            case MNodeTypes.BleBeacon =>
+              ScalazUtil.liftNelSome( idOpt, "EddyStone-UID expected" )( MRadioSignal.validateEddyStoneNodeId )
             case _ =>
               "ID validation unsupported for current node-type".failureNel[Option[String]]
           }

@@ -11,6 +11,7 @@ import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.netif.NetworkingUtil
 import io.suggest.radio.{MRadioData, MRadioSignal, MRadioSignalJs, MRadioSignalTypes, RadioUtil}
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.model.MTsTimerId
@@ -199,8 +200,11 @@ class BleBeaconerAh[M](
   }
 
 
-  /** Grab latest scan results from Wi-Fi manager. */
-  private def _wifiScanPassiveFx(): Effect = Effect {
+  /** Grab latest scan results from Wi-Fi manager.
+    * @param passive Passive scan (no WiFi-adverisements will be sent outside device).
+    * @return Effect of scan.
+    */
+  private def _wifiScanFx(passive: Boolean): Effect = Effect {
     val now = Instant.now()
     for {
       isWifiEnabled <- CdvWifiWizard2.isWifiEnabled().toFuture
@@ -209,8 +213,10 @@ class BleBeaconerAh[M](
         if (!isWifiEnabled) {
           Future.successful( List.empty[MRadioSignalJs] )
         } else {
-          CdvWifiWizard2
-            .getScanResults()
+          (
+            if (passive) CdvWifiWizard2.getScanResults()
+            else CdvWifiWizard2.scan()
+          )
             .toFuture
             .map { scanResults =>
               // Convert timestamp (since device OS boot) to nearest j.t.Instant via comparing with current Instant.
@@ -230,7 +236,7 @@ class BleBeaconerAh[M](
                         signal = MRadioSignal(
                           factoryUid  = Option( wifi.BSSID )
                             // Remove delimiters from MAC-address to make it short for URL query-string:
-                            .map( _.replaceAll("[:-]+", "") ),
+                            .map( NetworkingUtil.minifyMacAddress ),
                           customName  = Option( wifi.SSID ),
                           rssi        = Some( wifi.level ),
                           typ         = MRadioSignalTypes.WiFi,
@@ -249,7 +255,8 @@ class BleBeaconerAh[M](
       }
 
     } yield {
-      RadioSignalsDetected( signals )
+      if (signals.isEmpty) DoNothing
+      else RadioSignalsDetected( MRadioSignalTypes.WiFi, signals )
     }
   }
 
@@ -419,8 +426,17 @@ class BleBeaconerAh[M](
         noChange
 
       } else if (m.signals.isEmpty) {
-        logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
-        noChange
+        if (m.radioType ==* MRadioSignalTypes.WiFi) {
+          // WiFi scanner can send empty results to reset pending state.
+          if (v0.wifiScanTimer.isPending)
+            updatedSilent( MBeaconerS.wifiScanTimer.modify(_.unPending)(v0) )
+          else
+            noChange
+        } else {
+          // Bluetooth scanner shouldn't return any empty garbage.
+          logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
+          noChange
+        }
 
       } else {
         val beacons2 = m.signals
@@ -465,9 +481,7 @@ class BleBeaconerAh[M](
           wifiScanTimer   = {
             if (
               v0.wifiScanTimer.isPending &&
-              m.signals
-                .headOption
-                .exists( _.signal.typ ==* MRadioSignalTypes.WiFi )
+              (m.radioType ==* MRadioSignalTypes.WiFi)
             ) {
               // Reset wifi "pending" state back to ready.
               v0.wifiScanTimer.unPending
@@ -484,12 +498,24 @@ class BleBeaconerAh[M](
     // Get wifi passive scan results.
     case m @ WifiScanPassiveTimer =>
       val v0 = value
-      if (v0.wifiScanTimer.isPending || !(v0.isEnabled contains[Boolean] true)) {
-        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.wifiScanTimer) )
-        noChange
+      if (!(v0.isEnabled contains[Boolean] true)) {
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled, v0.wifiScanTimer) )
+        v0.wifiScanTimer
+          .fold( noChange ) { ivlId =>
+            // Cancel wifi-timer, if any.
+            val fx = Effect.action {
+              DomQuick.clearInterval( ivlId )
+              DoNothing
+            }
+            val v2 = MBeaconerS.wifiScanTimer.set( Pot.empty )(v0)
+            updatedSilent( v2, fx )
+          }
 
       } else {
-        val fx = _wifiScanPassiveFx()
+        // Ready to start wifi scanning.
+        val fx = _wifiScanFx(
+          passive = v0.opts.scanMode !=* IBleBeaconsApi.ScanMode.FULL_POWER,
+        )
         val v2 = MBeaconerS.wifiScanTimer.modify(_.pending())(v0)
         updatedSilent( v2, fx )
       }
@@ -687,10 +713,6 @@ class BleBeaconerAh[M](
           gcIntervalId  = ensureGcInterval( v0.beacons.isEmpty, v0.gcIntervalId ),
           opts          = m.opts,
           hasBle        = hasBle2,
-          wifiScanTimer = {
-            if (isWifiAvail) v0.wifiScanTimer.pending()
-            else v0.wifiScanTimer
-          },
         )
         updated( v2, fx )
 

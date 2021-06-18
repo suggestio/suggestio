@@ -21,8 +21,9 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
   case object WiFi extends MRadioSignalType("wifi") {
     override def goneAwayAfterSeconds = 20
     // Possible values from random measurments https://www.researchgate.net/figure/RSSI-versus-distance-for-BLE-Wi-Fi-and-XBee_fig5_317150846
-    override def rssi0 = Some( 14 )
-    override def distance0m = Some( 2 )
+    //
+    override def rssi0 = Some( -27 )
+    override def distance0m = Some( 0 )
   }
 
 

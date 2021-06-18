@@ -108,14 +108,14 @@ case class MNodeState(
       }
   }
 
-  def beaconUidOpt = beacon
+  def radioFactoryUidOpt = beacon
     .flatMap( _.data.signal.signal.factoryUid )
 
   def nodeId: Option[String] = {
     infoPot
       .toOption
       .map(_.id)
-      .orElse( beaconUidOpt )
+      .orElse( radioFactoryUidOpt )
   }
 
 }

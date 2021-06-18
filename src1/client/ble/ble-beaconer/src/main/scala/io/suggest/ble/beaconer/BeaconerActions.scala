@@ -2,7 +2,7 @@ package io.suggest.ble.beaconer
 
 import diode.data.Pot
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.radio.MRadioSignalJs
+import io.suggest.radio.{MRadioSignalJs, MRadioSignalType}
 import io.suggest.spa.DAction
 
 import scala.util.Try
@@ -20,6 +20,7 @@ sealed trait IBleBeaconAction extends DAction
 
 /** Detected useful radio-signals. */
 case class RadioSignalsDetected(
+                                 radioType     : MRadioSignalType,
                                  signals       : Seq[MRadioSignalJs],
                                )
   extends IBleBeaconAction

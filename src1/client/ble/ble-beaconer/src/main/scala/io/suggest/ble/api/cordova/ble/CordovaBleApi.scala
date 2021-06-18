@@ -7,7 +7,7 @@ import io.suggest.ble.beaconer.RadioSignalsDetected
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
-import io.suggest.radio.MRadioSignalJs
+import io.suggest.radio.{MRadioSignalJs, MRadioSignalTypes}
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -119,7 +119,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     } {
       // Ok, parsed. Call side-effecting listener with result...
       val signalJs = MRadioSignalJs( radioSignal )
-      val e = RadioSignalsDetected( signalJs :: Nil )
+      val e = RadioSignalsDetected( MRadioSignalTypes.BluetoothEddyStone, signalJs :: Nil )
       listener(e)
     }
   }

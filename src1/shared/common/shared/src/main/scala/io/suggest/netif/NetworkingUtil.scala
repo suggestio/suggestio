@@ -1,5 +1,6 @@
 package io.suggest.netif
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.scalaz.StringValidationNel
 import scalaz.Validation
 
@@ -26,6 +27,22 @@ object NetworkingUtil {
       !SHORT_MAC_ADDR_RE.matches(_),
       fail = "mac-address invalid"
     )
+  }
+
+
+  /** Strip delimiter from network interface mac-address.
+    *
+    * @param mac MAC-address.
+    * @return Minified MAC-address.
+    */
+  def minifyMacAddress(mac: String): String = {
+    mac.replaceAll("[:-]+", "")
+  }
+
+  def unminifyMacAddress(macMinified: String): String = {
+    macMinified
+      .sliding(2, 2)
+      .mkString( HtmlConstants.COLON )
   }
 
 }

@@ -161,6 +161,7 @@ class JsMessagesUtil @Inject() (
       MC.`Parent.node` ::
       MC.`Nothing.found` ::
       MC.`Show.ad.opened` ::
+      MC.`Radio.beacons` ::
       Nil
 
     (

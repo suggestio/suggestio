@@ -481,13 +481,12 @@ final class LkNodes @Inject() (
             }
             val nodeWithIdNotExistsFut = currIdNodeOptFut.filter(_.isEmpty)
 
-            val ntype = MNodeTypes.BleBeacon
             val isEnabled = true
 
             // Параллельно собираем инстанс нового узла. Крайне маловерятно, что это будет пустой работой.
             val newNode = MNode(
               common = MNodeCommon(
-                ntype       = ntype,
+                ntype       = addNodeInfo.nodeType,
                 isDependent = false,
                 isEnabled   = isEnabled
               ),
@@ -1085,7 +1084,7 @@ final class LkNodes @Inject() (
           bcnIdsCleared <- mNodes.dynSearchIds(
             new MNodeSearch {
               override val withIds = qs.beaconUids.toSeq
-              override val nodeTypes = MNodeTypes.BleBeacon :: Nil
+              override val nodeTypes = MNodeTypes.lkNodesUserCanCreate
               override val limit = bcnsReqCount
               // isDisabled: по флагу пока не фильтруем, т.к. иначе клиент подумает, что маячок свободен для регистрации.
             }
@@ -1193,7 +1192,7 @@ final class LkNodes @Inject() (
                 Tree.Leaf(
                   MLknNode(
                     id          = bcnId,
-                    ntype       = Some( MNodeTypes.BleBeacon ),
+                    ntype       = Some( bcnNode.common.ntype ),
                     name        = bcnNode.guessDisplayName,
                     // Права есть или нет - возвращаем, для isAnon тут будет всегда None.
                     isAdmin     = hasAdminRightsForIds.get( bcnId ),

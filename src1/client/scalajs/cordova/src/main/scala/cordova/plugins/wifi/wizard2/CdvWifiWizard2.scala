@@ -51,7 +51,7 @@ object CdvWifiWizard2 extends js.Object {
 
   /** @return [SSID] */
   def listNetworks(): js.Promise[js.Array[String]] = js.native
-  def scan(options: js.Array[ScanOptions] = js.native): js.Promise[WifiScanResult] = js.native
+  def scan(options: js.Array[ScanOptions] = js.native): js.Promise[js.Array[WifiScanResult]] = js.native
   def getScanResults(): js.Promise[js.Array[WifiScanResult]] = js.native
   def startScan(): js.Promise[Unit] = js.native
   def isWifiEnabled(): js.Promise[Boolean] = js.native

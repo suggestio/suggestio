@@ -1173,3 +1173,5 @@ Transparent=Прозрачно
 Define.manually=Задать вручную
 Sc.fsm.event.failed=Необработанное событие
 
+Radio.beacons=Радиомаяки
+

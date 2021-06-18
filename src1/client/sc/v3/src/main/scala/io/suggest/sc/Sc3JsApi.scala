@@ -2,6 +2,7 @@ package io.suggest.sc
 
 import io.suggest.ble.beaconer.RadioSignalsDetected
 import io.suggest.log.Log
+import io.suggest.pick.JsBinaryUtil
 import io.suggest.radio.{MRadioSignal, MRadioSignalJs, MRadioSignalTypes}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.{SetDebug, UpdateUnsafeScreenOffsetBy}
@@ -87,21 +88,68 @@ object Sc3JsApi extends Log {
           val tailId = 100000000000L + rnd.nextLong(1000000000L) + i
           val bcnUid = "bb112233445566778899-" + tailId.toString
           val ivlId = DomQuick.setInterval( 800 + rnd.nextInt(800) ) { () =>
+            val radioType = MRadioSignalTypes.BluetoothEddyStone
             val action = RadioSignalsDetected(
               signals = MRadioSignalJs(
                 signal = MRadioSignal(
                   rssi          = Some( -30 - rnd.nextInt(70) ),
                   rssi0         = Some( bcnTxPower ),
                   factoryUid    = Some( bcnUid ),
-                  typ     = MRadioSignalTypes.BluetoothEddyStone,
-                )
+                  typ           = radioType,
+                ),
               ) :: Nil,
+              radioType = radioType,
             )
             _d( action )
           }
           ivlId :: acc
         }
       _beaconsIntervalIdsUnd = js.defined( ivlIds )
+    }
+
+    DoNothing
+  }
+
+
+  private var _wifiIntervalIdU: js.UndefOr[Int] = js.undefined
+
+
+  /** Run emission of Wi-Fi detection signals. */
+  @JSExport
+  def wifiEmit(count: Int = 0): Unit = _d {
+    // Cleanup currently running timers, if any:
+    for {
+      ivlId <- _wifiIntervalIdU
+    } yield {
+      DomQuick.clearInterval( ivlId )
+    }
+    _wifiIntervalIdU = js.undefined
+
+    // Activate timed wifi-scan-results imitation:
+    if (count > 0) {
+      val rnd = new Random()
+      val macAddrSeed = rnd.nextInt( Int.MaxValue )
+      // For wifi scan imitation - used single interval for list of networks.
+      _wifiIntervalIdU = DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
+        val radioType = MRadioSignalTypes.WiFi
+        val action = RadioSignalsDetected(
+          signals = (1 to count)
+            .iterator
+            .map { i =>
+              MRadioSignalJs(
+                signal = MRadioSignal(
+                  rssi        = Some( -5 - rnd.nextInt(90) ),
+                  typ         = radioType,
+                  factoryUid  = Some( JsBinaryUtil.toHexString( macAddrSeed * i, 6 ) ),
+                  customName  = Some( "WiFi Emit #" + i ),
+                )
+              )
+            }
+            .to( LazyList ),
+          radioType = radioType,
+        )
+        _d( action )
+      }
     }
 
     DoNothing

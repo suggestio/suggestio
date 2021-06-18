@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIcon, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -8,10 +8,12 @@ import ReactCommonUtil.Implicits._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
-import io.suggest.i18n.MCommonReactCtx
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.lk.nodes.{MLknOpKeys, MLknOpValue}
 import io.suggest.n2.node.MNodeTypes
+import io.suggest.netif.NetworkingUtil
+import io.suggest.radio.MRadioSignalTypes
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -79,10 +81,36 @@ final class NodeHeaderR(
       } >> e.stopPropagationCB
     }
 
+    private def _BLUETOOTH_ICON = Mui.SvgIcons.BluetoothAudio
+
     def render(propsProxy: Props, s: Props_t): VdomElement = {
       val st = s.render.state
       val advPot = st.optionBoolPot( MLknOpKeys.AdvEnabled )
       val infoOpt = st.infoPot.toOption
+
+
+      // Produce wifi/bluetooth icon from radio-signal:
+      def __radioToIconOpt: Option[MuiSvgIcon] = {
+        for (beacon <- st.beacon) yield {
+          val signal = beacon.data.signal.signal
+          signal.typ match {
+            case MRadioSignalTypes.WiFi =>
+              // Convert signal rssi to one of Wifi-icons:
+              if (!beacon.isVisible) {
+                Mui.SvgIcons.SignalWifiOff
+              } else signal.rssi.fold[MuiSvgIcon]( Mui.SvgIcons.SignalWifi0Bar ) { rssi =>
+                if (rssi > -50) Mui.SvgIcons.SignalWifi4Bar
+                else if (rssi > -60) Mui.SvgIcons.SignalWifi3Bar
+                else if (rssi > -70) Mui.SvgIcons.SignalWifi2Bar
+                else if (rssi > -80) Mui.SvgIcons.SignalWifi1Bar
+                else Mui.SvgIcons.SignalWifi0Bar
+              }
+
+            case MRadioSignalTypes.BluetoothEddyStone =>
+              _BLUETOOTH_ICON
+          }
+        }
+      }
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).
       val listItemRendered = MuiListItem(
@@ -94,17 +122,26 @@ final class NodeHeaderR(
         // Иконка-значок типа узла:
         infoOpt
           .flatMap(_.ntype)
-          .orElse {
-            st.role match {
-              case MTreeRoles.BeaconSignal | MTreeRoles.BeaconsDetected =>
-                Some( MNodeTypes.BleBeacon )
-              case _ => None
-            }
-          }
-          .whenDefinedNode { ntype =>
+          .fold [VdomNode] {
+            (if (st.role ==* MTreeRoles.BeaconSignal) {
+              __radioToIconOpt
+            } else if (st.role ==* MTreeRoles.BeaconsDetected) {
+              // Render radio beacons/wifi group icon:
+              Some( Mui.SvgIcons.SettingsInputAntenna )
+            } else
+              None
+            )
+              .whenDefinedNode { iconComponent =>
+                MuiListItemIcon()(
+                  iconComponent()(),
+                )
+              }
+          } { ntype =>
+            // Convert node-type to svg-icon:
             MuiListItemIcon()(
               (ntype match {
-                case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
+                case MNodeTypes.WifiAP                        => __radioToIconOpt getOrElse Mui.SvgIcons.Wifi
+                case MNodeTypes.BleBeacon                     => _BLUETOOTH_ICON
                 case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
                 case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
                 case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
@@ -113,44 +150,65 @@ final class NodeHeaderR(
                 case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
                 case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
                 case _                                        => Mui.SvgIcons.BuildOutlined
-              })(
-                /* // Выключена блёклая иконка, т.к. на андройде почему-то теряются некоторые входящие eddystone-advertisements, и иконка сбивает с толку.
-                new MuiSvgIconProps {
-                  override val color = (for {
-                    bcn <- st.beacon
-                    // 5000ms - почему-то bluetooth-сканер пропускает некоторые кадры при сканировании.
-                    if (BeaconDetected.seenNowMs() - bcn.data.detect.seenAtMs) > 8000
-                  } yield {
-                    MuiColorTypes.disabled
-                  })
-                    .orUndefined
-                }
-                */
-              )(),
+              })()(),
             )
           },
 
         // Название узла:
         MuiListItemText {
+          val radioNameCustomOpt = st.beacon
+            .flatMap(_.data.signal.signal.customName)
+
           val _textPrimary = (for {
             info <- infoOpt
             name <- info.name
+            if name.nonEmpty
           } yield {
             name
           })
+            // Use Wi-Fi as unknown node name:
+            .orElse( radioNameCustomOpt )
             .orUndefined
 
-          val _textSecondary = (for {
+          var _textSecondaryNode: Option[VdomNode] = (for {
             info <- infoOpt
             ntype <- info.ntype
             if _textPrimary.nonEmpty
           } yield {
-            crCtxP.message( ntype.singular ).rawNode
+            crCtxP.message( ntype.singular )
           })
-            .orElse(
-              st.beaconUidOpt
-                .map(_.rawNode)
+            .orElse[VdomNode](
+              for {
+                radio <- st.beacon
+                signal = radio.data.signal.signal
+                uid <- signal.factoryUid
+              } yield {
+                signal.typ match {
+                  case MRadioSignalTypes.WiFi =>
+                    // Render MAC-address in human-readable format:
+                    NetworkingUtil.unminifyMacAddress( uid )
+
+                  case MRadioSignalTypes.BluetoothEddyStone =>
+                    // Render Beacon UUID as-is
+                    uid
+                }
+              }
             )
+
+          // Prepend Wi-Fi SSID Name in secondary string
+          for ( radioName <- radioNameCustomOpt if !_textPrimary.contains(radioName) ) {
+            _textSecondaryNode = _textSecondaryNode
+              .map[VdomNode] { suffix =>
+                VdomArray( radioName, " | ", suffix )
+              }
+              .orElse {
+                radioNameCustomOpt
+                  .map(m => m: VdomNode)
+              }
+          }
+
+          val _textSecondary = _textSecondaryNode
+            .map(_.rawNode)
             .orUndefined
 
           new MuiListItemTextProps {
@@ -176,7 +234,7 @@ final class NodeHeaderR(
                 override val classes = css
               }
             } (
-              ReactCommonUtil.maybeNode( beacon.data.lastDistanceCm.exists(_ <= 15) )(
+              ReactCommonUtil.maybeNode( beacon.isVisible && beacon.data.lastDistanceCm.exists(_ <= 15) )(
                 Mui.SvgIcons.NearMeOutlined()()
               ),
               distanceValueR.component( propsProxy.resetZoom(beacon) ),
@@ -256,7 +314,7 @@ final class NodeHeaderR(
         ReactCommonUtil.maybeNode( st.role ==* MTreeRoles.BeaconsDetected ) {
           React.Fragment(
             MuiListItemText()(
-              crCtxP.message( MNodeTypes.BleBeacon.plural ),
+              crCtxP.message( MsgCodes.`Radio.beacons` ),
             ),
             ReactCommonUtil.maybeNode( s.chs != null )(
               MuiListItemSecondaryAction()(
