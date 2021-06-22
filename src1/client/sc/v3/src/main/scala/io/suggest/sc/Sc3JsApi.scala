@@ -1,6 +1,6 @@
 package io.suggest.sc
 
-import io.suggest.ble.beaconer.RadioSignalsDetected
+import io.suggest.radio.beacon.{BtOnOff, MBeaconerOpts, RadioSignalsDetected}
 import io.suggest.log.Log
 import io.suggest.pick.JsBinaryUtil
 import io.suggest.radio.{MRadioSignal, MRadioSignalJs, MRadioSignalTypes}
@@ -80,6 +80,8 @@ object Sc3JsApi extends Log {
 
     // Запуск генерации сигналов eddystone-uid.
     if (count > 0) {
+      _initializeBeaconer()
+
       val rnd = new Random()
       val ivlIds = (1 to count)
         .foldLeft( List.empty[Int] ) { (acc, i) =>
@@ -110,6 +112,19 @@ object Sc3JsApi extends Log {
     DoNothing
   }
 
+  /** Ensure BeaconerAh ready to accept fake RadioSignalDetected() messages. */
+  private def _initializeBeaconer(): Unit = {
+    _d {
+      BtOnOff(
+        isEnabled = Some(true),
+        opts = MBeaconerOpts(
+          askEnableBt = false,
+          oneShot     = false,
+          offIfNoApi  = false,
+        ),
+      )
+    }
+  }
 
   private var _wifiIntervalIdU: js.UndefOr[Int] = js.undefined
 
@@ -127,6 +142,8 @@ object Sc3JsApi extends Log {
 
     // Activate timed wifi-scan-results imitation:
     if (count > 0) {
+      _initializeBeaconer()
+
       val rnd = new Random()
       val macAddrSeed = rnd.nextInt( Int.MaxValue )
       // For wifi scan imitation - used single interval for list of networks.

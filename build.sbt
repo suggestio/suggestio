@@ -339,9 +339,6 @@ lazy val cordovaSjs = {
     .dependsOn( commonSjs )
 }
 
-/** Scala.js API for cordova-ble-central. */
-lazy val cordovaBleSjs = Project(id = "scalajs-cordova-ble", base = file(DIR0 + "client/ble/cordova-ble"))
-
 /** Suggest.io util/addons over Apache Cordova APIs. */
 lazy val cordovaSioUtilSjs = {
   val name = "cordova-sio-util"
@@ -453,10 +450,10 @@ lazy val sysSjs = {
 }
 
 /** BluetoothLE Listener for detection of radio-beacons (Scala.js). */
-lazy val bleBeaconerSjs = {
-  val name = "ble-beaconer"
-  Project(id = name, base = file(DIR0 + "client/ble/" + name))
-    .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs)
+lazy val beaconerSjs = {
+  val name = "beaconer"
+  Project(id = name, base = file(DIR0 + "client/util/" + name))
+    .dependsOn(commonSjs)
 }
 
 /** Scala.js API for ServiceWorker toolbox. */
@@ -476,7 +473,7 @@ lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
     .dependsOn(
-      scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
+      scCommonSjs, commonReactSjs, beaconerSjs, cordovaSioUtilSjs,
       mapsSjs, jdRenderSjs, reactScroll, reactQrCodeSjs,
       loginFormSjs, lkNodesFormSjs,
     )
@@ -676,7 +673,7 @@ lazy val client = project
     scCommonSjs, sc3Sjs,
     scSwSjs, swToolBoxSjs,
     momentSjs, reactDatePickerSjs, momentSioSjs, lkDtPeriodSjs,
-    cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
+    cordovaSjs, cordovaSioUtilSjs, beaconerSjs,
     reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
     reactGridLayoutSjs, reactStoneCutterSjs,
     reactScroll, reactMeasureSjs, reactDndSjs,

@@ -1,5 +1,3 @@
-
-//import org.scalajs.core.tools.javascript.OutputMode
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 Common.settingsOrgJS
@@ -25,7 +23,7 @@ webpackBundlingMode := BundlingMode.LibraryOnly()
 webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
 
 scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_
-  .withUseECMAScript2015(true)
+  .withESVersion( Common.Vsn.ECMA_SCRIPT )
 )}
 
 scalaJSUseMainModuleInitializer := true

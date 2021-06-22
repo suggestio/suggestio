@@ -1,7 +1,7 @@
 package io.suggest.sc.v.dia.settings
 
 import diode.react.ModelProxy
-import io.suggest.ble.beaconer.MBeaconerS
+import io.suggest.radio.beacon.MBeaconerS
 import io.suggest.conf.ConfConst
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import japgolly.scalajs.react._

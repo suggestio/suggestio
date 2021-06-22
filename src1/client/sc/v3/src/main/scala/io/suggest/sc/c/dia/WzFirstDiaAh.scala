@@ -3,8 +3,7 @@ package io.suggest.sc.c.dia
 import cordova.Cordova
 import diode._
 import diode.data.{Pending, Pot}
-import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
+import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.{MPlatformS, MScreenInfo}
@@ -616,7 +615,7 @@ class WzFirstDiaAh[M](
         BtOnOff(
           isEnabled = OptionUtil.SomeBool.someTrue,
           opts = MBeaconerOpts(
-            scanMode    = IBleBeaconsApi.ScanMode.BALANCED,
+            scanMode    = IBeaconsListenerApi.ScanMode.BALANCED,
             askEnableBt = true,
             oneShot     = false,
           ),

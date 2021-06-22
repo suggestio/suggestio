@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import org.scalajs.linker.interface.ESVersion
 
 /**
  * Очень общие сеттинги для под-проектов.
@@ -22,6 +23,9 @@ object Common {
   /** Контейнер версий зависимостей. Вместо свалки полей в форме, записывать их надо в Vsn. */
   object Vsn {
 
+    /** Output ECMAScript version. */
+    final def ECMA_SCRIPT = ESVersion.ES2019
+
     /** Apache Tika.
       * @see [[https://mvnrepository.com/artifact/org.apache.tika/tika-core]]
       * tika 1.25+ - need play-2.8.8++, overwise conflicting jackson-databind versions with akka right after [www] run.
@@ -31,7 +35,7 @@ object Common {
     /** Версия moment.js. */
     def momentJs = "2.24.0"
 
-    val GUICE = "4.+"
+    val GUICE = "4.2.3"
 
     /** Typesafe slick version.
       */

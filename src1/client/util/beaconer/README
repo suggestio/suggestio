@@ -1,0 +1,6 @@
+Radio Beaconer.
+
+Stateful controller for pluggable radio (and others) beacon listeners.
+
+For example, if some repeating radio signal contains some unique identifier,
+it can be used as beacon for underlying systems.

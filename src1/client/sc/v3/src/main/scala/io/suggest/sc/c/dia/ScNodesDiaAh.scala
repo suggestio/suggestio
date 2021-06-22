@@ -2,8 +2,7 @@ package io.suggest.sc.c.dia
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Circuit, Effect, ModelRW}
-import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
+import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.lk.nodes.MLknConf
@@ -117,7 +116,7 @@ class ScNodesDiaAh[M](
                 opts = MBeaconerOpts(
                   askEnableBt = false,
                   oneShot = false,
-                  scanMode = IBleBeaconsApi.ScanMode.FULL_POWER,
+                  scanMode = IBeaconsListenerApi.ScanMode.FULL_POWER,
                 )
               )
             }
@@ -155,7 +154,7 @@ class ScNodesDiaAh[M](
               opts = MBeaconerOpts(
                 askEnableBt = false,
                 oneShot = false,
-                scanMode = IBleBeaconsApi.ScanMode.BALANCED,
+                scanMode = IBeaconsListenerApi.ScanMode.BALANCED,
               )
             )
           }

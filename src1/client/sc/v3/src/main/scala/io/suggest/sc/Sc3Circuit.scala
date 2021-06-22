@@ -3,7 +3,7 @@ package io.suggest.sc
 import diode.{Effect, FastEq, ModelRW}
 import diode.data.Pot
 import diode.react.ReactConnector
-import io.suggest.ble.beaconer.{BleBeaconerAh, IBleBeaconAction, MBeaconerS}
+import io.suggest.radio.beacon.{BeaconerAh, IBeaconsListenerApi, IBeaconAction, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
@@ -105,6 +105,7 @@ class Sc3Circuit(
                   scStuffApi                : => IScStuffApi,
                   csrfTokenApi              : => ICsrfTokenApi,
                   geoLocApis                : () => LazyList[GeoLocApi],
+                  beaconApis                : () => LazyList[IBeaconsListenerApi],
                   //nfcApiOpt                 : => Option[INfcApi],
                   mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
                 )
@@ -482,11 +483,12 @@ class Sc3Circuit(
     modelRW = delayerRW,
   )
 
-  private val beaconerAh: HandlerFunction = new BleBeaconerAh(
+  private val beaconerAh: HandlerFunction = new BeaconerAh(
     modelRW     = beaconerRW,
     dispatcher  = this,
     bcnsIsSilentRO = scNodesRW.zoom(!_.opened),
     osFamilyOpt = CircuitUtil.mkLensZoomRO( platformRW, MPlatformS.osFamily ).value,
+    beaconApis  = beaconApis,
     onNearbyChange = Some { (nearby0, nearby2) =>
       var fxAcc = List.empty[Effect]
 
@@ -716,7 +718,7 @@ class Sc3Circuit(
   /** Функция-роутер экшенов в конкретные контроллеры. */
   override protected val actionHandler: HandlerFunction = { (mroot, action) =>
     val ctlOrNull: HandlerFunction = action match {
-      case _: IBleBeaconAction          => beaconerAh
+      case _: IBeaconAction          => beaconerAh
       case _: IGridAction               => gridAh
       case _: IMapsAction               => mapAhs
       case _: IGeoLocAction             => geoLocAh

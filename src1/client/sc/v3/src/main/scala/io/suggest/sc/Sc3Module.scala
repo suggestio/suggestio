@@ -6,10 +6,12 @@ import cordova.Cordova
 import cordova.plugins.fetch.CdvPluginFetch
 import cordova.plugins.inappbrowser.InAppBrowser
 import diode.{Effect, ModelRW}
+import io.suggest.ble.cdv.CdvBleBeaconsApi
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.geolocation.CdvBgGeoLocApi
 import io.suggest.cordova.fetch.CdvFetchHttpResp
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.geo.{GeoLocApi, Html5GeoLocApi}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
@@ -28,6 +30,7 @@ import io.suggest.nfc.cdv.CordovaNfcApi
 import io.suggest.nfc.web.WebNfcApi
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReqData, IMHttpClientConfig}
+import io.suggest.radio.beacon.IBeaconsListenerApi
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.c.dia.ScNodesDiaAh
 import io.suggest.sc.index.MScIndexArgs
@@ -54,6 +57,7 @@ import io.suggest.sc.v.styl._
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DoNothing, SioPages}
+import io.suggest.wifi.CdvWifiWizard2BeaconsApi
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
@@ -311,6 +315,28 @@ class Sc3Module extends Log { outer =>
   sealed trait ScPlatformComponents extends IPlatformComponentsModule {
     override def getPlatformCss = outer._getPlatformCss
     override def platformComponents = outer.platformComponents
+  }
+
+  /** @return Instances generator for (radio) beacon listening apis. */
+  def beaconsListenApis: () => LazyList[IBeaconsListenerApi] = { () =>
+    val plat = sc3Circuit.platformRW.value
+    var acc = LazyList.empty[IBeaconsListenerApi]
+
+    if (plat.isCordova) {
+      // Append wifi scanner on Android. On iOS it is impossible to list wifi-networks.
+      if (plat.osFamily contains[MOsFamily] MOsFamilies.Android) {
+        val accWifi = new CdvWifiWizard2BeaconsApi #:: acc
+        acc = accWifi
+      }
+
+      // Prepend Bluetooth scanning API:
+      val accBle = new CdvBleBeaconsApi #:: acc
+      acc = accBle
+    }
+
+    // TODO else: WebBluetoothBeaconsApi
+
+    acc
   }
 
   // login
