@@ -3,12 +3,12 @@ package io.suggest.lk.nodes.form.a.pop
 import diode._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.lk.m.input.MTextFieldS
-import io.suggest.lk.nodes.{LkNodesConst, MLknNodeReq}
+import io.suggest.lk.nodes.{LkNodesConst, MLknBeaconsScanReq, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
-import io.suggest.n2.node.MNodeTypes
+import io.suggest.n2.node.{MNodeIdType, MNodeTypes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -49,17 +49,25 @@ class CreateNodeAh[M](
 
     // Сигнал о вводе id узла в форме добавления узла.
     case m: CreateNodeIdChange =>
-      // Сопоставить с паттерном маячка.
-      val id2 = LkNodesConst.normalizeBeaconId( m.id )
-      val isIdValid = LkNodesConst.isBeaconIdValid( id2 )
-
-      val v2 = for (cs0 <- value) yield {
-        MCreateNodeS.id.modify(_.copy(
-          value = id2,
-          isValid = isIdValid,
-        ))(cs0)
-      }
-      updated(v2)
+      (for {
+        v0 <- value
+        id2 = LkNodesConst.normalizeBeaconId( m.id )
+        isIdValid = v0.nodeTypeOpt.exists { nodeType =>
+          // Compare id against ble-beacon/network-mac/etc patterns:
+          MLknBeaconsScanReq
+            .validateNodeIdType( MNodeIdType(id2, nodeType) )
+            .isSuccess
+        }
+      } yield {
+        val v2 = for (cs0 <- value) yield {
+          MCreateNodeS.id.modify(_.copy(
+            value = id2,
+            isValid = isIdValid,
+          ))(cs0)
+        }
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Выбор родительского узла из списка.
@@ -80,6 +88,12 @@ class CreateNodeAh[M](
         lazy val mtfEmpty = MTextFieldS.empty
 
         val v2 = MCreateNodeS(
+          // Fixed type for node created dialog, if any.
+          nodeType = MTextFieldS(
+            value = m.nodeType.fold("")(_.value),
+            isEnabled = m.nodeType.isEmpty,
+            isValid = m.nodeType.nonEmpty,
+          ),
           // Выставить дефолтовое имя, если передано:
           name = m.nameDflt.fold(mtfEmpty) { name =>
             MTextFieldS(
@@ -140,6 +154,20 @@ class CreateNodeAh[M](
       }
 
 
+    // Action for editing node type:
+    case m: CreateNodeTypeChange =>
+      (for {
+        v0 <- value
+      } yield {
+        val v2 = MCreateNodeS.nodeType
+          .composeLens( MTextFieldS.value )
+          .set( m.nodeType.value )(v0)
+
+        updated( Some(v2) )
+      })
+        .getOrElse( noChange )
+
+
     // Сигнал о нажатии на кнопку "Закрыть" в форме добавления узла.
     case CreateNodeCloseClick =>
       updated( None )
@@ -160,6 +188,7 @@ class CreateNodeAh[M](
           .mnsPath( parentNodeLoc )
           .rcvrKey
         if parentRk.nonEmpty
+        nodeType <- cs.nodeTypeOpt
       } yield {
         // Огранизовать запрос на сервер.
         val fx = Effect {
@@ -169,7 +198,7 @@ class CreateNodeAh[M](
               val id = cs.id.value
               Option.when( id.nonEmpty )(id)
             },
-            nodeType = MNodeTypes.BleBeacon,
+            nodeType = nodeType,
           )
           api
             .createSubNodeSubmit( parentRk, req )

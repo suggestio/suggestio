@@ -36,7 +36,7 @@ class PwChangeCircuit(
 
   private val formRW  = mkLensRootZoomRW( this, MPwChangeRootS.form )( MPwChangeS.MPwChangeSFastEq )
   private val pwNewRW = mkLensZoomRW( formRW, MPwChangeS.pwNew )( MPwNew.MPwNewFastEq )
-  private val oldPwRW = mkLensZoomRW( formRW, MPwChangeS.pwOld )( MTextFieldS.MEpwTextFieldSFastEq )
+  private val oldPwRW = mkLensZoomRW( formRW, MPwChangeS.pwOld )( MTextFieldS.MTextFieldSFastEq )
 
   private val setNewPwAh = new SetNewPwAh(
     modelRW = pwNewRW,

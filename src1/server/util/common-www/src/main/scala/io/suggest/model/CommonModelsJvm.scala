@@ -17,6 +17,7 @@ import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknModifyQs, MLknOpKey, MLknOpK
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
+import io.suggest.n2.node.{MNodeIdType, MNodeType}
 import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
@@ -706,9 +707,46 @@ object CommonModelsJvm extends MacroLogsDyn {
   }
 
 
+  /** QueryStringBindable implementation for MNodeIdType instances. */
+  implicit def nodeIdTypeQsb(implicit
+                             stringB: QueryStringBindable[String],
+                             nodeTypeB: QueryStringBindable[MNodeType]
+                            ): QueryStringBindable[MNodeIdType] = {
+    new QueryStringBindableImpl[MNodeIdType] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeIdType]] = {
+        val F = MNodeIdType.Fields
+        val k = key1F( key )
+        for {
+          nodeIdE <- stringB.bind( k(F.NODE_ID), params )
+          nodeTypeE <- nodeTypeB.bind( k(F.NODE_TYPE), params )
+        } yield {
+          for {
+            nodeId <- nodeIdE
+            nodeType <- nodeTypeE
+          } yield {
+            MNodeIdType(
+              nodeId      = nodeId,
+              nodeType    = nodeType,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MNodeIdType): String = {
+        val F = MNodeIdType.Fields
+        val k = key1F( key )
+        _mergeUnbinded1(
+          stringB.unbind( k(F.NODE_ID), value.nodeId ),
+          nodeTypeB.unbind( k(F.NODE_TYPE), value.nodeType ),
+        )
+      }
+    }
+  }
+
+
   /** QSB для [[MLknBeaconsScanReq]]. */
   implicit def lknBeaconsAskReq(implicit
-                                stringSeqB: QueryStringBindable[QsbSeq[String]],
+                                nodeIdTypeSeqB: QueryStringBindable[QsbSeq[MNodeIdType]],
                                 stringOptB: QueryStringBindable[Option[String]],
                                ): QueryStringBindable[MLknBeaconsScanReq] = {
     new QueryStringBindableImpl[MLknBeaconsScanReq] {
@@ -716,8 +754,9 @@ object CommonModelsJvm extends MacroLogsDyn {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLknBeaconsScanReq]] = {
         val F = MLknBeaconsScanReq.Fields
         val k = key1F( key )
+
         for {
-          beaconIdsSeqE <- stringSeqB.bind( k(F.BEACON_UIDS), params )
+          beaconIdsSeqE <- nodeIdTypeSeqB.bind( k(F.BEACON_UIDS), params )
           adIdOptE <- stringOptB.bind( k(F.AD_ID), params )
         } yield {
           for {
@@ -726,7 +765,7 @@ object CommonModelsJvm extends MacroLogsDyn {
             resp <- MLknBeaconsScanReq
               .validate(
                 MLknBeaconsScanReq(
-                  beaconUids  = beaconIdsSeq.items.toSet,
+                  beaconUids  = beaconIdsSeq.items.toList,
                   adId        = adIdOpt,
                 )
               )
@@ -744,8 +783,8 @@ object CommonModelsJvm extends MacroLogsDyn {
         val F = MLknBeaconsScanReq.Fields
         val k = key1F(key)
         _mergeUnbinded1(
-          stringSeqB.unbind( k(F.BEACON_UIDS),  QsbSeq(value.beaconUids.toSeq) ),
-          stringOptB.unbind( k(F.AD_ID),        value.adId ),
+          nodeIdTypeSeqB.unbind   ( k(F.BEACON_UIDS),     QsbSeq(value.beaconUids) ),
+          stringOptB.unbind       ( k(F.AD_ID),           value.adId ),
         )
       }
 

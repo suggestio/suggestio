@@ -11,6 +11,7 @@ import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.tree.NodeHeaderR
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -28,6 +29,7 @@ import japgolly.univeq._
 import monocle.Lens
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -59,6 +61,7 @@ class CreateNodeR(
                     openedSomeC                 : ReactConnectProxy[Some[Boolean]],
                     nameOptC                    : ReactConnectProxy[Option[MTextFieldS]],
                     idOptC                      : ReactConnectProxy[Option[MTextFieldS]],
+                    nodeTypeC                   : ReactConnectProxy[Option[MTextFieldS]],
                     saveBtnDisabledSomeC        : ReactConnectProxy[Some[Boolean]],
                     isPendingSomeC              : ReactConnectProxy[Some[Boolean]],
                     exceptionOptC               : ReactConnectProxy[Option[Throwable]],
@@ -112,6 +115,15 @@ class CreateNodeR(
       dispatchOnProxyScopeCB( $, CreateNodeIdChange(id = id) )
     }
 
+    /** Editing node type callback. */
+    private val _onNodeTypeChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+      MNodeTypes
+        .withValueOpt( e.target.value )
+        .fold( Callback.empty ) { nodeType =>
+          dispatchOnProxyScopeCB( $, CreateNodeTypeChange(nodeType) )
+        }
+    }
+
     /** Callback выставления родителя. */
     private val onParentChangeCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val nodePath = e.target.value
@@ -149,11 +161,36 @@ class CreateNodeR(
         override val variant = MuiTextField.Variants.standard
       }
 
+      lazy val nodeTypesSelectOptions = {
+        MNodeTypes
+          .lkNodesUserCanCreate
+          .map[VdomNode] { ntype =>
+            val optionText = crCtxP.message( ntype.singular )
+
+            if (isUseNativeSelect) {
+              <.option(
+                ^.value := ntype.value,
+                ^.key := ntype.value,
+                optionText,
+              )
+            } else {
+              MuiMenuItem.component.withKey( ntype.value )(
+                new MuiMenuItemProps {
+                  override val value = ntype.value
+                }
+              )(
+                optionText,
+              )
+            }
+          }
+      }
+
       // Готовим функция-рендерер для всех элементов селекта:
       val renderF = if (isUseNativeSelect) {
         (nodePathStr: String, mnsNodePathRev: Either[String, (MNodeState, NodePath_t)]) =>
           <.option(
             ^.value := nodePathStr,
+            ^.key := nodePathStr,
 
             mnsNodePathRev.fold[TagMod](
               { title =>
@@ -162,7 +199,7 @@ class CreateNodeR(
                   title
                 )
               },
-              {case (mns, nodePathRev) =>
+              {case (mns, _) =>
                 mns.infoPot
                   .toOption
                   .flatMap( _.name )
@@ -222,6 +259,38 @@ class CreateNodeR(
                 s.nameOptC,
                 _onNameChanged,
               ),
+
+              // Type of node.
+              {
+                lazy val nodeTypeSelect = s.nodeTypeC { nodeTypeOptProxy =>
+                  val nodeTypeOpt = nodeTypeOptProxy.value
+                  MuiTextField(
+                    new MuiTextFieldProps {
+                      override val fullWidth    = true
+                      override val label        = crCtx.messages( MsgCodes.`Node.type` )
+                      override val value        = nodeTypeOpt.map(_.value).orUndefined
+                      override val select       = true
+                      override val error        = !nodeTypeOpt.exists(_.isValid)
+                      override val SelectProps  = _selectProps
+                      override val required     = true
+                      override val onChange     = _onNodeTypeChanged
+                    }
+                  )(
+                    nodeTypesSelectOptions: _*,
+                  )
+                }
+
+                ReactCommonUtil.maybeNode {
+                  !propsProxy
+                    .value
+                    .popups.createNodeS
+                    .exists(_.typeDisabled)
+                } {
+                  MuiListItem()(
+                    nodeTypeSelect,
+                  )
+                }
+              },
 
               // id узла/маячка.
               __mkTextField(
@@ -444,6 +513,8 @@ class CreateNodeR(
         nameOptC = __mkMtfConn( MCreateNodeS.name ),
 
         idOptC = __mkMtfConn( MCreateNodeS.id ),
+
+        nodeTypeC = __mkMtfConn( MCreateNodeS.nodeType ),
 
         saveBtnDisabledSomeC = propsOptProxy.connect { propsOpt =>
           val saveDisabled = propsOpt.fold(true) { props =>

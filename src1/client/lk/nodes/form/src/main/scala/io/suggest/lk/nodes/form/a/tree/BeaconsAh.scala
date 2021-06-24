@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknConf, MLknNode}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
+import io.suggest.n2.node.MNodeIdType
 import io.suggest.primo.Keep
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -199,21 +200,30 @@ class BeaconsAh[M](
             // Или если выставлен маркер, что нужен reget...
             (mns.infoPot isPendingWithStartTime BeaconsAh.PENDING_VALUE_NEED_REGET)
           }
-        } yield {
-          (for {
+
+          nodeIdType <- (for {
             mns <- mnsOpt
             beacon <- mns.beacon
-            bUid <- beacon.data.signal.signal.factoryUid
+            signal = beacon.data.signal.signal
+            uid <- signal.factoryUid
           } yield {
-            bUid
+            MNodeIdType( uid, signal.typ.nodeType )
           })
             .orElse {
-              mnsOpt
-                .flatMap( _.nodeId )
+              for {
+                mns <- mnsOpt
+                info <- mns.infoPot.toOption
+                nodeType <- info.ntype
+                nodeId <- mns.nodeId
+              } yield {
+                MNodeIdType( nodeId, nodeType )
+              }
             }
-            .getOrElse( treeId )
+        } yield {
+          nodeIdType
         })
-          .toSet
+          // TODO deduplicate list by node-id?
+          .to( List )
 
         if (unknownBcnIds.nonEmpty) {
           // Есть неизвестные маячки: организовать scan-запрос на сервер:
@@ -284,7 +294,19 @@ class BeaconsAh[M](
         {ex =>
           MTreeOuter.beacons
             .composeLens( MBeaconScan.scanReq )
-            .modify(_.fail(ex))
+            .modify(_.fail(ex)) andThen
+          MTreeOuter.tree
+            .composeLens( MTree.nodesMap )
+            .modify { nodesMap0 =>
+              // Reset pending infoPots with failures:
+              nodesMap0
+                .map { case kv0 @ (k, mns0) =>
+                  if (mns0.infoPot.isPending)
+                    k -> MNodeState.infoPot.modify(_.fail(ex))( mns0 )
+                  else
+                    kv0
+                }
+            }
           // TODO sc: эффект check-connectivity в выдачу?
         },
 
@@ -313,7 +335,9 @@ class BeaconsAh[M](
             .to( HashMap )
 
           // Определить НЕнайденные на сервере маячки, чтобы инфу о них тоже закэшировать:
-          val notFoundBcnIds = m.reqArgs.beaconUids -- cachedMapAppend.keySet
+          val beaconUidsSet = m.reqArgs.beaconUids.iterator.map(_.nodeId).toSet
+          val notFoundBcnIds = beaconUidsSet -- cachedMapAppend.keySet
+
           if (notFoundBcnIds.nonEmpty) {
             val notFoundMap = (for {
               notFoundBcnId <- notFoundBcnIds.iterator

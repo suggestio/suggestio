@@ -162,6 +162,7 @@ class JsMessagesUtil @Inject() (
       MC.`Nothing.found` ::
       MC.`Show.ad.opened` ::
       MC.`Radio.beacons` ::
+      MC.`Node.type` ::
       Nil
 
     (

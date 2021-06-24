@@ -511,5 +511,6 @@ object MsgCodes {
   val `Read.radio.tags.on.tap` = "Read.radio.tags.on.tap"
 
   val `Radio.beacons` = "Radio.beacons"
+  val `Node.type` = "Node.type"
 
 }

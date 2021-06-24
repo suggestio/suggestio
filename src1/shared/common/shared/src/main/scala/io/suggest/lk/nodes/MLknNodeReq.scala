@@ -33,7 +33,7 @@ object MLknNodeReq {
       NodeEditConstants.Name.validateNodeName( req.name ) |@|
       ScalazUtil
         // First, ensure optional id is mandatory for node editing:
-        .liftNelOptMust( req.id, mustBeSome = isEdit, reallyMust = false, error = "For editing, NodeID must present" )( _.successNel )
+        .liftNelOptMust( req.id, mustBeSome = true, reallyMust = isEdit, error = "NodeID missing" )( _.successNel )
         // Do node-type-dependend checks:
         .andThen { idOpt =>
           req.nodeType match {
@@ -46,7 +46,7 @@ object MLknNodeReq {
           }
         } |@|
       Validation.liftNel( req.nodeType )(
-        MNodeTypes.lkNodesUserCanCreate.contains[MNodeType],
+        !MNodeTypes.lkNodesUserCanCreate.contains[MNodeType](_),
         "Node-type unexpected"
       )
     )( apply )

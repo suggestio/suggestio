@@ -32,10 +32,6 @@ object LkNodesConst {
     name.length >= NodeEditConstants.Name.LEN_MIN
 
 
-  def isBeaconIdValid(id: String): Boolean =
-    id.matches( BeaconUtil.EddyStone.EDDY_STONE_NODE_ID_RE_LC )
-
-
   def normalizeBeaconId(id: String): String = {
     StringUtil.strLimitLen(
       str       = id.toLowerCase,

@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.m.{CaptchaInit, CaptchaInputBlur, CaptchaTyped}
 import io.suggest.lk.m.captcha.MCaptchaS
-import io.suggest.lk.m.input.MTextFieldExtS
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromInput, ReactFocusEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -36,7 +36,7 @@ class CaptchaFormR(
 
   case class State(
                     isShownC                  : ReactConnectProxy[Option[PropsVal]],
-                    captchaTypedC             : ReactConnectProxy[Option[MTextFieldExtS]],
+                    captchaTypedC             : ReactConnectProxy[Option[MTextFieldS]],
                     captchaImgUrlC            : ReactConnectProxy[Option[String]],
                     reloadPendingSomeC        : ReactConnectProxy[Option[Boolean]],
                   )
@@ -85,13 +85,13 @@ class CaptchaFormR(
             new MuiTextFieldProps {
               override val onChange = _onTypedChangeCbF
               override val value = js.defined {
-                captchaS.typed.value: MuiInputValue_t
+                captchaS.value: MuiInputValue_t
               }
               override val label        = placeHolderText.rawNode
               override val `type`       = HtmlConstants.Input.tel
-              override val error        = !captchaS.typed.isValid
+              override val error        = !captchaS.isValid
               override val onBlur       = _onInputBlurCbF
-              override val disabled     = captchaS.disabled
+              override val disabled     = !captchaS.isEnabled
               override val variant      = MuiTextField.Variants.standard
             }
           )()
@@ -136,12 +136,11 @@ class CaptchaFormR(
 
         captchaTypedC         = propsProxy.connect { props =>
           for (c <- props) yield {
-            MTextFieldExtS(
-              typed = c.captcha.typed,
-              disabled = c.disabled,
-            )
+            val isEnabled2 = !c.disabled
+            if (c.captcha.typed.isEnabled ==* isEnabled2) c.captcha.typed
+            else c.captcha.typed.copy( isEnabled = isEnabled2 )
           }
-        }( OptFastEq.Wrapped(MTextFieldExtS.MTextFieldExtSFastEq) ),
+        }( OptFastEq.Wrapped( MTextFieldS.MTextFieldSFastEq) ),
 
         captchaImgUrlC        = propsProxy.connect(_.flatMap(_.captcha.captchaImgUrlOpt))( OptFastEq.Plain ),
 

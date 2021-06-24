@@ -721,6 +721,7 @@ Ntype.ev=Видео
 Ntype.er=Ресурс
 Ntype.calendar=Календарь
 Ntype.cryptoKey=Крипто.ключ
+Ntype.wifi=Wi-Fi роутер
 
 Ntypes.p=Люди
 Ntypes.n=Кабинеты
@@ -735,6 +736,7 @@ Ntypes.ev=Видео
 Ntypes.er=Ресурсы
 Ntypes.calendar=Календари
 Ntypes.cryptoKey=Крипто.ключи
+Ntypes.wifi=Wi-Fi роутеры
 Nodes=Узлы
 
 edge.predicate.a=Владелец
@@ -1174,4 +1176,5 @@ Define.manually=Задать вручную
 Sc.fsm.event.failed=Необработанное событие
 
 Radio.beacons=Радиомаяки
+Node.type=Тип узла
 

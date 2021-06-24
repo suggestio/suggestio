@@ -2,6 +2,7 @@ package io.suggest.radio
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
@@ -15,15 +16,16 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     override def rssi0 = None
     /** Measured distance for EddyStone is 0 cm. */
     override def distance0m = Some( 0 )
+    override def nodeType = MNodeTypes.BleBeacon
   }
 
   /** Wi-Fi radio signal. */
   case object WiFi extends MRadioSignalType("wifi") {
     override def goneAwayAfterSeconds = 20
     // Possible values from random measurments https://www.researchgate.net/figure/RSSI-versus-distance-for-BLE-Wi-Fi-and-XBee_fig5_317150846
-    //
     override def rssi0 = Some( -27 )
     override def distance0m = Some( 0 )
+    override def nodeType = MNodeTypes.WifiAP
   }
 
 
@@ -43,6 +45,9 @@ sealed abstract class MRadioSignalType(override val value: String) extends Strin
 
   /** Distance of rssi0 measurments. Usually - None and declared inside radioType.distance0m. */
   def distance0m: Option[Int]
+
+  /** Type of node to create for radio-beacon with current signal type. */
+  def nodeType: MNodeType
 
 }
 

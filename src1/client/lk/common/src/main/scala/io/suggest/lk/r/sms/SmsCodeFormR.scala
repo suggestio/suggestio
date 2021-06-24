@@ -6,7 +6,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.m.{SmsCodeBlur, SmsCodeSet}
-import io.suggest.lk.m.input.MTextFieldExtS
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
@@ -46,26 +46,19 @@ class SmsCodeFormR(
 
   case class State(
                     isShownC        : ReactConnectProxy[Option[PropsVal]],
-                    codeInputC      : ReactConnectProxy[Option[MTextFieldExtS]],
+                    codeInputC      : ReactConnectProxy[Option[MTextFieldS]],
                   )
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    private def _onSmsCodeTyping(e: ReactEventFromInput): Callback = {
+    private val _onSmsCodeTypingCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val typed2 = e.target.value
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SmsCodeSet(smsCode = typed2) )
     }
-    private val _onSmsCodeTypingCbF = ReactCommonUtil.cbFun1ToJsCb( _onSmsCodeTyping )
 
-    /*
-    private def _onReSendSmsClick(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, SmsCodeReSend)
-    private val _onReSendSmsClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onReSendSmsClick )
-    */
-
-    private def _onInputBlur(e: ReactFocusEvent): Callback =
+    private val _onInputBlurCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactFocusEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SmsCodeBlur)
-    private val _onInputBlurCbF = ReactCommonUtil.cbFun1ToJsCb( _onInputBlur )
+    }
 
 
     def render(s: State): VdomElement = {
@@ -79,13 +72,13 @@ class SmsCodeFormR(
             new MuiTextFieldProps {
               override val onChange = _onSmsCodeTypingCbF
               override val value = js.defined {
-                v.typed.value: MuiInputValue_t
+                v.value: MuiInputValue_t
               }
               override val label        = labelText.rawNode
               override val `type`       = HtmlConstants.Input.tel
-              override val error        = !v.typed.isValid
+              override val error        = !v.isValid
               override val onBlur       = _onInputBlurCbF
-              override val disabled     = v.disabled
+              override val disabled     = !v.isEnabled
               override val variant      = MuiTextField.Variants.standard
             }
           )()
@@ -116,12 +109,12 @@ class SmsCodeFormR(
 
         codeInputC = propsOptProxy.connect { propsOpt =>
           for (props <- propsOpt) yield {
-            MTextFieldExtS(
-              typed     = props.smsCode.typed,
-              disabled  = props.disabled,
-            )
+            val isEnabled2 = !props.disabled
+            val text = props.smsCode.typed
+            if (text.isEnabled ==* isEnabled2) text
+            else (MTextFieldS.isEnabled set isEnabled2)(text)
           }
-        }( OptFastEq.Wrapped(MTextFieldExtS.MTextFieldExtSFastEq) ),
+        }( OptFastEq.Wrapped(MTextFieldS.MTextFieldSFastEq) ),
 
       )
     }

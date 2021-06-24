@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form.m
 import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp, MLknOpKey, MLknOpValue}
+import io.suggest.n2.node.MNodeType
 import io.suggest.radio.MRadioData
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
@@ -52,11 +53,13 @@ case class HandleSubNodesOf(
 
 /** Юзер кликнул по кнопке добавления подузла.
   *
+  * @param nodeType Fixed type of node to create. Usually, related to fixed defined id field.
   * @param parentPath Путь до родительского узла в текущем дереве узлов.
   * @param id Фиксированный идентификатор создаваемого узла.
   * @param nameDflt Дефолтовое название маячка.
   */
 case class CreateNodeClick(
+                            nodeType: Option[MNodeType] = None,
                             parentPath: Option[NodePath_t] = None,
                             id: Option[String] = None,
                             nameDflt: Option[String] = None,
@@ -72,6 +75,10 @@ case class CreateNodeNameChange( name: String )
 
 /** Добавление под-узла: Юзер вводит id узла (маячка). */
 case class CreateNodeIdChange( id: String )
+  extends LkNodesAction
+
+/** Changing node type for creating node. */
+case class CreateNodeTypeChange( nodeType: MNodeType )
   extends LkNodesAction
 
 /** Смена узла-родителя в селекте. */

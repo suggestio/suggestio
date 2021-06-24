@@ -58,7 +58,7 @@ object ScalazUtil {
     */
   def liftNelOptMust[E, T](opt: Option[T], mustBeSome: Boolean, reallyMust: Boolean = true, error: => E)
                           (f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
-    if (mustBeSome && opt.isDefined) {
+    if (mustBeSome) {
       if (reallyMust) liftNelSome(opt, error)(f)
       else liftNelOpt(opt)(f)
     } else

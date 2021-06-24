@@ -28,9 +28,9 @@ object MCaptchaS {
 
   @inline implicit def univEq: UnivEq[MCaptchaS] = UnivEq.derive
 
-  val typed               = GenLens[MCaptchaS]( _.typed )
-  val req                 = GenLens[MCaptchaS]( _.contentReq )
-  val captchaImgUrlOpt    = GenLens[MCaptchaS]( _.captchaImgUrlOpt )
+  def typed               = GenLens[MCaptchaS]( _.typed )
+  def req                 = GenLens[MCaptchaS]( _.contentReq )
+  def captchaImgUrlOpt    = GenLens[MCaptchaS]( _.captchaImgUrlOpt )
 
   def isTypedCapchaValid(typedCaptcha: String): Boolean = {
     typedCaptcha.nonEmpty && typedCaptcha.length < 10

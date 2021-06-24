@@ -49,7 +49,6 @@ trait MuiTextFieldProps extends MuiFormControlProps {
   val variant: js.UndefOr[MuiTextField.Variant] = js.undefined
   val value: js.UndefOr[MuiInputValue_t | js.Array[MuiInputValue_t]] = js.undefined
   val onOpen: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val native: js.UndefOr[Boolean] = js.undefined
 }
 
 

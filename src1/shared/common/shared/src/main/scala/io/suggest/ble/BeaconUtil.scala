@@ -1,5 +1,8 @@
 package io.suggest.ble
 
+import io.suggest.scalaz.StringValidationNel
+import scalaz.Validation
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -47,6 +50,12 @@ object BeaconUtil {
       val post = "}"
       hexCharRe + pre + NS_ID_HEX_LEN + post + ID_DELIM + hexCharRe + pre + INST_ID_HEX_LEN + post
     }
+
+    def isBeaconIdValid(id: String): Boolean =
+      id.matches( BeaconUtil.EddyStone.EDDY_STONE_NODE_ID_RE_LC )
+
+    def validateBeaconId(id: String): StringValidationNel[String] =
+      Validation.liftNel( id )( !isBeaconIdValid(_), "Unexpected EddyStone-UID format" )
 
   }
 

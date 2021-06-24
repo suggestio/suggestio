@@ -1,12 +1,16 @@
 package io.suggest.lk.nodes
 
+import io.suggest.ble.BeaconUtil
 import io.suggest.es.model.MEsUuId
-import io.suggest.scalaz.ScalazUtil
+import io.suggest.n2.node.{MNodeIdType, MNodeTypes}
+import io.suggest.netif.NetworkingUtil
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.{Validation, ValidationNel}
-import scalaz.std.set._
+import scalaz.std.list._
+import scalaz.syntax.validation._
 import scalaz.syntax.apply._
 
 /**
@@ -22,10 +26,23 @@ object MLknBeaconsScanReq {
     final def AD_ID = "a"
   }
 
+  /** JSON support. */
   implicit def lknBeaconsInfoReqJson: OFormat[MLknBeaconsScanReq] = {
     val F = Fields
     (
-      (__ \ F.BEACON_UIDS).format[Set[String]] and
+      {
+        val path = (__ \ F.BEACON_UIDS)
+        val formatNormal = path.format[List[MNodeIdType]]
+        // Before 2021-06-24, published mobile apps supports only eddystone beacon ids.
+        val readsCompat = formatNormal orElse {
+          path
+            .format[List[String]]
+            .map(_.map { nodeId =>
+              MNodeIdType(nodeId, MNodeTypes.BleBeacon)
+            })
+        }
+        OFormat( readsCompat, formatNormal )
+      } and
       (__ \ F.AD_ID).formatNullable[String]
     )( apply, unlift(unapply) )
   }
@@ -33,10 +50,10 @@ object MLknBeaconsScanReq {
   @inline implicit def univEq: UnivEq[MLknBeaconsScanReq] = UnivEq.derive
 
 
-  /** Валидация модели.
+  /** Model validation.
     *
-    * @param lknBcnReq Реквест.
-    * @return Результат валидации.
+    * @param lknBcnReq Form data.
+    * @return Validation result.
     */
   def validate(lknBcnReq: MLknBeaconsScanReq): ValidationNel[String, MLknBeaconsScanReq] = {
     (
@@ -45,24 +62,55 @@ object MLknBeaconsScanReq {
           val len = bcns.size
           !((len > 0) && (len <= LkNodesConst.MAX_BEACONS_INFO_PER_REQ))
         },
-        _e_beacons_ + "len",
+        "Beacons array count invalid",
       )
         .andThen {
-          ScalazUtil.validateAll(_) { bcnUid =>
-            Validation.liftNel( bcnUid )(
-              !LkNodesConst.isBeaconIdValid(_),
-              _e_beacons_ + "uid"
-            )
-              .map( Set.empty + _ )
+          ScalazUtil.validateAll(_) { nodeIdType =>
+            validateNodeIdType( nodeIdType )
+              .map( _ :: Nil )
+              .orElse {
+                println( getClass.getSimpleName + ": Dropped invalid node id/type: " + nodeIdType )
+                List.empty.successNel
+              }
           }
         } |@|
       ScalazUtil.liftNelOpt( lknBcnReq.adId ) { adId =>
-        Validation.liftNel(adId)( !MEsUuId.isEsIdValid(_), _e_beacons_ + "adId" )
+        Validation.liftNel(adId)( !MEsUuId.isEsIdValid(_), "adId invalid" )
       }
     )( MLknBeaconsScanReq.apply )
   }
 
-  private def _e_beacons_ = "e.beacons."
+
+  private def _NODE_TYPE_UNSUPPORTED = "Unsupported node-type"
+
+
+  /** Validate node-id and node-type in context of current model.
+    * @param nodeIdType node id and type.
+    * @return Validation result.
+    */
+  def validateNodeIdType(nodeIdType: MNodeIdType): StringValidationNel[MNodeIdType] = {
+    (
+      {
+        val id = nodeIdType.nodeId.trim
+        nodeIdType.nodeType match {
+          case MNodeTypes.WifiAP =>
+            NetworkingUtil.validateMacAddress( id )
+          case MNodeTypes.BleBeacon =>
+            BeaconUtil.EddyStone.validateBeaconId( id )
+          case _ =>
+            _NODE_TYPE_UNSUPPORTED.failureNel
+        }
+      } |@| {
+        Validation.liftNel( nodeIdType.nodeType )(
+          {
+            case MNodeTypes.WifiAP | MNodeTypes.BleBeacon => false
+            case _ => true
+          },
+          _NODE_TYPE_UNSUPPORTED
+        )
+      }
+    )( MNodeIdType.apply )
+  }
 
 }
 
@@ -73,6 +121,6 @@ object MLknBeaconsScanReq {
   * @param adId id текущей рекламной карточки, когда требуется возвращать содержимое MLknNode.adv .
   */
 final case class MLknBeaconsScanReq(
-                                     beaconUids   : Set[String],
+                                     beaconUids   : List[MNodeIdType],
                                      adId         : Option[String],
                                    )

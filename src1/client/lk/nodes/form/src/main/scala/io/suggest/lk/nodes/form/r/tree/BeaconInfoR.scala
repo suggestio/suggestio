@@ -5,6 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.MLknNode
 import io.suggest.lk.nodes.form.m.{CreateNodeClick, MNodeState, NodesDiConf}
+import io.suggest.n2.node.MNodeType
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -48,10 +49,11 @@ class BeaconInfoR(
   class Backend( $: BackendScope[Props, Props_t] ) {
 
     /** Клик по кнопке добавления маячка в свои узлы. */
-    private def _addBtnClick(beaconUid: String, nameDflt: Option[String] = None): Callback = {
+    private def _addBtnClick(beaconUid: String, nodeType: MNodeType, nameDflt: Option[String] = None): Callback = {
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, CreateNodeClick(
         id = Some( beaconUid ),
         nameDflt = nameDflt,
+        nodeType = Some( nodeType ),
       ))
     }
 
@@ -84,10 +86,21 @@ class BeaconInfoR(
               MuiListItem {
                 new MuiListItemProps {
                   override val button = true
-                  override val onClick = JsOptionUtil.maybeDefined(isLoggedIn) {
+                  override val onClick = JsOptionUtil.maybeDefined( isLoggedIn ) {
                     ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-                      val nameDflt = crCtx.messages( MsgCodes.`Beacon.name.example` )
-                      _addBtnClick( bcnUid, Some(nameDflt) )
+                      val signal = bcnState.data.signal.signal
+                      val nodeType = signal.typ.nodeType
+
+                      _addBtnClick(
+                        beaconUid = bcnUid,
+                        nodeType  = nodeType,
+                        nameDflt  = signal.customName
+                          .orElse {
+                            nodeType
+                              .creationNameExample
+                              .map( crCtx.messages(_) )
+                          },
+                      )
                     }
                   }
                   override val disabled = _isDisabled

@@ -1166,4 +1166,5 @@ Define.manually=Define manually
 Sc.fsm.event.failed=Unprocessed event
 
 Radio.beacons=Radio-beacons
+Node.type=Node type
 

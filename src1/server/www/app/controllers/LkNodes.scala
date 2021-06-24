@@ -1083,8 +1083,18 @@ final class LkNodes @Inject() (
           // чтение цепочек узлов для проверки прав доступа идёт через этот же кэш.
           bcnIdsCleared <- mNodes.dynSearchIds(
             new MNodeSearch {
-              override val withIds = qs.beaconUids.toSeq
-              override val nodeTypes = MNodeTypes.lkNodesUserCanCreate
+              override val withIds = qs.beaconUids
+                .iterator
+                .map(_.nodeId)
+                .toSeq
+              override val nodeTypes = {
+                val qsNodeTypes = qs.beaconUids
+                  .iterator
+                  .map(_.nodeType)
+                  .toSet
+                (qsNodeTypes intersect MNodeTypes.lkNodesUserCanCreate.toSet)
+                  .toSeq
+              }
               override val limit = bcnsReqCount
               // isDisabled: по флагу пока не фильтруем, т.к. иначе клиент подумает, что маячок свободен для регистрации.
             }

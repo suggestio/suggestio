@@ -13,7 +13,7 @@ import monocle.macros.GenLens
   */
 object MTextFieldS {
 
-  implicit object MEpwTextFieldSFastEq extends FastEq[MTextFieldS] {
+  implicit object MTextFieldSFastEq extends FastEq[MTextFieldS] {
     override def eqv(a: MTextFieldS, b: MTextFieldS): Boolean = {
       (a.value ===* b.value) &&
       (a.isValid ==* b.isValid) &&
