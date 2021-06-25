@@ -117,12 +117,17 @@ class ItemRowR(
                 .getOrElse( MsgCodes.`Node` )
 
               // Separate icon for BLE-beacon.
-              val nodeIcon = (for {
-                ntype <- ntypeOpt
-                if ntype eqOrHasParent MNodeTypes.BleBeacon
-              } yield {
-                Mui.SvgIcons.BluetoothSearching
-              })
+              val nodeIcon = ntypeOpt
+                .flatMap { ntype =>
+                  Option {
+                    if (ntype eqOrHasParent MNodeTypes.BleBeacon)
+                      Mui.SvgIcons.BluetoothSearching
+                    else if (ntype eqOrHasParent MNodeTypes.WifiAP)
+                      Mui.SvgIcons.Wifi
+                    else
+                      null
+                  }
+                }
                 .getOrElse( Mui.SvgIcons.LocationCity )
 
               nodeIcon -> Some(nodeTypeHint)

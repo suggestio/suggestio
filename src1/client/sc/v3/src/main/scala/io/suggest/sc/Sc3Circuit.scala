@@ -548,7 +548,9 @@ class Sc3Circuit(
               !mroot.grid.afterUpdate.exists {
                 case gla: GridLoadAds =>
                   gla.onlyMatching.exists { om =>
-                    om.ntype contains[MNodeType] MNodeTypes.BleBeacon
+                    om.ntype.exists { ntype =>
+                      MNodeTypes.lkNodesUserCanCreate contains[MNodeType] ntype
+                    }
                   }
                 case _ => false
               }

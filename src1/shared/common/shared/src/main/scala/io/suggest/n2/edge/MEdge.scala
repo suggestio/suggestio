@@ -6,6 +6,7 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.MNodeGeoLevel
 import io.suggest.model.PrefixedFn
 import io.suggest.n2.media.MEdgeMedia
+import io.suggest.text.StringUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -206,33 +207,17 @@ case class MEdge(
                 ) {
 
   override def toString: String = {
-    val sb = new StringBuilder(256)
-      .append("E(")
-    sb.append(predicate.value)
-      .append(':')
-    for (nodeId <- nodeIds) {
-      sb.append(nodeId)
-        .append(',')
+    StringUtil.toStringHelper( this, 256 ) { s =>
+      val emptyStr = ""
+      val F = MEdge.Fields
+
+      s( emptyStr )( predicate )
+      if (nodeIds.nonEmpty) s( emptyStr )( nodeIds.mkString("[", ";", "]") )
+      order foreach s( F.ORDER_FN )
+      if (info.nonEmpty) s( F.INFO_FN )(info)
+      if (doc.nonEmpty) s(F.DOCUMENT_FN)(doc)
+      media foreach s(F.MEDIA_FN)
     }
-    for (ord <- order) {
-      sb.append(':').append(ord)
-    }
-    if (info.nonEmpty) {
-      sb.append('{')
-        .append(info)
-        .append('}')
-    }
-    if (doc.nonEmpty) {
-      sb.append("d={")
-        .append(doc.toString)
-        .append("},")
-    }
-    for (m <- media) {
-      sb.append(',')
-        .append(m)
-    }
-    sb.append(')')
-      .toString()
   }
 
 

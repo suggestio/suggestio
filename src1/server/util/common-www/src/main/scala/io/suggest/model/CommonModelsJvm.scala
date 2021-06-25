@@ -17,7 +17,7 @@ import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknModifyQs, MLknOpKey, MLknOpK
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
-import io.suggest.n2.node.{MNodeIdType, MNodeType}
+import io.suggest.n2.node.{MNodeIdType, MNodeType, MNodeTypes}
 import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
@@ -716,7 +716,7 @@ object CommonModelsJvm extends MacroLogsDyn {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeIdType]] = {
         val F = MNodeIdType.Fields
         val k = key1F( key )
-        for {
+        (for {
           nodeIdE <- stringB.bind( k(F.NODE_ID), params )
           nodeTypeE <- nodeTypeB.bind( k(F.NODE_TYPE), params )
         } yield {
@@ -729,7 +729,19 @@ object CommonModelsJvm extends MacroLogsDyn {
               nodeType    = nodeType,
             )
           }
-        }
+        })
+          .orElse {
+            // 2021-06-24 Previosly, only nodeId was defined, and nodeType always was == BleBeacon. MNodeIdType model wasn't exist.
+            // TODO Remove this code after some time: after mobile apps would be upgraded.
+            for (nodeIdE <- stringB.bind(key, params)) yield {
+              for (nodeId <- nodeIdE) yield {
+                MNodeIdType(
+                  nodeId   = nodeId,
+                  nodeType = MNodeTypes.BleBeacon,
+                )
+              }
+            }
+          }
       }
 
       override def unbind(key: String, value: MNodeIdType): String = {

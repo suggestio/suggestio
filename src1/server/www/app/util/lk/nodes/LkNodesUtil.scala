@@ -35,8 +35,8 @@ final class LkNodesUtil {
           clauses = cr :: Nil,
         )
       }
-      override def withNameSort = Some( SortOrder.ASC )
-      override def nodeTypes = MNodeTypes.BleBeacon :: Nil
+      override val withNameSort = Some( SortOrder.ASC )
+      override val nodeTypes = MNodeTypes.lkNodesUserCanCreate
     }
   }
 

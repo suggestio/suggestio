@@ -114,7 +114,7 @@ object MNodeType {
     def randomIdAllowed: Boolean = {
       // Узлам-маячкам надо хранить свои uid'ы в _id. Так хоть и длинее,
       // но всё-таки нет необходимости в ведении ещё одного индекса.
-      !_isBleBeacon
+      !_isRadioBeacon
     }
 
     /**
@@ -123,14 +123,14 @@ object MNodeType {
       */
     def userHasExtendedAcccess: Boolean = {
       // Юзер управляет маячками самостоятельно.
-      _isBleBeacon
+      _isRadioBeacon
     }
 
     /** Разрешено ли неограниченному кругу лиц узнавать данные по узлу на тему размещения на нём? */
     def publicCanReadInfoAboutAdvOn: Boolean = {
       _isAdnNode ||
       // Маячок -- тоже узел для направленного размещения, с какими-то своими правилами.
-      _isBleBeacon
+      _isRadioBeacon
     }
 
     /** Для этого типа узлов можно рендерить юзеру ссылку на личный кабинет? */
@@ -138,13 +138,13 @@ object MNodeType {
       _isAdnNode
 
     def showScLink: Boolean =
-      _isAdnNode || _isBleBeacon
+      _isAdnNode || _isRadioBeacon
 
     private def _isAdnNode =
       ntype ==* MNodeTypes.AdnNode
 
-    private def _isBleBeacon =
-      ntype ==* MNodeTypes.BleBeacon
+    private def _isRadioBeacon =
+      MNodeTypes.lkNodesUserCanCreate contains[MNodeType] ntype
 
     private def _isPerson =
       ntype ==* MNodeTypes.Person
