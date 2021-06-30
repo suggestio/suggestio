@@ -199,7 +199,7 @@ final class NodeHeaderR(
           for ( radioName <- radioNameCustomOpt if !_textPrimary.contains(radioName) ) {
             _textSecondaryNode = _textSecondaryNode
               .map[VdomNode] { suffix =>
-                VdomArray( radioName, " | ", suffix )
+                React.Fragment( radioName, " | ", suffix )
               }
               .orElse {
                 radioNameCustomOpt

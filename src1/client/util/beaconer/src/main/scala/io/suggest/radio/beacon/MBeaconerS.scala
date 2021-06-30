@@ -34,8 +34,7 @@ object MBeaconerS {
         (a.gcIntervalId ===* b.gcIntervalId) &&
         (a.envFingerPrint ===* b.envFingerPrint) &&
         (a.bleBeaconsApis ===* b.bleBeaconsApis) &&
-        (a.opts ==* b.opts) &&
-        (a.wifiScanTimer ===* b.wifiScanTimer)
+        (a.opts ==* b.opts)
     }
   }
 
@@ -47,7 +46,6 @@ object MBeaconerS {
   def nearbyReport = GenLens[MBeaconerS](_.nearbyReport)
   def opts = GenLens[MBeaconerS]( _.opts )
   def hasBle = GenLens[MBeaconerS]( _.hasBle )
-  def wifiScanTimer = GenLens[MBeaconerS]( _.wifiScanTimer )
 
 }
 
@@ -73,7 +71,6 @@ object MBeaconerS {
   *               Pot.empty - not checked, by now.
   *               Ready(true|false) - Detected bluetooth support.
   *               failed(ex) - Detection failed.
-  * @param wifiScanTimer Timer id for periodical wifi networks scanner.
   */
 case class MBeaconerS(
                        isEnabled            : Pot[Boolean]               = Pot.empty,
@@ -86,7 +83,6 @@ case class MBeaconerS(
                        bleBeaconsApis       : Pot[Map[MRadioSignalType, IBeaconsListenerApi]] = Pot.empty,
                        opts                 : MBeaconerOpts              = MBeaconerOpts.default,
                        hasBle               : Pot[Boolean]               = Pot.empty,
-                       wifiScanTimer        : Pot[Int]                   = Pot.empty,
                      )
   extends EmptyProduct
 {

@@ -126,12 +126,10 @@ object Sc3JsApi extends Log {
     }
   }
 
+
   private var _wifiIntervalIdU: js.UndefOr[Int] = js.undefined
 
-
-  /** Run emission of Wi-Fi detection signals. */
-  @JSExport
-  def wifiEmit(count: Int = 0): Unit = _d {
+  private def _wifiEmitter(ids: Seq[String]) = _d {
     // Cleanup currently running timers, if any:
     for {
       ivlId <- _wifiIntervalIdU
@@ -141,23 +139,23 @@ object Sc3JsApi extends Log {
     _wifiIntervalIdU = js.undefined
 
     // Activate timed wifi-scan-results imitation:
-    if (count > 0) {
+    if (ids.iterator.nonEmpty) {
       _initializeBeaconer()
 
       val rnd = new Random()
-      val macAddrSeed = rnd.nextInt( Int.MaxValue )
       // For wifi scan imitation - used single interval for list of networks.
       _wifiIntervalIdU = DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
         val radioType = MRadioSignalTypes.WiFi
         val action = RadioSignalsDetected(
-          signals = (1 to count)
+          signals = ids
             .iterator
-            .map { i =>
+            .zipWithIndex
+            .map { case (macAddr, i) =>
               MRadioSignalJs(
                 signal = MRadioSignal(
                   rssi        = Some( -5 - rnd.nextInt(90) ),
                   typ         = radioType,
-                  factoryUid  = Some( JsBinaryUtil.toHexString( macAddrSeed * i, 6 ) ),
+                  factoryUid  = Some( macAddr ),
                   customName  = Some( "WiFi Emit #" + i ),
                 )
               )
@@ -171,5 +169,32 @@ object Sc3JsApi extends Log {
 
     DoNothing
   }
+
+  /** Run emission of Wi-Fi detection signals. */
+  @JSExport
+  def wifiEmit(count: Int = 0): Unit = {
+    _wifiEmitter(
+      ids = {
+        if (count <= 0) {
+          Nil
+        } else {
+          val rnd = new Random()
+          val macAddrSeed = rnd.nextInt( Int.MaxValue )
+
+          Iterator
+            .from( 1 )
+            .take( count )
+            .map { i =>
+              JsBinaryUtil.toHexString( macAddrSeed * i, 6 )
+            }
+            .to( List )
+        }
+      }
+    )
+  }
+
+  /** Emit wi-fi signals with these MAC-addrs. */
+  @JSExport
+  def wifiEmitById(ids: String*): Unit = _wifiEmitter( ids )
 
 }

@@ -325,13 +325,13 @@ class Sc3Module extends Log { outer =>
     if (plat.isCordova) {
       // Append wifi scanner on Android. On iOS it is impossible to list wifi-networks.
       if (plat.osFamily contains[MOsFamily] MOsFamilies.Android) {
-        val accWifi = new CdvWifiWizard2BeaconsApi #:: acc
-        acc = accWifi
+        val accNoWifi = acc
+        acc = new CdvWifiWizard2BeaconsApi #:: accNoWifi
       }
 
       // Prepend Bluetooth scanning API:
-      val accBle = new CdvBleBeaconsApi #:: acc
-      acc = accBle
+      val accNoBle = acc
+      acc = new CdvBleBeaconsApi #:: accNoBle
     }
 
     // TODO else: WebBluetoothBeaconsApi

@@ -395,17 +395,8 @@ class BeaconerAh[M](
         noChange
 
       } else if (m.signals.isEmpty) {
-        if (m.radioType ==* MRadioSignalTypes.WiFi) {
-          // WiFi scanner can send empty results to reset pending state.
-          if (v0.wifiScanTimer.isPending)
-            updatedSilent( MBeaconerS.wifiScanTimer.modify(_.unPending)(v0) )
-          else
-            noChange
-        } else {
-          // Bluetooth scanner shouldn't return any empty garbage.
-          logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
-          noChange
-        }
+        logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
+        noChange
 
       } else {
         val beacons2 = m.signals
@@ -446,18 +437,6 @@ class BeaconerAh[M](
           notifyAllTimer  = notifyAllTimerOpt2,
           beacons         = beacons2,
           gcIntervalId    = gcIvl2,
-          // If wifi is pending, and wifi-results received, reset pending state.
-          wifiScanTimer   = {
-            if (
-              v0.wifiScanTimer.isPending &&
-              (m.radioType ==* MRadioSignalTypes.WiFi)
-            ) {
-              // Reset wifi "pending" state back to ready.
-              v0.wifiScanTimer.unPending
-            } else {
-              v0.wifiScanTimer
-            }
-          },
         )
 
         ah.optionalResult( Some(v2), notifyFxOpt, silent = bcnsIsSilentRO.value )
@@ -680,16 +659,6 @@ class BeaconerAh[M](
           }
         }
 
-        // Stop wifi timer, if any
-        for {
-          timerId <- v0.wifiScanTimer
-        } {
-          fxAcc ::= Effect.action {
-            DomQuick.clearInterval( timerId )
-            DoNothing
-          }
-        }
-
         val beacons2: Map[String, MRadioData] = {
           Map.empty
         }
@@ -709,7 +678,6 @@ class BeaconerAh[M](
           nearbyReport      = bcnsNearby2.map(_._2),
           beacons           = beacons2,
           hasBle            = hasBle2,
-          wifiScanTimer     = Pot.empty,
         )
 
         ah.updatedMaybeEffect( v2, fxAcc.mergeEffects )
