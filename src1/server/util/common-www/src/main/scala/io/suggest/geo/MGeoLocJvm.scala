@@ -1,8 +1,9 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoConstants.GeoLocQs._
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
   * Suggest.io
@@ -20,7 +21,7 @@ object MGeoLocJvm {
                           geoPointB  : QueryStringBindable[MGeoPoint],
                           doubleOptB : QueryStringBindable[Option[Double]]
                          ): QueryStringBindable[MGeoLoc] = {
-    new QueryStringBindableImpl[MGeoLoc] {
+    new AbstractQueryStringBindable[MGeoLoc] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGeoLoc]] = {
         val k = key1F(key)
         for {

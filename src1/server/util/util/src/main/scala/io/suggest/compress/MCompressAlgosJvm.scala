@@ -1,6 +1,7 @@
 package io.suggest.compress
 
 import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.xplay.qsb.CrossQsBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -11,7 +12,7 @@ import play.api.mvc.QueryStringBindable
   */
 object MCompressAlgosJvm {
 
-  implicit def compressAlgoQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MCompressAlgo] = {
+  implicit def compressAlgoQsb(implicit strB: QueryStringBindable[String]): CrossQsBindable[MCompressAlgo] = {
     EnumeratumJvmUtil.valueEnumQsb( MCompressAlgos )
   }
 

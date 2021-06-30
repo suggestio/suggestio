@@ -1,23 +1,21 @@
 package io.suggest.model
 
-import java.net.URLEncoder
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
 import io.suggest.common.empty.OptionUtil
 import OptionUtil.BoolOptOps
-import io.suggest.ble.BleConstants.Beacon.Qs.{DISTANCE_CM_FN, UID_FN}
 import io.suggest.ble.MUidBeacon
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MScreen}
 import io.suggest.es.model.MEsUuId
-import io.suggest.geo.MLocEnv
+import io.suggest.geo.{GeoPoint, MGeoPoint, MLocEnv}
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknModifyQs, MLknOpKey, MLknOpKeys, MLknOpValue}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
-import io.suggest.n2.node.{MNodeIdType, MNodeType, MNodeTypes}
+import io.suggest.n2.node.{MNodeIdType, MNodeType}
 import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
@@ -27,8 +25,11 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.spa.SioPages
 import io.suggest.swfs.fid.Fid
 import io.suggest.up.{MUploadChunkQs, MUploadChunkSize, MUploadChunkSizes}
+import io.suggest.url.bind.QsbSeqUtil
 import io.suggest.util.logs.MacroLogsDyn
-import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
+import io.suggest.xplay.qsb.{AbstractQueryStringBindable, CrossQsBindable, QsbSeq}
+import io.suggest.xplay.qsb.CrossQsBindable._
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 import scala.util.Try
 import japgolly.univeq._
@@ -42,33 +43,22 @@ import scalaz.{ICons, IList, NonEmptyList}
   */
 object CommonModelsJvm extends MacroLogsDyn {
 
-  /** Тут костыль для символов типа '[' ']' в qs-ключах.
-    * Почему-то штатный String QSB экранирует эти символы, но только для String.
-    */
-  implicit object BindableString2 extends QueryStringBindable[String] {
-    // TODO Этот объект-костыль можно просто удалить, когда в play пофиксят https://github.com/playframework/playframework/issues/10369
-    def bind(key: String, params: Map[String, Seq[String]]) =
-      params.get(key).flatMap(_.headOption).map(Right(_))
-    def unbind(key: String, value: String) =
-      s"$key=${URLEncoder.encode(value, "utf-8")}"
-  }
-
 
   /** Биндинги для url query string. */
-  implicit def mScApiVsnQsb: QueryStringBindable[MScApiVsn] =
+  implicit def mScApiVsnQsb: CrossQsBindable[MScApiVsn] =
     EnumeratumJvmUtil.valueEnumQsb( MScApiVsns )
 
   /** QSB для инстансов [[MStorage]]. */
-  implicit def mStorageQsb: QueryStringBindable[MStorage] =
+  implicit def mStorageQsb: CrossQsBindable[MStorage] =
     EnumeratumJvmUtil.valueEnumQsb( MStorages )
 
-  implicit def uploadChunkSizeQsb: QueryStringBindable[MUploadChunkSize] =
+  implicit def uploadChunkSizeQsb: CrossQsBindable[MUploadChunkSize] =
     EnumeratumJvmUtil.valueEnumQsb( MUploadChunkSizes )
 
 
   /** Поддержка сырого биндинга из query-string. */
   implicit def fidQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[Fid] = {
-    new QueryStringBindableImpl[Fid] {
+    new AbstractQueryStringBindable[Fid] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Fid]] = {
         val fidStrRaw = strB.bind(key, params)
         for (fidStrE <- fidStrRaw) yield {
@@ -97,7 +87,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                                   strB         : QueryStringBindable[String],
                                   strSeqB      : QueryStringBindable[QsbSeq[String]],
                                  ): QueryStringBindable[MStorageInfoData] = {
-    new QueryStringBindableImpl[MStorageInfoData] {
+    new AbstractQueryStringBindable[MStorageInfoData] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MStorageInfoData]] = {
         val F = MStorageInfoData.Fields
@@ -135,7 +125,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                               storageB   : QueryStringBindable[MStorage],
                               infoDataB  : QueryStringBindable[MStorageInfoData],
                              ): QueryStringBindable[MStorageInfo] = {
-    new QueryStringBindableImpl[MStorageInfo] {
+    new AbstractQueryStringBindable[MStorageInfo] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MStorageInfo]] = {
         val F = MStorageInfo.Fields
         val k = key1F(key)
@@ -173,7 +163,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                                 longB     : QueryStringBindable[Long],
                                 intOptB   : QueryStringBindable[Option[Int]],
                                ): QueryStringBindable[MNodeEdgeIdQs] = {
-    new QueryStringBindableImpl[MNodeEdgeIdQs] {
+    new AbstractQueryStringBindable[MNodeEdgeIdQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeEdgeIdQs]] = {
         val k = key1F(key)
@@ -211,7 +201,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   }
 
 
-  implicit def osPlatformQsb: QueryStringBindable[MOsFamily] =
+  implicit def osPlatformQsb: CrossQsBindable[MOsFamily] =
     EnumeratumJvmUtil.valueEnumQsb( MOsFamilies )
 
 
@@ -219,7 +209,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def scAppDlQs(implicit
                          predicateOptB: QueryStringBindable[Option[MPredicate]],
                         ): QueryStringBindable[MScAppGetQs] = {
-    new QueryStringBindableImpl[MScAppGetQs] {
+    new AbstractQueryStringBindable[MScAppGetQs] {
       private def osPlatformB = implicitly[QueryStringBindable[MOsFamily]]
       private def boolB = implicitly[QueryStringBindable[Boolean]]
       private def strOptB = implicitly[QueryStringBindable[Option[String]]]
@@ -264,15 +254,15 @@ object CommonModelsJvm extends MacroLogsDyn {
   }
 
 
-  implicit def mhashQsb: QueryStringBindable[MHash] =
+  implicit def mhashQsb: CrossQsBindable[MHash] =
     EnumeratumJvmUtil.valueEnumQsb( MHashes )
 
 
   /** Поддержка URL-qs вида "x.s1=aahh45234234&x.s256=aa543525325..."  */
   implicit def hashesHexQsb: QueryStringBindable[HashesHex] = {
-   new QueryStringBindableImpl[HashesHex] {
+   new AbstractQueryStringBindable[HashesHex] {
 
-     private def strB = BindableString2
+     private def strB = implicitly[QueryStringBindable[String]]
 
      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, HashesHex]] = {
        val hashesHexOptEithSeq = for (mhash <- MHashes.values) yield {
@@ -321,7 +311,7 @@ object CommonModelsJvm extends MacroLogsDyn {
 
 
 
-  implicit def fileMetaHashFlagQsb: QueryStringBindable[MFileMetaHashFlag] =
+  implicit def fileMetaHashFlagQsb: CrossQsBindable[MFileMetaHashFlag] =
     EnumeratumJvmUtil.valueEnumQsb( MFileMetaHashFlags )
 
 
@@ -330,7 +320,7 @@ object CommonModelsJvm extends MacroLogsDyn {
     @inline def strB = implicitly[QueryStringBindable[String]]
     @inline def fmHashFlagsB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHashFlag]]]
 
-    new QueryStringBindableImpl[MFileMetaHash] {
+    new AbstractQueryStringBindable[MFileMetaHash] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MFileMetaHash]] = {
         val F = MFileMetaHash.Fields
         val k = key1F( key )
@@ -378,7 +368,7 @@ object CommonModelsJvm extends MacroLogsDyn {
     @inline def boolB = implicitly[QueryStringBindable[Boolean]]
     @inline def fmHashesB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHash]]]
 
-    new QueryStringBindableImpl[MFileMeta] {
+    new AbstractQueryStringBindable[MFileMeta] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MFileMeta]] = {
         val F = MFileMeta.Fields
         val k = key1F( key )
@@ -425,7 +415,7 @@ object CommonModelsJvm extends MacroLogsDyn {
     @inline def strOptB = implicitly[QueryStringBindable[Option[String]]]
     @inline def hashesHexB = implicitly[QueryStringBindable[HashesHex]]
 
-    new QueryStringBindableImpl[MScAppManifestQs] {
+    new AbstractQueryStringBindable[MScAppManifestQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAppManifestQs]] = {
         val k = key1F(key)
         val F = MScAppManifestQs.Fields
@@ -458,7 +448,7 @@ object CommonModelsJvm extends MacroLogsDyn {
     lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
     @inline def hashesHexB = implicitly[QueryStringBindable[HashesHex]]
 
-    new QueryStringBindableImpl[MUploadChunkQs] {
+    new AbstractQueryStringBindable[MUploadChunkQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUploadChunkQs]] = {
         val F = MUploadChunkQs.Fields
         for {
@@ -521,7 +511,7 @@ object CommonModelsJvm extends MacroLogsDyn {
 
   /** routes-Биндер для параметров showcase'а. */
   implicit def mScIndexArgsQsb: QueryStringBindable[MScIndexArgs] = {
-    new QueryStringBindableImpl[MScIndexArgs] {
+    new AbstractQueryStringBindable[MScIndexArgs] {
       import io.suggest.sc.ScConstants.ReqArgs.{GEO_INTO_RCVR_FN, NODE_ID_FN, RET_GEO_LOC_FN}
 
       def strOptB = implicitly[QueryStringBindable[Option[String]]]
@@ -565,194 +555,44 @@ object CommonModelsJvm extends MacroLogsDyn {
   }
 
 
-  /** QS-биндинги дял Sc3 MainScreen. */
-  implicit def sc3MainScreenQsb: QueryStringBindable[SioPages.Sc3] = {
-    new QueryStringBindableImpl[SioPages.Sc3] {
-      import io.suggest.sc.ScConstants.ScJsState._
-      import io.suggest.geo.GeoPoint
+  /** URL Query-string binder for SioPages.Sc3 showcase state URIs. */
+  implicit def sc3MainScreenQsb: CrossQsBindable[SioPages.Sc3] = {
+    import io.suggest.n2.node.MNodeTypesJvm._
 
-      private lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
-
-      private lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
-
-      private lazy val boolOrFalseB =
-        boolOptB.transform[Boolean](
-          _.getOrElseFalse,
-          OptionUtil.SomeBool.orNone
-        )
-
-      private def boolOrTrueB: QueryStringBindable[Boolean] =
-        boolOptB.transform[Boolean](
-          _.getOrElseTrue,
-          OptionUtil.SomeBool.orSome
-        )
-
-      private def longOptB = implicitly[QueryStringBindable[Option[Long]]]
-      private def geoPointOptB = GeoPoint.pipeDelimitedQsbOpt( strOptB )
-
-      private def stringsB = implicitly[QueryStringBindable[QsbSeq[String]]]
-        .transform[Set[String]](
-          _.items.toSet,
-          m => QsbSeq( m.toSeq )
-        )
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SioPages.Sc3]] = {
-        for {
-          nodeIdOptE          <- strOptB.bind( NODE_ID_FN, params )
-          searchOpenedE       <- boolOrFalseB.bind( SEARCH_OPENED_FN, params )
-          menuOpenedE         <- boolOrFalseB.bind( MENU_OPENED_FN, params )
-          generationOptE      <- longOptB.bind( GENERATION_FN, params )
-          tagNodeIdOptE       <- strOptB.bind( TAG_NODE_ID_FN, params )
-          geoPointOptE        <- geoPointOptB.bind( LOC_ENV_FN, params )
-          focusedAdIdOptE     <- strOptB.bind( FOCUSED_AD_ID_FN, params )
-          firstRunOpenE       <- boolOrFalseB.bind( FIRST_RUN_OPEN_FN, params )
-          dlAppOpenE          <- boolOrFalseB.bind( DL_APP_OPEN_FN, params )
-          settingsOpenE       <- boolOrFalseB.bind( SETTINGS_OPEN_FN, params )
-          showWelcomeE        <- boolOrTrueB.bind( SHOW_WELCOME_FN, params )
-          virtBeaconsE        <- stringsB.bind( VIRT_BEACONS_FN, params )
-        } yield {
-          for {
-            nodeIdOpt         <- nodeIdOptE
-            searchOpened      <- searchOpenedE
-            menuOpened        <- menuOpenedE
-            generationOpt     <- generationOptE
-            tagNodeIdOpt      <- tagNodeIdOptE
-            geoPointOpt       <- geoPointOptE
-            focusedAdIdOpt    <- focusedAdIdOptE
-            firstRunOpen      <- firstRunOpenE
-            dlAppOpen         <- dlAppOpenE
-            settingsOpen      <- settingsOpenE
-            showWelcome       <- showWelcomeE
-            virtBeacons       <- virtBeaconsE
-          } yield {
-            SioPages.Sc3(
-              nodeId          = nodeIdOpt,
-              searchOpened    = searchOpened,
-              menuOpened      = menuOpened,
-              generation      = generationOpt,
-              tagNodeId       = tagNodeIdOpt,
-              locEnv          = geoPointOpt,
-              focusedAdId     = focusedAdIdOpt,
-              firstRunOpen    = firstRunOpen,
-              dlAppOpen       = dlAppOpen,
-              settingsOpen    = settingsOpen,
-              showWelcome     = showWelcome,
-              virtBeacons     = virtBeacons,
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: SioPages.Sc3): String = {
-        _mergeUnbinded1(
-          strOptB.unbind( NODE_ID_FN, value.nodeId ),
-          geoPointOptB.unbind( LOC_ENV_FN, value.locEnv ),
-          boolOrFalseB.unbind( SEARCH_OPENED_FN, value.searchOpened ),
-          boolOrFalseB.unbind( MENU_OPENED_FN, value.menuOpened ),
-          longOptB.unbind( GENERATION_FN, value.generation ),
-          strOptB.unbind( TAG_NODE_ID_FN, value.tagNodeId ),
-          strOptB.unbind( FOCUSED_AD_ID_FN, value.focusedAdId ),
-          boolOrFalseB.unbind( FIRST_RUN_OPEN_FN, value.firstRunOpen ),
-          boolOrFalseB.unbind( DL_APP_OPEN_FN, value.dlAppOpen ),
-          boolOrFalseB.unbind( SETTINGS_OPEN_FN, value.settingsOpen ),
-          boolOrTrueB.unbind( SHOW_WELCOME_FN, value.showWelcome ),
-          stringsB.unbind( VIRT_BEACONS_FN, value.virtBeacons ),
-        )
-      }
-    }
+    SioPages.Sc3.sc3QsB(
+      stringOptB = implicitly[QueryStringBindable[Option[String]]],
+      boolOptB = implicitly[QueryStringBindable[Option[Boolean]]],
+      longOptB = implicitly[QueryStringBindable[Option[Long]]],
+      geoPointOptB = {
+        implicit val geoPointQsb = GeoPoint.pipeDelimitedQsb
+        implicitly[QueryStringBindable[Option[MGeoPoint]]]
+      },
+      nodeIdTypeSeqB = QsbSeqUtil.qsbSeqQsB[MNodeIdType],
+      loginOptB = implicitly[QueryStringBindable[Option[SioPages.Login]]],
+    )
   }
 
 
   /** qs-биндинг таба Login-страницы. */
-  implicit def loginTabQsb: QueryStringBindable[MLoginTab] =
+  implicit def loginTabQsb: CrossQsBindable[MLoginTab] =
     EnumeratumJvmUtil.valueEnumQsb( MLoginTabs )
 
 
   /** qs-биндинг для Login-страницы. */
   implicit def loginPageQsb(implicit
-                            loginTabB       : QueryStringBindable[MLoginTab],
+                            loginTabB       : CrossQsBindable[MLoginTab],
                             stringOptB      : QueryStringBindable[Option[String]],
-                           ): QueryStringBindable[SioPages.Login] = {
-    new QueryStringBindableImpl[SioPages.Login] {
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SioPages.Login]] = {
-        val k = key1F(key)
-        val F = SioPages.Login.Fields
-        for {
-          loginTabE         <- loginTabB.bind ( k(F.CURR_TAB_FN),   params )
-          returnUrlOptB     <- stringOptB.bind( k(F.RETURN_URL_FN), params )
-        } yield {
-          for {
-            loginTab        <- loginTabE
-            returnUrlOpt    <- returnUrlOptB
-          } yield {
-            SioPages.Login(
-              currTab       = loginTab,
-              returnUrl     = returnUrlOpt,
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: SioPages.Login): String = {
-        val k = key1F(key)
-        val F = SioPages.Login.Fields
-        _mergeUnbinded1(
-          loginTabB.unbind ( k(F.CURR_TAB_FN),   value.currTab   ),
-          stringOptB.unbind( k(F.RETURN_URL_FN), value.returnUrl ),
-        )
-      }
-
-    }
+                           ): CrossQsBindable[SioPages.Login] = {
+    SioPages.Login.loginQsB( loginTabB, stringOptB )
   }
 
 
   /** QueryStringBindable implementation for MNodeIdType instances. */
   implicit def nodeIdTypeQsb(implicit
                              stringB: QueryStringBindable[String],
-                             nodeTypeB: QueryStringBindable[MNodeType]
-                            ): QueryStringBindable[MNodeIdType] = {
-    new QueryStringBindableImpl[MNodeIdType] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeIdType]] = {
-        val F = MNodeIdType.Fields
-        val k = key1F( key )
-        (for {
-          nodeIdE <- stringB.bind( k(F.NODE_ID), params )
-          nodeTypeE <- nodeTypeB.bind( k(F.NODE_TYPE), params )
-        } yield {
-          for {
-            nodeId <- nodeIdE
-            nodeType <- nodeTypeE
-          } yield {
-            MNodeIdType(
-              nodeId      = nodeId,
-              nodeType    = nodeType,
-            )
-          }
-        })
-          .orElse {
-            // 2021-06-24 Previosly, only nodeId was defined, and nodeType always was == BleBeacon. MNodeIdType model wasn't exist.
-            // TODO Remove this code after some time: after mobile apps would be upgraded.
-            for (nodeIdE <- stringB.bind(key, params)) yield {
-              for (nodeId <- nodeIdE) yield {
-                MNodeIdType(
-                  nodeId   = nodeId,
-                  nodeType = MNodeTypes.BleBeacon,
-                )
-              }
-            }
-          }
-      }
-
-      override def unbind(key: String, value: MNodeIdType): String = {
-        val F = MNodeIdType.Fields
-        val k = key1F( key )
-        _mergeUnbinded1(
-          stringB.unbind( k(F.NODE_ID), value.nodeId ),
-          nodeTypeB.unbind( k(F.NODE_TYPE), value.nodeType ),
-        )
-      }
-    }
+                             nodeTypeB: CrossQsBindable[MNodeType],
+                            ): CrossQsBindable[MNodeIdType] = {
+    MNodeIdType.nodeIdTypeQsB( stringB, nodeTypeB )
   }
 
 
@@ -761,7 +601,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                                 nodeIdTypeSeqB: QueryStringBindable[QsbSeq[MNodeIdType]],
                                 stringOptB: QueryStringBindable[Option[String]],
                                ): QueryStringBindable[MLknBeaconsScanReq] = {
-    new QueryStringBindableImpl[MLknBeaconsScanReq] {
+    new AbstractQueryStringBindable[MLknBeaconsScanReq] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLknBeaconsScanReq]] = {
         val F = MLknBeaconsScanReq.Fields
@@ -806,23 +646,36 @@ object CommonModelsJvm extends MacroLogsDyn {
 
   /** Поддержка биндинга инстансов модели в play router. */
   implicit def mBeaconDataQsb(implicit
-                              strB         : QueryStringBindable[String],
+                              nodeIdTypeB  : QueryStringBindable[MNodeIdType],
                               intOptB      : QueryStringBindable[Option[Int]],
                              ): QueryStringBindable[MUidBeacon] = {
-    new QueryStringBindableImpl[MUidBeacon] {
+    new AbstractQueryStringBindable[MUidBeacon] {
+      private def strB = implicitly[QueryStringBindable[String]]
+
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUidBeacon]] = {
         val k = key1F(key)
+        val F = MUidBeacon.Fields
         for {
           // TODO проверять по uuid | uuid_major_minor
-          uuidStrE        <- strB.bind     (k(UID_FN),          params)
-          distanceCmE     <- intOptB.bind  (k(DISTANCE_CM_FN),  params)
+          nodeIdTypeE        <- {
+            val fullFn = k(F.UID_FN)
+            nodeIdTypeB
+              .bind(fullFn, params)
+              // TODO 2021-06-25 Drop fallback .orElse() when mobile apps will be updated.
+              .orElse {
+                strB
+                  .bind( fullFn, params )
+                  .map( _.map( MNodeIdType.bleBeaconFallback ) )
+              }
+          }
+          distanceCmE     <- intOptB.bind  (k(F.DISTANCE_CM_FN),  params)
         } yield {
           for {
-            uuidStr       <- uuidStrE
+            nodeIdType    <- nodeIdTypeE
             distanceCm    <- distanceCmE
           } yield {
             MUidBeacon(
-              id          = uuidStr,
+              node        = nodeIdType,
               distanceCm  = distanceCm,
             )
           }
@@ -831,20 +684,21 @@ object CommonModelsJvm extends MacroLogsDyn {
 
       override def unbind(key: String, value: MUidBeacon): String = {
         val k = key1F(key)
+        val F = MUidBeacon.Fields
         _mergeUnbinded1(
-          strB.unbind    (k(UID_FN),          value.id),
-          intOptB.unbind (k(DISTANCE_CM_FN),  value.distanceCm),
+          nodeIdTypeB.unbind    (k(F.UID_FN),          value.node),
+          intOptB.unbind        (k(F.DISTANCE_CM_FN),  value.distanceCm),
         )
       }
     }
   }
 
 
-  implicit def lknOpKeyQsb: QueryStringBindable[MLknOpKey] =
+  implicit def lknOpKeyQsb: CrossQsBindable[MLknOpKey] =
     EnumeratumJvmUtil.valueEnumQsb( MLknOpKeys )
 
   implicit def lknOpValueQsb: QueryStringBindable[MLknOpValue] = {
-    new QueryStringBindableImpl[MLknOpValue] {
+    new AbstractQueryStringBindable[MLknOpValue] {
       private def boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLknOpValue]] = {
@@ -874,7 +728,7 @@ object CommonModelsJvm extends MacroLogsDyn {
 
   /** Поддержка бинда для MLknModifyQs. */
   implicit def lknModifyQsb: QueryStringBindable[MLknModifyQs] = {
-    new QueryStringBindableImpl[MLknModifyQs] {
+    new AbstractQueryStringBindable[MLknModifyQs] {
       private def stringSeqB = implicitly[QueryStringBindable[QsbSeq[String]]]
       private def stringOptB = implicitly[QueryStringBindable[Option[String]]]
       private def opKeyB = implicitly[QueryStringBindable[MLknOpKey]]
@@ -923,7 +777,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def zNelQsb[A](implicit
                           qsbSeqB: QueryStringBindable[QsbSeq[A]]
                          ): QueryStringBindable[NonEmptyList[A]] = {
-    new QueryStringBindableImpl[NonEmptyList[A]] {
+    new AbstractQueryStringBindable[NonEmptyList[A]] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, NonEmptyList[A]]] = {
         qsbSeqB
           .bind( key, params )
@@ -951,7 +805,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   def zNelOrSingleValueQsb[A](implicit
                               singleB : QueryStringBindable[A]
                              ): QueryStringBindable[NonEmptyList[A]] = {
-    new QueryStringBindableImpl[NonEmptyList[A]] {
+    new AbstractQueryStringBindable[NonEmptyList[A]] {
       private def zNelB = zNelQsb[A]
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, NonEmptyList[A]]] = {
@@ -983,7 +837,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                               locEnvB      : QueryStringBindable[MLocEnv],
                               boolOptB     : QueryStringBindable[Option[Boolean]]
                              ): QueryStringBindable[MScCommonQs] = {
-    new QueryStringBindableImpl[MScCommonQs] {
+    new AbstractQueryStringBindable[MScCommonQs] {
       import MScCommonQs.Fields._
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScCommonQs]] = {
@@ -1024,7 +878,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def scNodesArgsQsb(implicit
                               boolB: QueryStringBindable[Boolean],
                              ): QueryStringBindable[MScNodesArgs] = {
-    new QueryStringBindableImpl[MScNodesArgs] {
+    new AbstractQueryStringBindable[MScNodesArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScNodesArgs]] = {
         val F = MScNodesArgs.Fields
         val k = key1F( key )
@@ -1061,7 +915,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                                  locEnvB        : QueryStringBindable[MLocEnv],
                                  strOptB        : QueryStringBindable[Option[String]],
                                 ): QueryStringBindable[MAdsSearchReq] = {
-    new QueryStringBindableImpl[MAdsSearchReq] {
+    new AbstractQueryStringBindable[MAdsSearchReq] {
       import io.suggest.ad.search.AdSearchConstants._
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MAdsSearchReq]] = {
@@ -1117,7 +971,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                               boolB       : QueryStringBindable[Boolean],
                               boolOptB    : QueryStringBindable[Option[Boolean]],
                              ): QueryStringBindable[MScGridArgs] = {
-    new QueryStringBindableImpl[MScGridArgs] {
+    new AbstractQueryStringBindable[MScGridArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScGridArgs]] = {
         val k = key1F(key)
         val F = MScGridArgs.Fields
@@ -1162,7 +1016,7 @@ object CommonModelsJvm extends MacroLogsDyn {
                         scGridArgsOptB     : QueryStringBindable[Option[MScGridArgs]],
                         scNodesArgsOptB    : QueryStringBindable[Option[MScNodesArgs]],
                        ): QueryStringBindable[MScQs] = {
-    new QueryStringBindableImpl[MScQs] {
+    new AbstractQueryStringBindable[MScQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScQs]] = {
         val F = MScQs.Fields
         val k = key1F(key)
@@ -1206,9 +1060,7 @@ object CommonModelsJvm extends MacroLogsDyn {
           scNodesArgsOptB.unbind  ( k(F.NODES_FN),          value.nodes ),
         )
       }
-
     }
-
   }
 
 
@@ -1216,7 +1068,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def indexAdOpenQsb(implicit
                               boolB            : QueryStringBindable[Boolean],
                              ): QueryStringBindable[MIndexAdOpenQs] = {
-    new QueryStringBindableImpl[MIndexAdOpenQs] {
+    new AbstractQueryStringBindable[MIndexAdOpenQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MIndexAdOpenQs]] = {
         val F = MIndexAdOpenQs.Fields
@@ -1248,7 +1100,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def mScFocusArgsQsb(implicit
                                indexAdOpenQs    : QueryStringBindable[Option[MIndexAdOpenQs]],
                               ): QueryStringBindable[MScFocusArgs] = {
-    new QueryStringBindableImpl[MScFocusArgs] {
+    new AbstractQueryStringBindable[MScFocusArgs] {
       private def boolB = implicitly[QueryStringBindable[Boolean]]
       private def zNelOrSingleStrB = zNelOrSingleValueQsb[String]
 
@@ -1291,6 +1143,5 @@ object CommonModelsJvm extends MacroLogsDyn {
 
     }
   }
-
 
 }

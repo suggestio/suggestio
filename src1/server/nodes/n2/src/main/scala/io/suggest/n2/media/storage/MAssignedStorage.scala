@@ -1,8 +1,9 @@
 package io.suggest.n2.media.storage
 
 import io.suggest.url.MHostInfo
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
   * Suggest.io
@@ -24,7 +25,7 @@ object MAssignedStorage {
                                    hostB           : QueryStringBindable[MHostInfo],
                                    mediaStorageB   : QueryStringBindable[MStorageInfo],
                                   ): QueryStringBindable[MAssignedStorage] = {
-    new QueryStringBindableImpl[MAssignedStorage] {
+    new AbstractQueryStringBindable[MAssignedStorage] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MAssignedStorage]] = {
         val k = key1F(key)

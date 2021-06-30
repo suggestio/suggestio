@@ -2,6 +2,7 @@ package io.suggest.img
 
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.playx.FormMappingUtil
+import io.suggest.xplay.qsb.CrossQsBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -12,7 +13,7 @@ import play.api.mvc.QueryStringBindable
   */
 object MImgFmtJvm {
 
-  implicit def outImgFmtQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MImgFormat] = {
+  implicit def outImgFmtQsb(implicit strB: QueryStringBindable[String]): CrossQsBindable[MImgFormat] = {
     EnumeratumJvmUtil.valueEnumQsb( MImgFormats )
   }
 

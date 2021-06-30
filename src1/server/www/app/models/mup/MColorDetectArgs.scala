@@ -1,6 +1,7 @@
 package models.mup
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import japgolly.univeq.UnivEq
 import play.api.mvc.QueryStringBindable
 
@@ -19,7 +20,7 @@ object MColorDetectArgs {
 
 
   implicit def mColorDetectArgsQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[MColorDetectArgs] = {
-    new QueryStringBindableImpl[MColorDetectArgs] {
+    new AbstractQueryStringBindable[MColorDetectArgs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MColorDetectArgs]] = {
         val k = key1F(key)

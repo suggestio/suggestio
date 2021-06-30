@@ -1,6 +1,7 @@
 package io.suggest.text
 
 import scala.scalajs.js.URIUtils
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -21,11 +22,17 @@ object UrlUtilJs {
       .map { kv =>
         kv.productIterator
           .map { s =>
-            URIUtils.encodeURIComponent(s.toString)
+            URIUtils.encodeURIComponent( s.toString )
           }
           .mkString("=")
       }
       .mkString("&")
+  }
+
+
+  def urlQsTokenize(qsRaw: String): Array[String] = {
+    qsRaw
+      .split('&')
   }
 
 
@@ -35,14 +42,20 @@ object UrlUtilJs {
       // распарсить ключи и значения, причесать их
       .flatMap { kv =>
         kv.split('=') match {
-          case Array(k, v) =>
-            // из ключа надо удалить namespace-префикс вместе с точкой.
-            val k2 = k
-            val v2 = URIUtils.decodeURIComponent( v )
-            Some(k2 -> v2)
+          case arr if arr.length ==* 2 =>
+            val Array(k2, v2) = arr.map( URIUtils.decodeURIComponent )
+            Some((k2, v2))
           case _ => None
         }
       }
+  }
+
+
+  def qsParseToMap( qsRaw: String ): Map[String, Seq[String]] = {
+    qsKvsParse( urlQsTokenize( qsRaw ) )
+      .iterator
+      .to( Seq )
+      .groupMap( _._1 )( _._2 )
   }
 
 }

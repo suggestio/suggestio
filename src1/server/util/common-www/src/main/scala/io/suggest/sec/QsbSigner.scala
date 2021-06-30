@@ -1,10 +1,10 @@
 package io.suggest.sec
 
-import io.suggest.model.CommonModelsJvm
 import javax.crypto.Mac
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import org.apache.commons.codec.binary.Hex
+import play.api.mvc.QueryStringBindable
 import play.core.parsers.FormUrlEncodedParser
 
 /**
@@ -28,7 +28,7 @@ import io.suggest.sec.QsbSigner._
  * @param signKeyName Имя qs-ключа с подписью.
  */
 class QsbSigner(secretKey: String, signKeyName: String)
-  extends QueryStringBindableImpl[Map[String, Seq[String]]]
+  extends AbstractQueryStringBindable[Map[String, Seq[String]]]
   with MacroLogsImpl
 {
 
@@ -85,6 +85,7 @@ class QsbSigner(secretKey: String, signKeyName: String)
     Hex.encodeHexString(mac.doFinal())
   }
 
+  private def stringB = implicitly[QueryStringBindable[String]]
 
   /**
    * Проверить подпись на параметрах, имена которых начинаются на key.
@@ -94,7 +95,7 @@ class QsbSigner(secretKey: String, signKeyName: String)
    *         None - если подпись не найдена.
    */
   override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Map[String, Seq[String]]]] = {
-    for (maybeSignature <- CommonModelsJvm.BindableString2.bind(signKeyName, params)) yield {
+    for (maybeSignature <- stringB.bind(signKeyName, params)) yield {
       maybeSignature.flatMap { signature =>
         val pfk = onlyParamsForKey(key, params).toSeq
         LOGGER.trace(s"bind($key): Params:\n All: ${params.mkString(" & ")};\n onlyForKey: ${pfk.mkString(" & ")}")
@@ -128,7 +129,7 @@ class QsbSigner(secretKey: String, signKeyName: String)
    */
   def paramsSigned(key: String, value: Map[String, Seq[String]]): Map[String, Seq[String]] = {
     val s = mkSignForMap(key, value)
-    value + (signKeyName -> Seq(s))
+    value + (signKeyName -> (s :: Nil))
   }
 
 
@@ -164,10 +165,13 @@ class QsbSigner(secretKey: String, signKeyName: String)
    * @return Строка qs с сериализованной картой параметров и параметром с подписью.
    */
   override def unbind(key: String, value: Map[String, Seq[String]]): String = {
-    paramsSigned(key, value)
-      .iterator
-      .flatMap { case (k, vs) => vs.map(k -> _) }
-      .map { case (k, v) => CommonModelsJvm.BindableString2.unbind(k, v) }
+    val _stringB = stringB
+    (for {
+      (k, vs) <- paramsSigned( key, value ).iterator
+      v <- vs
+    } yield {
+      _stringB.unbind( k, v )
+    })
       .mkString("&")
   }
 

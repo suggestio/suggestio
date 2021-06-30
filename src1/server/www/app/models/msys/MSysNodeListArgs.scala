@@ -1,7 +1,8 @@
 package models.msys
 
 import io.suggest.n2.node.MNodeType
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import models.madn.AdnShownType
 import play.api.mvc.QueryStringBindable
 
@@ -27,7 +28,7 @@ object MSysNodeListArgs {
                                    stiOptB    : QueryStringBindable[Option[AdnShownType]],
                                    intOptB    : QueryStringBindable[Option[Int]]
                                   ): QueryStringBindable[MSysNodeListArgs] = {
-    new QueryStringBindableImpl[MSysNodeListArgs] {
+    new AbstractQueryStringBindable[MSysNodeListArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSysNodeListArgs]] = {
         val k = key1F(key)
         for {

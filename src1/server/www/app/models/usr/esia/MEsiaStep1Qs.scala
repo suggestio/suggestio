@@ -1,6 +1,7 @@
 package models.usr.esia
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -28,7 +29,7 @@ object MEsiaStep1Qs {
                                     esiaRespTypeB     : QueryStringBindable[MEsiaRespType],
                                     esiaAccessTypeB   : QueryStringBindable[MEsiaAccessType],
                                    ): QueryStringBindable[MEsiaStep1Qs] = {
-    new QueryStringBindableImpl[MEsiaStep1Qs] {
+    new AbstractQueryStringBindable[MEsiaStep1Qs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsiaStep1Qs]] = {
         // Скорее всего, этот код никогда не вызывается.

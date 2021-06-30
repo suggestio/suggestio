@@ -3,6 +3,7 @@ package io.suggest.n2.node
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.{EnumeratumUtil, TreeEnumEntry}
 import io.suggest.i18n.MsgCodes
+import io.suggest.url.bind.QsBindable
 import japgolly.univeq._
 import play.api.libs.json.Format
 
@@ -167,6 +168,10 @@ object MNodeType {
     }
 
   }
+
+
+  implicit def nodeTypeQsB(implicit intB: QsBindable[String]): QsBindable[MNodeType] =
+    EnumeratumUtil.qsBindable( MNodeTypes )
 
 }
 

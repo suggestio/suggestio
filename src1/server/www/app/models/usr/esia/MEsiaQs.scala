@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 import scala.util.Try
@@ -21,7 +21,7 @@ object MEsiaQs extends MacroLogsImpl {
 
   /** Поддержка offset date time <=> qs маппинга. */
   implicit def esiaTimestampQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[OffsetDateTime] = {
-    new QueryStringBindableImpl[OffsetDateTime] {
+    new AbstractQueryStringBindable[OffsetDateTime] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OffsetDateTime]] = {
         for {

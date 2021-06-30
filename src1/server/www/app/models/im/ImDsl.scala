@@ -5,7 +5,7 @@ import java.text.DecimalFormat
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import org.im4java.core.IMOperation
 import play.api.mvc.QueryStringBindable
 import util.FormUtil
@@ -21,8 +21,6 @@ import scala.util.parsing.combinator.JavaTokenParsers
  */
 
 object ImOp extends MacroLogsImpl with JavaTokenParsers {
-
-  val SPLIT_ON_BRACKETS_RE = "[\\[\\]]+".r
 
   /** qsb для биндинга списка трансформаций картинки (последовательности ImOp). */
   implicit def imOpsSeqQsb = new ImOpsQsb
@@ -54,7 +52,6 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
    * @return Строка im-операций.
    */
   def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean): String = {
-    import io.suggest.model.CommonModelsJvm.BindableString2
     val strBinder = implicitly[QueryStringBindable[String]]
 
     value
@@ -141,7 +138,7 @@ import ImOp._
 
 
 /** qsb-биндер. */
-class ImOpsQsb extends QueryStringBindableImpl[Seq[ImOp]] {
+class ImOpsQsb extends AbstractQueryStringBindable[Seq[ImOp]] {
 
   import LOGGER._
 
@@ -151,7 +148,7 @@ class ImOpsQsb extends QueryStringBindableImpl[Seq[ImOp]] {
    * @param params ListMap с параметрами.
    */
   override def bind(keyDotted: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[ImOp]]] = {
-    val splitOnBracketsRe = SPLIT_ON_BRACKETS_RE
+    val splitOnBracketsRe = "[\\[\\]]+".r
     try {
       val ops0 = params
         .iterator
@@ -175,6 +172,7 @@ class ImOpsQsb extends QueryStringBindableImpl[Seq[ImOp]] {
         .map(_._1)
       val ops = ImOp.bindImOps(keyDotted, ops0)
         .toSeq
+
       if (ops.isEmpty) {
         None
       } else {

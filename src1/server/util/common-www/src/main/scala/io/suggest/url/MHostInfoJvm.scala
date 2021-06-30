@@ -1,7 +1,8 @@
 package io.suggest.url
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
   * Suggest.io
@@ -13,7 +14,7 @@ object MHostInfoJvm {
 
   /** Поддержка биндинга в URL qs подстроку. */
   implicit def mHostInfoQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MHostInfo] = {
-    new QueryStringBindableImpl[MHostInfo] {
+    new AbstractQueryStringBindable[MHostInfo] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MHostInfo]] = {
         val k = key1F(key)
         val F = MHostInfo.Fields

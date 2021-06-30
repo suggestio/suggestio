@@ -1,9 +1,8 @@
 package io.suggest.n2
 
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.common.html.HtmlConstants
 import io.suggest.xplay.psb.PathBindableImpl
-import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
+import io.suggest.xplay.qsb.{QsbSeq, AbstractQueryStringBindable}
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
@@ -48,7 +47,7 @@ object RcvrKeyUtil {
 
     /** QSB для rcvrKey. */
     implicit def rcvrKeyQsb(implicit qsbSeqStrB: QueryStringBindable[QsbSeq[String]]): QueryStringBindable[RcvrKey] = {
-      new QueryStringBindableImpl[RcvrKey] {
+      new AbstractQueryStringBindable[RcvrKey] {
 
         override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, RcvrKey]] = {
           for {

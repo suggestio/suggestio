@@ -2,8 +2,9 @@ package models.adv
 
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
  * Suggest.io
@@ -36,7 +37,7 @@ object MExtAdvQs extends SecretKeyInit {
                             strB    : QueryStringBindable[String],
                             infosB  : QueryStringBindable[List[MExtTargetInfo]]
                            ): QueryStringBindable[MExtAdvQs] = {
-    new QueryStringBindableImpl[MExtAdvQs] {
+    new AbstractQueryStringBindable[MExtAdvQs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
 

@@ -2,7 +2,8 @@ package models.msc
 
 import io.suggest.sc.MScApiVsn
 import io.suggest.sc.pwa.MPwaManifestQs
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.url.bind.QueryStringBindableUtil._
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -15,7 +16,7 @@ object MPwaManifestQsJvm {
 
   /** Поддержка биндинга из/в query string для MPwaManifestQs. */
   implicit def mpwaManifestQsQsb(implicit apiVsnB: QueryStringBindable[MScApiVsn]): QueryStringBindable[MPwaManifestQs] = {
-    new QueryStringBindableImpl[MPwaManifestQs] {
+    new AbstractQueryStringBindable[MPwaManifestQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MPwaManifestQs]] = {
         val k = key1F(key)

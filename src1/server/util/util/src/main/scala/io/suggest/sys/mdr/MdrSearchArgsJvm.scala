@@ -5,7 +5,8 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
 import play.api.mvc.QueryStringBindable
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
+import io.suggest.xplay.qsb.{QsbSeq, AbstractQueryStringBindable}
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
  * Suggest.io
@@ -22,7 +23,7 @@ object MdrSearchArgsJvm {
                                 boolOptB    : QueryStringBindable[Option[Boolean]],
                                 mdrConfB    : QueryStringBindable[MMdrConf],
                                ): QueryStringBindable[MdrSearchArgs] = {
-    new QueryStringBindableImpl[MdrSearchArgs] {
+    new AbstractQueryStringBindable[MdrSearchArgs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MdrSearchArgs]] = {
         val k1 = key1F(key)
@@ -71,7 +72,7 @@ object MdrSearchArgsJvm {
                                 boolOptB        : QueryStringBindable[Option[Boolean]],
                                 strOptB         : QueryStringBindable[Option[String]],
                                ): QueryStringBindable[MMdrActionInfo] = {
-    new QueryStringBindableImpl[MMdrActionInfo] {
+    new AbstractQueryStringBindable[MMdrActionInfo] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MMdrActionInfo]] = {
         val k = key1F(key)
@@ -120,7 +121,7 @@ object MdrSearchArgsJvm {
                                 strOptB             : QueryStringBindable[Option[String]],
                                 mdrConfB            : QueryStringBindable[MMdrConf],
                                ): QueryStringBindable[MMdrResolution] = {
-    new QueryStringBindableImpl[MMdrResolution] {
+    new AbstractQueryStringBindable[MMdrResolution] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MMdrResolution]] = {
         val k = key1F(key)
@@ -167,7 +168,7 @@ object MdrSearchArgsJvm {
                           boolB             : QueryStringBindable[Boolean],
                           qsbSeqStrOptB     : QueryStringBindable[Option[QsbSeq[String]]],
                          ): QueryStringBindable[MMdrConf] = {
-    new QueryStringBindableImpl[MMdrConf] {
+    new AbstractQueryStringBindable[MMdrConf] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MMdrConf]] = {
         val k = key1F(key)

@@ -9,7 +9,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.HttpConst
 import io.suggest.sc.m.{MScRoot, RouteTo}
 import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
-import io.suggest.spa.{DAction, SioPagesUtil}
+import io.suggest.spa.{DAction, SioPagesUtilJs}
 
 import java.net.URI
 import scala.scalajs.js.JSON
@@ -37,7 +37,7 @@ final class ScIntentsAh[M](
           qs <- Option( URI.create(url).getRawQuery )
           if qs.nonEmpty
         } {
-          val parsed = SioPagesUtil.parseSc3FromQs( qs )
+          val parsed = SioPagesUtilJs.parseSc3FromQs( qs )
           fxAcc ::= RouteTo( parsed ).toEffectPure
         }
 

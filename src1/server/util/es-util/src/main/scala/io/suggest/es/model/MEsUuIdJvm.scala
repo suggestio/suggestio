@@ -1,7 +1,7 @@
 package io.suggest.es.model
 
 import io.suggest.xplay.psb.PathBindableImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
@@ -14,7 +14,7 @@ object MEsUuIdJvm {
 
   /** Поддержка биндинга из/в qs. */
   implicit def nEsUuIdQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MEsUuId] = {
-    new QueryStringBindableImpl[MEsUuId] {
+    new AbstractQueryStringBindable[MEsUuId] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsUuId]] = {
         for (esIdE <- strB.bind(key, params)) yield {
           esIdE

@@ -1,6 +1,7 @@
 package io.suggest.mbill2.m.item.typ
 
 import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.xplay.qsb.CrossQsBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -13,7 +14,7 @@ import play.api.mvc.QueryStringBindable
 object MItemTypesJvm {
 
   /** Поддержка маппинга для play router. */
-  implicit def mItemTypeQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MItemType] = {
+  implicit def mItemTypeQsb(implicit strB: QueryStringBindable[String]): CrossQsBindable[MItemType] = {
     EnumeratumJvmUtil.valueEnumQsb( MItemTypes )
   }
 

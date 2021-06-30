@@ -1,7 +1,8 @@
 package models.msc
 
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.mvc.QueryStringBindable
 
 import scala.language.implicitConversions
@@ -30,7 +31,7 @@ object SiteQsArgs {
                              strOptB      : QueryStringBindable[Option[String]],
                              apiVsnOptB   : QueryStringBindable[Option[MScApiVsn]]
                             ): QueryStringBindable[SiteQsArgs] = {
-    new QueryStringBindableImpl[SiteQsArgs] {
+    new AbstractQueryStringBindable[SiteQsArgs] {
       import Fields._
 
       /** Маппер из qs. */

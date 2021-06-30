@@ -4,7 +4,8 @@ import io.suggest.n2.media.MFileMeta
 import io.suggest.n2.media.storage.MAssignedStorage
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -44,7 +45,7 @@ object MUploadTargetQs extends SecretKeyInit {
                                  strOptB            : QueryStringBindable[Option[String]],
                                  upInfoB            : QueryStringBindable[MUploadInfoQs],
                                 ): QueryStringBindable[MUploadTargetQs] = {
-    new QueryStringBindableImpl[MUploadTargetQs] {
+    new AbstractQueryStringBindable[MUploadTargetQs] {
       private def qsbSigner = new QsbSigner(SIGN_SECRET, Fields.SIGNATURE_FN)
 
       /** Биндинг значения [[MUploadTargetQs]] из URL qs. */

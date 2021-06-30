@@ -1,7 +1,7 @@
 package io.suggest.captcha
 
 import io.suggest.enum2.EnumeratumJvmUtil
-import play.api.mvc.QueryStringBindable
+import io.suggest.xplay.qsb.CrossQsBindable
 
 /**
   * Suggest.io
@@ -11,7 +11,7 @@ import play.api.mvc.QueryStringBindable
   */
 object MCaptchaJvm {
 
-  implicit def captchaCookiePathQsb: QueryStringBindable[MCaptchaCookiePath] =
+  implicit def captchaCookiePathQsb: CrossQsBindable[MCaptchaCookiePath] =
     EnumeratumJvmUtil.valueEnumQsb( MCaptchaCookiePaths )
 
 }

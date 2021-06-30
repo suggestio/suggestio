@@ -2,9 +2,10 @@ package models.mpay.yaka
 
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.mvc.QueryStringBindable
 import io.suggest.pay.yaka.YakaConst._
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 
 /**
   * Suggest.io
@@ -44,7 +45,7 @@ object MYakaReturnQs {
 
     val retActionB = MYakaReturnActions.mYakaActionQsb
 
-    new QueryStringBindableImpl[MYakaReturnQs] {
+    new AbstractQueryStringBindable[MYakaReturnQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]) = {
         for {

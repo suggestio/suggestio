@@ -3,6 +3,7 @@ package io.suggest.id.login
 import enumeratum.values.{IntEnum, IntEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
 import io.suggest.i18n.MsgCodes
+import io.suggest.url.bind._
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
@@ -50,5 +51,8 @@ object MLoginTab {
 
   implicit def loginTabJson: Format[MLoginTab] =
     EnumeratumUtil.valueEnumEntryFormat( MLoginTabs )
+
+  implicit def loginTabQsB(implicit intB: QsBindable[Int]): QsBindable[MLoginTab] =
+    EnumeratumUtil.qsBindable( MLoginTabs )
 
 }

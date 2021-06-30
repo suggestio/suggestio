@@ -2,6 +2,7 @@ package models.mext
 
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.ext.svc.{MExtService, MExtServices}
+import io.suggest.xplay.qsb.CrossQsBindable
 import models.mext.fb.FacebookService
 import models.mext.gu.GosUslugiService
 import models.mext.tw.TwitterService
@@ -30,7 +31,7 @@ object MExtServicesJvm {
   implicit def extServicePb: PathBindable[MExtService] =
     EnumeratumJvmUtil.valueEnumPb( MExtServices )
 
-  implicit def extServiceQsb: QueryStringBindable[MExtService] =
+  implicit def extServiceQsb: CrossQsBindable[MExtService] =
     EnumeratumJvmUtil.valueEnumQsb( MExtServices )
 
 }

@@ -4,7 +4,7 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.PicSzParsers
 import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.util.logs.MacroLogsImplLazy
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -32,7 +32,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
   /** qsb для NodeGeoLevel, записанной в виде int или string (esfn). */
   implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String],
                                intB: QueryStringBindable[Int]): QueryStringBindable[MNodeGeoLevel] = {
-    new QueryStringBindableImpl[MNodeGeoLevel] {
+    new AbstractQueryStringBindable[MNodeGeoLevel] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeGeoLevel]] = {
         val result = (for {
           bindedE <- intB.bind(key, params)
@@ -67,7 +67,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
 
   /** qsb для бинда значения длины*ширины из qs. */
   implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MSize2di] = {
-    new QueryStringBindableImpl[MSize2di] {
+    new AbstractQueryStringBindable[MSize2di] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSize2di]] = {
         strB.bind(key, params).map { maybeWxh =>
           maybeWxh.flatMap { wxh =>
@@ -90,7 +90,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
   type NglsStateMap_t = Map[MNodeGeoLevel, Boolean]
 
   implicit def nglsMapQsb: QueryStringBindable[NglsStateMap_t] = {
-    new QueryStringBindableImpl[NglsStateMap_t] with MacroLogsImplLazy {
+    new AbstractQueryStringBindable[NglsStateMap_t] with MacroLogsImplLazy {
       import LOGGER._
 
       def vP: Parser[Boolean] = opt("_" ^^^ false) ^^ { _ getOrElse true }

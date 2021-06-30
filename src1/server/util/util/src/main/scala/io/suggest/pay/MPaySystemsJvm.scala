@@ -1,6 +1,6 @@
 package io.suggest.pay
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -14,7 +14,7 @@ object MPaySystemsJvm {
   // TODO Заменить опциональный qsb на EnumeratumJvmUtil.valueEnumQsb( MPaySystems )
   /** Поддержка опционального Query String Bindable для инстансов [[MPaySystem]]. */
   implicit def mPaySystemsQsbOpt(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[Option[MPaySystem]] = {
-    new QueryStringBindableImpl[Option[MPaySystem]] {
+    new AbstractQueryStringBindable[Option[MPaySystem]] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Option[MPaySystem]]] = {
         for {

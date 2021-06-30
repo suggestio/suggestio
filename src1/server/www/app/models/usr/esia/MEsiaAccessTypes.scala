@@ -2,6 +2,7 @@ package models.usr.esia
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.xplay.qsb.CrossQsBindable
 import japgolly.univeq.UnivEq
 import play.api.mvc.QueryStringBindable
 
@@ -33,7 +34,7 @@ object MEsiaAccessType {
 
   @inline implicit def univEq: UnivEq[MEsiaAccessType] = UnivEq.derive
 
-  implicit def esiaAccessTypeQsb: QueryStringBindable[MEsiaAccessType] =
+  implicit def esiaAccessTypeQsb: CrossQsBindable[MEsiaAccessType] =
     EnumeratumJvmUtil.valueEnumQsb( MEsiaAccessTypes )
 
 }

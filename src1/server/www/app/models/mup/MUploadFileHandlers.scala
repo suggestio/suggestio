@@ -2,6 +2,7 @@ package models.mup
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.xplay.qsb.CrossQsBindable
 import japgolly.univeq.UnivEq
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, QueryStringBindable}
@@ -29,7 +30,7 @@ sealed abstract class MUploadFileHandler(override val value: String) extends Str
 object MUploadFileHandler {
 
   /** Поддержка биндинга из URL qs. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MUploadFileHandler] = {
+  implicit def qsb(implicit strB: QueryStringBindable[String]): CrossQsBindable[MUploadFileHandler] = {
     EnumeratumJvmUtil.valueEnumQsb( MUploadFileHandlers )
   }
 

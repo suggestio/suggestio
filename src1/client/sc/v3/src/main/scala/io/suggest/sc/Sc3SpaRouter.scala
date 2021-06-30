@@ -6,7 +6,7 @@ import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.spa.{SioPages, SioPagesUtil}
+import io.suggest.spa.{SioPages, SioPagesUtilJs}
 import io.suggest.text.UrlUtil2
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -40,9 +40,9 @@ class Sc3SpaRouter(
     val mainScreenOptRoute = ("?" ~ string(".+"))
       .option
       .pmap { qsOpt =>
-        qsOpt.map( SioPagesUtil.parseSc3FromQs )
+        qsOpt.map( SioPagesUtilJs.parseSc3FromQs )
       } { mainScreen =>
-        val queryString = SioPagesUtil.sc3ToQs( mainScreen )
+        val queryString = SioPagesUtilJs.sc3ToQs( mainScreen )
         Some( queryString )
       }
       .option

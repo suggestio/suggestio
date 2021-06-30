@@ -2,8 +2,9 @@ package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
 import LocationConst._
-import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
+import io.suggest.xplay.qsb.{QsbSeq, AbstractQueryStringBindable}
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
   * Suggest.io
@@ -21,7 +22,7 @@ object MLocEnvJvm {
                           geoLocOptB: QueryStringBindable[Option[MGeoLoc]],
                           beaconsB  : QueryStringBindable[QsbSeq[MUidBeacon]]
                          ): QueryStringBindable[MLocEnv] = {
-    new QueryStringBindableImpl[MLocEnv] {
+    new AbstractQueryStringBindable[MLocEnv] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLocEnv]] = {
         val k = key1F(key)
         for {

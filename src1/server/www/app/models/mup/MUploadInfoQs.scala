@@ -1,7 +1,8 @@
 package models.mup
 
 import io.suggest.n2.node.MNodeType
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.mvc.QueryStringBindable
@@ -31,7 +32,7 @@ object MUploadInfoQs {
                             ): QueryStringBindable[MUploadInfoQs] = {
     @inline def strOptB = implicitly[QueryStringBindable[Option[String]]]
     lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
-    new QueryStringBindableImpl[MUploadInfoQs] {
+    new AbstractQueryStringBindable[MUploadInfoQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUploadInfoQs]] = {
         val F = Fields

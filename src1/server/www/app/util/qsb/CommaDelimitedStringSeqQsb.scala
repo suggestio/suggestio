@@ -1,6 +1,6 @@
 package util.qsb
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 import scala.language.implicitConversions
@@ -18,7 +18,7 @@ trait CharDelimitedStringSeq {
   protected def cdssDelimChar: Char
 
   implicit def cdssQsb: QueryStringBindable[Seq[String]] = {
-    new QueryStringBindableImpl[Seq[String]] {
+    new AbstractQueryStringBindable[Seq[String]] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[String]]] = {
         val ch = cdssDelimChar
         val res = params.get(key)

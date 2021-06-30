@@ -1,7 +1,7 @@
 package io.suggest.dev
 
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 
@@ -16,7 +16,7 @@ object MScreenJvm {
 
   /** Биндер для отработки значения screen из ссылки. */
   implicit def devScreenQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MScreen] = {
-    new QueryStringBindableImpl[MScreen] {
+    new AbstractQueryStringBindable[MScreen] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScreen]] = {
         for {
           devScreenStrE <- strB.bind(key, params)

@@ -1,11 +1,13 @@
 package models.adv.ext.act
 
 import akka.actor.ActorPath
+import io.suggest.common.qs.QsConstants
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import io.suggest.util.logs.MacroLogsDyn
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
  * Suggest.io
@@ -29,10 +31,10 @@ object ActorPathQs extends MacroLogsDyn with SecretKeyInit {
 
   /** qsb для извлечения нотариально заверенного путя из URL qs. */
   implicit def actorPathQsQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[ActorPathQs] = {
-    new QueryStringBindableImpl[ActorPathQs] {
+    new AbstractQueryStringBindable[ActorPathQs] {
 
       /** Фасад для работы с секретным ключом подписи. */
-      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key$KEY_DELIM$SIGN_FN")
+      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key${QsConstants.KEY_PARTS_DELIM_STR}$SIGN_FN")
 
       /** Десериализация. */
       override def bind(key: String, params0: Map[String, Seq[String]]): Option[Either[String, ActorPathQs]] = {

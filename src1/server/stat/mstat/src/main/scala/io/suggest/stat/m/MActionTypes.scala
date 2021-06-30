@@ -46,7 +46,7 @@ object MActionTypes extends StringEnum[MActionType] {
   case object ScAdsFocusingOnAd extends MActionType("выдача: фокусировка на карточке")
 
   /** Маячок BLE слышен где-то рядом на расстоянии, указанном в сантиметрах в count. */
-  case object BleBeaconNear extends MActionType("BLE-маячок, см")
+  case object RadioBeaconNear extends MActionType("BLE-маячок, см")
 
   case object ScTags extends MActionType("выдача: теги")
 

@@ -1,5 +1,6 @@
 package models.im
 
+import io.suggest.common.qs.QsConstants
 import io.suggest.compress.MCompressAlgo
 import io.suggest.img.MImgFormat
 import io.suggest.n2.media.storage.MStorage
@@ -8,7 +9,8 @@ import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -41,7 +43,7 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
 
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
   def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {
-    new QueryStringBindableImpl[String] {
+    new AbstractQueryStringBindable[String] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, String]] = {
         for (rawEith <- strB.bind(key, params)) yield {
           rawEith.flatMap { raw =>
@@ -82,7 +84,7 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
                         imOpsOptB         : QueryStringBindable[Option[Seq[ImOp]]],
                         compressAlgoOptB  : QueryStringBindable[Option[MCompressAlgo]]
                        ): QueryStringBindable[MImgT] = {
-    new QueryStringBindableImpl[MImgT] {
+    new AbstractQueryStringBindable[MImgT] {
 
       /** Создать подписывалку для qs. */
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, key1(key, SIGN_FN))
@@ -124,7 +126,7 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
         val unsignedRes = _mergeUnbinded1(
           rowKeyB.unbind            ( k(IMG_ID_FN),         value.dynImgId.origNodeId),
           imgFormatOptB.unbind      ( k(DYN_FORMAT_FN),     value.dynImgId.imgFormat),
-          imOpsOptB.unbind          ( s"$key$KEY_DELIM",    Option.when(value.dynImgId.hasImgOps)(value.dynImgId.imgOps) ),
+          imOpsOptB.unbind          ( s"$key${QsConstants.KEY_PARTS_DELIM_STR}",    Option.when(value.dynImgId.hasImgOps)(value.dynImgId.imgOps) ),
           compressAlgoOptB.unbind   (k(COMPRESS_ALGO_FN),   value.dynImgId.compressAlgo),
         )
 

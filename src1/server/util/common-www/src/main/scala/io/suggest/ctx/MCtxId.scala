@@ -8,7 +8,7 @@ import io.suggest.sec.{HmacAlgos, HmacUtil}
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import io.suggest.xplay.psb.PathBindableImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import org.apache.commons.codec.binary.Base64
 import play.api.Configuration
 import japgolly.univeq._
@@ -144,7 +144,7 @@ object MCtxId extends MacroLogsImplLazy {
 
   /** Поддержка биндинга значения из URL qs. */
   implicit def mCtxIdQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MCtxId] = {
-    new QueryStringBindableImpl[MCtxId] {
+    new AbstractQueryStringBindable[MCtxId] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MCtxId]] = {
         for (ctxIdStrE <- strB.bind(key, params)) yield {

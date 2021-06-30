@@ -4,7 +4,7 @@ import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.edge.MPredicates
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.CrossQsBindable
 import play.api.mvc.QueryStringBindable
 import japgolly.univeq._
 
@@ -80,7 +80,7 @@ object MNodeTypesJvm {
     }
   }
 
-  implicit def nodeTypeQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MNodeType] =
+  implicit def nodeTypeQsb(implicit strB: QueryStringBindable[String]): CrossQsBindable[MNodeType] =
     EnumeratumJvmUtil.valueEnumQsb( MNodeTypes )
 
   import play.api.data._, Forms._

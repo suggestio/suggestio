@@ -1,6 +1,6 @@
 package io.suggest.n2.edge
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -13,7 +13,7 @@ object MPredicatesJvm {
 
   /** Поддержка URL qs-биндинга из play routes. */
   implicit def mPredicateQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MPredicate] = {
-    new QueryStringBindableImpl[MPredicate] {
+    new AbstractQueryStringBindable[MPredicate] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MPredicate]] = {
         for (strIdEith <- strB.bind(key, params)) yield {

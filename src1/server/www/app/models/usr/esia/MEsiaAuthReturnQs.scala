@@ -2,7 +2,8 @@ package models.usr.esia
 
 import java.util.UUID
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.url.bind.QueryStringBindableUtil._
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -23,7 +24,7 @@ object MEsiaAuthReturnQs {
                                    strOptB: QueryStringBindable[Option[String]],
                                    uuidOptB: QueryStringBindable[Option[UUID]],
                                   ): QueryStringBindable[MEsiaAuthReturnQs] = {
-    new QueryStringBindableImpl[MEsiaAuthReturnQs] {
+    new AbstractQueryStringBindable[MEsiaAuthReturnQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsiaAuthReturnQs]] = {
         val F = Fields
         for {

@@ -1,6 +1,5 @@
 package util.ble
 
-import javax.inject.Singleton
 import io.suggest.ble.MUidBeacon
 import io.suggest.es.model.{MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicate
@@ -19,8 +18,7 @@ import Ordering.Float.TotalOrdering
   * Created: 24.10.16 16:01
   * Description: Утиль маячков в выдаче.
   */
-@Singleton
-class BleUtil {
+final class BleUtil {
 
   /**
     * Новый поиск нод маячков, завязанный на function-score и ровно один нижележащий
@@ -36,7 +34,7 @@ class BleUtil {
       } yield {
         val dCm = Math.max(1, distanceCm)
         val weightFactor = 1.0F / dCm
-        bcn.id -> weightFactor
+        bcn.node.nodeId -> weightFactor
       })
         .to( Iterable )
         .groupBy(_._1)

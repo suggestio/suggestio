@@ -3,14 +3,14 @@ package io.suggest.geo
 import org.locationtech.spatial4j.context.SpatialContext
 import org.locationtech.spatial4j.io.GeohashUtils
 import org.locationtech.spatial4j.shape.Point
-import io.suggest.geo.GeoConstants.Qs
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.LngLat
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.{AbstractQueryStringBindable, CrossQsBindable}
 import org.locationtech.jts.geom.Coordinate
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
   * Suggest.io
@@ -57,9 +57,7 @@ object GeoPoint extends MacroLogsImpl {
 
     /** Поддержка биндинга из/в Query string в play router. */
     implicit def geoPointQsb(implicit doubleB: QueryStringBindable[Double]): QueryStringBindable[MGeoPoint] = {
-      new QueryStringBindableImpl[MGeoPoint] {
-
-        override def KEY_DELIM = Qs.DELIM
+      new AbstractQueryStringBindable[MGeoPoint] {
 
         override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGeoPoint]] = {
           val k = key1F(key)
@@ -101,55 +99,9 @@ object GeoPoint extends MacroLogsImpl {
   /** Поддержка формата "e=51.9123|33.2424".
     * Появилась для поддержки текущей точки в выдаче v2.
     */
-  def pipeDelimitedQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MGeoPoint] = {
-    new QueryStringBindableImpl[MGeoPoint] {
-
-      override def unbind(key: String, value: MGeoPoint): String = {
-        strB.unbind(key, value.toString)
-      }
-
-      override def bind(key: String, params: Map[String, Seq[String]]) = {
-        for {
-          rawEith <- strB.bind(key, params)
-        } yield {
-          rawEith.flatMap { raw =>
-            MGeoPoint.fromString(raw)
-              .toRight("e.geo.point")
-          }
-        }
-      }
-
-    }
-  }
-
-  /** Опциональная поддержка формата "e=51.9123|33.2424"
-    * Появилась для поддержки текущей точки в выдаче v2.
-    */
-  def pipeDelimitedQsbOpt(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[Option[MGeoPoint]] = {
-    new QueryStringBindableImpl[Option[MGeoPoint]] {
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Option[MGeoPoint]]] = {
-        for {
-          rawOptEith <- strOptB.bind(key, params)
-        } yield {
-          rawOptEith.flatMap { rawOpt =>
-            rawOpt.fold[Either[String, Option[MGeoPoint]]] {
-              Right(None)
-            } { raw =>
-              val gpOpt = MGeoPoint.fromString(raw)
-              if (gpOpt.isEmpty)
-                Left("e.geo.point")
-              else
-                Right(gpOpt)
-            }
-          }
-        }
-      }
-
-      override def unbind(key: String, value: Option[MGeoPoint]): String = {
-        strOptB.unbind(key, value.map(_.toString))
-      }
-    }
+  def pipeDelimitedQsb(implicit stringB: QueryStringBindable[String]): CrossQsBindable[MGeoPoint] = {
+    import CrossQsBindable._
+    MGeoPoint.qsBindablePiped(stringB)
   }
 
 }

@@ -85,7 +85,7 @@ case class MScRoot(
         mainScreen
           .virtBeacons
           .iterator
-          .map( MUidBeacon(_) ) ++: nearbyReport0
+          .map { MUidBeacon(_) } ++: nearbyReport0
       }
   }
   def locEnvMap: MLocEnv = {

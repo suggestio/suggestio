@@ -2,6 +2,7 @@ package models.msc
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.xplay.qsb.CrossQsBindable
 import japgolly.univeq.UnivEq
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
@@ -47,7 +48,7 @@ object OneAdRenderVariant {
 
   @inline implicit def univEq: UnivEq[OneAdRenderVariant] = UnivEq.derive
 
-  implicit def oarvQsb: QueryStringBindable[OneAdRenderVariant] =
+  implicit def oarvQsb: CrossQsBindable[OneAdRenderVariant] =
     EnumeratumJvmUtil.valueEnumQsb( OneAdRenderVariants )
 
   implicit def oarvPb: PathBindable[OneAdRenderVariant] =

@@ -9,6 +9,7 @@ import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.n2.node.MNodeIdType
 import io.suggest.radio.{MRadioData, MRadioSignalTypes, RadioUtil}
 import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.sjs.dom2.DomQuick
@@ -64,11 +65,13 @@ object BeaconerAh extends Log {
     beacons
       .iterator
       .flatMap { case (k, v) =>
+        val signal = v.signal.signal
         val res = for {
-          uid           <- v.signal.signal.factoryUid
+          uid           <- signal.factoryUid
           accuracyCm    <- v.accuracy
         } yield {
-          (k, MUidBeacon(uid, Some(accuracyCm) ))
+          val nodeIdType = MNodeIdType( uid, signal.typ.nodeType )
+          (k, MUidBeacon( nodeIdType, Some(accuracyCm) ))
         }
         if (res.isEmpty)
           logger.log( ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )

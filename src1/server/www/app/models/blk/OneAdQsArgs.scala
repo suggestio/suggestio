@@ -3,8 +3,9 @@ package models.blk
 import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 import scala.language.implicitConversions   // конверсий тут по факту нет.
 
@@ -41,7 +42,7 @@ object OneAdQsArgs extends SecretKeyInit {
                              // Есть также случаи, когда это обязательное поле не нужно (см. scaladoc для класса-компаньона).
                              imgFmtB  : QueryStringBindable[Option[MImgFormat]]
                             ) : QueryStringBindable[OneAdQsArgs] = {
-    new QueryStringBindableImpl[OneAdQsArgs] {
+    new AbstractQueryStringBindable[OneAdQsArgs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
 

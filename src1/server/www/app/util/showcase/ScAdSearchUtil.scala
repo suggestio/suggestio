@@ -1,6 +1,6 @@
 package util.showcase
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.es.model.{EsModel, IMust, MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
@@ -11,6 +11,7 @@ import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImpl
+import play.api.inject.Injector
 import util.ble.BleUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,17 +25,17 @@ import scala.concurrent.{ExecutionContext, Future}
   * т.к. забинденные qs-данные нужно было приводить к MNodeSearch, что может потребовать исполнения
   * асинхронного кода (например, в случае маячков).
   */
-@Singleton
-class ScAdSearchUtil @Inject() (
-                                 esModel   : EsModel,
-                                 mNodes    : MNodes,
-                                 bleUtil   : BleUtil,
-                                 implicit private val ec: ExecutionContext,
-                               )
+final class ScAdSearchUtil @Inject() (
+                                       injector  : Injector,
+                                     )
   extends MacroLogsImpl
 {
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val bleUtil = injector.instanceOf[BleUtil]
+  implicit private val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
   private def LIMIT_MAX           = 50
@@ -207,9 +208,11 @@ class ScAdSearchUtil @Inject() (
       Future.successful( MBleSearchCtx.empty )
 
     } else {
+      import esModel.api._
+
       val _uidsQs = bcnsQs
         .iterator
-        .map(_.id)
+        .map(_.node.nodeId)
         .toSet
 
       // Проверить id маячков: они должны быть существующими enabled узлами и иметь тип радио-маячков.
@@ -217,7 +220,11 @@ class ScAdSearchUtil @Inject() (
         new MNodeSearch {
           override val withIds    = _uidsQs.toSeq
           override val limit      = _uidsQs.size
-          override val nodeTypes  = MNodeTypes.BleBeacon :: Nil
+          override val nodeTypes  = {
+            val qsNodeTypes = bcnsQs.iterator.map(_.node.nodeType).toSet
+            val allowedNodeTypes = MNodeTypes.lkNodesUserCanCreate.toSet
+            (qsNodeTypes intersect allowedNodeTypes).toSeq
+          }
           override val isEnabled  = Some(true)
         }
       )
@@ -244,9 +251,9 @@ class ScAdSearchUtil @Inject() (
             // Фильтруем заявленные в qs id маячков по выверенному списку реально существующих маячков.
             // Ленивость bcnsQs2 не важна, т.к. коллекция сразу будет перемолота целиком в scoredByDistanceBeaconSearch()
             bcnsQs.filter { bcnQs =>
-              val isExistBcn = uidsClear contains bcnQs.id
+              val isExistBcn = uidsClear contains bcnQs.node.nodeId
               if (!isExistBcn)
-                LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.id}''' is unknown. Dropped.")
+                LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.node.nodeId}''' is unknown. Dropped.")
               // fold(true), т.к. virtBeacon имеет отсутсвующее расстояние.
               isExistBcn && bcnQs.distanceCm.fold(true)(_ <= maxDistance)
             }

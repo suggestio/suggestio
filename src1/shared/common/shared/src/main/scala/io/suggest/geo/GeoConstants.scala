@@ -1,7 +1,5 @@
 package io.suggest.geo
 
-import io.suggest.common.qs.QsConstants
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -29,9 +27,6 @@ object GeoConstants {
 
   /** Контейнер констант первого поколения [[GeoConstants]]. */
   object Qs {
-
-    /** Разделитель. */
-    def DELIM             = QsConstants.KEY_PARTS_DELIM_STR
 
     def TOP_LEFT_FN       = "t"
     def BOTTOM_RIGHT_FN   = "b"

@@ -5,6 +5,7 @@ import io.suggest.enum2.{EnumeratumJvmUtil, EnumeratumUtil}
 import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.n2.extra.MAdnExtra
 import io.suggest.n2.node.MNode
+import io.suggest.xplay.qsb.CrossQsBindable
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 import play.api.mvc.QueryStringBindable
@@ -130,7 +131,7 @@ object AdnShownType {
 
   @inline implicit def univEq: UnivEq[AdnShownType] = UnivEq.derive
 
-  implicit def adnShownTypeQsb: QueryStringBindable[AdnShownType] =
+  implicit def adnShownTypeQsb: CrossQsBindable[AdnShownType] =
     EnumeratumJvmUtil.valueEnumQsb( AdnShownTypes )
 
 

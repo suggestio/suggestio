@@ -29,15 +29,17 @@ import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
-import io.suggest.spa.{DiodeUtil, DoNothing, HwBackBtn, SioPagesUtil}
+import io.suggest.spa.{DiodeUtil, DoNothing, HwBackBtn, SioPagesUtilJs}
 import io.suggest.spa.DiodeUtil.Implicits._
 import org.scalajs.dom
 import org.scalajs.dom.Event
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.url.bind.QsBindableUtilJs
 
+import scala.collection.immutable.AbstractMap
 import scala.concurrent.duration.DurationInt
-import scala.scalajs.js.JSON
+import scala.scalajs.js.{JSON, WrappedDictionary}
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -355,7 +357,9 @@ final class PlatformAh[M](
                 Try( UniversalLinks.unsubscribeF() )
                 UniversalLinks.subscribeF() { eventData =>
                   try {
-                    val sc3Page = SioPagesUtil.parseSc3FromQsTokens( eventData.params )
+                    // Zero-cost convertion to immutable-map, compatible with QueryStringBindable:
+                    val qs = QsBindableUtilJs.unsafeJSDictionaryAsImmutableMap( eventData.params )
+                    val sc3Page = SioPagesUtilJs.parseSc3FromQsTokens( qs )
                     logger.log(s"Universal link found:\n url: ${eventData.url}\n qs = ${JSON.stringify(eventData.params)}\n parsed => $sc3Page")
                     dispatcher.dispatch( RouteTo( sc3Page ) )
                   } catch {

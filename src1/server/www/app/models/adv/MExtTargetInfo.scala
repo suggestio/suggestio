@@ -2,7 +2,7 @@ package models.adv
 
 import io.suggest.es.model.MEsUuId
 import io.suggest.util.logs.MacroLogsDyn
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -22,7 +22,7 @@ object MExtTargetInfo extends ExtTargetInfoParsers with MacroLogsDyn {
 
   /** QueryStringBindable для экземпляров текущей модели. */
   implicit def mExtTargetInfoQsb(implicit strB: QueryStringBindable[String]) = {
-    new QueryStringBindableImpl[MExtTargetInfo] {
+    new AbstractQueryStringBindable[MExtTargetInfo] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MExtTargetInfo]] = {
         for {
           ser <- strB.bind(key, params)

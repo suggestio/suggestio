@@ -3,8 +3,8 @@ package io.suggest.enum2
 import enumeratum._
 import enumeratum.values.{StringEnum, StringEnumEntry, ValueEnum, ValueEnumEntry}
 import io.suggest.common.empty.EmptyUtil
-import play.api.libs.functional.syntax._
-import play.api.libs.json.{Writes, _}
+import io.suggest.url.bind.{QsBindable, QsBinderF, QsUnbinderF}
+import play.api.libs.json._
 
 import scala.language.implicitConversions
 
@@ -44,6 +44,35 @@ object EnumeratumUtil {
   }
 
 
+  /** Abstracted body for QueryStringBindable.bind() method: make raw query-string value binded into EnumEntry or ValueEnumEntry.
+    *
+    * @param adapter Enum [[Adapter]] impl.
+    * @param valueB ValueType bindable between URL-query-string and ValueType.
+    * @tparam ValueType Type of value enum. key.
+    * @tparam EntryType Type of each enum element, keyed by ValueType
+    * @return URL query-string binding function.
+    */
+  def qsBindable[ValueType, EntryType](adapter: Adapter[ValueType, EntryType])
+                                      (implicit valueB: QsBindable[ValueType]): QsBindable[EntryType] = {
+    new QsBindable[EntryType] {
+      override def bindF: QsBinderF[EntryType] = { (key, params) =>
+        for {
+          valueE <- valueB.bindF(key, params)
+        } yield {
+          for {
+            value <- valueE
+            entry <- adapter
+              .withValueOpt(value)
+              .toRight( "Unknown value" )
+          } yield entry
+        }
+      }
+      /** Abstracted body for QueryStringBindable.unbind() method: URL query-string unbinding. */
+      override def unbindF: QsUnbinderF[EntryType] = { (key, value) =>
+        valueB.unbindF( key, adapter.entryToValue(value) )
+      }
+    }
+  }
 
   /** Поддержка JSON-сериализации в строку.
     *
@@ -140,6 +169,36 @@ object EnumeratumUtil {
         JsObject( jsObjFields )
       }
     }
+
+  }
+
+
+
+  sealed trait Adapter[ValueType, EntryType] {
+    def withValueOpt(value: ValueType): Option[EntryType]
+    def entryToValue(entry: EntryType): ValueType
+    def theEnum: AnyRef
+
+    override final def toString = theEnum.toString
+  }
+  object Adapter {
+
+    implicit final class ValueEnumAdp[ValueType, EntryType <: ValueEnumEntry[ValueType]]( override val theEnum: ValueEnum[ValueType, EntryType] )
+      extends Adapter[ValueType, EntryType] {
+        override def withValueOpt(value: ValueType ): Option[EntryType] =
+          theEnum.withValueOpt( value )
+        override def entryToValue(entry: EntryType): ValueType =
+          entry.value
+      }
+
+
+    implicit final class EnumAdp[EntryType <: EnumEntry]( override val theEnum: Enum[EntryType] )
+      extends Adapter[String, EntryType] {
+        override def withValueOpt(value: String ): Option[EntryType] =
+          theEnum.withNameOption( value )
+        override def entryToValue(entry: EntryType): String =
+          entry.entryName
+      }
 
   }
 

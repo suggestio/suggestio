@@ -4,7 +4,8 @@ import io.suggest.geo.GeoConstants.Qs
 import org.elasticsearch.common.geo.builders.EnvelopeBuilder
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.{LngLat, Polygon}
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
   * Suggest.io
@@ -22,9 +23,7 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
 
   /** Поддержка биндинга этой простой фигуры в play router. */
   implicit def envelopeGsQsb(implicit geoPointB: QueryStringBindable[MGeoPoint]): QueryStringBindable[EnvelopeGs] = {
-    new QueryStringBindableImpl[EnvelopeGs] {
-
-      override def KEY_DELIM = Qs.DELIM
+    new AbstractQueryStringBindable[EnvelopeGs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, EnvelopeGs]] = {
         val k = key1F(key)

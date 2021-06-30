@@ -3,7 +3,8 @@ package models.mup
 import io.suggest.crypto.hash.HashesHex
 import io.suggest.es.model.MEsUuId
 import io.suggest.sec.QsbSigner
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.mvc.QueryStringBindable
@@ -30,7 +31,7 @@ object MDownLoadQs {
                            esUuIdB: QueryStringBindable[MEsUuId],
                            hashesHexB: QueryStringBindable[HashesHex],
                           ): QueryStringBindable[MDownLoadQs] = {
-    new QueryStringBindableImpl[MDownLoadQs] {
+    new AbstractQueryStringBindable[MDownLoadQs] {
 
       private def strOptB = implicitly[QueryStringBindable[Option[String]]]
       private def longOptB = implicitly[QueryStringBindable[Option[Long]]]

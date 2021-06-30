@@ -39,18 +39,6 @@ object BleConstants {
     final def UID_DELIM = HtmlConstants.UNDERSCORE
 
 
-    /** Константы названий URL QS полей у BLE-маячков. */
-    object Qs {
-
-      /** Имя поля со строковым идентификатором маячка. В случае ibeacon - proximity uuid не уникален. */
-      final def UID_FN            = "a"
-
-      /** Имя поля с оценочным расстоянием до маячка. */
-      final def DISTANCE_CM_FN     = "g"
-
-    }
-
-
     object EddyStone {
 
       /** Короткий bt service UUID. */

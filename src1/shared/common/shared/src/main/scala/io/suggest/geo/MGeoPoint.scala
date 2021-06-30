@@ -8,6 +8,7 @@ import japgolly.univeq.UnivEq
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.url.bind.{QsBindable, QsBinderF, QsUnbinderF}
 import monocle.macros.GenLens
 
 import scala.util.Try
@@ -248,6 +249,53 @@ object MGeoPoint {
     * но сериализации в JSON object с полями lat и lon. */
   implicit val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, MGeoPoint.FORMAT_GEO_ARRAY)
 
+
+  implicit final class GeoPointExt( private val geoPoint: MGeoPoint ) extends AnyVal {
+
+    /** (12.1234 65.5633) - StringBuilder. */
+    def toHumanFriendlySb(sb: StringBuilder = new StringBuilder(16)): StringBuilder = {
+      def _fmt(coord: GeoCoord_t) =
+        "%1.2f".format(coord.toFloat)     // Напрямую format(BigDecimal) нельзя из-за странной ошибки.
+      sb.append( '(' )
+        .append( _fmt( geoPoint.lat ) )
+        .append( ' ' )
+        .append( _fmt( geoPoint.lon ) )
+        .append( ')' )
+    }
+    /** (12.1234 65.5633) */
+    def toHumanFriendlyString: String =
+      toHumanFriendlySb().toString()
+
+
+    def withCoordScale(scale: Int): MGeoPoint = {
+      geoPoint.copy(
+        lat = MathConst.FracScale.scaledOptimal( geoPoint.lat, scale ),
+        lon = MathConst.FracScale.scaledOptimal( geoPoint.lon, scale ),
+      )
+    }
+
+  }
+
+
+  def qsBindablePiped(implicit stringB: QsBindable[String]): QsBindable[MGeoPoint] = {
+    new QsBindable[MGeoPoint] {
+      override def bindF: QsBinderF[MGeoPoint] = { (key, params) =>
+        for {
+          rawEith <- stringB.bindF( key, params )
+        } yield {
+          rawEith.flatMap { raw =>
+            MGeoPoint.fromString(raw)
+              .toRight("e.geo.point")
+          }
+        }
+      }
+
+      override def unbindF: QsUnbinderF[MGeoPoint] = { (key, value) =>
+        stringB.unbindF( key, value.toString )
+      }
+    }
+  }
+
 }
 
 
@@ -262,30 +310,6 @@ final case class MGeoPoint(
   // TODO заменить на "lon|lat" ? Пользователю в браузере конечно удобенее "lat|lon", надо поразмыслить над этим.
   override def toString: String =
     lat.toString + Qs.LAT_LON_DELIM_FN + lon.toString
-
-
-
-  /** (12.1234 65.5633) - StringBuilder. */
-  def toHumanFriendlySb(sb: StringBuilder = new StringBuilder(16)): StringBuilder = {
-    def _fmt(coord: GeoCoord_t) =
-      "%1.2f".format(coord.toFloat)     // Напрямую format(BigDecimal) нельзя из-за странной ошибки.
-    sb.append( '(' )
-      .append( _fmt(lat) )
-      .append( ' ' )
-      .append( _fmt(lon) )
-      .append( ')' )
-  }
-  /** (12.1234 65.5633) */
-  def toHumanFriendlyString: String =
-    toHumanFriendlySb().toString()
-
-
-  def withCoordScale(scale: Int): MGeoPoint = {
-    copy(
-      lat = MathConst.FracScale.scaledOptimal(lat, scale),
-      lon = MathConst.FracScale.scaledOptimal(lon, scale),
-    )
-  }
 
 }
 

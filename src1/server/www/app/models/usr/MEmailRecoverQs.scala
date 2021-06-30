@@ -4,9 +4,10 @@ import java.util.UUID
 
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
+import io.suggest.url.bind.QueryStringBindableUtil._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -48,7 +49,7 @@ object MEmailRecoverQs extends SecretKeyInit {
                                  uuidB    : QueryStringBindable[UUID],
                                  boolB    : QueryStringBindable[Boolean],
                                 ): QueryStringBindable[MEmailRecoverQs] = {
-    new QueryStringBindableImpl[MEmailRecoverQs] {
+    new AbstractQueryStringBindable[MEmailRecoverQs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
 

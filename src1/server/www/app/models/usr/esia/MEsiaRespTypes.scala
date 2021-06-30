@@ -2,6 +2,7 @@ package models.usr.esia
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.xplay.qsb.CrossQsBindable
 import japgolly.univeq.UnivEq
 import play.api.mvc.QueryStringBindable
 
@@ -26,7 +27,7 @@ object MEsiaRespType {
 
   @inline implicit def univEq: UnivEq[MEsiaRespType] = UnivEq.derive
 
-  implicit def qsb: QueryStringBindable[MEsiaRespType] =
+  implicit def esiaRespTypeQsb: CrossQsBindable[MEsiaRespType] =
     EnumeratumJvmUtil.valueEnumQsb( MEsiaRespTypes )
 
 }

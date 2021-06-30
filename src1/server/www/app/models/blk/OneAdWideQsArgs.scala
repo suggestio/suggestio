@@ -1,6 +1,7 @@
 package models.blk
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 
@@ -20,7 +21,7 @@ object OneAdWideQsArgs {
 
   /** Поддержка биндинга в routes и в qsb. */
   implicit def oneAdWideQsArgsQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[OneAdWideQsArgs] = {
-    new QueryStringBindableImpl[OneAdWideQsArgs] {
+    new AbstractQueryStringBindable[OneAdWideQsArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdWideQsArgs]] = {
         // Оформлено многословно через for{}, т.к. в будущем очень возможно расширения списка аргументов.
         for {

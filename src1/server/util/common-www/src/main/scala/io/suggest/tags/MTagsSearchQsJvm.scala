@@ -1,8 +1,9 @@
 package io.suggest.tags
 
 import io.suggest.tags.TagSearchConstants.Req._
-import io.suggest.xplay.qsb.{QsbUtil, QueryStringBindableImpl}
+import io.suggest.xplay.qsb.{QsbUtil, AbstractQueryStringBindable}
 import play.api.mvc.QueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 
 /**
  * Suggest.io
@@ -19,7 +20,7 @@ object MTagsSearchQsJvm {
                                   intOptB    : QueryStringBindable[Option[Int]]
                                  ): QueryStringBindable[MTagsSearchQs] = {
 
-    new QueryStringBindableImpl[MTagsSearchQs] {
+    new AbstractQueryStringBindable[MTagsSearchQs] {
 
       /** Биндинг значения [[MTagsSearchQs]] из URL qs. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MTagsSearchQs]] = {

@@ -1,6 +1,7 @@
 package models.usr.esia
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -27,7 +28,7 @@ object MEsiaAcTokQs {
                             esiaTokenTypeB  : QueryStringBindable[MEsiaTokenType],
                            ): QueryStringBindable[MEsiaAcTokQs] = {
 
-    new QueryStringBindableImpl[MEsiaAcTokQs] {
+    new AbstractQueryStringBindable[MEsiaAcTokQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsiaAcTokQs]] = {
         val F = Fields

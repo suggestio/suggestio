@@ -1,6 +1,7 @@
 package models.mgeo
 
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
+import io.suggest.url.bind.QueryStringBindableUtil._
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -18,7 +19,7 @@ object MGsPtr {
   implicit def mGsPtrQsb(implicit
                          strB: QueryStringBindable[String],
                          intB: QueryStringBindable[Int]): QueryStringBindable[MGsPtr] = {
-    new QueryStringBindableImpl[MGsPtr] {
+    new AbstractQueryStringBindable[MGsPtr] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGsPtr]] = {
         val k = key1F(key)
         for {

@@ -3,7 +3,7 @@ package controllers
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
-import io.suggest.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNodeIdType, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.spa.SioPages
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -44,16 +44,11 @@ final class ShortUrls @Inject() (
 
 
   /** Рендер ответа с редиректом в выдачу. */
-  private def _scUrlRdrResp(beaconId: Option[String] = None)
+  private def _scUrlRdrResp(beaconId: Option[MNodeIdType] = None)
                            (implicit request: RequestHeader): Future[Result] = {
     val call = sc.routes.ScSite.geoSite(
       SioPages.Sc3(
-        virtBeacons = {
-          var acc = Set.empty[String]
-          for (bId <- beaconId)
-            acc += bId
-          acc
-        },
+        virtBeacons = beaconId.toList,
       )
     )
     val toAbsUrl = contextUtil.SC_URL_PREFIX + call.url
@@ -90,15 +85,15 @@ final class ShortUrls @Inject() (
       res <- mnodeOpt
         .flatMap { res =>
           // Разобраться, что тут у нас.
-          res.common.ntype match {
-            // Это маячок. Нужно, чтобы выдача открылась, как бы находясь в данном маячке, не имея bluetooth.
-            case MNodeTypes.BleBeacon =>
-              LOGGER.trace(s"$logPrefix Found beacon#${res.id}")
-              Some( _scUrlRdrResp( res.id ) )
-
-            case other =>
-              LOGGER.warn(s"$logPrefix Unsupported node-type#$other for short-URL.")
-              None
+          val ntype = res.common.ntype
+          if (MNodeTypes.lkNodesUserCanCreate contains[MNodeType] ntype) {
+            // The radio-beacon or something alike. Showcase should open "inside-like-or-nearby" beacon without bluetooth.
+            LOGGER.trace(s"$logPrefix Found beacon#${res.id}")
+            val nodeIdTypeOpt = res.id.map { MNodeIdType(_, ntype) }
+            Some( _scUrlRdrResp( nodeIdTypeOpt ) )
+          } else {
+            LOGGER.warn(s"$logPrefix Unsupported node-type#$ntype for short-URL.")
+            None
           }
         }
         .getOrElse {

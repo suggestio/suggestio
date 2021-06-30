@@ -1,9 +1,8 @@
 package io.suggest.enum2
 
-import enumeratum.{Enum, EnumEntry}
 import enumeratum.values._
 import io.suggest.xplay.psb.PathBindableImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.CrossQsBindable
 import play.api.data.Mapping
 import play.api.data.Forms._
 import play.api.mvc.{PathBindable, QueryStringBindable}
@@ -101,64 +100,21 @@ object EnumeratumJvmUtil {
 
   /** Сборка QueryStringBindable для моделей enumeratum ValueEnum.
     *
-    * @param m Модель со всеми инстансами.
-    *          Ленивое, потому что не факт, что она потребуется.
-    * @param vQsb QSB-биндер для типа ключа.
-    * @tparam V Тип ключа.
-    * @tparam VEE Тип одного значения enum-модели.
-    * @return QSB для элементов модели.
+    * @param adapter Enum model adapter.
+    * @param valueQsb QS-binder for enum entry values.
+    * @return QSB implementation for related enum model.
     */
-  def valueEnumQsb[V, VEE <: ValueEnumEntry[V]](m: => ValueEnum[V, VEE])
-                                               (implicit vQsb: QueryStringBindable[V]): QueryStringBindable[VEE] = {
-    _anyEnumQsb[V, VEE](m.withValueOpt, _.value)
-  }
-
-  /** Сборка QueryStringBindable для моделей enumeratum Enum.
-    *
-    * @param m Enum-модель со строковыми ключами.
-    *          Ленивое, потому что не факт, что она потребуется.
-    * @param strQsb QSB для строк.
-    * @tparam EE Тип элемента enum-модели.
-    * @return QSB[EE].
-    */
-  def enumQsb[EE <: EnumEntry](m: => Enum[EE])
-                              (implicit strQsb: QueryStringBindable[String]): QueryStringBindable[EE] = {
-    _anyEnumQsb[String, EE](m.withNameOption, _.entryName)
+  def valueEnumQsb[ValueType, EntryType]
+                  (adapter: EnumeratumUtil.Adapter[ValueType, EntryType])
+                  (implicit valueQsb: QueryStringBindable[ValueType]): CrossQsBindable[EntryType] = {
+    EnumeratumUtil.qsBindable( adapter )( valueQsb: CrossQsBindable[ValueType] )
   }
 
 
-  /** Сборка QSB для произвольных enum-подобных моделей.
-    *
-    * @param withValueOpt Функция поиска значения в enum-модели.
-    * @param vee2v Получение ключа из элемента enum-модели.
-    * @param vQsb QSB-биндер для ключей элементов модели.
-    * @tparam V Тип ключей модели.
-    * @tparam VEE Тип элементов модели.
-    * @return QSB для элементов enum-модели.
-    */
-  private def _anyEnumQsb[V, VEE](withValueOpt: V => Option[VEE], vee2v: VEE => V)
-                                 (implicit vQsb: QueryStringBindable[V]): QueryStringBindable[VEE] = {
-    new QueryStringBindableImpl[VEE] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, VEE]] = {
-        for {
-          vEith <- vQsb.bind(key, params)
-        } yield {
-          vEith.flatMap { v =>
-            withValueOpt(v).toRight("e.invalid")
-          }
-        }
-      }
-
-      override def unbind(key: String, value: VEE): String = {
-        vQsb.unbind(key, vee2v(value))
-      }
-    }
-  }
-
-
-  def valueEnumPb[K, VEE <: ValueEnumEntry[K]](m: => ValueEnum[K, VEE])
-                                              (implicit kPb: PathBindable[K]): PathBindable[VEE] = {
-    _anyEnumPb[K, VEE]( m.withValueOpt, _.value )
+  def valueEnumPb[ValueType, EntryType <: ValueEnumEntry[ValueType]]
+                 (m: => ValueEnum[ValueType, EntryType])
+                 (implicit valuePb: PathBindable[ValueType]): PathBindable[EntryType] = {
+    _anyEnumPb[ValueType, EntryType]( m.withValueOpt, _.value )
   }
 
   /** Сборка play router PathBindable.
@@ -166,14 +122,15 @@ object EnumeratumJvmUtil {
     * @param withValueOpt Поиск значения по ключу.
     * @param vee2k Извлечение ключа из значения.
     * @param kPb PathBindable ключа.
-    * @tparam K Тип ключа.
-    * @tparam VEE Тип (класс) инстансов значения модели.
+    * @tparam ValueType Тип ключа.
+    * @tparam EntryType Тип (класс) инстансов значения модели.
     * @return PathBindable значения.
     */
-  private def _anyEnumPb[K, VEE](withValueOpt: K => Option[VEE], vee2k: VEE => K)
-                                (implicit kPb: PathBindable[K]): PathBindable[VEE] = {
-    new PathBindableImpl[VEE] {
-      override def bind(key: String, value: String): Either[String, VEE] = {
+  private def _anyEnumPb[ValueType, EntryType]
+                        (withValueOpt: ValueType => Option[EntryType], vee2k: EntryType => ValueType)
+                        (implicit kPb: PathBindable[ValueType]): PathBindable[EntryType] = {
+    new PathBindableImpl[EntryType] {
+      override def bind(key: String, value: String): Either[String, EntryType] = {
         kPb.bind(key, value)
           .flatMap { k =>
             withValueOpt(k)
@@ -181,7 +138,7 @@ object EnumeratumJvmUtil {
           }
       }
 
-      override def unbind(key: String, value: VEE): String = {
+      override def unbind(key: String, value: EntryType): String = {
         val k = vee2k(value)
         kPb.unbind(key, k)
       }

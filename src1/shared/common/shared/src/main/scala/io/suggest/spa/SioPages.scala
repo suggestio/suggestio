@@ -3,6 +3,9 @@ package io.suggest.spa
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
+import io.suggest.n2.node.MNodeIdType
+import io.suggest.url.bind._
+import io.suggest.url.bind.QueryStringBindableUtil._
 import japgolly.univeq.{UnivEq, _}
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -47,9 +50,9 @@ object SioPages {
         (__ \ DL_APP_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ SETTINGS_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ SHOW_WELCOME_FN).formatNullable[Boolean].formatBooleanOrTrue and
-        (__ \ VIRT_BEACONS_FN).formatNullable[Set[String]]
-          .inmap[Set[String]](
-            EmptyUtil.opt2ImplEmptyF(Set.empty),
+        (__ \ VIRT_BEACONS_FN).formatNullable[Seq[MNodeIdType]]
+          .inmap[Seq[MNodeIdType]](
+            EmptyUtil.opt2ImplEmptyF(Nil),
             s => Option.when(s.nonEmpty)(s)
           ) and
         (__ \ Login.Fields.CURR_TAB_FN).formatNullable[MLoginTab]
@@ -98,7 +101,7 @@ object SioPages {
           firstRunOpen  = mainScreen.firstRunOpen,
           showWelcome   = false,
           dlAppOpen     = mainScreen.dlAppOpen,
-          virtBeacons   = Set.empty,
+          virtBeacons   = Nil,
         )
       }
 
@@ -108,10 +111,100 @@ object SioPages {
           searchOpened      = false,
           menuOpened        = false,
           generation        = None,
-          virtBeacons       = Set.empty,
+          virtBeacons       = Nil,
         )
       }
 
+    }
+
+
+
+    /** Cross-platform URL query-string bindable for showcase state uri. */
+    implicit def sc3QsB(implicit
+                        stringOptB       : QsBindable[Option[String]],
+                        boolOptB         : QsBindable[Option[Boolean]],
+                        longOptB         : QsBindable[Option[Long]],
+                        geoPointOptB     : QsBindable[Option[MGeoPoint]],
+                        nodeIdTypeSeqB   : QsBindable[Seq[MNodeIdType]],
+                        loginOptB        : QsBindable[Option[SioPages.Login]],
+                       ): QsBindable[Sc3] = {
+      import io.suggest.sc.ScConstants.ScJsState._
+
+      val boolOrFalseB = QsBindable.optionDefaulted(false)
+      val boolOrTrueB = QsBindable.optionDefaulted(true)
+
+      new QsBindable[Sc3] {
+        override def bindF: QsBinderF[Sc3] = {
+
+          { (_, params) =>
+            for {
+              nodeIdOptE          <- stringOptB.bindF( NODE_ID_FN, params )
+              searchOpenedE       <- boolOrFalseB.bindF( SEARCH_OPENED_FN, params )
+              menuOpenedE         <- boolOrFalseB.bindF( MENU_OPENED_FN, params )
+              generationOptE      <- longOptB.bindF( GENERATION_FN, params )
+              tagNodeIdOptE       <- stringOptB.bindF( TAG_NODE_ID_FN, params )
+              geoPointOptE        <- geoPointOptB.bindF( LOC_ENV_FN, params )
+              focusedAdIdOptE     <- stringOptB.bindF( FOCUSED_AD_ID_FN, params )
+              firstRunOpenE       <- boolOrFalseB.bindF( FIRST_RUN_OPEN_FN, params )
+              dlAppOpenE          <- boolOrFalseB.bindF( DL_APP_OPEN_FN, params )
+              settingsOpenE       <- boolOrFalseB.bindF( SETTINGS_OPEN_FN, params )
+              showWelcomeE        <- boolOrTrueB.bindF( SHOW_WELCOME_FN, params )
+              virtBeaconsE        <- nodeIdTypeSeqB.bindF( VIRT_BEACONS_FN, params )
+              loginOptE           <- loginOptB.bindF( LOGIN_FN, params )
+            } yield {
+              for {
+                nodeIdOpt         <- nodeIdOptE
+                searchOpened      <- searchOpenedE
+                menuOpened        <- menuOpenedE
+                generationOpt     <- generationOptE
+                tagNodeIdOpt      <- tagNodeIdOptE
+                geoPointOpt       <- geoPointOptE
+                focusedAdIdOpt    <- focusedAdIdOptE
+                firstRunOpen      <- firstRunOpenE
+                dlAppOpen         <- dlAppOpenE
+                settingsOpen      <- settingsOpenE
+                showWelcome       <- showWelcomeE
+                virtBeacons       <- virtBeaconsE
+                loginOpt          <- loginOptE
+              } yield {
+                SioPages.Sc3(
+                  nodeId          = nodeIdOpt,
+                  searchOpened    = searchOpened,
+                  menuOpened      = menuOpened,
+                  generation      = generationOpt,
+                  tagNodeId       = tagNodeIdOpt,
+                  locEnv          = geoPointOpt,
+                  focusedAdId     = focusedAdIdOpt,
+                  firstRunOpen    = firstRunOpen,
+                  dlAppOpen       = dlAppOpen,
+                  settingsOpen    = settingsOpen,
+                  showWelcome     = showWelcome,
+                  virtBeacons     = virtBeacons,
+                  login           = loginOpt,
+                )
+              }
+            }
+          }
+        }
+
+        override def unbindF: QsUnbinderF[Sc3] = { (_, value) =>
+          _mergeUnbinded1(
+            stringOptB.unbindF( FOCUSED_AD_ID_FN, value.focusedAdId ),
+            stringOptB.unbindF( TAG_NODE_ID_FN, value.tagNodeId ),
+            stringOptB.unbindF( NODE_ID_FN, value.nodeId ),
+            geoPointOptB.unbindF( LOC_ENV_FN, value.locEnv ),
+            boolOrFalseB.unbindF( SEARCH_OPENED_FN, value.searchOpened ),
+            boolOrFalseB.unbindF( MENU_OPENED_FN, value.menuOpened ),
+            boolOrFalseB.unbindF( FIRST_RUN_OPEN_FN, value.firstRunOpen ),
+            boolOrFalseB.unbindF( DL_APP_OPEN_FN, value.dlAppOpen ),
+            boolOrFalseB.unbindF( SETTINGS_OPEN_FN, value.settingsOpen ),
+            boolOrTrueB.unbindF( SHOW_WELCOME_FN, value.showWelcome ),
+            nodeIdTypeSeqB.unbindF( VIRT_BEACONS_FN, value.virtBeacons ),
+            longOptB.unbindF( GENERATION_FN, value.generation ),
+            loginOptB.unbindF( LOGIN_FN, value.login ),
+          )
+        }
+      }
     }
 
   }
@@ -129,7 +222,7 @@ object SioPages {
                   dlAppOpen      : Boolean             = false,
                   settingsOpen   : Boolean             = false,
                   showWelcome    : Boolean             = true,
-                  virtBeacons    : Set[String]         = Set.empty,
+                  virtBeacons    : Seq[MNodeIdType]    = List.empty,
                   login          : Option[SioPages.Login]   = None,
                 )
     extends SioPages
@@ -158,6 +251,41 @@ object SioPages {
 
     def currTab = GenLens[Login](_.currTab)
     def returnUrl = GenLens[Login](_.returnUrl)
+
+
+    implicit def loginQsB(implicit
+                          loginTabB: QsBindable[MLoginTab],
+                          stringOptB: QsBindable[Option[String]],
+                         ): QsBindable[Login] = {
+      new QsBindable[Login] {
+        override def bindF: QsBinderF[Login] = { (key, params) =>
+          val k = key1F( key )
+          val F = SioPages.Login.Fields
+          for {
+            loginTabE         <- loginTabB.bindF  ( k(F.CURR_TAB_FN),   params )
+            returnUrlOptB     <- stringOptB.bindF ( k(F.RETURN_URL_FN), params )
+          } yield {
+            for {
+              loginTab        <- loginTabE
+              returnUrlOpt    <- returnUrlOptB
+            } yield {
+              SioPages.Login(
+                currTab       = loginTab,
+                returnUrl     = returnUrlOpt,
+              )
+            }
+          }
+        }
+        override def unbindF: QsUnbinderF[Login] = { (key, value) =>
+          val k = key1F( key )
+          val F = SioPages.Login.Fields
+          _mergeUnbinded1(
+            loginTabB.unbindF   ( k(F.CURR_TAB_FN),   value.currTab   ),
+            stringOptB.unbindF  ( k(F.RETURN_URL_FN), value.returnUrl ),
+          )
+        }
+      }
+    }
 
   }
 

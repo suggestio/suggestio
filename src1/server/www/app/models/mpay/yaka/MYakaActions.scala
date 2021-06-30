@@ -1,7 +1,7 @@
 package models.mpay.yaka
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.AbstractQueryStringBindable
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -43,7 +43,7 @@ object MYakaReturnActions extends StringEnum[MYakaAction] {
 
 
   implicit def mYakaActionQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MYakaAction] = {
-    new QueryStringBindableImpl[MYakaAction] {
+    new AbstractQueryStringBindable[MYakaAction] {
 
       override def bind(key: String, params: Map[String, Seq[String]]) = {
         for {

@@ -192,6 +192,10 @@ object ScConstants {
     */
   object ScJsState {
 
+    /** Value for key of top-parent URL QSB.bind(key,) and .unbind(key,).
+      * Always empty, because all keys have hard full-names. */
+    final def QSB_KEY = ""
+
     // Название qs-параметров, отражающих состояние выдачи. Не удалось их нормально с максом согласовать из-за
     // какой-то неизвестной науке паталогии копипастинга идентификаторов из окошка джаббер-клиента в файл showcase2.coffee.
 
