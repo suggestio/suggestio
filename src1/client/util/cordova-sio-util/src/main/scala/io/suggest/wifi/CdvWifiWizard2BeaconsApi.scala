@@ -35,8 +35,12 @@ final class CdvWifiWizard2BeaconsApi
   private var _intervalId: Option[Int] = None
 
   /** Is Wi-Fi enabled at the moment? */
-  override def isPeripheralEnabled(): Future[Boolean] =
-    CdvWifiWizard2.isWifiEnabled().toFuture
+  override def isPeripheralEnabled(): Future[Boolean] = {
+    //CdvWifiWizard2.isWifiEnabled().toFuture
+    // Guessing true, even if wifi is disabled. If user switch wifi on/off during nodes window, scan will work as expected.
+    // TODO Suboptimal. Need to shutdown scanning, when wifi disabled.
+    Future.successful(true)
+  }
 
   /** Try to enable Wi-Fi. */
   override def enablePeripheral(): Future[Boolean] = {

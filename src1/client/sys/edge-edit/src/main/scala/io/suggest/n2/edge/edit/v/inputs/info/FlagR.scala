@@ -9,8 +9,6 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.scalajs.js.annotation.JSName
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -31,9 +29,9 @@ class FlagR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private val _onFlagChanged = ReactCommonUtil.cbFun2ToJsCb {
-      (e: ReactEventFromInput, isChecked: Boolean) =>
-        val isCheckedOpt = Option.when(!e.target.indeterminate)( isChecked )
+    private val _onFlagChanged = ReactCommonUtil.cbFun1ToJsCb {
+      e: ReactEventFromInput =>
+        val isCheckedOpt = Option.when( !e.target.indeterminate )( e.target.checked )
         ReactDiodeUtil.dispatchOnProxyScopeCB( $, FlagSet(isCheckedOpt) )
     }
 
@@ -48,8 +46,7 @@ class FlagR(
             new MuiCheckBoxProps {
               override val indeterminate = isCheckedOpt.isEmpty
               override val checked = isCheckedOpt contains true
-              @JSName("onChange")
-              override val onChange2 = _onFlagChanged
+              override val onChange = _onFlagChanged
               override val classes = css
               override val color = MuiColorTypes.secondary
             }

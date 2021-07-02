@@ -11,7 +11,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -36,8 +35,8 @@ class TextNiR(
     private def _doDispatch(textNiOpt: Option[String]): Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, TextNiSet(textNiOpt) )
 
-    private val _onCheckBoxChange = ReactCommonUtil.cbFun2ToJsCb { (_: ReactEventFromInput, checked: Boolean) =>
-      val textNiOpt = Option.when( checked )("")
+    private val _onCheckBoxChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+      val textNiOpt = Option.when( e.target.checked )("")
       _doDispatch( textNiOpt )
     }
 
@@ -61,8 +60,7 @@ class TextNiR(
             MuiCheckBox(
               new MuiCheckBoxProps {
                 override val checked = isEnabledSomeProxy.value.value
-                @JSName("onChange")
-                override val onChange2 = _onCheckBoxChange
+                override val onChange = _onCheckBoxChange
                 override val classes = css
                 override val color = MuiColorTypes.secondary
               }

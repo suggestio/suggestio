@@ -5,7 +5,7 @@ import io.suggest.spa.DAction
 
 
 /** Interface for signals, for beaconer FSM. */
-trait IBeaconAction extends DAction
+trait IBeaconerAction extends DAction
 
 
 /** Detected useful radio-signals. */
@@ -13,5 +13,4 @@ case class RadioSignalsDetected(
                                  radioType     : MRadioSignalType,
                                  signals       : Seq[MRadioSignalJs],
                                )
-  extends IBeaconAction
-
+  extends IBeaconerAction

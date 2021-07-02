@@ -9,11 +9,10 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.component.Scala.BackendScope
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{Callback, React, ReactEventFromInput, ScalaComponent}
+import japgolly.scalajs.react.{React, ReactEventFromInput, ScalaComponent}
 import japgolly.univeq._
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -48,12 +47,12 @@ class CheckBoxR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private def _onForeignPcChange( event: ReactEventFromInput, checked: Boolean ): Callback = {
+    private val _onForeignPcChangeCbF = ReactCommonUtil.cbFun1ToJsCb { event: ReactEventFromInput =>
+      val isChecked = event.target.checked
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
-        propsProxy.value.onChange( checked )
+        propsProxy.value.onChange( isChecked )
       }
     }
-    private val _onForeignPcChangeCbF = ReactCommonUtil.cbFun2ToJsCb( _onForeignPcChange )
 
 
     def render(p: Props, s: State): VdomElement = {
@@ -65,8 +64,7 @@ class CheckBoxR(
           val props = propsProxy.value
           MuiCheckBox(
             new MuiCheckBoxProps {
-              @JSName("onChange")
-              override val onChange2 = _onForeignPcChangeCbF
+              override val onChange = _onForeignPcChangeCbF
               override val checked = js.defined( props.checked )
               override val classes = cbCss
               override val disabled = props.disabled

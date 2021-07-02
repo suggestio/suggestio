@@ -189,7 +189,7 @@ class BeaconerAh[M](
 
   private def _getListenOpts(opts: MBeaconerOpts) = {
     IBeaconsListenerApi.ListenOptions(
-      onBeacon = dispatcher(_: RadioSignalsDetected),
+      dispatchEvent = dispatcher.dispatch(_: IBeaconerAction),
       scanMode = opts.scanMode,
     )
   }
@@ -755,7 +755,7 @@ class BeaconerAh[M](
           apis              = v0.apis.ready( m.apisReady ),
           gcIntervalId      = ensureGcInterval(v0.beacons.isEmpty, v0.gcIntervalId),
           afterOnOff        = None,
-          hasBle            = truePot2,
+          hasBle            = truePot2.ready( m.apisReady.nonEmpty ),
         )
 
         val timerFx2 = if (v0.opts.oneShot)

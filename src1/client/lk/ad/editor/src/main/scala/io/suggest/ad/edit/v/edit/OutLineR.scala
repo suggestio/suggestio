@@ -43,9 +43,9 @@ final class OutLineR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    private val _onOffChangeCb = ReactCommonUtil.cbFun2ToJsCb {
-      (_: ReactEventFromInput, isChecked2: Boolean) =>
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $, OutlineOnOff(isChecked2) )
+    private val _onOffChangeCb = ReactCommonUtil.cbFun1ToJsCb {
+      (e: ReactEventFromInput) =>
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, OutlineOnOff(e.target.checked) )
     }
 
     private val _onColorChange = { (mcd: MColorData) =>
@@ -104,8 +104,7 @@ final class OutLineR(
             MuiCheckBox(
               new MuiCheckBoxProps {
                 override val checked = js.defined( onOff )
-                @JSName("onChange")
-                override val onChange2 = _onOffChangeCb
+                override val onChange = _onOffChangeCb
                 override val color = MuiColorTypes.secondary
               }
             )

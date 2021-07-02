@@ -15,6 +15,7 @@ import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import scalaz.{Tree, TreeLoc}
+import io.suggest.scalaz.ZTreeUtil._
 
 import java.time.Instant
 import scala.collection.immutable.HashMap
@@ -151,7 +152,8 @@ class BeaconsAh[M](
         bcnsGroupLoc1.setTree( tree1 )
       }
 
-      var modTreeF = MTree.setNodes( bcnsGroupLoc2.toTree )
+      val tree2 = bcnsGroupLoc2.toTree
+      var modTreeF = MTree.setNodes( tree2 )
 
       var nodesMap2 = v0.tree.nodesMap
       if (v0.tree.idsTreeOpt.isEmpty || !(nodesMap2 contains rootTreeId))
@@ -161,24 +163,36 @@ class BeaconsAh[M](
       if (nodesMap2 !===* v0.tree.nodesMap)
         modTreeF = modTreeF andThen (MTree.nodesMap set nodesMap2)
 
-      // Нужно проинкрементить корневой элемент opened-path после добавления корневой подгруппы Bluetooth-маячков.
-      if (
-        v0.tree.opened.exists(_.nonEmpty) &&
-        bcnsGroupLocOpt0.isEmpty
-      ) {
-        modTreeF = modTreeF andThen MTree.opened.modify { openedOpt0 =>
-          openedOpt0.map { opened0 =>
-            (opened0.head + 1) :: opened0.tail
-          }
-        }
-      }
-
       var modTreeOuterF = MTreeOuter.tree.modify( modTreeF )
       var modBeaconsAcc = List.empty[MBeaconScan => MBeaconScan]
 
       // TODO Если исчез opened-маячок, то обновить opened на валидное значение.
 
       var fxAcc = List.empty[Effect]
+
+      val bcnGroupCreated = bcnsGroupLocOpt0.isEmpty
+      if (bcnGroupCreated) {
+        if (v0.tree.opened.exists(_.nonEmpty)) {
+          // Нужно проинкрементить корневой элемент opened-path после добавления корневой подгруппы Bluetooth-маячков.
+          modTreeF = modTreeF andThen MTree.opened.modify { openedOpt0 =>
+            openedOpt0.map { opened0 =>
+              (opened0.head + 1) :: opened0.tail
+            }
+          }
+
+        } else if (v0.tree.opened.isEmpty && v0.tree.nodesMap.sizeIs <= 2) {
+          // First shown, nothing opened, but beacons group have something inside. Expand very first non-empty beacon group automatically.
+          for (firstSubLoc <- tree2.loc.firstChild if firstSubLoc.hasChildren)
+            modTreeF = modTreeF andThen (MTree.opened set Some(firstSubLoc.toNodePath))
+        }
+
+      } else if (/* !bcnGroupCreated && */ v0.beacons.updateTimeout ==* Pot.empty) {
+        // !bcnGroupCreated: rendering timer ignored, everything will be rendered ASAP, and timer not needed.
+        // Обновлений от сигналов маячков может быть много каждую секунду. Но обновлять экран надо не чаще раза в секунду,
+        // иначе всё затупит и встанет колом. Поэтому, нужно silent update, а рендер запускать только по таймауту.
+        fxAcc ::= _reRenderFx
+        modBeaconsAcc ::= MBeaconScan.updateTimeout.modify(_.pending())
+      }
 
       if (!v0.beacons.scanReq.isPending) {
         // Если есть маячки для запроса с сервера, то запросить инфу по ним.
@@ -249,19 +263,12 @@ class BeaconsAh[M](
         }
       }
 
-      // Обновлений от сигналов маячков может быть много каждую секунду. Но обновлять экран надо не чаще раза в секунду,
-      // иначе всё затупит и встанет колом. Поэтому, нужно silent update, а рендер запускать только по таймауту.
-      if (v0.beacons.updateTimeout ==* Pot.empty) {
-        fxAcc ::= _reRenderFx
-        modBeaconsAcc ::= MBeaconScan.updateTimeout.modify(_.pending())
-      }
-
       // Сохранить обновлённое состояние:
       if (modBeaconsAcc.nonEmpty)
         modTreeOuterF = modTreeOuterF andThen MTreeOuter.beacons.modify( modBeaconsAcc.reduce(_ andThen _) )
 
       val v2 = modTreeOuterF(v0)
-      ah.updatedSilentMaybeEffect( v2, fxAcc.mergeEffects )
+      ah.optionalResult( Some(v2), fxAcc.mergeEffects, silent = !bcnGroupCreated )
 
 
     // Срабатывание таймера отложенного рендера.

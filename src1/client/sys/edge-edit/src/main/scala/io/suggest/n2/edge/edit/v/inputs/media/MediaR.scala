@@ -28,7 +28,6 @@ import io.suggest.up.{MFileUploadS, MUploadResp}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 
-import scala.scalajs.js.annotation.JSName
 import scala.util.Try
 
 /**
@@ -98,8 +97,8 @@ class MediaR(
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileSizeSet(szBytes) )
     }
 
-    private lazy val _onFileIsOriginalChanged = ReactCommonUtil.cbFun2ToJsCb { (_: ReactEventFromInput, checked: Boolean) =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileIsOriginalSet(checked) )
+    private lazy val _onFileIsOriginalChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileIsOriginalSet( e.target.checked ) )
     }
 
     private def _onFileHashChange(mhash: MHash) = {
@@ -116,8 +115,9 @@ class MediaR(
     }
 
     private def _onFileHashFlagChange(mhash: MHash, flag: MFileMetaHashFlag) = {
-      ReactCommonUtil.cbFun2ToJsCb { (_: ReactEventFromInput, checked: Boolean) =>
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileHashFlagSet(mhash, flag, checked) )
+      ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+        val isChecked = e.target.checked
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileHashFlagSet(mhash, flag, isChecked) )
       }
     }
 
@@ -194,8 +194,7 @@ class MediaR(
                   MuiCheckBox(
                     new MuiCheckBoxProps {
                       override val checked = isOrig
-                      @JSName("onChange")
-                      override val onChange2 = _onFileIsOriginalChanged
+                      override val onChange = _onFileIsOriginalChanged
                       override val color = MuiColorTypes.secondary
                     }
                   )
@@ -261,8 +260,7 @@ class MediaR(
                                 val _cb = MuiCheckBox {
                                   new MuiCheckBoxProps {
                                     override val checked = _hasFlag
-                                    @JSName("onChange")
-                                    override val onChange2 = _onFileHashFlagChange(mhash, fmFlag)
+                                    override val onChange = _onFileHashFlagChange(mhash, fmFlag)
                                   }
                                 }
                                 val _cbLabel = fmFlag.toString

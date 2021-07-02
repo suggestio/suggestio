@@ -20,26 +20,26 @@ import scala.util.Try
   * @param opts Options of beaconer.
   */
 case class BtOnOff(isEnabled: Option[Boolean],
-                   opts: MBeaconerOpts = MBeaconerOpts.default) extends IBeaconAction
+                   opts: MBeaconerOpts = MBeaconerOpts.default) extends IBeaconerAction
 
 
 /** Result of subscription for IBleBeaconsApi events.
   * @param apisReady APIs map.
   */
-private[beacon] case class HandleListenRes( apisReady: Map[MRadioSignalType, IBeaconsListenerApi] ) extends IBeaconAction
+private[beacon] case class HandleListenRes( apisReady: Map[MRadioSignalType, IBeaconsListenerApi] ) extends IBeaconerAction
 
 /** Notify timer produced timeout. */
-private[beacon] case class MaybeNotifyAll(timestamp: Long) extends IBeaconAction
+private[beacon] case class MaybeNotifyAll(timestamp: Long) extends IBeaconerAction
 
 
 /** Action for garbage-collection inside beacons data. */
-private[beacon] case object DoGc extends IBeaconAction
+private[beacon] case object DoGc extends IBeaconerAction
 
 /** Action to cleanup internal state after beaconer (de)initialization finished.
   * @param tryEnabled New isEnabled state.
   */
-private[beacon] case class BtOnOffFinish(tryEnabled: Try[Boolean] ) extends IBeaconAction
+private[beacon] case class BtOnOffFinish(tryEnabled: Try[Boolean] ) extends IBeaconerAction
 
 
 /** Result for testing about bluetooth abilities presence. */
-private[beacon] case class HasBleRes(hasBle: Pot[Boolean] ) extends IBeaconAction
+private[beacon] case class HasBleRes(hasBle: Pot[Boolean] ) extends IBeaconerAction

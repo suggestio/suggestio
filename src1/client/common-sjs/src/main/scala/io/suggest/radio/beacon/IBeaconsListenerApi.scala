@@ -21,7 +21,7 @@ trait IBeaconsListenerApi {
   def doDispatch( signals: Seq[MRadioSignalJs],
                   opts: IBeaconsListenerApi.ListenOptions,
                 ): Unit = {
-    opts.onBeacon( RadioSignalsDetected(radioSignalType, signals) )
+    opts.dispatchEvent( RadioSignalsDetected(radioSignalType, signals) )
   }
 
   /** Is hardware/software/etc underlying stuff enabled at the moment? */
@@ -51,7 +51,7 @@ trait IBeaconsListenerApi {
   def isScannerRestartNeeded(v0: IBeaconsListenerApi.ListenOptions,
                              v2: IBeaconsListenerApi.ListenOptions,
                              osFamily: Option[MOsFamily]): Boolean = {
-    (v0.onBeacon eq v2.onBeacon) &&
+    (v0.dispatchEvent eq v2.dispatchEvent) &&
     isScannerRestartNeededSettingsOnly(v0, v2, osFamily)
   }
 
@@ -63,7 +63,7 @@ trait IBeaconsListenerApi {
 object IBeaconsListenerApi extends Log {
 
   case class ListenOptions(
-                            onBeacon          : RadioSignalsDetected => Unit,
+                            dispatchEvent     : IBeaconerAction => Unit,
                             scanMode          : ScanMode,
                           )
   object ListenOptions {

@@ -3,7 +3,7 @@ package io.suggest.sc
 import diode.{Effect, FastEq, ModelRW}
 import diode.data.Pot
 import diode.react.ReactConnector
-import io.suggest.radio.beacon.{BeaconerAh, IBeaconsListenerApi, IBeaconAction, MBeaconerS}
+import io.suggest.radio.beacon.{BeaconerAh, IBeaconsListenerApi, IBeaconerAction, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
@@ -338,7 +338,7 @@ class Sc3Circuit(
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
   private[sc] def beaconerEnabled = beaconerRW.zoom(_.isEnabled contains true)
   private[sc] def beaconsRO       = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
-  private[sc] val hasBleRO        = mkLensZoomRO( beaconerRW, MBeaconerS.hasBle ).zoom( _ contains true )
+  private[sc] val hasBleRO        = mkLensZoomRO( beaconerRW, MBeaconerS.hasBle ).zoom( _ contains[Boolean] true )
 
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
   private[sc] def firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
@@ -720,7 +720,7 @@ class Sc3Circuit(
   /** Функция-роутер экшенов в конкретные контроллеры. */
   override protected val actionHandler: HandlerFunction = { (mroot, action) =>
     val ctlOrNull: HandlerFunction = action match {
-      case _: IBeaconAction             => beaconerAh
+      case _: IBeaconerAction           => beaconerAh
       case _: IGridAction               => gridAh
       case _: IMapsAction               => mapAhs
       case _: IGeoLocAction             => geoLocAh

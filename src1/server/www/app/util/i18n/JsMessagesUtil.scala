@@ -34,9 +34,10 @@ class JsMessagesUtil @Inject() (
 
   /** Локализация для периодов рекламного размещения. */
   private def ADV_DATES_PERIOD_MSGS: IterableOnce[String] = {
-    val static = "Today" ::
-      "Date.choosing" ::
-      "Advertising.period" ::
+    val static =
+      MC.`Today` ::
+      MC.`Date.choosing` ::
+      MC.`Advertising.period` ::
       "Your.ad.will.adv" ::
       "From._date" ::
       "from._date" ::
@@ -60,7 +61,7 @@ class JsMessagesUtil @Inject() (
   private def TAGS_EDITOR_MSGS: IterableOnce[String] = {
     MC.`Add` ::
       MC.`Clear` ::
-      "Tags.choosing" ::
+      MC.`Tags.choosing` ::
       MC.`Add.tags` ::
       MC.`Delete` ::
       Nil
@@ -113,7 +114,7 @@ class JsMessagesUtil @Inject() (
   /** Коды ошибок форм. */
   private def FORM_ERRORS: IterableOnce[String] = {
     MC.`Error` ::
-      "Something.gone.wrong" ::
+      MC.`Something.gone.wrong` ::
       "error.maxLength" ::
       "error.minLength" ::
       "error.required" ::
@@ -124,23 +125,23 @@ class JsMessagesUtil @Inject() (
   private def LK_NODES_MSGS: IterableOnce[String] = {
     val l1 = MC.`Create` ::
       MC.`Name` ::
-      "Identifier" ::
+      MC.`Identifier` ::
       MC.`Beacon.name.example` :: MC.`Wifi.router.name.example` ::
-      "Server.request.in.progress.wait" ::
-      "Example.id.0" ::
+      MC.`Server.request.in.progress.wait` ::
+      MC.`Example.id.0` ::
       MC.`Is.enabled` ::
       MC.`Edit` ::
       MC.`Change` ::
       MC.`Yes` :: MC.`No` ::
-      "Are.you.sure" ::
+      MC.`Are.you.sure` ::
       MC.`Delete` ::
       MC.`Deletion` ::
       MC.`Subnodes` :: MC.`N.nodes` :: MC.`N.disabled` ::
       MC.`Yes.delete.it` ::
-      "New.node" ::
+      MC.`New.node` ::
       "Node.with.such.id.already.exists" ::
       MC.`Type.new.name.for.beacon.0` ::
-      "For.example.0" ::
+      MC.`For.example.0` ::
       MC.`Show.details` ::
       MC.`Close` ::
       MC.`Save` ::
@@ -190,9 +191,9 @@ class JsMessagesUtil @Inject() (
         c.i18nPriceCode :: c.currencyNameI18n :: Nil
       }
     val msgs = {
-      "Total.amount._money" ::
-        "Send.request" ::
-        Nil
+      MC.`Total.amount._money` ::
+      MC.`Send.request` ::
+      Nil
     }
     prices ++ msgs
   }

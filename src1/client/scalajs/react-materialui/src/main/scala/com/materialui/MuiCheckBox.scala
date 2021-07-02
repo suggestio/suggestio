@@ -6,7 +6,6 @@ import org.scalajs.dom.raw.HTMLInputElement
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSName
 
 
 object MuiCheckBox {
@@ -34,8 +33,7 @@ trait MuiCheckBoxProps
   val indeterminateIcon: js.UndefOr[raw.React.Node] = js.undefined
   val inputProps: js.UndefOr[js.Object] = js.undefined
   val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] = js.undefined
-  @JSName("onChange")
-  val onChange2: js.UndefOr[js.Function2[ReactEventFromInput, Boolean, _]] = js.undefined
+  // onChange2 removed: working unstable, $2 == js.undefined, not boolean.
   val `type`: js.UndefOr[String] = js.undefined
   val value: js.UndefOr[String] = js.undefined
 }
