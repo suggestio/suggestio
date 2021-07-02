@@ -720,7 +720,7 @@ class Sc3Circuit(
   /** Функция-роутер экшенов в конкретные контроллеры. */
   override protected val actionHandler: HandlerFunction = { (mroot, action) =>
     val ctlOrNull: HandlerFunction = action match {
-      case _: IBeaconAction          => beaconerAh
+      case _: IBeaconAction             => beaconerAh
       case _: IGridAction               => gridAh
       case _: IMapsAction               => mapAhs
       case _: IGeoLocAction             => geoLocAh
@@ -736,7 +736,7 @@ class Sc3Circuit(
       case _: ISessionAction            => sessionAh
       case _: IGeoTabAction             => geoTabAh
       case _: ICsrfTokenAction          => csrfTokenAh
-      case _: IOsNotifyAction           => notifyAh.get
+      case _: IOsNotifyAction           => notifyAh.orNull
       case _: IScErrorAction            => scErrorDiaAh
       case _: IScAppAction              => dlAppAh
       case _: IScSettingsAction         => scSettingsDiaAh

@@ -67,8 +67,8 @@ class NodeR(
 
   class Backend($: BackendScope[Props, Props_t]) {
 
-    /** Клик по заголовку узла (сворачивание-разворачивание). */
-    private val _onNodeLabelClickCbFSome = Some {
+    /** Click on tree item: expand/collapse/etc. */
+    private val _onNodeLabelClickCbF = {
       ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
         ReactDiodeUtil.dispatchOnProxyScopeCBf($) { p: Props =>
           NodeClick( p.value.node.nodePath )
@@ -112,7 +112,6 @@ class NodeR(
             isAdv       = p.advMode,
             chs         = p.chs,
             asList      = true,
-            onClick     = _onNodeLabelClickCbFSome,
           )
         }( nodeHeaderR.component.apply )
 
@@ -120,6 +119,7 @@ class NodeR(
         new MuiTreeItemProps {
           override val nodeId = _nodeId
           override val label = _nodeHeader.rawNode
+          override val onClick = _onNodeLabelClickCbF
         }
       } (
         ReactCommonUtil.maybeNode(

@@ -7,17 +7,6 @@
     "files": {}
   },
   "installed_plugins": {
-    "8bhsolutions-cordova-plugin-background-geolocation": {
-      "GOOGLE_PLAY_SERVICES_VERSION": "11+",
-      "ANDROID_SUPPORT_LIBRARY_VERSION": "26+",
-      "ICON": "@mipmap/icon",
-      "SMALL_ICON": "@mipmap/icon",
-      "ACCOUNT_NAME": "@string/app_name",
-      "ACCOUNT_LABEL": "@string/app_name",
-      "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
-      "CONTENT_AUTHORITY": "$PACKAGE_NAME",
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "com-darryncampbell-cordova-plugin-intent": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -57,6 +46,9 @@
       "TRANSLATION_PATH": "translations/app/",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
+    "cordova-plugin-network-information": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-plugin-splashscreen": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -67,9 +59,6 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-network-information": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "wifiwizard2": {

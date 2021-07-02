@@ -9,7 +9,6 @@ import diode.{Effect, ModelRW}
 import io.suggest.ble.cdv.CdvBleBeaconsApi
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
-import io.suggest.cordova.background.geolocation.CdvBgGeoLocApi
 import io.suggest.cordova.fetch.CdvFetchHttpResp
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.geo.{GeoLocApi, Html5GeoLocApi}
@@ -110,9 +109,9 @@ class Sc3Module extends Log { outer =>
   /** Функция, возвращающая списки стабильных инстансов реализаций API геолокации. */
   val geoLocApis: () => LazyList[GeoLocApi] = {
     lazy val html5GeoLocApi = wire[Html5GeoLocApi]
-    lazy val cdvBgGeoLocApi = new CdvBgGeoLocApi(
-      getMessages = () => sc3Circuit.internalsInfoRW.value.commonReactCtx.messages,
-    )
+    //lazy val cdvBgGeoLocApi = new CdvBgGeoLocApi(
+    //  getMessages = () => sc3Circuit.internalsInfoRW.value.commonReactCtx.messages,
+    //)
 
     () =>
       val mplat = sc3Circuit.platformRW.value

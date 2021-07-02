@@ -953,6 +953,7 @@ _in.nodes.management=управления узлами
 You.can.tweak.nodes.link.in.0.page=Вы можете настроить список узлов на странице {0}.
 
 Beacon.name.example=Мой маячок
+Wifi.router.name.example=Мой WiFi-роутер
 Identifier=Идентификатор
 Example.id.0=Пример идентификатора: {0}
 Type.new.name.for.beacon.0=Введите новое имя для маячка "{0}".

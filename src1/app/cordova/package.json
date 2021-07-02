@@ -41,18 +41,6 @@
             "cordova-plugin-fetch": {},
             "cordova-plugin-background-fetch": {},
             "cordova-plugin-ble-central": {},
-            "8bhsolutions-cordova-plugin-background-geolocation": {
-                "ALWAYS_USAGE_DESCRIPTION": "To speed-up search for offers nearby",
-                "MOTION_USAGE_DESCRIPTION": "Compass on the map need motion sensor",
-                "GOOGLE_PLAY_SERVICES_VERSION": "11+",
-                "ANDROID_SUPPORT_LIBRARY_VERSION": "26+",
-                "ICON": "@mipmap/icon",
-                "SMALL_ICON": "@mipmap/icon",
-                "ACCOUNT_NAME": "@string/app_name",
-                "ACCOUNT_LABEL": "@string/app_name",
-                "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
-                "CONTENT_AUTHORITY": "$PACKAGE_NAME"
-            },
             "cordova-plugin-geolocation": {
                 "GPS_REQUIRED": "true"
             },
@@ -67,7 +55,6 @@
         ]
     },
     "devDependencies": {
-        "8bhsolutions-cordova-plugin-background-geolocation": "git+https://github.com/ebhsgit/cordova-plugin-background-geolocation.git",
         "com-darryncampbell-cordova-plugin-intent": "^1.3.0",
         "cordova-android": "^9.1.0",
         "cordova-ios": "^6.2.0",

@@ -12,6 +12,7 @@ import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.tree.NodeHeaderR
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.n2.node.MNodeTypes
+import io.suggest.netif.NetworkingUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -70,7 +71,7 @@ class CreateNodeR(
 
   private def __mkTextField(
                              labelI18n: String,
-                             placeHolderI18n: String,
+                             placeHolder: String,
                              conn: ReactConnectProxy[Option[MTextFieldS]],
                              onChanged: js.Function1[ReactEventFromInput, Unit],
                              helpText: js.UndefOr[raw.React.Node] = js.undefined,
@@ -88,7 +89,7 @@ class CreateNodeR(
             override val label = labelI18n
             override val value = _value
             override val error = !_isValid
-            override val placeholder = placeHolderI18n
+            override val placeholder = placeHolder
             override val onChange = onChanged
             override val helperText = helpText
             override val required = true
@@ -252,14 +253,6 @@ class CreateNodeR(
           MuiDialogContent()(
             MuiList()(
 
-              // Название узла (маячка).
-              __mkTextField(
-                crCtx.messages( MsgCodes.`Name` ),
-                crCtx.messages( MsgCodes.`Beacon.name.example` ),
-                s.nameOptC,
-                _onNameChanged,
-              ),
-
               // Type of node.
               {
                 lazy val nodeTypeSelect = s.nodeTypeC { nodeTypeOptProxy =>
@@ -270,7 +263,7 @@ class CreateNodeR(
                       override val label        = crCtx.messages( MsgCodes.`Node.type` )
                       override val value        = nodeTypeOpt.map(_.value).orUndefined
                       override val select       = true
-                      override val error        = !nodeTypeOpt.exists(_.isValid)
+                      override val error        = nodeTypeOpt.fold(false)(!_.isValid)
                       override val SelectProps  = _selectProps
                       override val required     = true
                       override val onChange     = _onNodeTypeChanged
@@ -292,14 +285,46 @@ class CreateNodeR(
                 }
               },
 
-              // id узла/маячка.
-              __mkTextField(
-                crCtx.messages( MsgCodes.`Identifier` ),
-                EddyStone.EXAMPLE_UID,
-                s.idOptC,
-                _onIdChanged,
-                helpText = "EddyStone-UID",
-              ),
+              s.nodeTypeC { nodeTypeOptProxy =>
+                nodeTypeOptProxy
+                  .value
+                  .filter( _.value.nonEmpty )
+                  .whenDefinedEl { nodeTypeFieldState =>
+                    val placeHolderHelperOpt = Option {
+                      nodeTypeFieldState.value match {
+                        case MNodeTypes.BleBeacon.value =>
+                          ("EddyStone UID", EddyStone.EXAMPLE_UID, MsgCodes.`Beacon.name.example`)
+                        case MNodeTypes.WifiAP.value =>
+                          ("Wi-Fi MAC", NetworkingUtil.MAC_ADDR_EXAMPLE, MsgCodes.`Wifi.router.name.example`)
+                        case _ =>
+                          null
+                      }
+                    }
+
+                    React.Fragment(
+                      // Field for ID of beacon/wifi or other node.
+                      __mkTextField(
+                        crCtx.messages( MsgCodes.`Identifier` ),
+                        placeHolder = placeHolderHelperOpt.fold("")(_._2),
+                        s.idOptC,
+                        _onIdChanged,
+                        helpText = placeHolderHelperOpt
+                          .map(_._1)
+                          .orUndefined,
+                      ),
+
+                      // New node name field:
+                      __mkTextField(
+                        crCtx.messages( MsgCodes.`Name` ),
+                        placeHolderHelperOpt.fold("") { m =>
+                          crCtx.messages( m._3 )
+                        },
+                        s.nameOptC,
+                        _onNameChanged,
+                      ),
+                    )
+                  }
+              },
 
               // Выбор родительского узла:
               MuiListItem()(

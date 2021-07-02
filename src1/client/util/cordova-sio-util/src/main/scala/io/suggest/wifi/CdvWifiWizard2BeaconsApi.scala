@@ -27,9 +27,9 @@ final class CdvWifiWizard2BeaconsApi
 
   /** Every N seconds passively scan WI-FI BSS.
     * Also check if WI-FI is enabled. */
-  private def SCAN_PASSIVE_EVERY_SECONDS = 15
+  private def SCAN_PASSIVE_EVERY_SECONDS = 5
 
-  private def SCAN_ACTIVE_EVERY_SECONDS = 4
+  private def SCAN_ACTIVE_EVERY_SECONDS = 1
 
   /** State: interval timer id for  */
   private var _intervalId: Option[Int] = None

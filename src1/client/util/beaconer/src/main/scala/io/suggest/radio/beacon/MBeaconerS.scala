@@ -33,7 +33,7 @@ object MBeaconerS {
         (a.nearbyReport ===* b.nearbyReport) &&
         (a.gcIntervalId ===* b.gcIntervalId) &&
         (a.envFingerPrint ===* b.envFingerPrint) &&
-        (a.bleBeaconsApis ===* b.bleBeaconsApis) &&
+        (a.apis ===* b.apis) &&
         (a.opts ==* b.opts)
     }
   }
@@ -60,7 +60,7 @@ object MBeaconerS {
   * @param afterOnOff After enabling/disablig, this effect must be executed.
   * @param beacons Current beacons scan state (map by beacon id).
   * @param envFingerPrint Beacons scan state current state hash.
-  * @param bleBeaconsApis Current active BLE API.
+  * @param apis Current active BLE API.
   *                      Pot.empty - no initialized API, at the moment.
   *                      Pending - API initialization going in background.
   *                      Error - API failed to initialize.
@@ -80,7 +80,7 @@ case class MBeaconerS(
                        nearbyReport         : BeaconsNearby_t            = Nil,
                        gcIntervalId         : Option[Int]                = None,
                        envFingerPrint       : Option[Int]                = None,
-                       bleBeaconsApis       : Pot[Map[MRadioSignalType, IBeaconsListenerApi]] = Pot.empty,
+                       apis                 : Pot[Map[MRadioSignalType, IBeaconsListenerApi]] = Pot.empty,
                        opts                 : MBeaconerOpts              = MBeaconerOpts.default,
                        hasBle               : Pot[Boolean]               = Pot.empty,
                      )
@@ -122,7 +122,7 @@ case class MBeaconerS(
       .append( nearbyReport.length ).append( DIEZ ).append( COMMA )
       .append( gcIntervalId ).append( COMMA )
       .append( envFingerPrint ).append( COMMA )
-      .append( bleBeaconsApis ).append( COMMA )
+      .append( apis ).append( COMMA )
       .append( opts )
       .append( `)` )
       .toString()

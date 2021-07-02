@@ -55,6 +55,7 @@ object MsgCodes {
   val `Server.request.in.progress.wait` = "Server.request.in.progress.wait"
 
   val `Beacon.name.example` = "Beacon.name.example"
+  val `Wifi.router.name.example` = "Wifi.router.name.example"
   val `Type.new.name.for.beacon.0` = "Type.new.name.for.beacon.0"
 
   def `ofMonth.N.`(month_1_12: Int) = "ofMonth.N." + month_1_12

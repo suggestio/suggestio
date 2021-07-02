@@ -1,5 +1,8 @@
 package io.suggest.cordova.background.geolocation
 
+// TODO 2021-07-02 Cordova plugin "8bhsolutions-cordova-plugin-background-geolocation" was deleted, by now:
+//      Unused plugin; removed useless permissions.
+
 import cordova.plugins.background.geolocation._
 import io.suggest.geo._
 import io.suggest.i18n.MsgCodes

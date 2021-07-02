@@ -129,20 +129,17 @@ object Sc3JsApi extends Log {
 
   private var _wifiIntervalIdU: js.UndefOr[Int] = js.undefined
 
-  private def _wifiEmitter(ids: Seq[String]) = _d {
+  private def _wifiEmitter(ids: Seq[String], rnd: Random = new Random()) = _d {
     // Cleanup currently running timers, if any:
-    for {
-      ivlId <- _wifiIntervalIdU
-    } yield {
+    for (ivlId <- _wifiIntervalIdU) yield {
       DomQuick.clearInterval( ivlId )
+      _wifiIntervalIdU = js.undefined
     }
-    _wifiIntervalIdU = js.undefined
 
     // Activate timed wifi-scan-results imitation:
     if (ids.iterator.nonEmpty) {
       _initializeBeaconer()
 
-      val rnd = new Random()
       // For wifi scan imitation - used single interval for list of networks.
       _wifiIntervalIdU = DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
         val radioType = MRadioSignalTypes.WiFi
@@ -173,12 +170,12 @@ object Sc3JsApi extends Log {
   /** Run emission of Wi-Fi detection signals. */
   @JSExport
   def wifiEmit(count: Int = 0): Unit = {
+    val rnd = new Random()
     _wifiEmitter(
       ids = {
         if (count <= 0) {
           Nil
         } else {
-          val rnd = new Random()
           val macAddrSeed = rnd.nextInt( Int.MaxValue )
 
           Iterator
@@ -189,7 +186,8 @@ object Sc3JsApi extends Log {
             }
             .to( List )
         }
-      }
+      },
+      rnd = rnd,
     )
   }
 

@@ -566,7 +566,7 @@ class BeaconerAh[M](
         var modF = MBeaconerS.opts set m.opts
 
         val fxOpt = for {
-          apis <- v0.bleBeaconsApis.toOption
+          apis <- v0.apis.toOption
           // If scanning options changed, need to restart scan with new options.
           listenOpts2 = _getListenOpts( m.opts )
           apisNeedRestart = apis
@@ -624,7 +624,7 @@ class BeaconerAh[M](
           isEnabled     = v0.isEnabled
             .ready(true)
             .pending(),
-          bleBeaconsApis = v0.bleBeaconsApis.pending(),
+          apis = v0.apis.pending(),
           // Usually, here None - because no beacons expected here.
           gcIntervalId  = ensureGcInterval( v0.beacons.isEmpty, v0.gcIntervalId ),
           opts          = m.opts,
@@ -641,10 +641,10 @@ class BeaconerAh[M](
 
         // Stop BleBeaconer: shut down API, stop other timers, etc.
         for {
-          bbApis <- v0.bleBeaconsApis.iterator
+          apis <- v0.apis.iterator
         } {
           fxAcc ::= Effect {
-            Future.traverse( bbApis.values ) { bbApi =>
+            Future.traverse( apis.values ) { bbApi =>
               bbApi
                 .unListenAllBeacons()
             }
@@ -671,7 +671,7 @@ class BeaconerAh[M](
             .pending(),
           notifyAllTimer    = None,
           envFingerPrint    = BeaconerAh.mkFingerPrint( bcnsNearby2 ),
-          bleBeaconsApis    = Pot.empty,
+          apis              = Pot.empty,
           // Stop gc-timer.
           gcIntervalId      = ensureGcInterval(beacons2.isEmpty, v0.gcIntervalId),
           opts              = m.opts,
@@ -709,7 +709,7 @@ class BeaconerAh[M](
     case m: HandleListenRes =>
       val v0 = value
 
-      if (!v0.bleBeaconsApis.isPending) {
+      if (!v0.apis.isPending) {
         // No API subscription expected.
         logger.error( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, msg = m )
         if (m.apisReady.isEmpty) {
@@ -724,7 +724,7 @@ class BeaconerAh[M](
         }
 
       } else if (m.apisReady.isEmpty && v0.opts.offIfNoApi) {
-        // API activation error.
+        // API activation error, and beaconer's kill-switch enabled in opts. Clear state (disable self).
         val beacons2 = Map.empty[String, MRadioData]
         val gcTimer2 = ensureGcInterval( beacons2.isEmpty, v0.gcIntervalId )
         logger.error( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, msg = m )
@@ -733,7 +733,7 @@ class BeaconerAh[M](
         val falsePot2 = v0.isEnabled.ready(false)
         val v2 = v0.copy(
           isEnabled         = falsePot2,
-          bleBeaconsApis    = Pot.empty.fail( ex ),
+          apis              = Pot.empty.fail( ex ),
           notifyAllTimer    = None,
           beacons           = beacons2,
           gcIntervalId      = gcTimer2,
@@ -752,7 +752,7 @@ class BeaconerAh[M](
         val v2 = v0.copy(
           notifyAllTimer    = Some(timerInfo),
           isEnabled         = truePot2,
-          bleBeaconsApis    = v0.bleBeaconsApis.ready( m.apisReady ),
+          apis              = v0.apis.ready( m.apisReady ),
           gcIntervalId      = ensureGcInterval(v0.beacons.isEmpty, v0.gcIntervalId),
           afterOnOff        = None,
           hasBle            = truePot2,

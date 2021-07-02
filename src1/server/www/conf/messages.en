@@ -943,6 +943,7 @@ _in.nodes.management=nodes management
 You.can.tweak.nodes.link.in.0.page=You can tweak the nodes list in {0} page.
 
 Beacon.name.example=My beacon
+Wifi.router.name.example=My WiFi-router
 Identifier=Identifier
 Example.id.0=Example identifier: {0}
 Type.new.name.for.beacon.0=Type new name for beacon "{0}".

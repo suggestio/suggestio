@@ -327,13 +327,12 @@ class TreeAh[M](
           }
 
         // Залить обновления в дерево, а CreateNodeAh удалит addState для текущего rcvrKey.
+        val loc2 = loc0
+          .insertDownLast( newChild )
         val v2 = (
-          MTree.setNodes {
-            loc0
-              .insertDownLast( newChild )
-              .toTree
-          } andThen
-          MTree.nodesMap.modify(_ + (resp.id -> mns2))
+          (MTree setNodes loc2.toTree) andThen
+          MTree.nodesMap.modify(_ + (resp.id -> mns2)) andThen
+          (MTree.opened set Some(loc2.toNodePath ))
         )(v0)
         updated(v2)
       })

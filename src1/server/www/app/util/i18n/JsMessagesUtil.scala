@@ -125,7 +125,7 @@ class JsMessagesUtil @Inject() (
     val l1 = MC.`Create` ::
       MC.`Name` ::
       "Identifier" ::
-      "Beacon.name.example" ::
+      MC.`Beacon.name.example` :: MC.`Wifi.router.name.example` ::
       "Server.request.in.progress.wait" ::
       "Example.id.0" ::
       MC.`Is.enabled` ::

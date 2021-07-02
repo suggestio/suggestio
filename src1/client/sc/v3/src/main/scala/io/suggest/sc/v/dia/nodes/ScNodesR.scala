@@ -146,6 +146,8 @@ class ScNodesR(
                   }
                 },
               ),
+
+              // TODO On/off buttons for WiFi/Bluetooth:
             ),
 
             // Содержимое диалога.

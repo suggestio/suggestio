@@ -8,7 +8,7 @@ import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
-import io.suggest.n2.node.{MNodeIdType, MNodeTypes}
+import io.suggest.n2.node.{MNodeIdType, MNodeType, MNodeTypes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -92,7 +92,8 @@ class CreateNodeAh[M](
           nodeType = MTextFieldS(
             value = m.nodeType.fold("")(_.value),
             isEnabled = m.nodeType.isEmpty,
-            isValid = m.nodeType.nonEmpty,
+            // If empty - do not attack user with error on first dialog open.
+            isValid = true,
           ),
           // Выставить дефолтовое имя, если передано:
           name = m.nameDflt.fold(mtfEmpty) { name =>
@@ -159,9 +160,14 @@ class CreateNodeAh[M](
       (for {
         v0 <- value
       } yield {
-        val v2 = MCreateNodeS.nodeType
-          .composeLens( MTextFieldS.value )
-          .set( m.nodeType.value )(v0)
+        val modF = MCreateNodeS.nodeType.modify(
+          (MTextFieldS.value set m.nodeType.value) andThen
+          (MTextFieldS.isValid set (MNodeTypes.lkNodesUserCanCreate contains[MNodeType] m.nodeType))
+        )
+
+        // TODO If name is empty or default, reset name to default: "My beacon" or "My wifi router", etc.
+
+        val v2 = modF(v0)
 
         updated( Some(v2) )
       })
