@@ -19,15 +19,18 @@ fi
 set -e
 
 KEYSTORE_ALIAS="io.suggest.appsuggest"
-jarsigner \
-    -verbose \
-    -sigalg "SHA256withRSA" \
-    -digestalg "SHA-256" \
-    -keystore "$KEYSTORE_FILE" \
-    "$OUTFILE" "$KEYSTORE_ALIAS"
 
 ZIPALIGN="$HOME/.BUILD_INFO/android.sdk.build.tools/zipalign"
 rm -f "$FINAL_FILE"
 $ZIPALIGN -v 4 "$OUTFILE" "$FINAL_FILE"
+
+
+## jarsigner: MIN_SIG_SCHEME_FOR_TARGET_SDK_NOT_MET: Target SDK version 30 requires a minimum of signature scheme v2
+apksigner sign \
+    --v4-signing-enabled false \
+    --ks "$KEYSTORE_FILE" \
+    --ks-key-alias "$KEYSTORE_ALIAS" \
+    "$FINAL_FILE"
+
 
 echo "OK: $FINAL_FILE"

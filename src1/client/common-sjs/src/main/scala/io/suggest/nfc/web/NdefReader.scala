@@ -5,7 +5,7 @@ import org.scalajs.dom.experimental.AbortSignal
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
-import scala.scalajs.js.typedarray.DataView
+import scala.scalajs.js.typedarray.{ArrayBuffer, ArrayBufferView}
 import scala.scalajs.js.|
 
 @js.native
@@ -92,7 +92,7 @@ trait NdefRecord extends js.Object {
       id,
       encoding,
       lang: js.UndefOr[String] = js.undefined
-  val data: js.UndefOr[DataView] = js.undefined
+  val data: js.UndefOr[String | ArrayBuffer | ArrayBufferView | NdefMessage] = js.undefined
 
   //TODO def toRecords?
 }

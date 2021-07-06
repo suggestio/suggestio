@@ -14,7 +14,9 @@ import org.scalajs.dom.experimental.AbortController
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.typedarray.DataView
+import scala.scalajs.js.typedarray.{ArrayBuffer, ArrayBufferView, DataView, Uint8Array}
+import scala.scalajs.js.|
+import scala.util.Try
 
 
 /** INfcApi implementation over WebNFC W3C standard.
@@ -89,6 +91,72 @@ final class WebNfcApi extends nfc.INfcApi {
   }
 
 
+  def decodeMessage(message: js.Array[NdefRecord]): nfc.NdefMessage = {
+    nfc.NdefMessage(
+      message = message
+        .iterator
+        .map { ndefRecord =>
+          val (_tnf, _rtdOpt) = recordType2TnfRtd( ndefRecord.recordType )
+
+          new nfc.INdefRecord {
+            override def tnf = _tnf
+            override def recordType = _rtdOpt
+            override def mediaType = ndefRecord.mediaType.toOption
+            override def id = ndefRecord.id.toOption
+            override def encoding = ndefRecord.encoding.toOption
+            override def lang = ndefRecord.lang.toOption
+
+            //override def data: Option[DataView] =
+            override def dataAsString(): Option[String] = {
+              for {
+                data <- ndefRecord.data.toOption
+              } yield {
+                new TextDecoder(
+                  encoding = ndefRecord.encoding getOrElse TextDecoder.Encoding.UTF8,
+                )
+                  .decode( data.asInstanceOf[ArrayBuffer | ArrayBufferView] )
+              }
+            }
+
+            override def dataAsByteView(): Option[DataView] = {
+              for {
+                data <- ndefRecord.data.toOption
+              } yield {
+                if (data.isInstanceOf[DataView]) {
+                  data.asInstanceOf[DataView]
+                } else if (data.isInstanceOf[String]) {
+                  val bytea = data.asInstanceOf[String]
+                    .getBytes
+                    .toJSArray
+                  new Uint8Array( bytea.asInstanceOf[js.Array[Short]] )
+                } else if (data.isInstanceOf[ArrayBuffer] ) {
+                  val buf = data.asInstanceOf[ArrayBuffer]
+                  new DataView( buf )
+                } else if (data.isInstanceOf[ArrayBufferView]) {
+                  val bufV = data.asInstanceOf[ArrayBufferView]
+                  new DataView( bufV.buffer )
+                } else {
+                  throw new IllegalArgumentException( js.typeOf(data) + " " + Try(data.toString).getOrElse("???") )
+                }
+              }
+            }
+
+            override def dataAsRecords(): Option[nfc.NdefMessage] = {
+              for {
+                data <- ndefRecord.data.toOption
+              } yield {
+                val arr = data.asInstanceOf[js.Array[NdefRecord]]
+                require( arr.headOption.fold(true)(_.isInstanceOf[js.Object]), data.toString )
+                decodeMessage( arr )
+              }
+            }
+          }
+        }
+        .to( LazyList )
+    )
+  }
+
+
   override def scan(props: nfc.NfcScanProps): nfc.NfcPendingState = {
     val abrtCtl = new AbortController
 
@@ -107,34 +175,7 @@ final class WebNfcApi extends nfc.INfcApi {
       } yield {
         // Subscribe to ndef reader events:
         ndefReader.onreading = props.onMessage.compose[NdefReadingEvent] { ndefReadEvent =>
-          nfc.NdefMessage(
-            message = ndefReadEvent
-              .message
-              .iterator
-              .map { ndefRecord =>
-                val (_tnf, _rtdOpt) = recordType2TnfRtd( ndefRecord.recordType )
-
-                new nfc.INdefRecord {
-                  override def tnf = _tnf
-                  override def recordType = _rtdOpt
-                  override def mediaType = ndefRecord.mediaType.toOption
-                  override def id = ndefRecord.id.toOption
-                  override def encoding = ndefRecord.encoding.toOption
-                  override def lang = ndefRecord.lang.toOption
-
-                  override def data: Option[DataView] = ndefRecord.data.toOption
-                  override def dataAsString = {
-                    for (dataView <- data) yield {
-                      new TextDecoder(
-                        encoding = ndefRecord.encoding getOrElse TextDecoder.Encoding.UTF8,
-                      )
-                        .decode( dataView )
-                    }
-                  }
-                }
-              }
-              .to( LazyList )
-          )
+          decodeMessage( ndefReadEvent.message )
         }
 
         for (onError <- props.onError) {
@@ -157,37 +198,38 @@ final class WebNfcApi extends nfc.INfcApi {
   }
 
 
-  override def write(props: nfc.NfcWriteProps): nfc.NfcPendingState = {
+  override type WRecord_t = NdefRecord
+
+  override def textRecord(text: String): WRecord_t = {
+    new NdefRecord {
+      override val recordType = NdefRecord.RecordType.TEXT
+      override val data = js.defined( text )
+    }
+  }
+
+  override def uriRecord(uri: String): WRecord_t = {
+    new NdefRecord {
+      override val recordType = NdefRecord.RecordType.URL
+      override val data = js.defined( uri )
+    }
+  }
+
+
+  override def write(message: Seq[WRecord_t], options: nfc.NfcWriteOptions): nfc.NfcPendingState = {
     val abrtCtl = new AbortController
 
     val writeFut = Future {
-      val ndefReader = new NdefReader()
-        ndefReader
-          .write(
-            data = new NdefMessage {
-              override val records: js.Array[NdefRecord] = {
-                props
-                  .message
-                  .iterator
-                  .map { iNdefRecord =>
-                    new NdefRecord {
-                      override val recordType = tnfRtd2RecordType( iNdefRecord.tnf, iNdefRecord.recordType )
-                      override val encoding = iNdefRecord.encoding.orUndefined
-                      override val data = iNdefRecord.data.orUndefined
-                      override val mediaType = iNdefRecord.mediaType.orUndefined
-                      override val id = iNdefRecord.id.orUndefined
-                      override val lang = iNdefRecord.lang.orUndefined
-                    }
-                  }
-                  .toJSArray
-              }
-            },
-            options = new NdefWriteOptions {
-              override val overwrite = props.overwrite
-              override val signal = abrtCtl.signal
-            }
-          )
-          .toFuture
+      new NdefReader()
+        .write(
+          data = new NdefMessage {
+            override val records = message.toJSArray
+          },
+          options = new NdefWriteOptions {
+            override val overwrite = options.overwrite
+            override val signal = abrtCtl.signal
+          }
+        )
+        .toFuture
     }
       .flatten
 

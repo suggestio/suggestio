@@ -5,12 +5,15 @@ import japgolly.univeq.UnivEq
 import org.scalajs.dom
 
 import scala.concurrent.Future
-import scala.scalajs.js.typedarray.DataView
+import scala.scalajs.js.typedarray.{ArrayBufferView, DataView}
 
 /** Interface for NFC APIs.
   * Note that implementation may be STATEFUL, if needed.
   */
 trait INfcApi {
+
+  /** Return type for implementation-side record builders for writing. */
+  type WRecord_t
 
   def isApiAvailable(): Boolean
 
@@ -18,10 +21,14 @@ trait INfcApi {
 
   def scan(props: NfcScanProps): NfcPendingState
 
-  def write(props: NfcWriteProps): NfcPendingState
+  def write(message: Seq[WRecord_t], options: NfcWriteOptions = NfcWriteOptions.empty): NfcPendingState
 
   def canMakeReadOnly: Boolean
   def makeReadOnly(): Future[Unit]
+
+  def textRecord(text: String): WRecord_t
+  def uriRecord(uri: String): WRecord_t
+
 
 }
 
@@ -36,8 +43,11 @@ trait INdefRecord {
   def encoding: Option[String]
   def lang: Option[String]
 
-  def data: Option[DataView]
-  def dataAsString: Option[String]
+  //def data: Option[DataView]
+  def dataAsByteView(): Option[DataView]
+  def dataAsString(): Option[String]
+  def dataAsRecords(): Option[NdefMessage]
+
 }
 
 
@@ -67,10 +77,12 @@ case class NfcPendingState(
                             cancel: Option[() => Unit],
                           )
 
-case class NfcWriteProps(
-                          message: Seq[INdefRecord],
-                          overwrite: Boolean = false,
-                        )
+object NfcWriteOptions {
+  def empty = apply()
+}
+case class NfcWriteOptions(
+                            overwrite  : Boolean = false,
+                          )
 
 
 sealed trait Tnf

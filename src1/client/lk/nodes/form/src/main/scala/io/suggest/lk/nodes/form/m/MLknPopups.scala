@@ -22,7 +22,8 @@ object MLknPopups {
       (a.createNodeS ===* b.createNodeS) &&
       (a.deleteNodeS ===* b.deleteNodeS) &&
       (a.editTfDailyS ===* b.editTfDailyS) &&
-      (a.editName ===* b.editName)
+      (a.editName ===* b.editName) &&
+      (a.nfc ===* b.nfc)
     }
   }
 
@@ -30,6 +31,7 @@ object MLknPopups {
   val deleteNodeS = GenLens[MLknPopups](_.deleteNodeS)
   val editTfDailyS = GenLens[MLknPopups](_.editTfDailyS)
   val editName = GenLens[MLknPopups](_.editName)
+  val nfc = GenLens[MLknPopups](_.nfc)
 
   @inline implicit def univEq: UnivEq[MLknPopups] = UnivEq.derive
 
@@ -42,11 +44,13 @@ object MLknPopups {
   * @param createNodeS Состояние попапа добавления узла, если есть.
   * @param deleteNodeS Состояние попапа удаления узла, если есть.
   * @param editName Состояние редактирования названия.
+  * @param nfc NFC dialog state.
   */
 case class MLknPopups(
                        createNodeS   : Option[MCreateNodeS]             = None,
                        deleteNodeS   : Option[MDeleteConfirmPopupS]     = None,
                        editTfDailyS  : Option[MEditTfDailyS]            = None,
                        editName      : Option[MEditNodeState]           = None,
+                       nfc           : Option[MNfcDiaS]                 = None,
                      )
   extends EmptyProduct

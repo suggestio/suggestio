@@ -211,3 +211,15 @@ case object BeaconsRenderTimer extends ILknBeaconsAction
 
 /** Переключение формы между управлением узлами и размещением рекламной карточки на лету. */
 case class SetAd( adId: Option[String] ) extends LkNodesAction
+
+
+/** Interface for actions for NFC-controller. */
+sealed trait INfcWriteAction extends LkNodesAction
+
+/** Open NFC writer dialog. */
+case class NfcOpenDia( isOpen: Boolean ) extends INfcWriteAction
+
+/** Confirm/cancel NFC writing. */
+case object NfcWrite extends INfcWriteAction
+
+// TODO NfcModeSet(mode: Adv | AdnNode)

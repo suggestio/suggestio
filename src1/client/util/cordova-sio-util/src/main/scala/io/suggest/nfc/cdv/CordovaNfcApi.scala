@@ -10,7 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.nfc.{INfcError, NdefMessage, NfcPendingState, NfcScanProps, NfcWriteProps}
+import io.suggest.nfc.{INfcError, NdefMessage, NfcPendingState, NfcScanProps, NfcWriteOptions}
 import japgolly.univeq._
 
 import scala.concurrent.Future
@@ -100,7 +100,7 @@ object CordovaNfcApi extends Log {
           .map( cdv.NfcUtil.bytesToString )
       }
 
-      override lazy val data: Option[DataView] = {
+      override def dataAsByteView(): Option[DataView] = {
         cdvNdefRec
           .payload
           .toOption
@@ -110,11 +110,13 @@ object CordovaNfcApi extends Log {
           }
       }
 
-      override lazy val dataAsString: Option[String] = {
+      override def dataAsString(): Option[String] = {
         cdvNdefRec.payload
           .toOption
           .map(cdv.NfcUtil.bytesToString)
       }
+
+      override def dataAsRecords(): Option[NdefMessage] = ???
 
       override def mediaType: Option[String] = ???
       override def encoding: Option[String] = ???
@@ -154,6 +156,14 @@ trait CordovaNfcApi extends nfc.INfcApi {
   override def canMakeReadOnly: Boolean = true
   override def makeReadOnly(): Future[Unit] =
     cdv.Nfc.makeReadOnlyF()
+
+  override type WRecord_t = cdv.NdefRecord
+
+  override def textRecord(text: String): WRecord_t =
+    cdv.Ndef.textRecord( text )
+
+  override def uriRecord(uri: String): WRecord_t =
+    cdv.Ndef.uriRecord( uri )
 
 }
 
@@ -197,9 +207,7 @@ class IosNfcApi extends CordovaNfcApi {
   }
 
 
-  override def write(props: NfcWriteProps): NfcPendingState = {
-    ???
-  }
+  override def write(message: Seq[WRecord_t], options: NfcWriteOptions): NfcPendingState = ???
 
 }
 
@@ -269,7 +277,7 @@ class AndroidNfcApi extends CordovaNfcApi {
   }
 
 
-  override def write(props: nfc.NfcWriteProps): nfc.NfcPendingState = {
+  override def write(message: Seq[WRecord_t], options: NfcWriteOptions): NfcPendingState = {
     ???
   }
 

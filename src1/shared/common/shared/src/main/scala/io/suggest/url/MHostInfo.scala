@@ -32,7 +32,7 @@ object MHostInfo {
 
     /** Все хостнеймы, содержащиеся в инстанса MHostInfo.. */
     def allHostNames: Set[String] =
-      Set.empty + hostInfo.nameInt + hostInfo.namePublic
+      Set.empty[String] + hostInfo.nameInt + hostInfo.namePublic
 
   }
 
