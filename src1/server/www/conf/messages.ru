@@ -1179,3 +1179,11 @@ Sc.fsm.event.failed=Необработанное событие
 Radio.beacons=Радиомаяки
 Node.type=Тип узла
 
+Write.nfc.tag=Записать NFC-тег
+Make.nfc.tag.read.only=Запрет перезаписи
+Bring.nfc.tag.to.device=Приблизьте устройство к NFC-тегу...
+You.can.flash.nfc.tag.with.link.to.0=Вы можете записать в NFC-тег ссылку на {0}
+_nfc._to.current.ad=текущую выбранную карточку в выдаче текущего узла.
+_nfc._to.current.node=выдачу текущего узла.
+Also.you.can.make.nfc.tag.non.writable=Также, вы можете запретить дальнейшую запись NFC-тега.
+

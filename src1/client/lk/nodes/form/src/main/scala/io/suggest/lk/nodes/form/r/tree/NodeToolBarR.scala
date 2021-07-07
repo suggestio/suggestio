@@ -24,6 +24,7 @@ class NodeToolBarR(
                    goToLkLinkR          : GoToLkLinkR,
                    deleteBtnR           : DeleteBtnR,
                    nameEditButtonR      : NameEditButtonR,
+                   nfcBtnR              : NfcBtnR,
                    lkNodesFormCssP      : React.Context[LkNodesFormCss],
                   ) {
 
@@ -45,6 +46,12 @@ class NodeToolBarR(
         j
       }
 
+      val isShowScLink = s.ntype.exists(_.showScLink)
+
+      // NFC dialog button:
+      if (isShowScLink && diConfig.nfcApi.nonEmpty)
+        chsAcc ::= nfcBtnR.component.withKey( _incrKey() )( p )
+
       // Кнопка "Перейти..." в ЛК узла:
       if (
         diConfig.showLkLinks() &&
@@ -54,9 +61,8 @@ class NodeToolBarR(
       }
 
       // Кнопка перехода в выдачу узла:
-      if (s.ntype.exists(_.showScLink)) {
+      if (isShowScLink)
         chsAcc ::= nodeScLinkR.component.withKey( _incrKey() )( s.id )
-      }
 
       if (s.isAdmin contains[Boolean] true) {
         val someFalseProps = p.resetZoom( OptionUtil.SomeBool.someFalse )

@@ -15,6 +15,7 @@ import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.pick.MimeConst
 import io.suggest.plist.ApplePlistUtil
 import io.suggest.pwa.manifest.{MPwaDisplayModes, MWebManifest}
+import io.suggest.sc.ScConstants
 import io.suggest.sc.app.{MScAppDlInfo, MScAppGetQs, MScAppGetResp, MScAppManifestQs}
 import io.suggest.sc.pwa.MPwaManifestQs
 import io.suggest.url.MHostInfo
@@ -476,8 +477,8 @@ final class ScApp @Inject()(
         })
           .getOrElse {
             MIosItemMeta(
-              bundleId  = "io.suggest.appsuggest",
-              bundleVersion = "1.0.0",
+              bundleId  = ScConstants.App.APP_ID,
+              bundleVersion = ScConstants.App.appVsn( MOsFamilies.Apple_iOS ),
               kind      = "software",
               title     = "Suggest.io",
               platformId = Some( "com.apple.platform.iphoneos" ),

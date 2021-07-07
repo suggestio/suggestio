@@ -514,4 +514,15 @@ object MsgCodes {
   val `Radio.beacons` = "Radio.beacons"
   val `Node.type` = "Node.type"
 
+  val `This.action.cannot.be.undone` = "This.action.cannot.be.undone"
+
+  val `Write.nfc.tag` = "Write.nfc.tag"
+  val `Make.nfc.tag.read.only` = "Make.nfc.tag.read.only"
+  val `Bring.nfc.tag.to.device` = "Bring.nfc.tag.to.device"
+
+  val `You.can.flash.nfc.tag.with.link.to.0` = "You.can.flash.nfc.tag.with.link.to.0"
+  val `_nfc._to.current.ad` = "_nfc._to.current.ad"
+  val `_nfc._to.current.node` = "_nfc._to.current.node"
+  val `Also.you.can.make.nfc.tag.non.writable` = "Also.you.can.make.nfc.tag.non.writable"
+
 }

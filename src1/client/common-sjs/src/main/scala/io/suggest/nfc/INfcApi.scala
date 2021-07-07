@@ -5,7 +5,7 @@ import japgolly.univeq.UnivEq
 import org.scalajs.dom
 
 import scala.concurrent.Future
-import scala.scalajs.js.typedarray.{ArrayBufferView, DataView}
+import scala.scalajs.js.typedarray.DataView
 
 /** Interface for NFC APIs.
   * Note that implementation may be STATEFUL, if needed.
@@ -24,11 +24,11 @@ trait INfcApi {
   def write(message: Seq[WRecord_t], options: NfcWriteOptions = NfcWriteOptions.empty): NfcPendingState
 
   def canMakeReadOnly: Boolean
-  def makeReadOnly(): Future[Unit]
+  def makeReadOnly(): NfcPendingState
 
   def textRecord(text: String): WRecord_t
   def uriRecord(uri: String): WRecord_t
-
+  def androidApplicationRecord(packageName: String): WRecord_t
 
 }
 
@@ -63,8 +63,9 @@ trait INfcError {
   def domErrorEvent: Option[dom.ErrorEvent]
 }
 case class NfcScanProps(
-                         onMessage: NdefMessage => Unit,
-                         onError: Option[INfcError => Unit] = None,
+                         onMessage        : NdefMessage => Unit,
+                         onError          : Option[INfcError => Unit] = None,
+                         keepSessionOpen   : Option[Boolean]           = None,
                        )
 
 /** @param result Future returns, if underlying scan() call returned.
@@ -76,6 +77,9 @@ case class NfcPendingState(
                             result: Future[_],
                             cancel: Option[() => Unit],
                           )
+object NfcPendingState {
+  @inline implicit def univEq: UnivEq[NfcPendingState] = UnivEq.force
+}
 
 object NfcWriteOptions {
   def empty = apply()

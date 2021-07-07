@@ -47,6 +47,11 @@ trait NodesDiConf extends IMHttpClientConfig {
   /** Define NFC API for use. */
   def nfcApi: Option[INfcApi]
 
+  /** Nodes form running in context of this ad node id.
+    * This differs from conf.adId, because None may be configured, but some adId still presents outside and
+    * may be used in non-ad Nodes-form mode. */
+  def contextAdId(): Option[String]
+
 }
 
 
@@ -67,6 +72,7 @@ object NodesDiConf {
       val webNfc = new WebNfcApi
       Option.when( webNfc.isApiAvailable() )( webNfc )
     }
+    override def contextAdId() = None
   }
 
 }

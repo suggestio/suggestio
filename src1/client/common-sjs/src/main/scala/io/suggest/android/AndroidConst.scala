@@ -26,4 +26,10 @@ object AndroidConst {
     }
   }
 
+
+  object Nfc {
+    /** NFC Android Application Record: NDEF external type name. */
+    final def AAR_EXTERNAL_TYPE = "android.com:pkg"
+  }
+
 }

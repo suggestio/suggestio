@@ -164,6 +164,10 @@ class JsMessagesUtil @Inject() (
       MC.`Show.ad.opened` ::
       MC.`Radio.beacons` ::
       MC.`Node.type` ::
+      MC.`This.action.cannot.be.undone` ::
+      MC.`Write.nfc.tag` :: MC.`Make.nfc.tag.read.only` :: MC.`Bring.nfc.tag.to.device` ::
+      MC.`You.can.flash.nfc.tag.with.link.to.0` :: MC.`_nfc._to.current.ad` :: MC.`_nfc._to.current.node` ::
+      MC.`Also.you.can.make.nfc.tag.non.writable` ::
       Nil
 
     (

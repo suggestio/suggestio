@@ -63,6 +63,9 @@
     },
     "wifiwizard2": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "phonegap-nfc": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

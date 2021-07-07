@@ -63,6 +63,9 @@ trait MuiPropsBase extends js.Object {
   // Attributes with "html" prefix - forwarded into HTML-tags.
   val htmlFor: js.UndefOr[String] = js.undefined
 
+  // Mui v5+
+  val sx: js.UndefOr[MuiSx] = js.undefined
+
 }
 
 object MuiPropsBaseStatic {
@@ -82,3 +85,7 @@ trait MuiPropsBaseComponent extends js.Object {
 trait MuiClassesBase extends js.Object {
   val root: js.UndefOr[String] = js.undefined
 }
+
+
+/** @see [[https://next.material-ui.com/ru/system/basics/#the-sx-prop]] */
+trait MuiSx extends js.Object

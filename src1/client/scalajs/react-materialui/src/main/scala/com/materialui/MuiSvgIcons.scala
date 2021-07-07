@@ -217,12 +217,12 @@ object MuiSvgIcons {
   object ActionLineWeight extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/list", JSImport.Default)
   object ActionList extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/lock-open", JSImport.Default)
-  object ActionLockOpen extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/lock-outline", JSImport.Default)
-  object ActionLockOutline extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/lock", JSImport.Default)
-  object ActionLock extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LockOpen", JSImport.Default)
+  object LockOpen extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LockOutline", JSImport.Default)
+  object LockOutline extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Lock", JSImport.Default)
+  object Lock extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/loyalty", JSImport.Default)
   object ActionLoyalty extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/markunread-mailbox", JSImport.Default)
@@ -1198,8 +1198,8 @@ object MuiSvgIcons {
   object HardwareLaptopWindows extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/laptop", JSImport.Default)
   object HardwareLaptop extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/hardware/memory", JSImport.Default)
-  object HardwareMemory extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Memory", JSImport.Default)
+  object Memory extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Mouse", JSImport.Default)
   object Mouse extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/phone-android", JSImport.Default)

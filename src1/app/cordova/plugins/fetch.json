@@ -168,5 +168,13 @@
     },
     "is_top_level": false,
     "variables": {}
+  },
+  "phonegap-nfc": {
+    "source": {
+      "type": "registry",
+      "id": "phonegap-nfc"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

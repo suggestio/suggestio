@@ -24,7 +24,7 @@ import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.nfc.INfcApi
+import io.suggest.nfc.{FakeNfcApiImpl, INfcApi}
 import io.suggest.nfc.cdv.CordovaNfcApi
 import io.suggest.nfc.web.WebNfcApi
 import io.suggest.proto.http.HttpConst
@@ -413,8 +413,17 @@ class Sc3Module extends Log { outer =>
 
   /** Make instance for NFC API, used by ShowCase. */
   lazy val nfcApiOpt: Option[INfcApi] = {
+    var acc = LazyList.empty[INfcApi]
+
+    if (scalajs.LinkingInfo.developmentMode) {
+      // The last element: fake API implementation
+      val acc0 = acc
+      acc = new FakeNfcApiImpl #:: acc0
+    }
+
+    // Try to detect API, depending on current device.
     val isCordova = CordovaConstants.isCordovaPlatform()
-    val tryRes = Try {
+    Try {
       (if (isCordova) {
         // Cordova API:
         sc3Circuit.platformRW
@@ -426,13 +435,19 @@ class Sc3Module extends Log { outer =>
       })
         .filter(_.isApiAvailable())
     }
+      .fold(
+        {ex =>
+          logger.error( ErrorMsgs.NFC_API_ERROR, ex, isCordova )
+        },
+        {nfcApiOpt =>
+          for (nfcApi <- nfcApiOpt) {
+            val acc1 = acc
+            acc = nfcApi #:: acc1
+          }
+        }
+      )
 
-    for (ex <- tryRes.failed)
-      logger.error( ErrorMsgs.NFC_API_ERROR, ex, isCordova )
-
-    tryRes
-      .toOption
-      .flatten
+    acc.headOption
   }
 
   /** Поддержка lk-nodes. */
@@ -463,12 +478,6 @@ class Sc3Module extends Log { outer =>
             )
           )
         }
-
-        /*outer.sc3SpaRouter.state.routerCtl.set(
-          SioPages.Sc3(
-            nodeId = Some( nodeId ),
-          )
-        )*/
       }
       override def closeForm = Some( Callback(
         outer.sc3Circuit.dispatch( ScNodesShowHide(false) )
@@ -488,6 +497,12 @@ class Sc3Module extends Log { outer =>
         OnlineCheckConn.toEffectPure + retryFx
       }
       override def nfcApi = nfcApiOpt
+      override def contextAdId() = {
+        outer.sc3Circuit
+          .focusedAdRO
+          .value
+          .flatMap(_.id)
+      }
     }
   }
   def getNodesFormCircuit = () => ScNodesFormModule.lkNodesFormCircuit

@@ -18,6 +18,7 @@ class LknPopupsR(
                   editTfDailyR      : EditTfDailyR,
                   nameEditDiaR      : NameEditDiaR,
                   deleteConfirmPopupR: DeleteConfirmPopupR,
+                  nfcDialogR        : NfcDialogR,
                 ) {
 
   type Props = ModelProxy[MLkNodesRoot]
@@ -40,6 +41,9 @@ class LknPopupsR(
 
         // Рендер попапа удаления существующего узла:
         popupsProxy.wrap( _.deleteNodeS )( deleteConfirmPopupR.component.apply ),
+
+        // NFC dialog popup
+        popupsProxy.wrap( _.nfc )( nfcDialogR.component.apply ),
 
       )
     }

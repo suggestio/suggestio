@@ -4,6 +4,10 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
 object Mui {
+
+  @js.native @JSImport("@material-ui/core/Alert", JSImport.Default) object Alert extends js.Any
+  @js.native @JSImport("@material-ui/core/AlertTitle", JSImport.Default) object AlertTitle extends js.Any
+
   @js.native @JSImport("@material-ui/core/AppBar", JSImport.Default) object AppBar extends js.Any
   @js.native @JSImport("@material-ui/core/Autocomplete", JSImport.Default) object AutoComplete extends js.Any
   @js.native @JSImport("@material-ui/core/Avatar", JSImport.Default) object Avatar extends js.Any
@@ -126,6 +130,7 @@ object Mui {
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   @js.native @JSImport("@material-ui/styles/StylesProvider", JSImport.Default) object StylesProvider extends js.Any
   @js.native @JSImport("@material-ui/core/styles", "StyledEngineProvider") object StyledEngineProvider extends js.Any
+
   val SvgIcons = MuiSvgIcons
 
 }

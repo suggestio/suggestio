@@ -6,6 +6,7 @@
 @import ctx.api.{cdn, ctxUtil, n2NodesUtil}
 @import io.suggest.i18n.MsgCodes
 @import io.suggest.sc.pwa.MPwaManifestQs
+@import io.suggest.sc.ScConstants
 
 <!DOCTYPE html>
 <html>
@@ -40,7 +41,7 @@
      TODO Need to handle 3p-domains here in domain path-token.
   *@
   <link rel="alternate"
-        href="android-app://io.suggest.appsuggest/https/suggest.io@controllers.sc.routes.ScSite.geoSite( args.mainScreen )" />
+        href="android-app://@ScConstants.App.APP_ID/@ctxUtil.PROTO/@ctxUtil.HOST_PORT@controllers.sc.routes.ScSite.geoSite( args.mainScreen )" />
 
   @if(!args.syncRender) {
     @* Раскомментить, когда будет рабочий SyncSite для новой выдачи.

@@ -4,9 +4,13 @@ import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp, MLknOpKey, MLknOpValue}
 import io.suggest.n2.node.MNodeType
+import io.suggest.nfc.NfcPendingState
 import io.suggest.radio.MRadioData
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
+import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
+import io.suggest.ueq.JsUnivEqUtil._
 
 import scala.util.Try
 
@@ -217,9 +221,25 @@ case class SetAd( adId: Option[String] ) extends LkNodesAction
 sealed trait INfcWriteAction extends LkNodesAction
 
 /** Open NFC writer dialog. */
-case class NfcOpenDia( isOpen: Boolean ) extends INfcWriteAction
+case class NfcDialog( isOpen: Boolean ) extends INfcWriteAction
 
-/** Confirm/cancel NFC writing. */
-case object NfcWrite extends INfcWriteAction
+
+/** Confirm/cancel NFC writing.
+  *
+  * @param op Requested NFC Operation.
+  *           May be None for cancel/stop any current operation.
+  * @param state Progressing steps.
+  *              unavailable() means cancelling of operation.
+  */
+case class NfcWrite(
+                     op     : Option[MNfcOperation],
+                     state  : Pot[NfcPendingState]    = Pot.empty,
+                   )
+  extends INfcWriteAction
+object NfcWrite {
+  @inline implicit def univEq: UnivEq[NfcWrite] = UnivEq.derive
+  def state = GenLens[NfcWrite](_.state)
+  def cancel = apply( None, Pot.empty.unavailable() )
+}
 
 // TODO NfcModeSet(mode: Adv | AdnNode)

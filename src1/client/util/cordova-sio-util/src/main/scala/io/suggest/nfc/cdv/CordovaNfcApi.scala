@@ -1,5 +1,6 @@
 package io.suggest.nfc.cdv
 
+import cordova.plugins.nfc.{NdefRecord, ScanNdefOpts}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.nfc
 import io.suggest.perm.{BoolOptPermissionState, IPermissionState}
@@ -7,6 +8,7 @@ import io.suggest.sjs.JsApiUtil
 import cordova.plugins.{nfc => cdv}
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
@@ -15,6 +17,7 @@ import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters.JSRichIterableOnce
 import scala.scalajs.js.typedarray.{DataView, Uint8Array}
 
 
@@ -153,9 +156,15 @@ trait CordovaNfcApi extends nfc.INfcApi {
   override def readPermissionState(): Future[IPermissionState] =
     Future successful BoolOptPermissionState( OptionUtil.SomeBool.someTrue )
 
-  override def canMakeReadOnly: Boolean = true
-  override def makeReadOnly(): Future[Unit] =
-    cdv.Nfc.makeReadOnlyF()
+  override def makeReadOnly(): NfcPendingState = {
+    NfcPendingState(
+      result = Future {
+        cdv.Nfc.makeReadOnlyF()
+      }
+        .flatten,
+      cancel = None,
+    )
+  }
 
   override type WRecord_t = cdv.NdefRecord
 
@@ -165,18 +174,36 @@ trait CordovaNfcApi extends nfc.INfcApi {
   override def uriRecord(uri: String): WRecord_t =
     cdv.Ndef.uriRecord( uri )
 
+  override def androidApplicationRecord(packageName: String): NdefRecord =
+    cdv.Ndef.androidApplicationRecord( packageName )
+
+  override def write(message: Seq[WRecord_t], options: NfcWriteOptions): NfcPendingState = {
+    NfcPendingState(
+      result = cdv.Nfc.writeF( message.toJSArray ),
+      cancel = None,
+    )
+  }
+
 }
 
 
 /** phonegap-nfc implementation of NFC-API for iOS platform. */
 class IosNfcApi extends CordovaNfcApi {
 
+  override def canMakeReadOnly = false
+
   override def scan(props: NfcScanProps): NfcPendingState = {
     NfcPendingState(
       result = Future {
         for {
           // Open NFC session for scanning:
-          nfcTag <- cdv.Nfc.scanNdef().toFuture
+          nfcTag <- cdv.Nfc
+            .scanNdef(
+              new ScanNdefOpts {
+                override val keepSessionOpen = props.keepSessionOpen.getOrElseFalse
+              }
+            )
+            .toFuture
         } yield {
           nfcTag.ndefMessage
         }
@@ -206,14 +233,13 @@ class IosNfcApi extends CordovaNfcApi {
     )
   }
 
-
-  override def write(message: Seq[WRecord_t], options: NfcWriteOptions): NfcPendingState = ???
-
 }
 
 
 /** Android implementation for NFC API. */
 class AndroidNfcApi extends CordovaNfcApi {
+
+  override def canMakeReadOnly = true
 
   /** Currently installed NDEF event listener, if any. */
   private var _ndefListener = Pot.empty[js.Function1[cdv.NfcEvent, Unit]]
@@ -274,11 +300,6 @@ class AndroidNfcApi extends CordovaNfcApi {
     }
 
     nfc.NfcPendingState( fut, Some(unScan) )
-  }
-
-
-  override def write(message: Seq[WRecord_t], options: NfcWriteOptions): NfcPendingState = {
-    ???
   }
 
 }

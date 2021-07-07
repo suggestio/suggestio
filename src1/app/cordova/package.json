@@ -47,7 +47,10 @@
             "cordova-plugin-deeplinks": {},
             "com-darryncampbell-cordova-plugin-intent": {},
             "cordova-plugin-network-information": {},
-            "wifiwizard2": {}
+            "wifiwizard2": {},
+            "phonegap-nfc": {
+                "NFC_USAGE_DESCRIPTION": "Read NFC Tags"
+            }
         },
         "platforms": [
             "ios",
@@ -66,6 +69,7 @@
         "cordova-plugin-inappbrowser": "^4.0.0",
         "cordova-plugin-network-information": "^3.0.0",
         "cordova-plugin-wifiwizard2": "github:VijayVaveHealth/WifiWizard2",
-        "es6-promise-plugin": "^4.1.0"
+        "es6-promise-plugin": "^4.1.0",
+        "phonegap-nfc": "^1.2.0"
     }
 }

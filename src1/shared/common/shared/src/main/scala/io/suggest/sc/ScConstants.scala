@@ -1,6 +1,7 @@
 package io.suggest.sc
 
 import io.suggest.common.html.HtmlConstants
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.routes.JsRoutesConst
 
 /**
@@ -10,6 +11,17 @@ import io.suggest.routes.JsRoutesConst
  * Description: Константы для выдачи.
  */
 object ScConstants {
+
+  object App {
+
+    final def APP_ID = "io.suggest.appsuggest"
+
+    def appVsn: PartialFunction[MOsFamily, String] = {
+      // TODO Grep version from cordova/config.xml
+      case MOsFamilies.Android => "4.5.0"
+      case MOsFamilies.Apple_iOS => "4.2.0"
+    }
+  }
 
   /** Принудительный debug выдачи на клиенте, выставляемый compile-time. */
   @inline final def FORCE_DEBUG = false
@@ -229,6 +241,7 @@ object ScConstants {
     def TAG_INFO_FN             = "t"
     val TAG_NODE_ID_FN          = TAG_INFO_FN + ".i"
 
+    // TODO fixJsRouterUrl() - Need to deprecate this crunch method: to reuse cross-platform QsBindable[SioPages.Sc3] and pass pre-rendered qs-string into js-router.
     /** Историческая проблема: названия qs-параметров оторваны от структуры qs-модели состояния.
       * js-роутер o2qs() неправильно сериализует названия qs-полей.
       * Тут фунция ремонта ссылки с состоянием, которая сгенерена через js-роутер и его функцию o2qs(). */

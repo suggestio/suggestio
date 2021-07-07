@@ -5,13 +5,13 @@ import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.{ILkNodesApi, LknFormAh}
-import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh, NameEditAh}
+import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh, NameEditAh, NfcDialogAh}
 import io.suggest.lk.nodes.form.a.tree.{BeaconsAh, TreeAh}
 import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknPopups, MNodeState, MTree, MTreeOuter, MTreeRoles, NodesDiConf}
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
-import io.suggest.lk.nodes.form.m.MCreateNodeS.MCreateNodeSFastEq
+import io.suggest.lk.nodes.form.m.MCreateNodeS.{MCreateNodeSFastEq, nodeType}
 import io.suggest.lk.nodes.form.m.MEditTfDailyS.MTfDailyEditSFastEq
 import io.suggest.lk.nodes.form.m.MTree.MTreeFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
@@ -65,8 +65,18 @@ case class LkNodesFormCircuit(
 
     val treeRW = CircuitUtil.mkLensZoomRW(treeOuterRW, MTreeOuter.tree)
     val beaconsRO = CircuitUtil.mkLensZoomRO( treeOuterRW, MTreeOuter.beacons )
-    val currNodeRO = treeRW.zoom(_.openedRcvrKey)( FastEq.ValueEq )
+    val currNodeRcvrKeyRO = treeRW.zoom(_.openedRcvrKey)( FastEq.ValueEq )
     val openedPathRO = CircuitUtil.mkLensZoomRO( treeRW, MTree.opened )
+    val openedNodeRO = treeRW.zoom( _.openedNode )
+    val nodeIdOptRO = openedNodeRO.zoom( _.flatMap(_.nodeId) )
+
+    val nfcDialogAh = new NfcDialogAh(
+      modelRW     = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.nfc ),
+      diConfig    = diConfig,
+      confRO      = confR,
+      dispatcher  = this,
+      currNodeIdRO = nodeIdOptRO,
+    )
 
     // Реактор на события, связанные с окошком создания узла.
     val createNodeAh = new CreateNodeAh(
@@ -79,7 +89,7 @@ case class LkNodesFormCircuit(
     val deleteNodeAh = new DeleteNodeAh(
       api         = lkNodesApi,
       modelRW     = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.deleteNodeS ),
-      currNodeRO  = currNodeRO,
+      currNodeRO  = currNodeRcvrKeyRO,
       openedPathRO = openedPathRO,
     )
 
@@ -93,7 +103,7 @@ case class LkNodesFormCircuit(
     val nameEditAh = new NameEditAh(
       api = lkNodesApi,
       modelRW = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.editName ),
-      currNodeRO = treeRW.zoom( _.openedNode ),
+      currNodeRO = openedNodeRO,
       beaconsRO = beaconsRO,
     )
 
@@ -126,8 +136,12 @@ case class LkNodesFormCircuit(
       modelRW = zoomRW(identity){ (_, v2) => v2 },
       diConf  = diConfig,
     )
-    composeHandlers( allHandlers, rootAh )
 
+    composeHandlers(
+      allHandlers,
+      rootAh,
+      nfcDialogAh,
+    )
   }
 
   addProcessor( DoNothingActionProcessor[MLkNodesRoot] )

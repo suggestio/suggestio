@@ -52,6 +52,7 @@ trait LkNodesModuleBase
   lazy val distanceValueR = wire[DistanceValueR]
   lazy val beaconInfoR = wire[BeaconInfoR]
   lazy val treeStuffR = wire[TreeStuffR]
+  lazy val nfcBtnR = wire[NfcBtnR]
 
   // pop
   lazy val deleteConfirmPopupR = wire[DeleteConfirmPopupR]
@@ -59,6 +60,7 @@ trait LkNodesModuleBase
   lazy val editTfDailyR = wire[EditTfDailyR]
   lazy val lknPopupsR = wire[LknPopupsR]
   lazy val nameEditDiaR = wire[NameEditDiaR]
+  lazy val nfcDialogR = wire[NfcDialogR]
 
 }
 

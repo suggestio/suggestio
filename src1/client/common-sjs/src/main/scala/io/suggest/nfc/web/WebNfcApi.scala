@@ -5,7 +5,7 @@ import io.suggest.nfc
 import io.suggest.perm.{Html5PermissionApi, IPermissionState}
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2.TextDecoder
+import io.suggest.sjs.dom2.{TextDecoder, TextEncoder}
 import japgolly.univeq._
 import org.scalajs.dom
 import org.scalajs.dom.ErrorEvent
@@ -15,7 +15,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.typedarray.{ArrayBuffer, ArrayBufferView, DataView, Uint8Array}
-import scala.scalajs.js.|
+import scala.scalajs.js.{UndefOr, |}
 import scala.util.Try
 
 
@@ -128,15 +128,13 @@ final class WebNfcApi extends nfc.INfcApi {
                   val bytea = data.asInstanceOf[String]
                     .getBytes
                     .toJSArray
-                  new Uint8Array( bytea.asInstanceOf[js.Array[Short]] )
+                  new DataView( new Uint8Array( bytea.asInstanceOf[js.Array[Short]] ).buffer )
                 } else if (data.isInstanceOf[ArrayBuffer] ) {
                   val buf = data.asInstanceOf[ArrayBuffer]
                   new DataView( buf )
-                } else if (data.isInstanceOf[ArrayBufferView]) {
+                } else {
                   val bufV = data.asInstanceOf[ArrayBufferView]
                   new DataView( bufV.buffer )
-                } else {
-                  throw new IllegalArgumentException( js.typeOf(data) + " " + Try(data.toString).getOrElse("???") )
                 }
               }
             }
@@ -214,6 +212,13 @@ final class WebNfcApi extends nfc.INfcApi {
     }
   }
 
+  override def androidApplicationRecord(packageName: String): NdefRecord = {
+    val encoder = new TextEncoder()
+    new NdefRecord {
+      override val recordType = "android.com:pkg"
+      override val data = encoder.encode( packageName )
+    }
+  }
 
   override def write(message: Seq[WRecord_t], options: nfc.NfcWriteOptions): nfc.NfcPendingState = {
     val abrtCtl = new AbortController
@@ -240,7 +245,7 @@ final class WebNfcApi extends nfc.INfcApi {
   }
 
   override def canMakeReadOnly = false
-  override def makeReadOnly(): Future[Unit] =
-    Future.failed( new UnsupportedOperationException )
+  override def makeReadOnly() =
+    throw new UnsupportedOperationException
 
 }
