@@ -137,7 +137,7 @@ class ItemsTableBodyR(
 
           } else {
             // Cart non-empty. Render items table:
-            var iter = for {
+            val resAcc = (for {
               // For each ad, walk item groups (group per ad):
               (nodeId, nodeItems) <- orderContentJs.adId2itemsMap.iterator
               nodeItemsCount = nodeItems.length
@@ -215,8 +215,8 @@ class ItemsTableBodyR(
                     ReactCommonUtil.maybeNode( isWithPreview )( previewOpt )
                   )
               }
-            }
-            val resAcc = iter.toVdomArray
+            })
+              .toVdomArray
 
             // If order-prices is defined, when render PRICE TOTAL.
             if (orderContent.orderPrices.nonEmpty) {

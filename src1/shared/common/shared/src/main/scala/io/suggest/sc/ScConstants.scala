@@ -18,7 +18,7 @@ object ScConstants {
 
     def appVsn: PartialFunction[MOsFamily, String] = {
       // TODO Grep version from cordova/config.xml
-      case MOsFamilies.Android => "4.5.0"
+      case MOsFamilies.Android => "5.0.0"
       case MOsFamilies.Apple_iOS => "4.2.0"
     }
   }
@@ -238,8 +238,7 @@ object ScConstants {
     // Панель поиска: гео-позишен, [гео]теги.
     final def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN
 
-    def TAG_INFO_FN             = "t"
-    val TAG_NODE_ID_FN          = TAG_INFO_FN + ".i"
+    val TAG_NODE_ID_FN          = "t.i"
 
     // TODO fixJsRouterUrl() - Need to deprecate this crunch method: to reuse cross-platform QsBindable[SioPages.Sc3] and pass pre-rendered qs-string into js-router.
     /** Историческая проблема: названия qs-параметров оторваны от структуры qs-модели состояния.

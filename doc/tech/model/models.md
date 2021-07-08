@@ -21,4 +21,4 @@ Talking in SQL terms, node like a table row, and edges is something like sub-tab
 
 
 ## PostgreSQL models
-
+MItem, MOffer, MTxn, MBalance, etc.

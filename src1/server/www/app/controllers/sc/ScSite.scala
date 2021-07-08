@@ -345,7 +345,7 @@ final class ScSite @Inject() (
       val _rcvrsMapUrlArgsFut = rcvrNodesUrlArgsFut
 
       // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
-      val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
+      val jsMessagesJs = jsMessagesUtil.sc( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
       val _aboutSioNodeIdFut = aboutSioNodeIdFut
 
       val _scriptCacheHashCodeFut = scriptCacheHashCodeFut

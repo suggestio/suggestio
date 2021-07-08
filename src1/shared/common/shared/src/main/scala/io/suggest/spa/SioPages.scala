@@ -131,12 +131,11 @@ object SioPages {
       import io.suggest.sc.ScConstants.ScJsState._
 
       val boolOrFalseB = QsBindable.optionDefaulted(false)
-      val boolOrTrueB = QsBindable.optionDefaulted(true)
 
       new QsBindable[Sc3] {
+        def boolOrTrueB = QsBindable.optionDefaulted(true)
         override def bindF: QsBinderF[Sc3] = {
-
-          { (_, params) =>
+          (_, params) =>
             for {
               nodeIdOptE          <- stringOptB.bindF( NODE_ID_FN, params )
               searchOpenedE       <- boolOrFalseB.bindF( SEARCH_OPENED_FN, params )
@@ -184,7 +183,6 @@ object SioPages {
                 )
               }
             }
-          }
         }
 
         override def unbindF: QsUnbinderF[Sc3] = { (_, value) =>

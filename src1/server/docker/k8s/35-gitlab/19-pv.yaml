@@ -1,0 +1,233 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app: postgresql
+    release: gitlab
+    role: master
+  name: data-gitlab-postgresql-0
+  namespace: gitlab-ce
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  finalizers:
+  - kubernetes.io/pv-protection
+  labels:
+    type: local
+  name: data-gitlab-postgresql-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: data-gitlab-postgresql-0
+    namespace: gitlab-ce
+  hostPath:
+    path: /var/lib/containers/gitlab-ce/postgresql
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    meta.helm.sh/release-name: gitlab
+    meta.helm.sh/release-namespace: gitlab-ce
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app: minio
+    app.kubernetes.io/managed-by: Helm
+    chart: minio-0.4.3
+    heritage: Helm
+    release: gitlab
+  name: gitlab-minio
+  namespace: gitlab-ce
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  finalizers:
+  - kubernetes.io/pv-protection
+  labels:
+    type: local
+  name: gitlab-minio
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: gitlab-minio
+    namespace: gitlab-ce
+  hostPath:
+    path: /var/lib/containers/gitlab-ce/minio
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    meta.helm.sh/release-name: gitlab
+    meta.helm.sh/release-namespace: gitlab-ce
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app: prometheus
+    app.kubernetes.io/managed-by: Helm
+    chart: prometheus-11.16.9
+    component: server
+    heritage: Helm
+    release: gitlab
+  name: gitlab-prometheus-server
+  namespace: gitlab-ce
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  finalizers:
+  - kubernetes.io/pv-protection
+  labels:
+    type: local
+  name: gitlab-prometheus-server
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 3Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: gitlab-prometheus-server
+    namespace: gitlab-ce
+  hostPath:
+    path: /var/lib/containers/gitlab-ce/prometheus
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app: redis
+    component: master
+    heritage: Helm
+    release: gitlab
+    role: master
+  name: redis-data-gitlab-redis-master-0
+  namespace: gitlab-ce
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  finalizers:
+  - kubernetes.io/pv-protection
+  labels:
+    type: local
+  name: redis-data-gitlab-redis-master-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: redis-data-gitlab-redis-master-0
+    namespace: gitlab-ce
+  hostPath:
+    path: /var/lib/containers/gitlab-ce/redis
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app: gitaly
+    release: gitlab
+  name: repo-data-gitlab-gitaly-0
+  namespace: gitlab-ce
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  finalizers:
+  - kubernetes.io/pv-protection
+  labels:
+    type: local
+  name: repo-data-gitlab-gitaly-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 5Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: repo-data-gitlab-gitaly-0
+    namespace: gitlab-ce
+  hostPath:
+    path: /var/lib/containers/gitlab-ce/gitaly
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---

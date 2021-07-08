@@ -5,6 +5,17 @@ Suggest.io have transparent support for Bluetooth Low-Energy (BLE) beacons. User
 - Advertise ads in beacons (including paid advertisements and monetization of other advertisements)
 - View beacon ads-contents in showcase in same way as other ads.
 
+## End-user need Suggest.io mobile app installed
+End-users need installed application on Android/iOS, because bluetooth advertising packets radio-scann
+supported only from operating system API
+Possibly in future from WebBluetooth low-level advertisement scanning will be available.
+
+To help users to install Suggest.io mobile application, flash and use [NFC-tags](nfc.md)
+with Suggest.io data-records inside.
+
+## Background scanning.
+If app is installed, background bluetooth advertisements scan may be done silently
+(for example, once in 15 minutes).
 
 ## Add EddyStone beacon
 There are two ways to register a beacon.
@@ -36,7 +47,6 @@ for change yours ad's visiblity on yours beacons.
 
 
 ## Limitations
-Nothing serious here, just for information.
 - Bluetooth beacon signal detection currently supported in Suggest.io mobile app for Android and iOS.
 - [WebBluetooth implementation status](https://github.com/WebBluetoothCG/web-bluetooth/blob/master/implementation-status.md)
   not very happy about readyness of WebBluetooth in common web-browsers for `watchAdvertisements()`
@@ -48,3 +58,7 @@ Nothing serious here, just for information.
   - iBeacon uses BLE-incompatible frames. So, it is impossible to limit scanning by ServiceUUID to reduce power-consumption on device.
     (e.g. on Android: need to dump & analyze all bluetooth frames - produces heavy load).
     Also, it makes impossible to start bluetooth background scanning (when device sleeps and screen is off).
+- Bluetooth beacons may be not so cheap solution. For infrastructure-level integration,
+  you should check the cost of power-supply questions (like 5V DC) for each beacon, review maintance issues
+  and ensure safety of bluetooth-beacons installed inside building. If you don't need iOS support, you may want
+  to use [Wi-Fi](wifi.md) routers as background radio-beacons.

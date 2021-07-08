@@ -1,7 +1,13 @@
 # Suggest.io: Your offer may be here
 
-Suggest.io is concept solution to simplify create rich eye-candy content, attached to regions on the geo-map or
-Bluetooth (and possibly others) physical radio-beacons.
+Suggest.io is conceptual solution to simply create rich eye-candy cross-screen content and
+simply attach it to physical locations via:
+- [NFC tags](doc/tech/nfc.md)
+- [Wi-Fi zones](doc/tech/wifi.md)
+- Geographical regions on the map
+- [Bluetooth radio-beacons (EddyStone technology)](doc/tech/bluetooth-beacons.md)
+- Internal nodes graph hierarchy
+- etc.
 
 ## Contents
 
@@ -16,14 +22,15 @@ Bluetooth (and possibly others) physical radio-beacons.
 ## About
 
 Suggest.io is an CMS-like + Web + Hybrid Mobile App solution over ElasticSearch storage, used to create design-rich
-screen-fit single-page Web, composed into unified nodes graphs and contexted into bluetooth-beacon signals,
-geolocation regions, parent nodes, etc. Content placements can be monetized using build-in billing system.
+screen-fit single-page Web, composed into unified nodes graphs and contexted into radio-beacon signals,
+geolocation regions, nodes of graph, etc. Content placements can be monetized using build-in billing system.
 
-All server, client and shared code written on Scala.
+Server, client and shared code written on Scala.
 Client-side UI developed using [scalajs-react](https://github.com/japgolly/scalajs-react/)
 and translated into JavaScript using [Scala.js](https://www.scala-js.org/) compiler.
 Server-side code based on [Play! framework](https://playframework.com/).
 
+Some small parts contains non-scala code due to historical reasons.
 
 ## Goals
 - Create a simple representation into the internet for end-users.
@@ -31,9 +38,9 @@ Server-side code based on [Play! framework](https://playframework.com/).
   high and raising cost for small/middle business.
 - More content dimensions.
   Current usual Internet structured into sites, and pages mapped into URLs.
-  Content may be also transparently attached to radio-beacon signals, geographical regions, NFC dots, etc.
+  Content may be also transparently attached to radio-beacon signals (Wi-Fi, bluetooth, etc), geographical regions, NFC-tags, etc.
   Abstract out from virtual and physical dimensions.
-- Extended navigation dimensions: usual site page-to-page navigation may be extended by extending current content view
+- Extended navigation dimensions: usual site page-to-page navigation may be extended via extending current content view
   with new content.
 - Page can contain apps, app can show pages. Single-page view can become app. Abstract over browsers and apps.
 - Many screens -- one content. Abstract over mobiles, tables and PCs screens. Be responsible.

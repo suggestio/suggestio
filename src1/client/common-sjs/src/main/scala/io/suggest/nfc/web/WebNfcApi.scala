@@ -15,8 +15,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.typedarray.{ArrayBuffer, ArrayBufferView, DataView, Uint8Array}
-import scala.scalajs.js.{UndefOr, |}
-import scala.util.Try
+import scala.scalajs.js.|
 
 
 /** INfcApi implementation over WebNFC W3C standard.
