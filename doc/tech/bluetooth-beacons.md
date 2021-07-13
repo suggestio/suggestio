@@ -1,5 +1,7 @@
 # Bluetooth beacons
 
+![Bluetooth beacons app showcase](../images/bluetooth-beacons-showcase.gif)
+
 Suggest.io have transparent support for Bluetooth Low-Energy (BLE) beacons. Users can:
 - Register new EddyStone beacons in Suggest.io system.
 - Advertise ads in beacons (including paid advertisements and monetization of other advertisements)
@@ -14,7 +16,7 @@ To help users to install Suggest.io mobile application, flash and use [NFC-tags]
 with Suggest.io data-records inside.
 
 ## Background scanning.
-If app is installed, background bluetooth advertisements scan may be done silently
+If app installed, background bluetooth advertisements scan may be done silently
 (for example, once in 15 minutes).
 
 ## Add EddyStone beacon

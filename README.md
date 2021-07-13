@@ -1,5 +1,7 @@
 # Suggest.io: Your offer may be here
 
+![Suggest.io showcase](doc/images/showcase-demo-moscow-2021.gif)
+
 Suggest.io is conceptual solution to simply create rich eye-candy cross-screen content and
 simply attach it to physical locations via:
 - [NFC tags](doc/tech/nfc.md)
