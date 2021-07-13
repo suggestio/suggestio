@@ -40,13 +40,6 @@ object BeaconerAh extends Log {
   /** Run garbage collection for lost beacons every N milliseconds. */
   private def GC_LOST_EVERY_MS = 5000
 
-  /**
-    * Forget about the beacon if it is not heard for more than a specified period of time.
-    * On test beacons, "5 seconds" was not enough, there were false positives.
-    * "9 seconds" turned out to be not enough on android at the end of 2020y - the card disappeared & appeared.
-    */
-  private def FORGET_UNSEEN_AFTER_SECONDS = 15
-
   /** How many milliseconds after receiving a notification from the beacon, to start checking the beacon map to
     * look for changes in the environment of the surrounding beacons?
     * The timer is needed to smooth out possible fluctuations at a high density of beacons and to reduce the load on the devices.
@@ -454,18 +447,18 @@ class BeaconerAh[M](
         updated(v2)
 
       } else {
-        val ttlSeconds = BeaconerAh.FORGET_UNSEEN_AFTER_SECONDS
         val nowSeconds = Instant.now().getEpochSecond
 
         // Collect beacon ids for deletion:
         val keys2delete = (for {
-          (k, mbd) <- v0.beacons.iterator
+          (uid, radioData) <- v0.beacons.iterator
           if {
-            val isOk = (nowSeconds - mbd.signal.seenAt.getEpochSecond) < ttlSeconds
+            val ttlSeconds = radioData.signal.signal.typ.lostAfterSeconds
+            val isOk = (nowSeconds - radioData.signal.seenAt.getEpochSecond) < ttlSeconds
             val isToDelete = !isOk
             isToDelete
           }
-        } yield k)
+        } yield uid)
           .toSet
 
         if (keys2delete.isEmpty) {

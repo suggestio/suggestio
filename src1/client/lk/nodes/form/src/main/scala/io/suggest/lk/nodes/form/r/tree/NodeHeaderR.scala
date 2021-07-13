@@ -97,8 +97,8 @@ final class NodeHeaderR(
             case MRadioSignalTypes.WiFi =>
               // Convert signal rssi to one of Wifi-icons:
               if (!beacon.isVisible) {
-                Mui.SvgIcons.SignalWifiOff
-              } else signal.rssi.fold[MuiSvgIcon]( Mui.SvgIcons.SignalWifi0Bar ) { rssi =>
+                Mui.SvgIcons.SignalWifi0Bar
+              } else signal.rssi.fold[MuiSvgIcon]( Mui.SvgIcons.Wifi ) { rssi =>
                 if (rssi > -50) Mui.SvgIcons.SignalWifi4Bar
                 else if (rssi > -60) Mui.SvgIcons.SignalWifi3Bar
                 else if (rssi > -70) Mui.SvgIcons.SignalWifi2Bar

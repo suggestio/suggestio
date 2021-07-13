@@ -23,7 +23,7 @@ simply attach it to physical locations via:
 
 Suggest.io is an CMS-like + Web + Hybrid Mobile App solution over ElasticSearch storage, used to create design-rich
 screen-fit single-page Web, composed into unified nodes graphs and contexted into radio-beacon signals,
-geolocation regions, nodes of graph, etc. Content placements can be monetized using build-in billing system.
+geolocation regions, nodes graph, etc. Content placements can be monetized using build-in billing system.
 
 Server, client and shared code written on Scala.
 Client-side UI developed using [scalajs-react](https://github.com/japgolly/scalajs-react/)

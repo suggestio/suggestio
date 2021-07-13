@@ -17,7 +17,7 @@ package models.msys
   */
 case class NodeCreateParams(
   billInit      : Boolean         = true,
-  extTgsInit    : Boolean         = true,
+  extTgsInit    : Boolean         = false,
   withDfltMads  : Boolean         = true,
   withId        : Option[String]  = None
 )

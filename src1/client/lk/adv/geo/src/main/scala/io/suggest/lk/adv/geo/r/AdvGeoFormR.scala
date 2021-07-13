@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.r
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.price.dsl.PriceDsl
-import io.suggest.css.Css
+import io.suggest.css.{Css, CssR}
 import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
@@ -79,6 +79,9 @@ final class AdvGeoFormR(
       // без <form>, т.к. форма теперь сущетсвует на уровне JS в состоянии diode.
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
+
+        // Render additional static CSS:
+        CssR.component( new LkAdvGeoCss ),
 
         // Рендер компонента документации.
         s.mDocC { docR.component.apply },

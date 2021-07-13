@@ -17,6 +17,11 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     /** Measured distance for EddyStone is 0 cm. */
     override def distance0m = Some( 0 )
     override def nodeType = MNodeTypes.BleBeacon
+
+    /** On test beacons, "5 seconds" was not enough, there were false positives.
+      * "9 seconds" turned out to be not enough on android at the end of 2020y - the card disappeared & appeared.
+      */
+    override def lostAfterSeconds = 15
   }
 
   /** Wi-Fi radio signal. */
@@ -26,6 +31,7 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     override def rssi0 = Some( -27 )
     override def distance0m = Some( 0 )
     override def nodeType = MNodeTypes.WifiAP
+    override def lostAfterSeconds = 30
   }
 
 
@@ -48,6 +54,9 @@ sealed abstract class MRadioSignalType(override val value: String) extends Strin
 
   /** Type of node to create for radio-beacon with current signal type. */
   def nodeType: MNodeType
+
+  /** After how much time of radio-silence, this signal will be marked as lost? */
+  def lostAfterSeconds: Int
 
 }
 

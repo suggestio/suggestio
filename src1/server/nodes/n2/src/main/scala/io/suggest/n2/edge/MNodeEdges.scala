@@ -10,8 +10,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import japgolly.univeq._
 
-import scala.collection.MapView
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -209,9 +207,9 @@ final case class MNodeEdges(
 
   /** Поиск по предикату - частая операция. Тут - карта для оптимизации данного действа.
     * Следует помнить, что эта карта трудно-обратима назад в эджи без шаманства: она содержит в себе дублирующиеся значения, т.к. предикаты имеют наследственность. */
-  lazy val edgesByPred: MapView[MPredicate, Seq[MEdge]] = {
+  lazy val edgesByPred: Map[MPredicate, Seq[MEdge]] = {
     if (out.isEmpty) {
-      MapView.empty
+      Map.empty
     } else {
       (for {
         e <- out.iterator
@@ -220,10 +218,8 @@ final case class MNodeEdges(
       } yield {
         pred -> e
       })
-        .to( LazyList )
-        .groupBy(_._1)
-        .view
-        .mapValues(_.map(_._2))
+        .to( Seq )
+        .groupMap(_._1)(_._2)
     }
   }
 
