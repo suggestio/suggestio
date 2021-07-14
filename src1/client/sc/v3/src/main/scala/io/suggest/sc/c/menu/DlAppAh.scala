@@ -101,7 +101,7 @@ class DlAppAh(
                 retryAction     = Some( MkAppDlInfoReq ),
               )
               SetErrorState( errDiaS )
-            }
+            } + OnlineCheckConn.toEffectPure
             Some(fx)
           },
           {resp =>
@@ -207,7 +207,7 @@ class DlAppAh(
           val r = DlInfoResp( timeStampMs, tryResp )
           Success(r)
         }
-    } + OnlineCheckConn.toEffectPure
+    }
 
     val updF = MDlAppDia.getReq.set {
       Pot.empty[MScAppGetResp].pending(timeStampMs)

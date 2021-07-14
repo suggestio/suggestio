@@ -1000,9 +1000,10 @@ class TailAh(
         scResp <- {
           // Если ошибка запроса, то залить её в состояние
           for (ex <- m.tryResp.toEither.left) yield {
-            // Костыль, чтобы безопасно скастовать MScRoot и M. На деле происходит просто копипаст инстанса, т.к. всегда M == MScRoot.
-            //ActionResult( ares.newModelOpt.map(modelRW.updated), ares.effectOpt )
-            respHandler.handleReqError(ex, rhCtx0)
+            val actionRes0 = respHandler.handleReqError(ex, rhCtx0)
+            // Append OnLineCheckConn effect (check if error related to lost internet connection).
+            val withOnlineCheckFx = (OnlineCheckConn.toEffectPure :: actionRes0.effectOpt.toList).mergeEffects
+            ActionResult( actionRes0.newModelOpt, withOnlineCheckFx )
           }
         }
 

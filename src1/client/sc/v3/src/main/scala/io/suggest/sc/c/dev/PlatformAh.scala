@@ -17,7 +17,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.c.android.ScIntentsAh
@@ -37,9 +37,8 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.url.bind.QsBindableUtilJs
 
-import scala.collection.immutable.AbstractMap
 import scala.concurrent.duration.DurationInt
-import scala.scalajs.js.{JSON, WrappedDictionary}
+import scala.scalajs.js.JSON
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -173,10 +172,6 @@ final class PlatformAh[M](
         ) {
           fxAcc ::= CloseNotify(Nil).toEffectPure
         }
-
-        // В фоне не приходят события уведомления online/offline в cordova. TODO В браузере тоже надо пере-проверять?
-        if (m.isScVisible)
-          fxAcc ::= OnlineCheckConn.toEffectPure
 
         if (v0.isCordova) {
           if (!m.isScVisible) {

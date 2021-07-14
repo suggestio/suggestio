@@ -1,6 +1,7 @@
 package io.suggest.sc.c.dev
 
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
+import io.suggest.common.empty.OptionUtil._
 import io.suggest.dev.MPlatformS
 import io.suggest.event.DomEvents
 import io.suggest.log.Log
@@ -99,7 +100,7 @@ class OnLineAh[M](
                   !(effTyp contains NetworkInformation.EffectiveTypes.`2G`)
                 }
                 // TODO orElse протестировать downline/rtt, если доступны.
-                .getOrElse( true ),
+                .getOrElseTrue,
             )
           },
       )
@@ -132,7 +133,7 @@ class OnLineAh[M](
           .modify( _.ready(m.netInfo) )(v0)
 
         // Запустить зафейленные экшены, если есть.
-        val fxOpt = Option.when( v2.isOnline && retryActionRO.value.nonEmpty) {
+        val fxOpt = Option.when( v2.isOnline && retryActionRO.value.nonEmpty ) {
           RetryError.toEffectPure
         }
 

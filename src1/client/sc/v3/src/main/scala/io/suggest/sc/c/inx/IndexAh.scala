@@ -598,7 +598,6 @@ class IndexAh[M](
     } else {
       // Надо делать запрос, обновив состояние:
       var fxAcc: List[Effect] = onChangeFxs
-      fxAcc ::= OnlineCheckConn.toEffectPure
       fxAcc ::= Effect {
         api
           .pubApi(args)

@@ -12,7 +12,7 @@ import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.JdTag
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{HandleScApiResp, MScRoot, OnlineCheckConn, ResetUrlRoute}
+import io.suggest.sc.m.{HandleScApiResp, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.grid._
 import io.suggest.sc.sc3._
 import io.suggest.sc.u.api.IScUniApi
@@ -495,7 +495,7 @@ class GridAh[M](
                     )
                     Success(r)
                   }
-              } + OnlineCheckConn.toEffectPure
+              }
 
               val v2 = MGridS.core
                 .composeLens( MGridCoreS.ads )
@@ -790,7 +790,7 @@ class GridAh[M](
           )
           Success(r)
         }
-    } + OnlineCheckConn.toEffectPure
+    }
   }
 
 }

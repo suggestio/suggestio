@@ -8,7 +8,7 @@ class LkAdvGeoCss extends StyleSheet.Standalone {
 
   /** To fit popups into geo-map, if too much content, make max-height limited. */
   ".leaflet-popup-content-wrapper" - (
-    maxHeight( 300.px ),
+    maxHeight( 270.px ),    // 0.5 * [radmap container height] - 30px (for popup outer borders, tail, etc) = 270px.
     overflowY.auto,
   )
 

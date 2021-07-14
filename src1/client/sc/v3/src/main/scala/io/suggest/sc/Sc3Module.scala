@@ -494,7 +494,11 @@ class Sc3Module extends Log { outer =>
           force = true,
           onComplete = Some(effect),
         ).toEffectPure
-        OnlineCheckConn.toEffectPure + retryFx
+        val checkOnlineFx = Effect.action {
+          sc3Circuit.dispatch( OnlineCheckConn )
+          DoNothing
+        }
+        checkOnlineFx + retryFx
       }
       override def nfcApi = nfcApiOpt
       override def contextAdId() = {

@@ -15,7 +15,6 @@ import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken}
 import io.suggest.spa.DAction
 import io.suggest.up.{ITransferProgressInfo, MUploadResp}
 import io.suggest.url.MHostUrl
-import monocle.Traversal
 import org.scalajs.dom.File
 
 import scala.util.Try
