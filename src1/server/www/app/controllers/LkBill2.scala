@@ -102,19 +102,21 @@ final class LkBill2 @Inject() (
       } yield {
 
         // Подготовить инфу по ценам на карточку, если она задана.
-        val madTfOpt = for (mad <- madOpt) yield {
-          val bmc = advUtil.getAdModulesCount( mad )
+        val madTfOpt = for {
+          mad <- madOpt
+          blockModulesCount <- advUtil.adModulesCount( mad )
+        } yield {
           val madTf = tfDaily.withClauses(
             tfDaily.clauses
               .view
               .mapValues { mdc =>
                 mdc.withAmount(
-                  mdc.amount * bmc
+                  mdc.amount * blockModulesCount
                 )
               }
               .toMap
           )
-          MAdTfInfo(bmc, madTf)
+          MAdTfInfo(blockModulesCount, madTf)
         }
 
         val args1 = MTfDailyTplArgs(
@@ -221,7 +223,7 @@ final class LkBill2 @Inject() (
 
     // Подготовить в фоне данные по тарифу в контексте текущей карточки.
     val tfDaily4AdFut = FutureUtil.optFut2futOpt(request.adProdReqOpt) { adProdReq =>
-      val bmc = advUtil.getAdModulesCount( adProdReq.mad )
+      val bmc = advUtil.adModulesCount( adProdReq.mad ).get
       for {
         tfInfo <- tfInfoFut
       } yield {

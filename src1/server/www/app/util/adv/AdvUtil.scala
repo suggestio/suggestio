@@ -1,12 +1,11 @@
 package util.adv
 
 import java.time.{DayOfWeek, LocalDate}
-import io.suggest.ad.blk.{BlockHeights, BlockPaddings, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockPaddings, BlockWidths, IBlockSize, IBlockSizes}
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dt.MYmd
 import io.suggest.es.model.EsModel
 import io.suggest.jd.tags.JdTag
@@ -74,31 +73,27 @@ final class AdvUtil @Inject() (
     * @return Площадь карточки.
     *         NoSuchElementException, если узел не является рекламной карточкой.
     */
-  def getAdModulesCount(mad: MNode): Int = {
-    // Тут поддержка разных кар
-    // TODO Следует ли отрабатывать ситуацию, когда нет BlockMeta?
-    val jdt = getAdvMainBlock( mad, blockOnly = OptionUtil.SomeBool.someTrue )
-      .get
-      .rootLabel
-    getAdModulesCount(jdt)
-  }
-  def getAdModulesCount(jdt: JdTag): Int = {
-    val wh = jdt.props1
-      .wh
-      .get
-    getAdModulesCount(wh)
-  }
-  def getAdModulesCount(bm: MSize2di): Int = {
-    val outlinePx = BlockPaddings.default.outlinePx
-    // Мультипликатор по ширине
-    val wmul = bm.width / (BlockWidths.min.value + outlinePx) + 1
-    // Мультипликатор по высоте
-    val hmul = bm.height / (BlockHeights.min.value + outlinePx) + 1
-    wmul * hmul
-  }
-  def maybeAdModulesCount(mad: MNode): Option[Int] = {
-    getAdvMainBlock(mad, blockOnly = OptionUtil.SomeBool.someTrue)
-      .map { m => getAdModulesCount(m.rootLabel) }
+  def adModulesCount(mad: MNode): Option[Int] = {
+    for {
+      mainJdTree  <- getAdvMainBlock( mad, blockOnly = OptionUtil.SomeBool.someTrue )
+      props1 = mainJdTree.rootLabel.props1
+      widthPx     <- props1.widthPx
+      heightPx    <- props1.heightPx
+    } yield {
+      val outlinePx = BlockPaddings.default.outlinePx
+
+      def __getRelSz(fromPx: Int, model: IBlockSizes[_ <: IBlockSize]): Int = {
+        model
+          .withValueOpt( fromPx )
+          .fold( Math.max( 1, widthPx / (model.min.value + outlinePx) ) )(_.relSz)
+      }
+      val wmul = __getRelSz( widthPx, BlockWidths )
+      val hmul = __getRelSz( heightPx, BlockHeights )
+
+      val result = wmul * hmul
+      LOGGER.trace(s"adModulesCount(${mad.id.orNull}) => $result, because width=${widthPx}px=$wmul height=${heightPx}px=$hmul")
+      result
+    }
   }
 
 
@@ -231,20 +226,6 @@ final class AdvUtil @Inject() (
 
 
   /**
-    * Рассчитать ценник размещения рекламной карточки.
-    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
-    *
-    * @param rcvrId id ресивера, тариф которого надо использовать.
-    * @param abc Контекст данных биллинга.
-    * @return Стоимость размещения.
-    */
-  @deprecated("Use calcDateAdvPriceOnTf().price instead.", "2017.apr.10")
-  def calculateAdvPriceOnRcvr(rcvrId: String, abc: IAdvBillCtx): MPrice = {
-    calcDateAdvPriceOnTf(rcvrId, abc).price
-  }
-
-
-  /**
     * Собрать контект rcvr-биллинга для вызова calculateAdvPriceOnRcvr().
     *
     * @param mad Размещаемая рекламная карточка.
@@ -254,7 +235,7 @@ final class AdvUtil @Inject() (
     */
   def rcvrBillCtx(mad: MNode, rcvrIds: Iterable[String], ivl: IDateStartEnd): Future[MAdvBillCtx] = {
     // Посчитать размеры карточки
-    rcvrBillCtx(rcvrIds, ivl, bmc = maybeAdModulesCount(mad))
+    rcvrBillCtx(rcvrIds, ivl, bmc = adModulesCount(mad))
   }
   def rcvrBillCtx(rcvrIds: Iterable[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
     import esModel.api._
@@ -297,7 +278,7 @@ final class AdvUtil @Inject() (
   /** Контекст для бесплатного размещения. */
   def freeRcvrBillCtx(mad: MNode, ivl: IDateStartEnd): MAdvBillCtx = {
     MAdvBillCtx(
-      blockModulesCount = maybeAdModulesCount(mad),
+      blockModulesCount = adModulesCount(mad),
       mcalsCtx          = MCalsCtx.empty,
       tfsMap            = Map.empty,
       ivl               = ivl,

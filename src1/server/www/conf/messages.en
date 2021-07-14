@@ -711,8 +711,9 @@ Ntype.mf=File
 Ntype.e=External
 Ntype.ev=Video
 Ntype.ev=Resource
-Ntypes.calendar=Calendar
-Ntypes.cryptoKey=Crypto.key
+Ntype.calendar=Calendar
+Ntype.cryptoKey=Crypto.key
+Ntype.wifi=Wi-Fi router
 
 Ntypes.p=People
 Ntypes.n=Cabinets
@@ -727,6 +728,7 @@ Ntypes.ev=Videos
 Ntypes.er=Resources
 Ntypes.calendar=Calendars
 Ntypes.cryptoKey=Crypto.keys
+Ntypes.wifi=Wi-Fi routers
 Nodes=Nodes
 
 edge.predicate.a=Owner
