@@ -13,7 +13,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.log.Log
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -49,6 +49,10 @@ class QdRrrHtml(
                )
   extends Log
 {
+
+  private lazy val stopPropagationCbF = ReactCommonUtil.stopPropagationCB _
+  private lazy val anchorAttrs: TagMod =
+    ^.onClick ==> stopPropagationCbF
 
   /** Дополнения, необходимые для реализации [[IQdRrr]]. */
   trait QdRrrBase extends IQdRrr {
@@ -104,6 +108,7 @@ class QdRrrHtml(
           renderedTag = <.a(
             // Если редактор открыт, то не надо рендерить ссылку кликабельной. Просто пусть будет подсказка.
             _hrefAttr := link,
+            anchorAttrs,
             renderedTag,
           )
         }
@@ -475,6 +480,7 @@ class QdRrrHtml(
           var hrefAttrs = List[TagMod](
             keyTm,
             qdRrr._hrefAttr := link,
+            anchorAttrs,
             acc
           )
           for (textStyle <- textStyleOpt) {

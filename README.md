@@ -76,7 +76,7 @@ TODO Pre-build images/binaries not-yet ready, so see [Development](#development)
   - `cat evolutions/default/schema.sql | sudo -U postgres psql`
 3. Create server config:
   - `cp conf/application.conf.example conf/application.conf`
-4. Edit `appliction.conf` file according to your needs. Type your admin email into `superusers.emails`.
+4. Edit `application.conf` file according to your needs. Type your admin email into `superusers.emails`.
 5. Start the server:
   - `sbt`
   - `project www`
