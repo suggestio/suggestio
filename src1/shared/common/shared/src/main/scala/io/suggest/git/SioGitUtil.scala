@@ -34,7 +34,20 @@ object SioGitUtil {
 
       val rev = ("git rev-parse --short HEAD" !!).trim
 
-      s"$dateTime.$rev.$revCounter"
+      val sb = new StringBuilder(36, dateTime)
+        .append('.')
+        .append(rev)
+
+      // Gitlab since ~ v13 prefers shallow clone, so revcounter always reports "50" on gitlab ci/cd build. Drop revCounter, if useless.
+      if (
+        revCounter.nonEmpty &&
+        scala.util.Try( revCounter.toInt )
+          .toOption
+          .exists(_ > 1000)
+      )
+        sb.append('.').append(revCounter)
+
+      sb.toString()
     }
       .getOrElse("???")
 

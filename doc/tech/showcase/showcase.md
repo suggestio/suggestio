@@ -10,4 +10,13 @@ Showcase also contains support for hybrid mobile apps via [Cordova framework](ht
 So, there are Suggest.io showcase apps for Android and iOS, containing same js-files inside.
 
 ## Responsive
+![Responsive Showcase: UM-Digital](../../images/showcase-umdigital-responsive-ru.gif)
 Showcase aimed to support wide range of screens; to be responsive for screen resizing, rotation, scaling, etc.
+Showcase content automatically resized including its CSS-styles.
+
+## Functions
+- Geo.map and search on right bar.
+- Geo.tags and node-level tags support.
+- Nodes management window. For managing user nodes, scanning wi-fi/bluetooth, writing NFC-tags.
+- Login/signup form.
+- etc.
