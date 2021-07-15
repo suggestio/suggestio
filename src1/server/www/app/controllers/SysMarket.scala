@@ -658,5 +658,18 @@ final class SysMarket @Inject() (
     }
   }
 
+
+  /** SuperUser wants to temporary drop superuser priveledges. */
+  def setNoSu() = csrf.Check {
+    isSu().async { implicit request =>
+      for {
+        call <- identUtil.redirectCallUserSomewhere( request.user.personIdOpt.get )
+      } yield {
+        Redirect( call )
+          .addingToSession( MSessionKeys.NoSu.value -> true.toString )
+      }
+    }
+  }
+
 }
 

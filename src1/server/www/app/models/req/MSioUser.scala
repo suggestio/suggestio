@@ -14,15 +14,18 @@ import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.inject.Injector
+import play.api.mvc.RequestHeader
 import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.mdr.MdrUtil
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -41,6 +44,9 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 sealed trait ISioUser {
 
+  /** Optional request header instance, if any. */
+  def requestHeaderOpt: Option[RequestHeader]
+
   /** id текущего юзера, если известен. */
   def personIdOpt: Option[String]
 
@@ -57,7 +63,7 @@ sealed trait ISioUser {
   def personNodeFut: Future[MNode]
 
   /** Является ли текущий юзер суперпользователем? */
-  def isSuper: Boolean
+  def personIdIsSuperUser: Boolean
 
   /** id контракта, записанный к узле юзера. */
   def contractIdOptFut: Future[Option[Gid_t]]
@@ -86,16 +92,43 @@ sealed trait ISioUser {
   override def toString: String = s"U(${personIdOpt.getOrElse("")})"
 
 }
+object ISioUser {
+  implicit final class SioUserExt( private val user: ISioUser ) extends AnyVal {
+
+    /** Is user have session NoSu flag inside session? */
+    def isForceNoSu: Boolean = {
+      user
+        .requestHeaderOpt
+        .exists {
+          _.session
+            .get( MSessionKeys.NoSu.value )
+            .exists { noSuValue =>
+              Try( noSuValue.toBoolean ) getOrElse false
+            }
+        }
+    }
+
+
+    /** Is current user have superuser capabilities? */
+    def isSuper: Boolean = {
+      user.personIdIsSuperUser && !isForceNoSu
+    }
+
+  }
+}
 
 
 /** Empty user context. Used as fast shared singleton implementation of [[ISioUser]] for anonymous users. */
 final class MSioUserEmpty extends ISioUser {
+
+  override def requestHeaderOpt = None
+
   private def _futOptOk[T] = Future.successful(Option.empty[T])
 
   override def personIdOpt          = None
   override def mContractOptFut      = _futOptOk[MContract]
   override def personNodeOptFut     = _futOptOk[MNode]
-  override def isSuper              = false
+  override def personIdIsSuperUser  = false
   override def contractIdOptFut     = _futOptOk[Gid_t]
   override def isAuth               = false
   override def balancesFut         = Future.successful(Nil)
@@ -119,7 +152,7 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
 
   override def isAuth = personIdOpt.isDefined
 
-  override def isSuper: Boolean = {
+  override def personIdIsSuperUser: Boolean = {
     personIdOpt.exists { personId =>
       msuStatics.mSuperUsers.isSuperuserId(personId)
     }
@@ -277,7 +310,7 @@ trait MSioUserLazyFactory {
     *
     * @param personIdOpt id текущего юзера, если есть.
     */
-  def apply(personIdOpt: Option[String]): MSioUserLazy
+  def apply( personIdOpt: Option[String], requestHeader: RequestHeader ): MSioUserLazy
 }
 
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
@@ -308,10 +341,13 @@ final class MsuStatic @Inject()(
   */
 final case class MSioUserLazy @Inject() (
                                           @Assisted override val personIdOpt  : Option[String],
+                                          @Assisted requestHeader: RequestHeader,
                                           injector: Injector,
                                         )
   extends ISioUserT
 {
+
+  override def requestHeaderOpt = Some( requestHeader )
 
   /** Зависимости, необходимые для успешной работы ленивых полей инстанса. */
   override lazy val msuStatics = injector.instanceOf[MsuStatic]
@@ -321,7 +357,7 @@ final case class MSioUserLazy @Inject() (
   override lazy val contractIdOptFut  = super.contractIdOptFut
   override lazy val mContractOptFut   = super.mContractOptFut
   override lazy val balancesFut       = super.balancesFut
-  override lazy val isSuper           = super.isSuper
+  override lazy val personIdIsSuperUser = super.personIdIsSuperUser
 
   override lazy val lkCtxDataFut      = super.lkCtxDataFut
   override lazy val lkMdrCountOptFut  = super.lkMdrCountOptFut
@@ -345,7 +381,7 @@ class MSioUsers @Inject() (
   extends MacroLogsImpl
 {
 
-  val empty = new MSioUserEmpty
+  val empty: ISioUser = new MSioUserEmpty
 
   /**
     * factory-метод с дефолтовыми значениями некоторых аргументов.
@@ -353,14 +389,10 @@ class MSioUsers @Inject() (
     * @param personIdOpt Опциональный id юзера. Экстрактиться из сессии с помощью SessionUtil.
     * @return Инстанс какой-то реализации [[ISioUser]].
     */
-  def apply(personIdOpt: Option[String]): ISioUser = {
+  def apply(personIdOpt: Option[String], requestHeader: RequestHeader): ISioUser = {
     // Частые анонимные запросы можно огулять одним общим инстансом ISioUser.
-    if (personIdOpt.isEmpty) {
-      empty
-    } else {
-      factory(
-        personIdOpt = personIdOpt,
-      )
+    personIdOpt.fold( empty ) { _ =>
+      factory( personIdOpt, requestHeader )
     }
   }
 

@@ -139,12 +139,12 @@ final class CanDownloadFile @Inject()(
       }
 
       // Проверить, соотносится ли запрос к файлу с текущим узлом?
-      storageCheckE <- cdnUtil.checkStorageForThisNode( storage )
+      _ <- cdnUtil.checkStorageForThisNode( storage )
 
       // Поискать инфу по распределённому хранилищу:
       storageInfoOpt <- _getStorageInfo( edgeMedia )(request)
 
-      user = mSioUsers( dlQs.personId )
+      user = mSioUsers( dlQs.personId, request )
 
       // TODO Когда будет проверка доступа юзера для скачивания, запилить её здесь.
 

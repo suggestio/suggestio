@@ -63,7 +63,7 @@ final class CanUpload @Inject()(
     lazy val logPrefix = s"[${System.currentTimeMillis}]:"
 
     // 2017.oct.19 Для кукисов затянуты гайки, и они теперь точно не передаются на ноды. Берём данные сессии прямо из подписанного URL запроса.
-    val user = mSioUsers( upTg.personId )
+    val user = mSioUsers( upTg.personId, request0 )
     if (ctxIdOpt.exists(ctxId => !mCtxIds.validate(ctxId, user.personIdOpt))) {
       val ctxId = ctxIdOpt.get
       // Юзер прислал неправильный ctxId. Такое возможно, если юзер перелогинился в одной вкладке, но не в другой. Либо попытка подмены.
@@ -156,7 +156,7 @@ final class CanUpload @Inject()(
     val nowTtl = uploadUtil.rightNow()
     lazy val logPrefix = s"_chunk()#${nowTtl.toMillis}:"
 
-    val user = mSioUsers( upTg.personId )
+    val user = mSioUsers( upTg.personId, request0 )
     val mreq0 = MReq( request0, user )
     LOGGER.trace(s"$logPrefix\n upTg = $upTg\n upChunkQs = $upChunkQs ip=${mreq0.remoteClientAddress}")
 

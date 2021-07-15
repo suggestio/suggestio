@@ -49,6 +49,14 @@ Some small parts contains non-scala code due to historical reasons.
 - Become distributed. Current implementation designed with horizontal cluster scaling in mind.
   In future become more federated/distributed using blockchains/git/activitypub/etc as underlying storage.
 
+## Parts
+There are three main parts of Suggest.io:
+- [Showcase](doc/tech/showcase/showcase.md) - Suggest.io start page (JS WebApp & Hybrid mobile app).
+- Private cabinet: registered user area. Create and edit nodes/content/etc.
+- System: restricted technical area for super-users and developers.
+
+Also, there are shared client-server Scala-code, placed into [src/shared](src1/shared) directory.
+Such code includes common models and utilities, protocols, etc.
 
 ## Requirements
 

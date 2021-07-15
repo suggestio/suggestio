@@ -19,6 +19,7 @@
 @import helper._
 @import io.suggest.i18n.MsgCodes
 @import io.suggest.n2.edge.MPredicates
+@import japgolly.univeq._
 
 @* Подшаблон генерации квадратной кнопки. *@
 @btn1(href: String, paddingPx: Int)(btnText: Html) = {
@@ -194,6 +195,13 @@
         btnText = Some( "Сбросить кэш узла" )
       )
     </p>
+
+    @if(request.user.personIdOpt ==* mnode.id) {
+      @stuff._deleteSmthFormBtnTpl(
+        call    = CSRF( routes.SysMarket.setNoSu() ),
+        btnText = Some("Сброс привелегий суперпользователя (сессия)"),
+      )
+    }
 
   }
 

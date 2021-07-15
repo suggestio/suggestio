@@ -119,10 +119,7 @@ final class Ident @Inject() (
         Ok( toPage.toString )
       }
 
-      resp.removingFromSession(
-        MSessionKeys.PersonId.value,
-        MSessionKeys.Timestamp.value
-      )
+      resp.removingFromSession( MSessionKeys.removeOnLogout.map(_.value): _* )
     }
   }
 

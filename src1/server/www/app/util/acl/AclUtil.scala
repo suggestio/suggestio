@@ -35,7 +35,7 @@ final class AclUtil @Inject() (
       // Это не sio-реквест, а play-реквест или какой-то другой инстанс. Поэтому user внутри нема.
       case _ =>
         val personIdOpt = sessionUtil.getPersonId(request)
-        mSioUsers(personIdOpt)
+        mSioUsers( personIdOpt, request )
     }
   }
 

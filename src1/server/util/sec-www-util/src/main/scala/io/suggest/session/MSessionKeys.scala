@@ -24,10 +24,16 @@ object MSessionKeys extends StringEnum[MSessionKey] {
   /** Изначально было ключом к secure-social, который сохраняет ссылку для возврата юзера через session. */
   case object ExtLoginData extends MSessionKey("x")
 
+  /** Ignore and suppress super-user capabilities. Super-user becomes normal user. */
+  case object NoSu extends MSessionKey("u")
 
   override val values = findValues
 
-  def onlyLoginIter = values.iterator.filter(_.isLogin)
+  def onlyLoginIter: Iterator[MSessionKey] =
+    values.iterator.filter(_.isLogin)
+
+  def removeOnLogout: List[MSessionKey] =
+    PersonId :: Timestamp :: NoSu :: ExtLoginData :: Nil
 
 }
 

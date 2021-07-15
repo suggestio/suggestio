@@ -1,7 +1,8 @@
 package util.acl
 
 import io.suggest.id.login.MLoginTabs
-import javax.inject.{Inject, Singleton}
+
+import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MReq}
@@ -19,13 +20,13 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 final class IsSu @Inject() (
                              injector               : Injector,
-                             aclUtil                : AclUtil,
-                             protected val reqUtil  : ReqUtil,
                            )
   extends MacroLogsImpl
-{
+{ outer =>
 
   private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  protected lazy val reqUtil = injector.instanceOf[ReqUtil]
 
   def logBlockedAccess(req: IReqHdr): Unit = {
     import req._
