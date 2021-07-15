@@ -140,8 +140,8 @@ final class NodeHeaderR(
             // Convert node-type to svg-icon:
             MuiListItemIcon()(
               (ntype match {
-                case MNodeTypes.WifiAP                        => __radioToIconOpt getOrElse Mui.SvgIcons.Wifi
-                case MNodeTypes.BleBeacon                     => _BLUETOOTH_ICON
+                case MNodeTypes.RadioSource.WifiAP            => __radioToIconOpt getOrElse Mui.SvgIcons.Wifi
+                case MNodeTypes.RadioSource.BleBeacon         => _BLUETOOTH_ICON
                 case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
                 case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
                 case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined

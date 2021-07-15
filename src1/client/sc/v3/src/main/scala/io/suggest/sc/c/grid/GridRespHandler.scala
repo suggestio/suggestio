@@ -93,8 +93,11 @@ final class GridRespHandler(
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
     val reusableAdsMap: Map[String, MScAdData] = {
       if (
-        isCleanLoad &&
-        (isSilentOpt contains[Boolean] true) &&
+        // When grid patching or silent update, or totally clean load, it is allowed to re-use ads. Possibly, this ugly conditions need rethink.
+        (
+          isCleanLoad ||
+          (isSilentOpt contains[Boolean] true)
+        ) &&
         gridResp.ads.nonEmpty &&
         g0.core.ads.adsTreePot.nonEmpty
       ) {
@@ -185,14 +188,6 @@ final class GridRespHandler(
     val onlyMatchingInfoOpt = loadAdsAction
       .flatMap(_.onlyMatching)
 
-    val newScAdsKeyed = (for {
-      (scAd, i) <- newScAds.iterator.zipWithIndex
-      gridKey: GridAdKey_t = gridAds0.idCounter + i
-    } yield {
-      gridKey -> scAd
-    })
-      .to( List )
-
     val newScAdPtrsEph = newScAds.toEphemeralStream
 
     val gridAds2 = (for {
@@ -241,6 +236,7 @@ final class GridRespHandler(
                             .fold(false)( newScAdsById.contains )
                       }
                     }
+                    // If some Ad is dropped & re-added, first check reusableAds Map.
                     isDrop
                   }
 

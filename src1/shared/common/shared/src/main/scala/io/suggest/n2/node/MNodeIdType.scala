@@ -29,7 +29,7 @@ object MNodeIdType {
     * Before 2021-06-24, only bluetooth radio-beacons was supported, and node types was not declared in API.
     */
   def bleBeaconFallback(beaconId: String): MNodeIdType =
-    MNodeIdType( beaconId, MNodeTypes.BleBeacon )
+    MNodeIdType( beaconId, MNodeTypes.RadioSource.BleBeacon )
 
 
   implicit def nodeIdTypeQsB(implicit

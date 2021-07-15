@@ -4,7 +4,7 @@ Suggest.io have support for using Wi-Fi zones as radio-beacons for attaching con
 Feature can be used to place content information inside buildings in zero-cost way
 (re-using current wi-fi infrastructure).
 
-No Wi-Fi router tweaks needed, publicitly-available MAC-addresses are used for regions identification.
+No Wi-Fi router tweaks needed, because only publicitly-available MAC-addresses are used for regions identification.
 
 ## End-users need Suggest.io mobile app installed
 Yes, end-users need installed application on Android/iOS, because Wi-Fi radio-scanning supported only

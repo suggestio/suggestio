@@ -164,10 +164,7 @@ final class MdrUtil @Inject() (
 
         // Запуск гуляния по графу узлов в поиске юзеров:
         walkAcc2 <- {
-          val goUpNodeTypes = Set[MNodeType](
-            MNodeTypes.AdnNode,
-            MNodeTypes.BleBeacon
-          )
+          val goUpNodeTypes: Set[MNodeType] = MNodeTypes.RadioSource.children.toSet + MNodeTypes.AdnNode
 
           mNodes.walkCache( MdrNotifyAcc(mdrCtx.rcvrIds), mdrCtx.rcvrIds ) { (acc0, mnode) =>
             // Сюда приходят узлы, которые скорее всего есть в seen - это нормально. По идее, это можно удалить, используя готовое значение из акка.

@@ -38,7 +38,7 @@ object MLknBeaconsScanReq {
           path
             .format[List[String]]
             .map(_.map { nodeId =>
-              MNodeIdType(nodeId, MNodeTypes.BleBeacon)
+              MNodeIdType.bleBeaconFallback( nodeId )
             })
         }
         OFormat( readsCompat, formatNormal )
@@ -93,18 +93,20 @@ object MLknBeaconsScanReq {
       {
         val id = nodeIdType.nodeId.trim
         nodeIdType.nodeType match {
-          case MNodeTypes.WifiAP =>
+          case MNodeTypes.RadioSource.WifiAP =>
             NetworkingUtil.validateMacAddress( id )
-          case MNodeTypes.BleBeacon =>
+          case MNodeTypes.RadioSource.BleBeacon =>
             BeaconUtil.EddyStone.validateBeaconId( id )
           case _ =>
             _NODE_TYPE_UNSUPPORTED.failureNel
         }
       } |@| {
         Validation.liftNel( nodeIdType.nodeType )(
-          {
-            case MNodeTypes.WifiAP | MNodeTypes.BleBeacon => false
-            case _ => true
+          { ntype =>
+            val isOk = MNodeTypes.RadioSource.children.exists { radioType =>
+              ntype eqOrHasParent radioType
+            }
+            !isOk
           },
           _NODE_TYPE_UNSUPPORTED
         )

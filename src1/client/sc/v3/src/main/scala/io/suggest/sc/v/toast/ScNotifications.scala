@@ -52,7 +52,9 @@ final class ScNotifications(
             adMatchInfo <- adData.info.matchInfos.iterator
             if adMatchInfo.predicates.exists(_ eqOrHasParent MPredicates.Receiver)
             adMatchNodeInfo <- adMatchInfo.nodeMatchings.iterator
-            if adMatchNodeInfo.ntype contains MNodeTypes.BleBeacon
+            if adMatchNodeInfo.ntype.exists { adMatchNType =>
+              adMatchNType eqOrHasParent MNodeTypes.RadioSource
+            }
             bleBeaconNodeId <- adMatchNodeInfo.nodeId.iterator
             // Есть id маячка. Найти в текущей инфе указанный маячок.
             uidBeacon <- mroot.dev.beaconer
@@ -94,7 +96,7 @@ final class ScNotifications(
         val unNotifiedAdsCount = unNotifiedAds.length
 
         val toast = MOsToast(
-          uid = getClass.getSimpleName + `.` + MNodeTypes.BleBeacon.value,
+          uid = getClass.getSimpleName + `.` + MNodeTypes.RadioSource.value,
           // Заголовок прост: вывести, что найдено сколько-то предложений рядом
           title = {
             // TODO Переехать на Mozilla Fluent, чтобы отрабатывать детали локализации на уровне каждого конкретного языка.

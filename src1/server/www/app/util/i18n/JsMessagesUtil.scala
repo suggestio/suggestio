@@ -156,7 +156,6 @@ final class JsMessagesUtil @Inject() (
       MC.`Always.outlined` ::
       MC.`Go.into` ::
       MC.`Showcase` ::
-      MNodeTypes.BleBeacon.plural ::
       MC.`Distance` ::
       MC.`_to.Register._thing` ::
       MC.`Add.beacon.to.account` ::
@@ -176,6 +175,7 @@ final class JsMessagesUtil @Inject() (
       CAL_TYPES #::
       NODE_TYPES_I18N #::
       ADV_PRICING #::
+      MNodeTypes.RadioSource.children.map(_.plural) #::
       LazyList.empty
     )
       .flatten

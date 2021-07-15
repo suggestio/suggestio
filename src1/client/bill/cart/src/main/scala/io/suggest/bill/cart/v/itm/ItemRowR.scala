@@ -120,9 +120,9 @@ class ItemRowR(
               val nodeIcon = ntypeOpt
                 .flatMap { ntype =>
                   Option {
-                    if (ntype eqOrHasParent MNodeTypes.BleBeacon)
+                    if (ntype eqOrHasParent MNodeTypes.RadioSource.BleBeacon)
                       Mui.SvgIcons.BluetoothSearching
-                    else if (ntype eqOrHasParent MNodeTypes.WifiAP)
+                    else if (ntype eqOrHasParent MNodeTypes.RadioSource.WifiAP)
                       Mui.SvgIcons.Wifi
                     else
                       null

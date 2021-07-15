@@ -510,7 +510,7 @@ class Sc3Circuit(
             ignorePending = true,
             silent        = OptionUtil.SomeBool.someTrue,
             onlyMatching  = Some( MScNodeMatchInfo(
-              ntype = Some( MNodeTypes.BleBeacon ),
+              ntype = Some( MNodeTypes.RadioSource.BleBeacon ), // TODO Replace ntype with "MNodeTypes.RadioSource" after app v5.0.3 installed (including GridAh & ScAdsTile).
             )),
           )
         }

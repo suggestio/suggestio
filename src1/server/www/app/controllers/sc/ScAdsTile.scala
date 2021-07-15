@@ -100,7 +100,7 @@ trait ScAdsTile
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
 
     /** Данные для поиска bluetooth-маячков. */
-    lazy val bleSearchCtxFut = scAdSearchUtil.bleBeaconsSearch(
+    lazy val radioSearchCtxFut = scAdSearchUtil.radioBeaconsSearch(
       bcnsQs = scQs_common_locEnv_beacons_LENS.get( _qs ),
       innerHits = Some {
         MEsInnerHitsInfo(
@@ -115,23 +115,23 @@ trait ScAdsTile
 
     // Часть операций по проверке и чистке qs требуют асинхронных шагов. Делаем:
     lazy val _qsClearedFut = for {
-      bleBeaconCtx <- bleSearchCtxFut
+      radioBeaconsCtx <- radioSearchCtxFut
     } yield {
-      val bcns0 = scQs_common_locEnv_beacons_LENS.get( _qs )
-      if (bcns0 !=* bleBeaconCtx.bcnsQs2) {
-        scQs_common_locEnv_beacons_LENS.set(bleBeaconCtx.bcnsQs2)( _qs )
+      val beacons0 = scQs_common_locEnv_beacons_LENS.get( _qs )
+      if (beacons0 !=* radioBeaconsCtx.qsBeacons2) {
+        scQs_common_locEnv_beacons_LENS.set(radioBeaconsCtx.qsBeacons2)( _qs )
       } else {
         _qs
       }
     }
 
     lazy val adSearch2Fut = for {
-      bleSearchCtx <- bleSearchCtxFut
-      clearedQs    <- _qsClearedFut
+      radioSearchCtx  <- radioSearchCtxFut
+      clearedQs       <- _qsClearedFut
     } yield {
       scAdSearchUtil.qsArgs2nodeSearch(
         args                  = clearedQs,
-        bleSearchCtx          = bleSearchCtx,
+        bleSearchCtx          = radioSearchCtx,
       )
     }
 
@@ -145,7 +145,7 @@ trait ScAdsTile
           if qsCleared.hasAnySearchCriterias
 
           _adSearchFut = adSearch2Fut
-          _bleSearchCtxFut = bleSearchCtxFut
+          _radioSearchCtxFut = radioSearchCtxFut
 
           // Подготовить id для adn-узлов и id узлов-тегов.
           adnNodeIds = (qsCleared.search.rcvrId :: qsCleared.search.prodId :: Nil)
@@ -164,7 +164,7 @@ trait ScAdsTile
           // Чтобы получить доступ к inner-hits-значениям, надо работать с исходным ES-ответом (SearchHit):
           // EsModel.source() тут использовать НЕЛЬЗЯ, т.к. сорсинг игнорирует критически важные limit/offset
           searchHits <- mNodes.search( adSearch )( mNodes.SearchHitsMapper )
-          bleSearchCtx <- _bleSearchCtxFut
+          radioSearchCtx <- _radioSearchCtxFut
 
         } yield {
           val res = (for {
@@ -230,11 +230,13 @@ trait ScAdsTile
                   .iterator
                   .map { nodeId =>
                     // Нужно найти связь с ble-маячком или иным узлом в контексте ble-search, если она есть.
-                    val ntype =
-                      if ( bleSearchCtx.uidsClear contains nodeId ) Some( MNodeTypes.BleBeacon )
+                    // So, MNodeTypes.WifiAP type here is missing here (BleBeacon is used for Wifi). Possibly, these types must be mixed as RadioSignal-node subtypes.
+                    val ntype = {
+                      if ( radioSearchCtx.uidsClear contains nodeId ) Some( MNodeTypes.RadioSource.BleBeacon /* TODO Replace with MNodeTypes.RadioSource, when app v5.0.3+ will be installed (including GridAh & Sc3Circuit). */ )
                       else if (adnNodeIds contains nodeId) Some( MNodeTypes.AdnNode )
                       else if (tagNodeIds contains nodeId) Some( MNodeTypes.Tag )
                       else None
+                    }
                     MScNodeMatchInfo(
                       nodeId = Some( nodeId ),
                       ntype  = ntype,

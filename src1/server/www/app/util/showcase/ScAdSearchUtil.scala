@@ -60,7 +60,7 @@ final class ScAdSearchUtil @Inject() (
   def qsArgs2nodeSearch(
                          args: MScQs,
                          innerHits: Option[MEsInnerHitsInfo] = None,
-                         bleSearchCtx: MBleSearchCtx = MBleSearchCtx.empty,
+                         bleSearchCtx: MRadioBeaconsSearchCtx = MRadioBeaconsSearchCtx.empty,
                        ): MNodeSearch = {
 
     val _outEdges: Seq[Criteria] = {
@@ -203,9 +203,9 @@ final class ScAdSearchUtil @Inject() (
     * Причём, чем ближе маячок -- тем выше результат.
     * @param innerHits Возвращать ли данные inner_hits?
     */
-  def bleBeaconsSearch(bcnsQs: Seq[MUidBeacon], innerHits: Option[MEsInnerHitsInfo]): Future[MBleSearchCtx] = {
+  def radioBeaconsSearch(bcnsQs: Seq[MUidBeacon], innerHits: Option[MEsInnerHitsInfo]): Future[MRadioBeaconsSearchCtx] = {
     if (bcnsQs.isEmpty) {
-      Future.successful( MBleSearchCtx.empty )
+      Future.successful( MRadioBeaconsSearchCtx.empty )
 
     } else {
       import esModel.api._
@@ -235,7 +235,7 @@ final class ScAdSearchUtil @Inject() (
       for {
         bcnsUidsClear <- bcnUidsClearedFut
       } yield {
-        new MBleSearchCtx {
+        new MRadioBeaconsSearchCtx {
           override def uidsQs = _uidsQs
 
           override val uidsClear: Set[String] = {
@@ -244,7 +244,7 @@ final class ScAdSearchUtil @Inject() (
             _uidsClear
           }
 
-          override lazy val bcnsQs2: Seq[MUidBeacon] = {
+          override lazy val qsBeacons2: Seq[MUidBeacon] = {
             // Учитывать только маячки до этого расстояния. Остальные не учитывать
             val maxDistance = BeaconUtil.DIST_CM_FAR
 
@@ -261,9 +261,9 @@ final class ScAdSearchUtil @Inject() (
 
           override lazy val subSearches: List[MSubSearch] = {
             // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
-            val _bcnsQs2 = bcnsQs2
+            val _qsBeacons2 = qsBeacons2
 
-            if (_bcnsQs2.isEmpty) {
+            if (_qsBeacons2.isEmpty) {
               LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
               Nil
             } else {
@@ -271,7 +271,7 @@ final class ScAdSearchUtil @Inject() (
                 maxBoost    = 20000000F,
                 // TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
                 predicates  = MPredicates.Receiver :: Nil,
-                bcns        = _bcnsQs2,
+                bcns        = _qsBeacons2,
                 innerHits   = innerHits,
               )
 
@@ -296,18 +296,18 @@ final class ScAdSearchUtil @Inject() (
   * Содержит в себе разные промежуточные значения обсчёта обстановки, которые могут быть нужны где-то выше по stacktrace.
   * Трейт, т.к. содержит в себе ленивые поля.
   */
-protected trait MBleSearchCtx {
+protected trait MRadioBeaconsSearchCtx {
   /** id запрошенных в qs маячков. */
   def uidsQs      : Set[String] = Set.empty
   /** id найденных в БД маячков. */
   def uidsClear   : Set[String] = Set.empty
   /** Отчищенные от мусора qs-данные по мячкам. */
-  def bcnsQs2     : Seq[MUidBeacon] = Nil
+  def qsBeacons2: Seq[MUidBeacon] = Nil
   /** Данные для поиска по маячкам в elasticsearch. */
   def subSearches : List[MSubSearch] = Nil
 }
-object MBleSearchCtx {
-  def empty = new MBleSearchCtx {}
+object MRadioBeaconsSearchCtx {
+  def empty = new MRadioBeaconsSearchCtx {}
 }
 
 

@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.radio.beacon.{BtOnOff, MBeaconerOpts, RadioSignalsDetected}
 import io.suggest.log.Log
 import io.suggest.pick.JsBinaryUtil
@@ -30,6 +31,11 @@ object Sc3JsApi extends Log {
     if (scalajs.LinkingInfo.developmentMode)
       Sc3Module.ref.sc3Circuit.dispatch( action )
 
+  private def _ifDev[T](f: => T): Option[T] =
+    Option.when( scalajs.LinkingInfo.developmentMode )(f)
+  private def _ifDevOpt[T](f: => Option[T]): Option[T] =
+    OptionUtil.maybeOpt( scalajs.LinkingInfo.developmentMode )(f)
+
   @JSExport
   def unsafeOffsetAdd(incDecBy: Int): Unit =
     _d( UpdateUnsafeScreenOffsetBy(incDecBy) )
@@ -54,36 +60,33 @@ object Sc3JsApi extends Log {
 
 
   @JSExport
-  def throwSnack(): Unit = {
-    _d {
-      val a = DoNothing
-      Sc3Module.ref.sc3Circuit.handleEffectProcessingError(a, new NoSuchElementException)
-      a
+  def throwSnack(): Unit = _ifDev {
+    Sc3Module.ref.sc3Circuit.handleEffectProcessingError( DoNothing, new NoSuchElementException )
+  }
+
+  @JSExport
+  def emitCancel(intervalIds: Any): Unit = _ifDev {
+    intervalIds match {
+      case opt: Option[_] =>
+        emitCancel( opt.iterator )
+      case intervalId: Int =>
+        DomQuick.clearInterval( intervalId )
+      case arr: IterableOnce[_] =>
+        emitCancel( arr )
+      case arr: js.Array[_] =>
+        emitCancel( arr.iterator )
     }
   }
 
-
-  /** Хранилка состояния интервалов генерации сигналов от маячков: */
-  private var _beaconsIntervalIdsUnd: js.UndefOr[Iterable[Int]] = js.undefined
-
   /** Запуск/остановка эмиссии сигналов маячков. */
   @JSExport
-  def beaconsEmit(count: Int = 0): Unit = _d {
-    // Очистить текущие интервалы:
-    for {
-      ivlIds <- _beaconsIntervalIdsUnd
-      ivlId  <- ivlIds
-    } {
-      DomQuick.clearInterval( ivlId )
-    }
-    _beaconsIntervalIdsUnd = js.undefined
-
+  def beaconsEmit(count: Int = 0) = _ifDevOpt {
     // Запуск генерации сигналов eddystone-uid.
-    if (count > 0) {
+    Option.when(count > 0) {
       _initializeBeaconer()
 
       val rnd = new Random()
-      val ivlIds = (1 to count)
+      (1 to count)
         .foldLeft( List.empty[Int] ) { (acc, i) =>
           val bcnTxPower = -70 - rnd.nextInt(30)
           // Генерация псевдо-случайного id вида "aa112233445566778899-000000000456"
@@ -106,10 +109,7 @@ object Sc3JsApi extends Log {
           }
           ivlId :: acc
         }
-      _beaconsIntervalIdsUnd = js.defined( ivlIds )
     }
-
-    DoNothing
   }
 
   /** Ensure BeaconerAh ready to accept fake RadioSignalDetected() messages. */
@@ -127,25 +127,25 @@ object Sc3JsApi extends Log {
   }
 
 
-  private var _wifiIntervalIdU: js.UndefOr[Int] = js.undefined
-
-  private def _wifiEmitter(ids: Seq[String], rnd: Random = new Random()) = _d {
-    // Cleanup currently running timers, if any:
-    for (ivlId <- _wifiIntervalIdU) yield {
-      DomQuick.clearInterval( ivlId )
-      _wifiIntervalIdU = js.undefined
-    }
-
+  private def _wifiEmitter(ids: Seq[String], rnd: Random = new Random()) = _ifDevOpt {
     // Activate timed wifi-scan-results imitation:
-    if (ids.iterator.nonEmpty) {
+    Option.when( ids.iterator.nonEmpty ) {
       _initializeBeaconer()
 
       // For wifi scan imitation - used single interval for list of networks.
-      _wifiIntervalIdU = DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
+      DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
         val radioType = MRadioSignalTypes.WiFi
         val action = RadioSignalsDetected(
           signals = ids
+            // randomize list:
             .iterator
+            .map { _ -> (rnd.nextInt(1000) - 600) }
+            .filter(_._2 > 0)   // Add some signals miss randomly...
+            .toSeq
+            .sortBy(_._2)
+            .iterator
+            .map(_._1)
+            // Emulate radio signals:
             .zipWithIndex
             .map { case (macAddr, i) =>
               MRadioSignalJs(
@@ -160,16 +160,16 @@ object Sc3JsApi extends Log {
             .to( LazyList ),
           radioType = radioType,
         )
-        _d( action )
+
+        if (action.signals.nonEmpty)
+          _d( action )
       }
     }
-
-    DoNothing
   }
 
   /** Run emission of Wi-Fi detection signals. */
   @JSExport
-  def wifiEmit(count: Int = 0): Unit = {
+  def wifiEmit(count: Int = 0) = {
     val rnd = new Random()
     _wifiEmitter(
       ids = {
@@ -193,6 +193,6 @@ object Sc3JsApi extends Log {
 
   /** Emit wi-fi signals with these MAC-addrs. */
   @JSExport
-  def wifiEmitById(ids: String*): Unit = _wifiEmitter( ids )
+  def wifiEmitById(ids: String*) = _wifiEmitter( ids )
 
 }

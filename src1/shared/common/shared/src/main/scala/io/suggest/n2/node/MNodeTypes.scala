@@ -49,8 +49,18 @@ object MNodeTypes extends StringEnum[MNodeType] {
   }
 
 
-  /** Маячок BLE. iBeacon или EddyStone -- системе это не важно. */
-  case object BleBeacon extends MNodeType("b")
+  case object RadioSource extends MNodeType("radio") {
+
+    /** Bluetooth LE beacon. EddyStone-UID, but current model here doesn't care about. */
+    case object BleBeacon extends MNodeType("b") with _Child
+
+    /** WiFi Router is a radio beacon. */
+    case object WifiAP extends MNodeType( "wifi" ) with _Child
+
+    override def children: LazyList[MNodeType] =
+      BleBeacon #:: WifiAP #:: super.children
+
+  }
 
 
   /** Тип узла, описывающего некий абстрактный внешний http-ресурс. */
@@ -75,15 +85,17 @@ object MNodeTypes extends StringEnum[MNodeType] {
   /** Crypto.key type - storing key material inside node. */
   case object CryptoKey extends MNodeType("cryptoKey")
 
-  case object WifiAP extends MNodeType( "wifi")
 
   override def values = findValues
 
-  def adnTreeMemberTypes: List[MNodeType] = AdnNode :: Ad :: BleBeacon :: Nil
+  private def _lkNodesUserCanCreate: LazyList[MNodeType] =
+    RadioSource.children
 
   /** Normal user can create nodes of these types (via lk-nodes): */
-  def lkNodesUserCanCreate: List[MNodeType] =
-    BleBeacon :: WifiAP :: Nil
+  def lkNodesUserCanCreate: Seq[MNodeType] =
+    _lkNodesUserCanCreate
+
+  def adnTreeMemberTypes: Seq[MNodeType] = AdnNode #:: Ad #:: _lkNodesUserCanCreate
 
 }
 
@@ -159,9 +171,9 @@ object MNodeType {
     /** Example name placeholder for creation of node of such type. */
     def creationNameExample: Option[String] = Option {
       ntype match {
-        case MNodeTypes.BleBeacon =>
+        case MNodeTypes.RadioSource.BleBeacon =>
           MsgCodes.`Beacon.name.example`
-        case MNodeTypes.WifiAP =>
+        case MNodeTypes.RadioSource.WifiAP =>
           MsgCodes.`Name`   // TODO `Wifi.router.name`
         case _ => null
       }

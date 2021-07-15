@@ -19,7 +19,7 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.jd.render.u.JdUtil
-import io.suggest.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.log.Log
@@ -254,7 +254,11 @@ object GridAh extends Log {
   }
 
   def _isMatches(onlyMatching: MScNodeMatchInfo, scAnm: MScNodeMatchInfo): Boolean = {
-    onlyMatching.ntype.fold(true)( scAnm.ntype.contains[MNodeType] ) &&
+    onlyMatching.ntype.fold(true) { onlyMatchingType =>
+      scAnm.ntype.exists { scAdMatchType =>
+        scAdMatchType eqOrHasParent onlyMatchingType
+      }
+    } &&
     onlyMatching.nodeId.fold(true)( scAnm.nodeId.contains[String] )
   }
 
@@ -388,7 +392,7 @@ class GridAh[M](
               .toLeft( Option.empty[MScQs] )
           }
           .left.flatMap {
-            case bleNtype @ MNodeTypes.BleBeacon =>
+            case radioSourceType @ MNodeTypes.RadioSource.BleBeacon => // TODO "case radioSourceType if radioSourceType eqOrHasParent MNodeTypes.RadioSource =>" -- Replace code, after app v5.0.3 installed (including Sc3Circuit & ScAdsTile)
               // Требуется запросить и отработать только карточки, которые относятся к bluetooth-маячкам.
               // Для этого, надо вычистить locEnv до маячков, и убрать остальные критерии запроса.
               // А есть ли маячки в qs?
@@ -413,7 +417,9 @@ class GridAh[M](
                           matchInfo
                             .nodeMatchings
                             .exists { nodeMatchInfo =>
-                              nodeMatchInfo.ntype contains[MNodeType] bleNtype
+                              nodeMatchInfo.ntype.exists { scAdMatchNtype =>
+                                scAdMatchNtype eqOrHasParent radioSourceType
+                              }
                             }
                         }
                         !isDrop

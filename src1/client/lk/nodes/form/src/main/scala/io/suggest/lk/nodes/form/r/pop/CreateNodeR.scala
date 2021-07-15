@@ -292,9 +292,9 @@ class CreateNodeR(
                   .whenDefinedEl { nodeTypeFieldState =>
                     val placeHolderHelperOpt = Option {
                       nodeTypeFieldState.value match {
-                        case MNodeTypes.BleBeacon.value =>
+                        case MNodeTypes.RadioSource.BleBeacon.value =>
                           ("EddyStone UID", EddyStone.EXAMPLE_UID, MsgCodes.`Beacon.name.example`)
-                        case MNodeTypes.WifiAP.value =>
+                        case MNodeTypes.RadioSource.WifiAP.value =>
                           ("Wi-Fi MAC", NetworkingUtil.MAC_ADDR_EXAMPLE, MsgCodes.`Wifi.router.name.example`)
                         case _ =>
                           null

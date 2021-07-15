@@ -16,7 +16,7 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     override def rssi0 = None
     /** Measured distance for EddyStone is 0 cm. */
     override def distance0m = Some( 0 )
-    override def nodeType = MNodeTypes.BleBeacon
+    override def nodeType = MNodeTypes.RadioSource.BleBeacon
 
     /** On test beacons, "5 seconds" was not enough, there were false positives.
       * "9 seconds" turned out to be not enough on android at the end of 2020y - the card disappeared & appeared.
@@ -30,7 +30,7 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     // Possible values from random measurments https://www.researchgate.net/figure/RSSI-versus-distance-for-BLE-Wi-Fi-and-XBee_fig5_317150846
     override def rssi0 = Some( -27 )
     override def distance0m = Some( 0 )
-    override def nodeType = MNodeTypes.WifiAP
+    override def nodeType = MNodeTypes.RadioSource.WifiAP
     override def lostAfterSeconds = 30
   }
 
