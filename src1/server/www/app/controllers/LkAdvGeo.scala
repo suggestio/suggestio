@@ -1,6 +1,7 @@
 package controllers
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
+
 import javax.inject.Inject
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._
@@ -174,53 +175,42 @@ final class LkAdvGeo @Inject() (
     def result(formFut: Future[MFormS], rs: Status, radEnabled: Boolean): Future[Result] = {
       def logPrefix = s"result(${request.mad.idOrNull} $rs):"
 
-      // Считаем в фоне начальный ценник для размещения...
-      val advPricingFut = for {
-        form    <- formFut
-        ctx     <- _ctxFut
-        pricing <- _getPricing(_isSuFree, form)(request, ctx)
-      } yield {
-        LOGGER.trace(s"$logPrefix su=${_isSuFree}  prod=${request.producer.idOrNull}  pricing => $pricing")
-        pricing
-      }
-
       // Отрендерить текущие радиусные размещения в форму MRoot.
-      val formStateSerFut: Future[String] = for {
-        a4fPropsOpt       <- _a4fPropsOptFut
+      for {
+        form    <- formFut
+        formForPricing: MFormS = if (form.radCircle.isDefined !=* radEnabled) {
+          MFormS.radCircle.modify(_.filter(_ => radEnabled))( form )
+        } else {
+          form
+        }
+        ctx     <- _ctxFut
+        pricing <- _getPricing( _isSuFree, formForPricing )(request, ctx)
+        a4fPropsOpt <- {
+          LOGGER.trace(s"$logPrefix su=${_isSuFree}  prod=${request.producer.idOrNull}  pricing => $pricing")
+          _a4fPropsOptFut
+        }
         rcvrsMapUrlArgs   <- _rcvrsMapUrlArgsFut
-        formS             <- formFut
-        advPricing        <- advPricingFut
       } yield {
         // Собираем исходную root-модель формы.
         val mFormInit = MFormInit(
           adId          = request.mad.id.get,
           adv4FreeProps = a4fPropsOpt,
-          advPricing    = advPricing,
-          form          = formS,
+          advPricing    = pricing,
+          form          = form,
           rcvrsMap      = rcvrsMapUrlArgs,
           radEnabled    = radEnabled,
         )
 
-        Json.toJson( mFormInit ).toString()
-      }
-
-
-      import cspUtil.Implicits._
-
-      // Собираем итоговый ответ на запрос: аргументы рендера, рендер html, рендер http-ответа.
-      for {
-        ctx           <- _ctxFut
-        formStateSer  <- formStateSerFut
-      } yield {
         val rargs = MForAdTplArgs(
           mad           = request.mad,
           producer      = request.producer,
-          formState     = formStateSer
+          formState     = Json.toJson( mFormInit ).toString(),
         )
 
         val html = AdvGeoForAdTpl(rargs)(ctx)
 
         // Навесить скорректированный CSP-заголовок на HTTP-ответ, т.к. форма нуждается в доступе к картам OSM.
+        import cspUtil.Implicits._
         rs(html)
           .withCspHeader( cspUtil.CustomPolicies.PageWithOsmLeaflet )
       }
@@ -373,7 +363,7 @@ final class LkAdvGeo @Inject() (
           // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:
           val pricingFut = for {
             mFormS2 <- mFromS2Fut
-            pricing <- _getPricing(isSuFree, mFormS2)
+            pricing <- _getPricing( isSuFree, mFormS2 )
           } yield {
             LOGGER.trace(s"$logPrefix request body =\n $mFormS=>$mFormS2 su=$isSuFree pricing => $pricing")
             pricing

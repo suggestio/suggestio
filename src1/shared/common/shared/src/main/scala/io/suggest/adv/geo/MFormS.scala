@@ -7,6 +7,7 @@ import io.suggest.geo.{CircleGs, IGeoShape}
 import io.suggest.maps.MMapProps
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -46,6 +47,8 @@ object MFormS {
   }
 
   @inline implicit def univEq: UnivEq[MFormS] = UnivEq.derive
+
+  def radCircle = GenLens[MFormS](_.radCircle)
 
 }
 
