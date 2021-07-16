@@ -299,8 +299,7 @@ final class SysMarket @Inject() (
 
   /** Безвозвратное удаление узла рекламной сети. */
   def deleteAdnNodeSubmit(nodeId: String) = csrf.Check {
-    val ab = isSuNode(nodeId)
-    ab.async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       import request.mnode
       lazy val logPrefix = s"deleteAdnNodeSubmit($nodeId):"
       LOGGER.info(s"$logPrefix by user[${request.user.personIdOpt}] request. Deleting...")
