@@ -137,7 +137,14 @@ final class LkAdvGeo @Inject() (
     bill2Conf.maybeFreePricing(isSuFree) {
       // Найти все узлы, принадлежащие текущему юзеру:
       for {
-        billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS, addFreeRcvrs = true)
+        billCtx     <- advGeoBillUtil.advBillCtx(
+          isSuFree      = isSuFree,
+          mad           = request.mad,
+          res           = mFormS,
+          addFreeRcvrs  = true,
+          personId      = request.user.personIdOpt,
+          adProducerId  = request.producer.id,
+        )
         pricing     <- advGeoBillUtil.getPricing( billCtx )(ctx)
       } yield {
         advFormUtil.prepareAdvPricing( pricing )(ctx)
@@ -264,7 +271,14 @@ final class LkAdvGeo @Inject() (
           val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
           val abcFut = mFormS2Fut.flatMap { mFormS2 =>
-            advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2)
+            advGeoBillUtil.advBillCtx(
+              isSuFree  = isSuFree,
+              mad       = request.mad,
+              res       = mFormS2,
+              personId  = request.user.personIdOpt,
+              adProducerId = request.producer.id,
+              addFreeRcvrs = false,
+            )
           }
 
           val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
@@ -415,16 +429,16 @@ final class LkAdvGeo @Inject() (
   }
 
 
-  def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) =
-    _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
 
   /** Рендер попапа при клике по узлу-ресиверу на карте ресиверов.
     *
-    * @param adId id текущей карточки, которую размещают.
-    * @param rcvrNodeId id узла, по которому кликнул юзер.
+    * @param adIdU id текущей карточки, которую размещают.
+    * @param rcvrNodeIdU id узла, по которому кликнул юзер.
     * @return 200 OK + JSON.
     */
-  private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = csrf.Check {
+  def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) = csrf.Check {
+    val adId = adIdU.id
+    val rcvrNodeId = rcvrNodeIdU.id
     canThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
 
       import request.{mnode => rcvrNode}
@@ -602,12 +616,14 @@ final class LkAdvGeo @Inject() (
     * @param tsearch query string.
     * @return Сериализованная модель MTagsFound.
     */
-  def tagsSearch2(tsearch: MTagsSearchQs) = isAuth().async { implicit request =>
-    for {
-      found <-  tagSearchUtil.liveSearchTagsFromQs( tsearch )
-    } yield {
-      LOGGER.trace(s"tagSearch2(${request.rawQueryString}): Found ${found.tags.size} tags: ${found.tags.iterator.map(_.face).mkString(", ")}")
-      Ok( Json.toJson(found) )
+  def tagsSearch2(tsearch: MTagsSearchQs) = csrf.Check {
+    isAuth().async { implicit request =>
+      for {
+        found <-  tagSearchUtil.liveSearchTagsFromQs( tsearch )
+      } yield {
+        LOGGER.trace(s"tagSearch2(${request.rawQueryString}): Found ${found.tags.size} tags: ${found.tags.iterator.map(_.face).mkString(", ")}")
+        Ok( Json.toJson(found) )
+      }
     }
   }
 

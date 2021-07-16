@@ -181,87 +181,78 @@ final class LkBill2 @Inject() (
     * @param nodeId id узла.
     * @return Бинарь с публичной инфой по узлу, на котором планируется размещение.
     */
-  def nodeAdvInfo(nodeId: String, forAdId: Option[String]) = canViewNodeAdvInfo(nodeId, forAdId).async { implicit request =>
+  def nodeAdvInfo(nodeId: String, forAdId: Option[String]) = csrf.Check {
+    canViewNodeAdvInfo(nodeId, forAdId).async { implicit request =>
+      val galleryImgsFut = galleryUtil.galleryImgs( request.mnode )
+      implicit val ctx = implicitly[Context]
 
-    val galleryImgsFut = galleryUtil.galleryImgs(request.mnode)
-
-    val mediaHostsMapFut = galleryImgsFut.flatMap { galleryImgs =>
-      nodesUtil.nodeMediaHostsMap(
-        gallery = galleryImgs
-      )
-    }
-
-    implicit val ctx = implicitly[Context]
-
-    val galleryCallsFut = galleryImgsFut.flatMap { galleryImgs =>
-      galleryUtil.renderGalleryCdn(galleryImgs, mediaHostsMapFut)(ctx)
-    }
-
-    // Собрать картинки
-    val galleryFut = for {
-      galleryCalls <- galleryCallsFut
-    } yield {
-      for ((mimg, galleryCall) <- galleryCalls) yield {
-        MMediaInfo(
-          giType  = MMediaTypes.Image,
-          url     = galleryCall.url,
-          contentType = mimg.dynImgId.imgFormat.get.mime,
-          // thumb'ы: Не отображаются на экране из-за особенностей вёрстки; в дизайне не предусмотрены.
-          thumb   = None, /*Some(
+      // Собрать картинки
+      val galleryFut = for {
+        galleryImgs <- galleryImgsFut
+        mediaHostsMapFut = nodesUtil.nodeMediaHostsMap(
+          gallery = galleryImgs
+        )
+        galleryCalls <- galleryUtil.renderGalleryCdn( galleryImgs, mediaHostsMapFut )(ctx)
+      } yield {
+        for {
+          (mimg, galleryCall) <- galleryCalls
+        } yield {
+          MMediaInfo(
+            giType  = MMediaTypes.Image,
+            url     = galleryCall.url,
+            contentType = mimg.dynImgId.imgFormat.get.mime,
+            // thumb'ы: Не отображаются на экране из-за особенностей вёрстки; в дизайне не предусмотрены.
+            thumb   = None, /*Some(
             MMediaInfo(
               giType = MMediaTypes.Image,
               url    = dynImgUtil.thumb256Call(mimg, fillArea = true).url
             )
           )*/
-
-        )
+          )
+        }
       }
-    }
 
-    // Собрать данные по тарифу.
-    val tfInfoFut = tfDailyUtil.getTfInfo( request.mnode )(ctx)
-
-    // Подготовить в фоне данные по тарифу в контексте текущей карточки.
-    val tfDaily4AdFut = FutureUtil.optFut2futOpt(request.adProdReqOpt) { adProdReq =>
-      val bmc = advUtil.adModulesCount( adProdReq.mad ).get
+      // Собрать итоговый ответ клиенту:
       for {
-        tfInfo <- tfInfoFut
+        // Собрать данные по тарифу.
+        tfInfo      <- tfDailyUtil.getTfInfo( request.mnode )(ctx)
+        // Подготовить данные по тарифу в контексте текущей карточки:
+        tfDaily4AdOpt = {
+          for (adProdReq <- request.adProdReqOpt) yield {
+            val blocksCount = advUtil
+              .adModulesCount( adProdReq.mad )
+              .get
+
+            val tdDaily4ad = MTfDailyInfo.clauses.modify {
+              _ .view
+                .mapValues { p0 =>
+                  val p2 = p0 * blocksCount
+                  TplDataFormatUtil.setFormatPrice( p2 )(ctx)
+                }
+                .toMap
+            }(tfInfo)
+
+            MNodeAdvInfo4Ad(
+              blockModulesCount = blocksCount,
+              tfDaily           = tdDaily4ad,
+            )
+          }
+        }
+        gallery     <- galleryFut
       } yield {
-        val tdDaily4ad = MTfDailyInfo.clauses.modify {
-          _.view
-            .mapValues { p0 =>
-              val p2 = p0 * bmc
-              TplDataFormatUtil.setFormatPrice( p2 )(ctx)
-            }
-            .toMap
-        }(tfInfo)
-
-        val r = MNodeAdvInfo4Ad(
-          blockModulesCount = bmc,
-          tfDaily           = tdDaily4ad
+        // Собрать финальный инстанс модели аргументов для рендера:
+        val m = MNodeAdvInfo(
+          nodeNameBasic   = request.mnode.meta.basic.name,
+          nodeName        = request.mnode.guessDisplayNameOrIdOrQuestions,
+          tfDaily         = Some(tfInfo),
+          tfDaily4Ad      = tfDaily4AdOpt,
+          meta            = request.mnode.meta.public,
+          gallery         = gallery,
         )
-        Some(r)
+
+        // Сериализовать и отправить ответ.
+        Ok( Json.toJson(m) )
       }
-    }
-
-    // Собрать итоговый ответ клиенту:
-    for {
-      tfInfo      <- tfInfoFut
-      gallery     <- galleryFut
-      tfDaily4Ad  <- tfDaily4AdFut
-    } yield {
-      // Собрать финальный инстанс модели аргументов для рендера:
-      val m = MNodeAdvInfo(
-        nodeNameBasic   = request.mnode.meta.basic.name,
-        nodeName        = request.mnode.guessDisplayNameOrIdOrQuestions,
-        tfDaily         = Some(tfInfo),
-        tfDaily4Ad      = tfDaily4Ad,
-        meta            = request.mnode.meta.public,
-        gallery         = gallery
-      )
-
-      // Сериализовать и отправить ответ.
-      Ok( Json.toJson(m) )
     }
   }
 

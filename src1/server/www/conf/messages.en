@@ -543,8 +543,8 @@ Holidays.primetime=Holidays/primetime
 Week.days=Weekdays
 Weekend=Weekend
 All.week=All week
-Minimal.module=Minimal{0}module
-scheme.left=scheme{0}left
+Minimal.module=Minimal module
+scheme.left=scheme left
 Agreement.btw.CBCA.and.node.tariffs.for.year=Agreement between the company CBCA and {0} "{1}" identified tariff plans for {2}.
 
 Adv.tariff=Advertising tariff

@@ -22,7 +22,6 @@ import models.adv.geo.cur.AdvGeoBasicInfo_t
 import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
-import models.req.IAdProdReq
 import scalaz.{EphemeralStream, Tree}
 import util.adn.NodesUtil
 import util.adv.AdvUtil
@@ -80,12 +79,12 @@ final class AdvGeoBillUtil @Inject() (
     *
     * @param mad рекламная карточка.
     * @param res Содержимое формы.
-    * @param request реквест. Биллинг зависит от юзера и продьсера, которые лежат в реквесте.
     * @param addFreeRcvrs Если требуется безопасно дописать в контекст бесплатных ресиверов (без тарифов), то true.
     *                        В норме - false.
     * @return Фьючерс с контекстом биллинга.
     */
-  def advBillCtx(isSuFree: Boolean, mad: MNode, res: MFormS, addFreeRcvrs: Boolean = false)(implicit request: IAdProdReq[_]): Future[MGeoAdvBillCtx] = {
+  def advBillCtx(isSuFree: Boolean, mad: MNode, res: MFormS, personId: Option[String],
+                 adProducerId: Option[String], addFreeRcvrs: Boolean = false): Future[MGeoAdvBillCtx] = {
     // Подготовить интервал размещения...
     val ivl = MDateStartEnd(res.datePeriod.info)
 
@@ -98,8 +97,8 @@ final class AdvGeoBillUtil @Inject() (
 
       for {
         freeNodeIds <- freeAdvNodeIds(
-          personIdOpt   = request.user.personIdOpt,
-          producerIdOpt = request.producer.id
+          personIdOpt   = personId,
+          producerIdOpt = adProducerId,
         )
 
         // Собираем id всех интересующих узлов. Из этих узлов затем будут получены тарифы...
@@ -462,17 +461,10 @@ final class AdvGeoBillUtil @Inject() (
           val rcvrId = rcvrKey.last
           val rcvrPrice = advUtil.calcDateAdvPriceOnTf(rcvrId, abc)
 
-          val omsMultOpt: Option[Double] = if (rcvrKey.tail.nonEmpty) {
-            // Для суб-ресиверов: без доп.наценок за главный экран.
-            None
-          } else {
-            // Домножаем за главный экран только для top-ресиверов.
-            Some(ON_MAIN_SCREEN_MULT)
-          }
           // Маппер OMS нужен ВСЕГДА, иначе addToOrder() не поймёт, что от него хотят.
           val rcvrOmsPrice = Tree.Node(
             PriceDsl.mapper(
-              multiplifier  = omsMultOpt,
+              multiplifier  = Some( ON_MAIN_SCREEN_MULT ),
               reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) ),
             ),
             EphemeralStream( rcvrPrice )
