@@ -872,7 +872,7 @@ Order.details=Order details
 Paid=Paid
 
 Radius=Radius
-in.radius.of.0.from.1=in {0} near {2}
+in.radius.of.0.from.1=in {0} near {1}
 in.radius.of.0=in radius of {0}
 n.km._kilometers={0} km
 n.m._meters={0} m

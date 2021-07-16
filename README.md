@@ -52,7 +52,7 @@ Some small parts contains non-scala code due to historical reasons.
 ## Parts
 There are three main parts of Suggest.io:
 - [Showcase](doc/tech/showcase/showcase.md) - Suggest.io start page (JS WebApp & Hybrid mobile app).
-- Private cabinet: registered user area. Create and edit nodes/content/etc.
+- Private cabinet: registered user area. Create, edit and [advertise](doc/tech/cabinet/adv-geo.md) nodes/content/etc.
 - System: restricted technical area for super-users and developers.
 
 Also, there are shared client-server Scala-code, placed into [src/shared](src1/shared) directory.

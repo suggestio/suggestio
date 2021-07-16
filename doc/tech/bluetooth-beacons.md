@@ -4,7 +4,7 @@
 
 Suggest.io have transparent support for Bluetooth Low-Energy (BLE) beacons. Users can:
 - Register new EddyStone beacons in Suggest.io system.
-- Advertise ads in beacons (including paid advertisements and monetization of other advertisements)
+- [Advertise ads in beacons](cabinet/adv-geo.md) (including paid advertisements and monetization of other advertisements)
 - View beacon ads-contents in showcase in same way as other ads.
 
 ## End-user need Suggest.io mobile app installed
@@ -41,12 +41,21 @@ Internally, "register a beacon" means to create a node with beacon `_id` and bea
 
 
 ## Further steps
-Beacons are visible in lk-adv-geo form popups, if parent ADN-node visible on the map.
+Beacons are [visible in lk-adv-geo form popups](cabinet/adv-geo.md), if parent ADN-node visible on the map.
 It can be used for monetization.
 
 Also, choosing ad in list personal cabinet > "Manage" button > Nodes (right panel) can be used
 for change yours ad's visiblity on yours beacons.
 
+## Integration & economy
+For infrastructure-level integration, Bluetooth beacons integration need some thinking and planning.
+
+After buying some Bluetooth-beacons, you may find it no so cheap solution in cost of power-supply questions
+(like 5V DC) for each beacon, summarize maintance task (replace/charge/maintain/etc power source), safety certification, etc.
+
+One of solution is to place USB-powered-beacons into USB-ports of many customer Wi-Fi routers, already present inside
+building (USB-port used as power-supply source 5V DC).
+Also, if you don't need iOS support, you can use these [Wi-Fi](wifi.md) routers directly as radio-beacons without bluetooth layer.
 
 ## Limitations
 - Bluetooth beacon signal detection currently supported in Suggest.io mobile app for Android and iOS.
@@ -55,12 +64,8 @@ for change yours ad's visiblity on yours beacons.
   and/or `Scanning API`. Currently, WebBluetooth support in Suggest.io not implemented, but planned.
 - Only EddyStone-UID beacons supported.
 - iBeacon support was removed forever.
-  - It is impossible to properly collect all iBeacon signals on iOS. iBeacon bluetooth-advertisements are hidden from
-    BLE scanning results by iOS. iBeacons interactions implemented inside CoreLocation API with zero bluetooth scanning abilities.
+  - It is impossible to properly collect all iBeacon signals on iOS. iBeacon bluetooth-advertisements are stripped from
+    BLE scanning results in iOS. iBeacons interactions implemented inside CoreLocation API with zero bluetooth scanning abilities.
   - iBeacon uses BLE-incompatible frames. So, it is impossible to limit scanning by ServiceUUID to reduce power-consumption on device.
     (e.g. on Android: need to dump & analyze all bluetooth frames - produces heavy load).
     Also, it makes impossible to start bluetooth background scanning (when device sleeps and screen is off).
-- Bluetooth beacons may be not so cheap solution. For infrastructure-level integration,
-  you should check the cost of power-supply questions (like 5V DC) for each beacon, review maintance issues
-  and ensure safety of bluetooth-beacons installed inside building. If you don't need iOS support, you may want
-  to use [Wi-Fi](wifi.md) routers as background radio-beacons.
