@@ -1,9 +1,8 @@
 package util.adv.geo
 
 import java.time.{LocalDate, OffsetDateTime}
-
 import javax.inject.Inject
-import io.suggest.adv.geo.MFormS
+import io.suggest.adv.geo.{AdvGeoConstants, MFormS}
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.common.empty.OptionUtil
@@ -355,9 +354,11 @@ final class AdvGeoBillUtil @Inject() (
 
 
   /** Сборка PriceDSL, на основе которой можно вычислить результат. */
-  def calcAdvGeoPrice(abc: MGeoAdvBillCtx): Tree[PriceDsl] = {
-    import abc.res
+  def calcAdvGeoPrice(abc: MGeoAdvBillCtx): Tree[PriceDsl] =
+    calcAdvGeoPrice( abc.res, abc )
 
+  /** Calculate PriceDSL using custom form instance. */
+  def calcAdvGeoPrice(res: MFormS, abc: MGeoAdvBillCtx): Tree[PriceDsl] = {
     lazy val logPrefix = s"calcAdvGeoPrice()[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix $res")
 
@@ -392,7 +393,7 @@ final class AdvGeoBillUtil @Inject() (
       if (res.onMainScreen) {
         accGeoRev ::= Tree.Node(
           PriceDsl.mapper(
-            multiplifier  = Some( ON_MAIN_SCREEN_MULT ),
+            multiplifier  = Some( AdvGeoConstants.ON_MAIN_SCREEN_MULT ),
             reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) ),
           ),
           allDaysPrices
@@ -464,7 +465,7 @@ final class AdvGeoBillUtil @Inject() (
           // Маппер OMS нужен ВСЕГДА, иначе addToOrder() не поймёт, что от него хотят.
           val rcvrOmsPrice = Tree.Node(
             PriceDsl.mapper(
-              multiplifier  = Some( ON_MAIN_SCREEN_MULT ),
+              multiplifier  = Some( AdvGeoConstants.ON_MAIN_SCREEN_MULT ),
               reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) ),
             ),
             EphemeralStream( rcvrPrice )
@@ -524,10 +525,6 @@ final class AdvGeoBillUtil @Inject() (
     )
     // Для рендера юзеру: надо не забыть .mapAllPrices( .normalizeByExponent + TplDataFormatUtil.setPriceAmountStr )
   }
-
-
-  /** Базовый множитель цены для размещения на главном экране (ресивера, карты). */
-  private def ON_MAIN_SCREEN_MULT = 3.0
 
 
   def freeAdvNodeIds(personIdOpt: Option[String], producerIdOpt: Option[String]): Future[Set[String]] = {

@@ -1,8 +1,10 @@
 package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
+import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
 import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
+import io.suggest.bill.price.dsl.{MReasonType, MReasonTypes}
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.color.MColors
@@ -23,8 +25,6 @@ import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.xplay.qsb.QsbSeq
 import japgolly.univeq._
-
-import javax.inject.Inject
 import models.mbill._
 import models.mctx.Context
 import models.mdr.MMdrNotifyMeta
@@ -43,6 +43,7 @@ import util.mdr.MdrUtil
 import views.html.lk.billing._
 import views.html.lk.billing.order._
 
+import javax.inject.Inject
 import scala.concurrent.Future
 
 /**
@@ -218,23 +219,37 @@ final class LkBill2 @Inject() (
         tfInfo      <- tfDailyUtil.getTfInfo( request.mnode )(ctx)
         // Подготовить данные по тарифу в контексте текущей карточки:
         tfDaily4AdOpt = {
-          for (adProdReq <- request.adProdReqOpt) yield {
+          for {
+            adProdReq <- request.adProdReqOpt
+          } yield {
+            val tf_clauses_LENS = MTfDailyInfo.clauses
+            def __tfClausesMultBy(multBy: Double) = {
+              tf_clauses_LENS.modify {
+                _ .view
+                  .mapValues { p0 =>
+                    val p2 = p0 * multBy
+                    TplDataFormatUtil.setFormatPrice( p2 )(ctx)
+                  }
+                  .toMap
+              }
+            }
+
             val blocksCount = advUtil
               .adModulesCount( adProdReq.mad )
               .get
 
-            val tdDaily4ad = MTfDailyInfo.clauses.modify {
-              _ .view
-                .mapValues { p0 =>
-                  val p2 = p0 * blocksCount
-                  TplDataFormatUtil.setFormatPrice( p2 )(ctx)
-                }
-                .toMap
-            }(tfInfo)
+            // On tag prices:
+            val tdDailyTag = __tfClausesMultBy( blocksCount )(tfInfo)
+
+            // On-main-screen prices:
+            val tfDaily4AdOms = __tfClausesMultBy( AdvGeoConstants.ON_MAIN_SCREEN_MULT )(tdDailyTag)
 
             MNodeAdvInfo4Ad(
               blockModulesCount = blocksCount,
-              tfDaily           = tdDaily4ad,
+              tfDaily           = (Map.empty[MReasonType, MTfDailyInfo] +
+                (MReasonTypes.Tag -> tdDailyTag) +
+                (MReasonTypes.OnMainScreen -> tfDaily4AdOms)
+              ),
             )
           }
         }

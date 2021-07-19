@@ -75,6 +75,7 @@ object MsgCodes {
   val `_from.you` = "_from.you"
 
   val `Adv.on.main.screen` = "Adv.on.main.screen"
+  val `Adv.in.tag` = "Adv.in.tag"
   val `Coverage.area` = "Coverage.area"
   val `Ad.area.modules.count` = "Ad.area.modules.count"
   val `Tag` = "Tag"

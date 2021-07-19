@@ -7,6 +7,8 @@ import play.api.libs.functional.syntax._
 import scalaz.ValidationNel
 import scalaz.syntax.validation._
 
+// TODO Rewrite MAdvPeriod, IPerioInfo (and all YmdHelpers, stuff) to one simple cross-platform model AdvPeriod(daysCount: Int, dateStart: Option[LocalDate]).
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

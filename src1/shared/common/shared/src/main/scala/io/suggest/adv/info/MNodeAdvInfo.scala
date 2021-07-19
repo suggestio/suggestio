@@ -1,5 +1,7 @@
 package io.suggest.adv.info
 
+import io.suggest.bill.MPrice
+import io.suggest.bill.price.dsl.MReasonType
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.media.MMediaInfo
 import io.suggest.n2.node.meta.MMetaPub
@@ -45,6 +47,6 @@ case class MNodeAdvInfo(
                          tfDaily        : Option[MTfDailyInfo],
                          tfDaily4Ad     : Option[MNodeAdvInfo4Ad],
                          meta           : MMetaPub,
-                         gallery        : Seq[MMediaInfo]
+                         gallery        : Seq[MMediaInfo],
                        )
 

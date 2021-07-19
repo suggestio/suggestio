@@ -114,7 +114,7 @@ GET  /lk/order/:nodeId                  @controllers.LkBill2.orderPage(nodeId, o
 POST /lk/items/del                      @controllers.LkBill2.deleteItems( i: QsbSeq[Gid_t] )
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
 GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
-GET  /lk/nai/:nodeId                    @controllers.LkBill2.nodeAdvInfo(nodeId, adId: Option[String] ?= None)
+POST /lk/nai/:nodeId                    @controllers.LkBill2.nodeAdvInfo(nodeId, adId: Option[String] ?= None)
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
 GET  /lk/order2                         @controllers.LkBill2.getOrder(orderId: Option[Gid_t] ?= None)

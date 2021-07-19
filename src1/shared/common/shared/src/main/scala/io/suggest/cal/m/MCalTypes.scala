@@ -18,6 +18,7 @@ object MCalTypes extends StringEnum[MCalType] {
     override def i18nCode = "Week.days"
     override def dayStart = Some(1)
     override def dayEnd   = Some(5)
+    override def ordering = 1
   }
 
   /** Выходные. */
@@ -25,6 +26,7 @@ object MCalTypes extends StringEnum[MCalType] {
     override def i18nCode     = "Weekend"
     override def dayStart = Some(6)
     override def dayEnd   = Some(7)
+    override def ordering = 2
 
     override def maybeWeekend(dow: Int, weekEndDays: Set[Int]): Boolean = {
       weekEndDays.contains(dow)
@@ -36,6 +38,7 @@ object MCalTypes extends StringEnum[MCalType] {
     override def i18nCode     = "Holidays.primetime"
     override def dayStart = None
     override def dayEnd   = None
+    override def ordering = 3
   }
 
   /** Все дни. Т.е. календарь на всю неделю. */
@@ -43,6 +46,7 @@ object MCalTypes extends StringEnum[MCalType] {
     override def i18nCode     = "All.week"
     override def dayStart = Some(1)
     override def dayEnd   = Some(7)
+    override def ordering = 4
   }
 
 
@@ -67,6 +71,8 @@ sealed abstract class MCalType(override val value: String) extends StringEnumEnt
 
   /** Костыль к jollyday для weekend-календарей, которые не могут описывать все выходные в году как праздники. */
   def maybeWeekend(dow: Int, weekEndDays: Set[Int]): Boolean = false
+
+  def ordering: Int
 
   override final def toString = value
 

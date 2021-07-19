@@ -96,4 +96,6 @@ object MReasonType {
   implicit def mReasonTypeFormat: Format[MReasonType] =
     EnumeratumUtil.valueEnumEntryFormat( MReasonTypes )
 
+  implicit def keyReadsWrites = new EnumeratumUtil.ValueEnumEntryKeyReadsWrites( MReasonTypes )(identity)
+
 }

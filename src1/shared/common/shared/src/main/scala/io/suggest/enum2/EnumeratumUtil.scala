@@ -3,6 +3,7 @@ package io.suggest.enum2
 import enumeratum._
 import enumeratum.values.{StringEnum, StringEnumEntry, ValueEnum, ValueEnumEntry}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.lk.nodes.{MLknOpKey, MLknOpKeys}
 import io.suggest.url.bind.{QsBindable, QsBinderF, QsUnbinderF}
 import play.api.libs.json._
 
@@ -16,6 +17,25 @@ import scala.language.implicitConversions
   * Например, нормальная поддержка play-json для кросс-платформенных моделей.
   */
 object EnumeratumUtil {
+
+  class ValueEnumEntryKeyReadsWrites[ValueType, EntryType <: ValueEnumEntry[ValueType]]
+                                    (model: ValueEnum[ValueType, EntryType])(fromStringKey: String => ValueType)
+    extends KeyWrites[EntryType]
+    with KeyReads[EntryType]
+  {
+    override def writeKey(key: EntryType) = key.value.toString
+
+    override def readKey(key: String): JsResult[EntryType] = {
+      model
+        .withValueEither( fromStringKey(key) )
+        .fold[JsResult[EntryType]](
+          {noSuch =>
+            JsError( noSuch.notFoundValue.toString )
+          },
+          JsSuccess(_)
+        )
+    }
+  }
 
   /** Поддержка JSON-десериализации из строки.
     *

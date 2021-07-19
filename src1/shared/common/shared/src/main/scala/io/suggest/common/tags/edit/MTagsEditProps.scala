@@ -23,6 +23,8 @@ import play.api.libs.functional.syntax._
 
 object MTagsEditProps {
 
+  def empty = apply()
+
   def validate(tep: MTagsEditProps): ValidationNel[String, MTagsEditProps] = {
     var vld = Validation.liftNel(tep)(_.tagsExists.size > TagsEditConstants.Constraints.TAGS_PER_ADD_MAX, "e.tags.too.many" )
 

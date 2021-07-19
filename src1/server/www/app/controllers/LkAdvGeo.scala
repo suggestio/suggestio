@@ -119,8 +119,9 @@ final class LkAdvGeo @Inject() (
           // TODO Найти текущие ресиверы в draft items (в корзине неоплаченных).
           rcvrsMap        = Map.empty,
           // TODO Найти текущие теги в draft items (в корзине неоплаченных).
-          tagsEdit        = MTagsEditProps(),
-          datePeriod      = MAdvPeriod(),
+          tagsEdit        = MTagsEditProps.empty,
+          // TODO Find current adv period (inside Cart order)
+          datePeriod      = MAdvPeriod.default,
           // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
           radCircle       = Some( advGeoFormUtil.radCircle0(gp0) ),
           tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE,
@@ -239,7 +240,7 @@ final class LkAdvGeo @Inject() (
           }
           .toMap
         LOGGER.trace(s"$logPrefix Rcvrs map updated:\n OLD = ${mFormS0.rcvrsMap}\n NEW = $rcvrsMap2")
-        mFormS0.withRcvrsMap(rcvrsMap2)
+        (MFormS.rcvrsMap set rcvrsMap2)(mFormS0)
       }
     } else {
       Future.successful(mFormS0)

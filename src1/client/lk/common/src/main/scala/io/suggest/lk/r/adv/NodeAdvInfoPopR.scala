@@ -2,6 +2,7 @@ package io.suggest.lk.r.adv
 
 import com.materialui.{MuiButton, MuiButtonProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle}
 import diode.react.ModelProxy
+import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.lk.m.NodeInfoPopupClose
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -9,6 +10,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.bill.MPrice
+import io.suggest.bill.price.dsl.MReasonTypes
 import io.suggest.cal.m.MCalType
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
@@ -22,6 +24,7 @@ import react.image.gallery.{IgItem, ImageGalleryPropsR, ImageGalleryR}
 
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -48,11 +51,15 @@ object NodeAdvInfoPopR {
 
     /** Ряд заголовка. */
     private def _tableHeaderRow(clauses: Iterable[(MCalType, MPrice)]): VdomElement = {
-      val firstCalTypeOpt = clauses.headOption.map(_._1)
+      val sortedClauses = clauses
+        .toSeq
+        .sortBy(_._1.ordering)
+
+      val firstCalTypeOpt = sortedClauses.headOption.map(_._1)
 
       val td = <.td
 
-      val tail = clauses
+      val tail = sortedClauses
         .iterator
         .flatMap { case (mCalType, _) =>
           // Ячейка заголовка с описанием названия (типа) календаря и затрагиваемых дней недели.
@@ -98,13 +105,15 @@ object NodeAdvInfoPopR {
 
 
     /** Ячейки ряда с ценами. */
-    private def _pricesRow(rowTitle1: String, rowTitle2: String, clauses: Iterable[(MCalType, MPrice)]): VdomElement = {
+    private def _pricesRow(key: String, rowTitle1: String, rowTitle2: String, clauses: Iterable[(MCalType, MPrice)]): VdomElement = {
       val sutki = Messages( MsgCodes.`day24h` )
 
       val td = <.td
       val tdCss = Css.Table.Td.TD
 
       val tail = clauses
+        .toSeq
+        .sortBy(_._1.ordering)
         .iterator
         .flatMap { case (mCalType, mPrice) =>
           // td-разделитель, из-за особенностей вёрстки.
@@ -126,6 +135,7 @@ object NodeAdvInfoPopR {
 
       // Левая колонка: описание принадлежности перечисленных цен.
       val children =
+        (^.key := key) #::
         td(
           ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_GREEN, Css.Font.Sz.XS, Css.Colors.WHITE ),
           rowTitle1,
@@ -269,14 +279,22 @@ object NodeAdvInfoPopR {
 
                     // Ряд-заголовок тарифной таблицы.
                     advInfo.tfDaily
-                      .orElse { advInfo.tfDaily4Ad.map(_.tfDaily) }
-                      .whenDefined { tfDailyInfo =>
-                        _tableHeaderRow( tfDailyInfo.clauses ): VdomElement
+                      .orElse {
+                        for {
+                          info4ad <- advInfo.tfDaily4Ad
+                          (_, tfDaily) <- info4ad.tfDaily.headOption
+                        } yield {
+                          tfDaily
+                        }
+                      }
+                      .whenDefined { tfDaily =>
+                        _tableHeaderRow( tfDaily.clauses ): VdomElement
                       },
 
                     // Ряд с тарифами минимального модуля.
                     advInfo.tfDaily.whenDefined { tfDailyInfo =>
                       _pricesRow(
+                        "",
                         Messages( MsgCodes.`Minimal.module` ),
                         `(` + Messages( MsgCodes.`scheme.left` ) + `)`,
                         tfDailyInfo.clauses
@@ -285,10 +303,58 @@ object NodeAdvInfoPopR {
 
                     // Ряд с тарифами в рамках текущей карточки, если есть.
                     advInfo.tfDaily4Ad.whenDefined { adTdDailyInfo =>
-                      _pricesRow(
-                        Messages( MsgCodes.`Current.ad` ),
-                        Messages( MsgCodes.`N.modules`, adTdDailyInfo.blockModulesCount ),
-                        adTdDailyInfo.tfDaily.clauses
+                      val nModulesMsg = Messages( MsgCodes.`N.modules`, adTdDailyInfo.blockModulesCount )
+                      React.Fragment(
+                        // Modules count row:
+                        <.tr(
+                          <.td(
+                            ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_GREEN, Css.Font.Sz.XS, Css.Colors.WHITE ),
+                            Messages( MsgCodes.`Current.ad` ),
+                          ),
+                          <.td,
+                          <.td(
+                            adTdDailyInfo.tfDaily
+                              .valuesIterator
+                              .map(_.clauses.size)
+                              .nextOption()
+                              .filter(_ > 1)
+                              .whenDefined { cols =>
+                                ^.colSpan := (cols * 2 - 1)
+                              },
+                            ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_INFO_VALUE ),
+                            nModulesMsg,
+                          ),
+                        ),
+
+                        // Ad tariff rows:
+                        (for {
+                          (k, tfDaily) <- adTdDailyInfo
+                            .tfDaily
+                            .toSeq
+                            .sortBy { case (reason, _) =>
+                              reason match {
+                                case MReasonTypes.Tag => 0
+                                case MReasonTypes.OnMainScreen => 1
+                                case _ => 2
+                              }
+                            }
+                            .iterator
+                        } yield {
+                          val msgCodeOrNull = k match {
+                            case MReasonTypes.Tag => MsgCodes.`Adv.in.tag`
+                            case MReasonTypes.OnMainScreen => MsgCodes.`Adv.on.main.screen`
+                            case _ => null
+                          }
+                          val multOpt = Option.when( k ==* MReasonTypes.OnMainScreen )( AdvGeoConstants.ON_MAIN_SCREEN_MULT )
+                          _pricesRow(
+                            k.value,
+                            Option( msgCodeOrNull )
+                              .fold("")( Messages(_) ),
+                            HtmlConstants.`(` + nModulesMsg + multOpt.fold("")( " ×" + _ ) + HtmlConstants.`)`,
+                            tfDaily.clauses,
+                          )
+                        })
+                          .toVdomArray,
                       )
                     },
 

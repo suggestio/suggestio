@@ -4,6 +4,8 @@ import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
+// TODO Rewrite MAdvPeriod, IPerioInfo (and all YmdHelpers, stuff) to one simple cross-platform model AdvPeriod(daysCount: Int, dateStart: Option[LocalDate]).
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -12,6 +14,8 @@ import play.api.libs.functional.syntax._
   */
 
 object MAdvPeriod {
+
+  def default = apply()
 
   implicit def mAdvPeriodFormat: OFormat[MAdvPeriod] = {
     (__ \ "i")

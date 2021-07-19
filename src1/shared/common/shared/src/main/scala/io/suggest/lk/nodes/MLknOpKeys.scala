@@ -46,22 +46,7 @@ object MLknOpKey {
   implicit def lknOpKeyJson: Format[MLknOpKey] =
     EnumeratumUtil.valueEnumEntryFormat( MLknOpKeys )
 
-  implicit object OpKeyJson extends KeyWrites[MLknOpKey] with KeyReads[MLknOpKey] {
-    override def writeKey(key: MLknOpKey): String = {
-      key.value
-    }
-
-    override def readKey(key: String): JsResult[MLknOpKey] = {
-      MLknOpKeys
-        .withValueEither( key )
-        .fold[JsResult[MLknOpKey]](
-          {noSuch =>
-            JsError( noSuch.notFoundValue )
-          },
-          JsSuccess(_)
-        )
-    }
-  }
+  implicit def OpKeyJson = new EnumeratumUtil.ValueEnumEntryKeyReadsWrites( MLknOpKeys )( identity )
 
 
   implicit final class OptionsKeyExt( private val ok: MLknOpKey ) extends AnyVal {

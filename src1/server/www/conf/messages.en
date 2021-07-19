@@ -1178,4 +1178,4 @@ You.can.flash.nfc.tag.with.link.to.0=You can write to NFC-tag a link to {0}
 _nfc._to.current.ad=currently selected ad-card in node showcase.
 _nfc._to.current.node=current node showcase.
 Also.you.can.make.nfc.tag.non.writable=Also, you can prohibit furner writing of NFC-tag.
-
+Adv.in.tag=Advertising in #tag

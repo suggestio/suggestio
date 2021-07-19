@@ -223,6 +223,7 @@ final class JsMessagesUtil @Inject() (
       MC.`Information` ::
       MC.`day24h` ::
       MC.`Minimal.module` ::
+      MC.`Adv.on.main.screen` :: MC.`Adv.in.tag` ::
       MC.`scheme.left` ::
       MC.`Current.ad` ::
       MC.`N.modules` ::

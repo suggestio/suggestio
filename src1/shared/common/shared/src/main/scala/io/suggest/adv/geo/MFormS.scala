@@ -49,6 +49,7 @@ object MFormS {
   @inline implicit def univEq: UnivEq[MFormS] = UnivEq.derive
 
   def radCircle = GenLens[MFormS](_.radCircle)
+  def rcvrsMap = GenLens[MFormS](_.rcvrsMap)
 
 }
 
@@ -66,14 +67,10 @@ object MFormS {
 case class MFormS(
                    mapProps         : MMapProps,
                    onMainScreen     : Boolean,
-                   adv4freeChecked  : Option[Boolean],
-                   rcvrsMap         : RcvrsMap_t,
-                   tagsEdit         : MTagsEditProps,
-                   datePeriod       : MAdvPeriod,
-                   radCircle        : Option[CircleGs],
-                   tzOffsetMinutes  : Int
-                 ) {
-
-  def withRcvrsMap(rcvrsMap2: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap2)
-
-}
+                   adv4freeChecked  : Option[Boolean]   = None,
+                   rcvrsMap         : RcvrsMap_t        = Map.empty,
+                   tagsEdit         : MTagsEditProps    = MTagsEditProps.empty,
+                   datePeriod       : MAdvPeriod        = MAdvPeriod.default,
+                   radCircle        : Option[CircleGs]  = None,
+                   tzOffsetMinutes  : Int               = 180,
+                 )

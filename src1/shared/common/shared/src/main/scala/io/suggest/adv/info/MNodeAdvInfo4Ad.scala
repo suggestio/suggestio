@@ -1,5 +1,6 @@
 package io.suggest.adv.info
 
+import io.suggest.bill.price.dsl.MReasonType
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -15,10 +16,22 @@ import play.api.libs.functional.syntax._
 /** Статическая поддержка контейнера инфы по размещению какой-то (текущей) карточки на текущем узле. */
 object MNodeAdvInfo4Ad {
 
-  implicit def nodeAdvInfo4AdJson: OFormat[MNodeAdvInfo4Ad] = (
-    (__ \ "b").format[Int] and
-    (__ \ "t").format[MTfDailyInfo]
-  )(apply, unlift(unapply))
+  implicit def nodeAdvInfo4AdJson: OFormat[MNodeAdvInfo4Ad] = {
+    (
+      (__ \ "b").format[Int] and
+      (__ \ "d").formatNullable {
+          val valueFormat = implicitly[Format[MTfDailyInfo]]
+          val kw = MReasonType.keyReadsWrites
+          val r = Reads.keyMapReads( kw, valueFormat )
+          val w = Writes.keyMapWrites[MReasonType, MTfDailyInfo, Map]( kw, valueFormat )
+          OFormat( r, w )
+        }
+          .inmap[Map[MReasonType, MTfDailyInfo]](
+            mapOpt => mapOpt getOrElse Map.empty,
+            map => Option.when( map.nonEmpty )(map),
+          )
+    )(apply, unlift(unapply))
+  }
 
   @inline implicit def univEq: UnivEq[MNodeAdvInfo4Ad] = UnivEq.derive
 
@@ -32,5 +45,5 @@ object MNodeAdvInfo4Ad {
   */
 case class MNodeAdvInfo4Ad(
                             blockModulesCount : Int,
-                            tfDaily           : MTfDailyInfo
+                            tfDaily           : Map[MReasonType, MTfDailyInfo],
                           )

@@ -54,4 +54,8 @@ object AdvGeoConstants {
 
   }
 
+
+  /** Base price multiplifier for main-screen advertisements. */
+  final def ON_MAIN_SCREEN_MULT = 3.0
+
 }
