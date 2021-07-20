@@ -154,7 +154,7 @@ object Sc3JsApi extends Log {
                   typ         = radioType,
                   factoryUid  = Some( macAddr ),
                   customName  = Some( "WiFi Emit #" + i ),
-                )
+                ),
               )
             }
             .to( LazyList ),

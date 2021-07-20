@@ -9,7 +9,7 @@ import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
-import io.suggest.n2.node.MNodeIdType
+import io.suggest.n2.node.{MNodeIdType, MNodeType, MNodeTypes}
 import io.suggest.radio.{MRadioData, MRadioSignalTypes, RadioUtil}
 import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.sjs.dom2.DomQuick
@@ -61,10 +61,9 @@ object BeaconerAh extends Log {
         val signal = v.signal.signal
         val res = for {
           uid           <- signal.factoryUid
-          accuracyCm    <- v.accuracy
         } yield {
           val nodeIdType = MNodeIdType( uid, signal.typ.nodeType )
-          (k, MUidBeacon( nodeIdType, Some(accuracyCm) ))
+          (k, MUidBeacon( nodeIdType, v.accuracy ))
         }
         if (res.isEmpty)
           logger.log( ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )
@@ -87,34 +86,53 @@ object BeaconerAh extends Log {
     */
   def mkFingerPrint( beacons: Seq[(String, MUidBeacon)] ): Option[Int] = {
     OptionUtil.maybe( beacons.nonEmpty ) {
-      if (beacons.lengthIs >= 3) {
-        // Distance ignored, when many beacons seen.
-        mkFingerPrintRaw( beacons )
-      } else {
+      if (
+        beacons
+          .iterator
+          .filter { case (_, beacon) =>
+            beacon.distanceCm.nonEmpty &&
+            // Only bluetooth beacons have nearly-valid distance, that can be used in fingerprinting:
+            _haveValidDistance( beacon.node.nodeType )
+          }
+          .length < 3
+      ) {
         // When small count of beacons seen, distance also need to be hashed. For debugging purposes, for example.
         mkFingerPrintDistanced( beacons )
+      } else {
+        // Distance ignored for fingerprinting, when many Bluetooth-beacons seen.
+        mkFingerPrintRaw( beacons )
       }
     }
   }
 
+  private def _haveValidDistance(ntype: MNodeType): Boolean = {
+    ntype ==* MNodeTypes.RadioSource.BleBeacon
+  }
 
-  def mkFingerPrintDistanced( beacons: Seq[(String, MUidBeacon)] ): Int = {
+  private def mkFingerPrintDistanced( beacons: Seq[(String, MUidBeacon)] ): Int = {
     (for {
       (bcnUid, rep) <- beacons.iterator
-      distanceCm <- rep.distanceCm
+      isDistaceValid = _haveValidDistance(rep.node.nodeType)
+      if !isDistaceValid || rep.distanceCm.nonEmpty
     } yield {
-      bcnUid -> BeaconUtil.quantedDistance( distanceCm )
+      // Do not quant and ignore wifi-distances;
+      val qDistanceStr = rep.distanceCm
+        .filter(_ => isDistaceValid)
+        .fold("") { distanceCm =>
+          "%04d" format BeaconUtil.quantedDistance( distanceCm )
+        }
+      bcnUid -> qDistanceStr
     })
       .toSeq
       // Sorting by normalized quanted distance and by beacon id. It helps to suppress fluctuations from beacons near.
-      .sortBy { case (bcnUid, distQ) =>
-        "%04d".format(distQ) + "." + bcnUid
+      .sortBy { case (bcnUid, qDistanceStr) =>
+        qDistanceStr + "." + bcnUid
       }
       .map(_._1)
       .hashCode()
   }
 
-  def mkFingerPrintRaw( beacons: Seq[(String, MUidBeacon)] ): Int = {
+  private def mkFingerPrintRaw( beacons: Seq[(String, MUidBeacon)] ): Int = {
     beacons
       .iterator
       .map(_._1)

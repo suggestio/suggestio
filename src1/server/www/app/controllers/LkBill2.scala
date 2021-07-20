@@ -246,10 +246,11 @@ final class LkBill2 @Inject() (
 
             MNodeAdvInfo4Ad(
               blockModulesCount = blocksCount,
-              tfDaily           = (Map.empty[MReasonType, MTfDailyInfo] +
+              tfDaily           = {
+                Map.empty[MReasonType, MTfDailyInfo] +
                 (MReasonTypes.Tag -> tdDailyTag) +
                 (MReasonTypes.OnMainScreen -> tfDaily4AdOms)
-              ),
+              },
             )
           }
         }
