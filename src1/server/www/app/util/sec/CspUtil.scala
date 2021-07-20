@@ -80,7 +80,7 @@ class CspUtil @Inject() (
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
           childSrc = IFRAMES_SRCS,
           // default-src не распространяется на form-action:
-          formAction = commonSources,
+          formAction =  commonSources,
           //objectSrc - флэш умер, всё. Запрет.
           // service-worker: нужна задать собственный домен
           workerSrc = Set.empty + Csp.Sources.SELF,

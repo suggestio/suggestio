@@ -3,7 +3,7 @@ package io.suggest.sys.mdr.v.pane
 import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiListItem, MuiListItemProps, MuiListItemText, MuiSvgIcon, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
@@ -81,7 +81,7 @@ class MdrRowR(
             // Кнопка "подтвердить"
             propsProxy.wrap { _ =>
               mdrRowBtnR.PropsVal(true, props.actionInfo, props.approveIcon, MsgCodes.`Approve`, isDisabled, props.itemIdOpt)
-            }( mdrRowBtnR.apply ),
+            }( mdrRowBtnR.component.apply ),
 
             // Заголовок ряда
             children,
@@ -89,7 +89,7 @@ class MdrRowR(
             // Кнопка "отказать"
             propsProxy.wrap { _ =>
               mdrRowBtnR.PropsVal(false, props.actionInfo, props.dismissIcon, MsgCodes.`Refuse`, isDisabled, props.itemIdOpt)
-            }( mdrRowBtnR.apply ),
+            }( mdrRowBtnR.component.apply ),
 
           )
         ),
@@ -214,8 +214,5 @@ class MdrRowBtnR {
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MdrRowBtnRPropsValFastEq ) )
     .build
-
-  def _apply( propsProxy: Props ) = component( propsProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
 
 }

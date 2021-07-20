@@ -9,6 +9,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.sec.csp.CspPolicy
 import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MEmailOrderPaidTplArgs
@@ -27,6 +28,7 @@ import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import util.mdr.MdrUtil
 import util.pay.yaka.YakaUtil
+import util.sec.CspUtil
 import util.stat.StatUtil
 import util.xplay.SecHeadersFilterUtil
 import views.html.lk.billing.order.OrderPaidEmailTpl
@@ -76,6 +78,7 @@ final class PayYaka @Inject() (
   private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
   private lazy val identUtil = injector.instanceOf[IdentUtil]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.
@@ -141,6 +144,14 @@ final class PayYaka @Inject() (
     }
   }
 
+  private def _payOrderFormCsp(profile: IYakaProfile) = {
+    cspUtil.mkCustomPolicyHdr {
+      CspPolicy.formAction.modify {
+        _ + profile.eshopActionUrl
+      }
+    }
+  }
+
   private def _payForm(profile: IYakaProfile, orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
     canPayOrder(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
       val orderPricesFut = slick.db.run {
@@ -187,6 +198,8 @@ final class PayYaka @Inject() (
         minPayPriceOpt  <- minPayPriceOptFut
         ctx             <- ctxFut
       } yield {
+        import cspUtil.Implicits._
+
         // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
         // Собрать аргументы для рендера, отрендерить страницу с формой.
         val formData = MYakaFormData(
@@ -204,7 +217,9 @@ final class PayYaka @Inject() (
           // Отрендерить саму форму в HTML. Форма может меняться от платежки к платёжке, поэтому вставляется в общую страницу в виде HTML.
           _YakaFormTpl(formData)(ctx)
         }(ctx)
+
         Ok(html)
+          .withCspHeader( _payOrderFormCsp(profile) )
       }
     }
   }
