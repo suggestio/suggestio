@@ -23,11 +23,11 @@ object ScQsUtil {
 
 
   /** Сборка LocEnv на основе описанных данных. */
-  private def getLocEnv(mroot: MScRoot, withGeoLoc: Boolean, withBluetooth: Boolean = true): MLocEnv = {
+  private def getLocEnv(mroot: MScRoot, withGeoLoc: Boolean, withRadioBeacons: Boolean = true): MLocEnv = {
     MLocEnv(
       geoLocOpt  = OptionUtil.maybeOpt(withGeoLoc)( mroot.geoLocOpt ),
       // При переходе в под-узел, зачем отображать маячки с предыдущей страницы? Незачем.
-      bleBeacons = if (withBluetooth) mroot.locEnvBleBeacons else Nil,
+      beacons = if (withRadioBeacons) mroot.locEnvRadioBeacons else Nil,
     )
   }
 
@@ -36,7 +36,12 @@ object ScQsUtil {
   def geoSearchQs(mroot: MScRoot): MScQs = {
     MScQs(
       common = MScCommonQs(
-        locEnv      = getLocEnv(mroot, withGeoLoc = true),
+        locEnv      = getLocEnv(
+          mroot = mroot,
+          withGeoLoc = true,
+          // For search tags inside ble/wifi beacons, beacons-flag defined explicitly:
+          withRadioBeacons = true,
+        ),
         apiVsn      = mroot.internals.conf.apiVsn,
         screen      = Some( mroot.dev.screen.info.screen ),
       ),
@@ -83,7 +88,7 @@ object ScQsUtil {
         locEnv = getLocEnv(
           mroot,
           withGeoLoc = currRcvrId.isEmpty,
-          withBluetooth = inxState.isBleGridAds,
+          withRadioBeacons = inxState.isBleGridAds,
         ),
       ),
       search = MAdsSearchReq(
@@ -111,7 +116,7 @@ object ScQsUtil {
         locEnv = getLocEnv(
           mroot,
           withGeoLoc = false,
-          withBluetooth = mroot.index.state.isBleGridAds,
+          withRadioBeacons = mroot.index.state.isBleGridAds,
         ),
       ),
       search = MAdsSearchReq(
@@ -142,7 +147,7 @@ object ScQsUtil {
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some( screenForGridAds(mroot) ),
-        locEnv = getLocEnv(mroot, withGeoLoc = false, withBluetooth = true),
+        locEnv = getLocEnv(mroot, withGeoLoc = false, withRadioBeacons = true),
       ),
       search = MAdsSearchReq(
         genOpt = Some( mroot.index.state.generation ),

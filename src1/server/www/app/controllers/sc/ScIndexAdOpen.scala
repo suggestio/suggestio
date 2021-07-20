@@ -28,7 +28,7 @@ trait ScIndexAdOpen
     * @param focQs Исходные qs-аргументы запроса фокусировки.
     * @param _request Исходный HTTP-реквест.
     */
-  case class ScFocToIndexLogicV3(producer: MNode, focQs: MScQs)
+  case class ScFocToIndexLogicV3(producer: MNode, focQs: MScQs, override val _geoIpInfo: GeoIpInfo)
                                 (override implicit val _request: IReq[_]) extends ScIndexLogic {
 
     /** Подстановка qs-аргументы реквеста. */
@@ -42,11 +42,11 @@ trait ScIndexAdOpen
         focQs.foc
           .exists(_.indexAdOpen
             .exists(!_.withBleBeaconAds)) &&
-        qsCommon2.locEnv.bleBeacons.nonEmpty
+        qsCommon2.locEnv.beacons.nonEmpty
       ) {
-        LOGGER.trace(s"$logPrefix _qs: Forget ${qsCommon2.locEnv.bleBeacons.length} BLE Beacons info from QS locEnv, because foc.indexAdOpen.withBleBeaconsAds = false")
+        LOGGER.trace(s"$logPrefix _qs: Forget ${qsCommon2.locEnv.beacons.length} BLE Beacons info from QS locEnv, because foc.indexAdOpen.withBleBeaconsAds = false")
         qsCommon2 = MScCommonQs.locEnv
-          .composeLens( MLocEnv.bleBeacons )
+          .composeLens( MLocEnv.beacons )
           .set( Nil )( qsCommon2 )
       }
 

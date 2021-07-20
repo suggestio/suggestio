@@ -486,7 +486,7 @@ final class AdvGeoBillUtil @Inject() (
         val topRcvrIds = res.rcvrsMap
           // TODO Отработать rcvrProps. Возможна отмена размещения вместо создания.
           .keysIterator
-          .flatMap(_.headOption)
+          .flatMap(_.lastOption)
           .toSet
 
         for (rcvrId <- topRcvrIds) {

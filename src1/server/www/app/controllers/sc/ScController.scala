@@ -1,14 +1,17 @@
 package controllers.sc
 
 import io.suggest.es.model.EsModel
-import io.suggest.sc.sc3.MSc3RespAction
+import io.suggest.geo.{IGeoFindIpResult, MGeoLoc}
+import io.suggest.sc.sc3.{MSc3RespAction, MScQs}
+import io.suggest.util.logs.MacroLogsImplLazy
 
 import javax.inject.{Inject, Singleton}
 import models.mctx.Context
 import models.mproj.IMCommonDi
-import models.req.IReq
+import models.req.{IReq, IReqHdr}
 import util.acl.SioControllerApi
 import util.cdn.ICdnUtilDi
+import util.geo.IGeoIpUtilDi
 import util.stat.{IStatUtil, StatUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -75,6 +78,7 @@ trait ScController
   extends IMCommonDi
   with ICdnUtilDi
   with IStatUtil
+  with IGeoIpUtilDi
 {
 
   val sioControllerApi: SioControllerApi
@@ -90,6 +94,34 @@ trait ScController
     implicit def _request: IReq[_]
 
     implicit lazy val ctx: Context = sioControllerApi.getContext2
+
+  }
+
+
+  class GeoIpInfo(_qs: MScQs)(implicit request: IReqHdr) extends MacroLogsImplLazy {
+
+    /** Подчищенные нормализованные данные о remote-адресе. */
+    lazy val remoteIp = geoIpUtil.fixedRemoteAddrFromRequest
+
+    /** Пошаренный результат ip-geo-локации. */
+    lazy val geoIpResOptFut: Future[Option[IGeoFindIpResult]] = {
+      val _remoteIp = remoteIp
+      val findFut = geoIpUtil.findIpCached( _remoteIp.remoteAddr )
+      if (LOGGER.underlying.isTraceEnabled()) {
+        findFut.onComplete { res =>
+          LOGGER.trace(s"$geoIpResOptFut geoIpResOptFut[${_remoteIp}]:: tried to geolocate by ip => $res")
+        }
+      }
+      findFut
+    }
+
+    /** Результат ip-геолокации. приведённый к MGeoLoc. */
+    lazy val geoIpLocOptFut = geoIpUtil.geoIpRes2geoLocOptFut( geoIpResOptFut )
+
+    /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
+    lazy val reqGeoLocFut: Future[Option[MGeoLoc]] = {
+      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpLocOptFut )
+    }
 
   }
 

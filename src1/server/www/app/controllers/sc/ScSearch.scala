@@ -11,7 +11,7 @@ import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
 import util.geo.IGeoIpUtilDi
-import util.showcase.ScSearchUtil
+import util.showcase.{IScAdSearchUtilDi, MRadioBeaconsSearchCtx, ScSearchUtil}
 import util.stat.IStatUtil
 import japgolly.univeq._
 import util.adv.geo.IAdvGeoRcvrsUtilDi
@@ -31,6 +31,7 @@ trait ScSearch
   with IStatUtil
   with IMacroLogs
   with IAdvGeoRcvrsUtilDi
+  with IScAdSearchUtilDi
 {
 
   def scSearchUtil: ScSearchUtil
@@ -45,18 +46,19 @@ trait ScSearch
     lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
     def _qs: MScQs
-
-    lazy val geoIpResOptFut = geoIpUtil.findIpCached(
-      geoIpUtil.fixedRemoteAddrFromRequest.remoteAddr
-    )
-
-    def mGeoLocOptFut =
-      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpUtil.geoIpRes2geoLocOptFut(geoIpResOptFut) )
+    def _radioSearchCtxFut: Future[MRadioBeaconsSearchCtx]
+    def _geoIpInfo: GeoIpInfo
 
     def nodesSearch: Future[MNodeSearch] = {
-      mGeoLocOptFut.flatMap { mGeoLocOpt2 =>
-        LOGGER.trace(s"$logPrefix geoLoc = ${mGeoLocOpt2.orNull}")
-        scSearchUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
+      for {
+        mGeoLocOpt2 <- _geoIpInfo.reqGeoLocFut
+        radioSearchCtx <- _radioSearchCtxFut
+        mNodeSearch <- {
+          LOGGER.trace(s"$logPrefix geoLoc = ${mGeoLocOpt2.orNull} and ${radioSearchCtx.uidsClear.size} radio-beacons")
+          scSearchUtil.qs2NodesSearch( _qs, mGeoLocOpt2, radioSearchCtx )
+        }
+      } yield {
+        mNodeSearch
       }
     }
 
@@ -80,7 +82,7 @@ trait ScSearch
         // Собранные данные по узлам сохранить в статистику:
         .mapMaterializedValue { idsAndNamesFut =>
           val _userSaOptFut = statUtil.userSaOptFutFromRequest()
-          val _geoIpResOptFut = geoIpResOptFut
+          val _geoIpResOptFut = _geoIpInfo.geoIpResOptFut
           for {
             _userSaOpt    <- _userSaOptFut
             geoIpResOpt   <- _geoIpResOptFut
@@ -171,13 +173,20 @@ trait ScSearch
 
   /** Интерфейс для объекта-компаньона реализаций ScTagsLogic. */
   protected trait IScSearchLogicCompanion {
-    def apply(qs: MScQs)(implicit request: IReq[_]): ScSearchLogic
+    def apply(qs: MScQs,
+              radioSearchCtxFut: Future[MRadioBeaconsSearchCtx],
+              geoIpInfo: GeoIpInfo,
+             )(implicit request: IReq[_]): ScSearchLogic
   }
 
 
   /** Реализация поддержки Sc APIv3. */
-  case class ScSearchLogicV3(override val _qs: MScQs)
-                            (override implicit val _request: IReq[_]) extends ScSearchLogic {
+  case class ScSearchLogicV3(override val _qs: MScQs,
+                             override val _radioSearchCtxFut: Future[MRadioBeaconsSearchCtx],
+                             override val _geoIpInfo: GeoIpInfo,
+                            )(override implicit val _request: IReq[_])
+    extends ScSearchLogic
+  {
 
     /** Сборка search-res-ответа без sc3Resp-обёртки. */
     override def respActionFut: Future[MSc3RespAction] = {

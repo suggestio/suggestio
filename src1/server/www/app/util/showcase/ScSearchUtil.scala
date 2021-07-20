@@ -34,7 +34,7 @@ final class ScSearchUtil {
 
 
   /** Компиляция значений query string в MNodeSearch. */
-  def qs2NodesSearch(qs: MScQs, geoLocOpt2: Option[MGeoLoc]): Future[MNodeSearch] = {
+  def qs2NodesSearch(qs: MScQs, geoLocOpt2: Option[MGeoLoc], radioCtx: MRadioBeaconsSearchCtx): Future[MNodeSearch] = {
     // По каким типа узлов фильтровать? Зависит от текущей вкладки поиска.
     //val tabOpt = qs.search.tab
     //val isMultiSearch = tabOpt.isEmpty
@@ -67,6 +67,17 @@ final class ScSearchUtil {
     }
 
     val distanceSort = geoLocOpt2.map(_.point)
+
+    // LocEnv tags from radio-beacons: Also do tags search in all visible beacons:
+    val beaconUidsClear = radioCtx.uidsClear
+    if (beaconUidsClear.nonEmpty) {
+      edgesCrs ::= Criteria(
+        predicates  = MPredicates.TaggedBy :: Nil,
+        tags        = tagCrs,
+        nodeIds     = beaconUidsClear.toSeq,
+        must        = should,
+      )
+    }
 
     // Поиск по тегам.
       edgesCrs ::= Criteria(

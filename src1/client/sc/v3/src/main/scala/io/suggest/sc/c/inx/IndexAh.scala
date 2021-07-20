@@ -543,7 +543,7 @@ class IndexAh[M](
           if (switchCtx.demandLocTest)
             root.locEnvUser
           else if (switchCtx.forceGeoLoc.nonEmpty)
-            MLocEnv(switchCtx.forceGeoLoc, root.locEnvBleBeacons)
+            MLocEnv(switchCtx.forceGeoLoc, root.locEnvRadioBeacons)
           else if (switchCtx.indexQsArgs.nodeId.isEmpty)
             root.locEnvMap
           else

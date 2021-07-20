@@ -6,9 +6,10 @@ Suggest.io is conceptual solution to simply create rich eye-candy cross-screen c
 simply attach it to physical locations via:
 - [NFC tags](doc/tech/nfc.md)
 - [Wi-Fi zones](doc/tech/wifi.md)
-- Geographical regions on the map
 - [Bluetooth radio-beacons (EddyStone technology)](doc/tech/bluetooth-beacons.md)
-- Internal nodes graph hierarchy
+- [Geographical regions on the map](doc/tech/cabinet/adv-geo.md#geo-area-advertising)
+- [Internal nodes hierarchy](doc/tech/cabinet/adv-geo.md#node-level-advertising)
+- [In tags advertising](doc/tech/cabinet/adv-geo.md#tags-advertising)
 - etc.
 
 ## Contents
@@ -28,24 +29,24 @@ screen-fit single-page Web, composed into unified nodes graphs and contexted int
 geolocation regions, nodes graph, etc. Content placements can be monetized using build-in billing system.
 
 Server, client and shared code written on Scala.
-Client-side UI developed using [scalajs-react](https://github.com/japgolly/scalajs-react/)
+Client-side UI developed using [scalajs-react](https://github.com/japgolly/scalajs-react/) over [React.js](https://reactjs.org/),
 and translated into JavaScript using [Scala.js](https://www.scala-js.org/) compiler.
 Server-side code based on [Play! framework](https://playframework.com/).
 
 Some small parts contains non-scala code due to historical reasons.
 
 ## Goals
+- More content placement dimensions.
+  Current usual Internet structured into sites, and pages mapped to URLs.
+  Content may be also transparently attached to geographical regions, radio-beacon signals, NFC-tags, geo/node-tags, etc.
+  Abstract out from virtual and physical dimensions.
 - Create a simple representation into the internet for end-users.
   Currently, sites+domains+certificates+programmers+html+designers+etc+etc have
-  high and raising cost for small/middle business.
-- More content dimensions.
-  Current usual Internet structured into sites, and pages mapped into URLs.
-  Content may be also transparently attached to radio-beacon signals (Wi-Fi, bluetooth, etc), geographical regions, NFC-tags, etc.
-  Abstract out from virtual and physical dimensions.
+  too high cost for small business.
 - Extended navigation dimensions: usual site page-to-page navigation may be extended via extending current content view
   with new content.
 - Page can contain apps, app can show pages. Single-page view can become app. Abstract over browsers and apps.
-- Many screens -- one content. Abstract over mobiles, tables and PCs screens. Be responsible.
+- Many screens -- one content. Abstract over mobiles, tables and PCs screens. [Be responsible](doc/tech/showcase/showcase.md#responsive).
 - Become distributed. Current implementation designed with horizontal cluster scaling in mind.
   In future become more federated/distributed using blockchains/git/activitypub/etc as underlying storage.
 
@@ -72,7 +73,7 @@ TODO Pre-build images/binaries not-yet ready, so see [Development](#development)
 ### Development
 - sbt 1.3+
 - scala 2.13+
-- Node.js
+- Node.js (for prepare assets and compile client-side code)
 
 ## Getting started
 0. Install needed system packages:
@@ -96,3 +97,10 @@ TODO Pre-build images/binaries not-yet ready, so see [Development](#development)
 7. Open browser, go to [login page](http://localhost:9000/id). Wait for compilation finishes. Type login/password from step 6.
 8. Superuser also have access to special [/sys/ pages](http://localhost:9000/sys).
 
+## License
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with the License.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.

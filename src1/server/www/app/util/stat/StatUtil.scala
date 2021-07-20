@@ -288,7 +288,7 @@ final class StatUtil @Inject()(
     def beaconsStats: Seq[MAction] = {
       val bcns = locEnvOpt
         .to( LazyList )
-        .flatMap(_.bleBeacons)
+        .flatMap(_.beacons)
 
       if (bcns.isEmpty) {
         Nil

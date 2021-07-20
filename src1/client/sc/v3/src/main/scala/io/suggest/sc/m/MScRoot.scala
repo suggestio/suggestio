@@ -77,7 +77,7 @@ case class MScRoot(
     )
   }
 
-  def locEnvBleBeacons = {
+  def locEnvRadioBeacons = {
     val nearbyReport0 = dev.beaconer.nearbyReport
     internals.info.currRoute
       .filter(_.virtBeacons.nonEmpty)
@@ -91,13 +91,13 @@ case class MScRoot(
   def locEnvMap: MLocEnv = {
     MLocEnv(
       geoLocOpt  = geoLocOpt,
-      bleBeacons = locEnvBleBeacons
+      beacons    = locEnvRadioBeacons,
     )
   }
   def locEnvUser: MLocEnv = {
     MLocEnv(
       geoLocOpt  = userLocOpt,
-      bleBeacons = locEnvBleBeacons
+      beacons    = locEnvRadioBeacons,
     )
   }
 

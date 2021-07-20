@@ -53,6 +53,7 @@ trait ScUniApi
     // Разобрать qs, собрать на исполнение.
     lazy val logPrefix = s"PubApi#${System.currentTimeMillis()}:"
 
+    lazy val geoIpInfo = new GeoIpInfo(qs)
 
     /** Надо ли выполнять перескок focused => index в какой-то другой узел?
       * Да, если фокусировка активна, перескок разрешён, и проверка перескока вернула узел.
@@ -72,13 +73,13 @@ trait ScUniApi
     /** Собрать index-логику, когда требуется. */
     lazy val indexLogicOptFut: Future[Option[ScIndexLogic]] = {
       if (qs.index.nonEmpty) {
-        val logic = ScIndexLogic(qs)(_request)
+        val logic = ScIndexLogic(qs, geoIpInfo)(_request)
         LOGGER.trace(s"$logPrefix Normal index-logic created: $logic")
         Future.successful( Some(logic) )
       } else if ( qs.foc.exists(_.indexAdOpen.nonEmpty) ) {
         for (toNnodeOpt <- focJumpToIndexNodeOptFut) yield {
           for (toNode <- toNnodeOpt) yield {
-            val inxLogic = ScFocToIndexLogicV3(toNode, qs)( _request )
+            val inxLogic = ScFocToIndexLogicV3(toNode, qs, geoIpInfo)( _request )
             LOGGER.trace(s"$logPrefix Foc-index jump, index-ad-open logic $inxLogic")
             inxLogic
           }
@@ -149,6 +150,9 @@ trait ScUniApi
       }
     }
 
+    lazy val radioBeaconsCtxFut = qsAfterIndexFut.flatMap { scQs2 =>
+      scAdSearchUtil.radioBeaconsSearch( scQs2.common.locEnv.beacons )
+    }
 
     /** Собрать focused-логику, если она требуется. */
     def focLogicOptFut: Future[Option[FocusedLogicHttpV3]] = {
@@ -223,7 +227,7 @@ trait ScUniApi
           !hasManyIndexes
         }
         qs2         <- qsAfterIndexFut
-        logic       = TileAdsLogic(qs2)(_request)
+        logic       = TileAdsLogic(qs2, radioBeaconsCtxFut)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
           // Обход перехватчика NSEE - пусть пойдёт по нормальному логгированию.
           .recover { case ex: Throwable =>
@@ -251,7 +255,7 @@ trait ScUniApi
         // Запрошен поиск узлов. Подготовить список искомых узлов.
         for {
           qs2         <- qsAfterIndexFut
-          logic       = ScSearchLogic(qs2.common.apiVsn)(qs2)(_request)
+          logic       = ScSearchLogic(qs2.common.apiVsn)(qs2, radioBeaconsCtxFut, geoIpInfo)(_request)
           respAction  <- _logic2stateRespActionFut( logic )
         } yield {
           LOGGER.trace(s"$logPrefix Search nodes => ${respAction.search.iterator.flatMap(_.nodes).size} results")

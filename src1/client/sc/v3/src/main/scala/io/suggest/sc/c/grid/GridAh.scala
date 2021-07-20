@@ -397,7 +397,7 @@ class GridAh[M](
               // Для этого, надо вычистить locEnv до маячков, и убрать остальные критерии запроса.
               // А есть ли маячки в qs?
               val mroot = scRootRO.value
-              val bcns0 = mroot.locEnvBleBeacons
+              val bcns0 = mroot.locEnvRadioBeacons
 
               val gridAds0 = v0.core.ads
               val gridAds2 = MGridAds.adsTreePot.modify {

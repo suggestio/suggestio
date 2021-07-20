@@ -2,7 +2,6 @@ package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
-import LocationConst._
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -22,18 +21,25 @@ object MLocEnv extends IEmpty {
 
   override val empty = apply()
 
+  object Fields {
+    final def GEO_LOC_FN = "e"
+    final def BEACONS_FN = "b"
+  }
 
   /** Поддержка JSON для инстансов [[MLocEnv]].
     * В первую очередь для js-роутера и qs.
     */
-  implicit val MLOC_ENV_FORMAT: OFormat[MLocEnv] = (
-    (__ \ GEO_LOC_FN).formatNullable[MGeoLoc] and
-    (__ \ BLE_BEACONS_FN).formatNullable[Seq[MUidBeacon]]
-      .inmap[Seq[MUidBeacon]](
-        EmptyUtil.opt2ImplEmptyF(Nil),
-        { seq => if (seq.isEmpty) None else Some(seq) }
-      )
-  )(apply, unlift(unapply))
+  implicit val MLOC_ENV_FORMAT: OFormat[MLocEnv] = {
+    val F = Fields
+    (
+      (__ \ F.GEO_LOC_FN).formatNullable[MGeoLoc] and
+      (__ \ F.BEACONS_FN).formatNullable[Seq[MUidBeacon]]
+        .inmap[Seq[MUidBeacon]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          seq => Option.when( seq.nonEmpty )(seq)
+        )
+    )(apply, unlift(unapply))
+  }
 
   @inline implicit def univEq: UnivEq[MLocEnv] = {
     import io.suggest.ueq.UnivEqUtil._
@@ -41,7 +47,7 @@ object MLocEnv extends IEmpty {
   }
 
   def geoLocOpt   = GenLens[MLocEnv](_.geoLocOpt)
-  def bleBeacons  = GenLens[MLocEnv](_.bleBeacons)
+  def beacons     = GenLens[MLocEnv](_.beacons)
 
 }
 
@@ -50,20 +56,21 @@ object MLocEnv extends IEmpty {
   * Класс экземпляров модели информации о локации.
   *
   * @param geoLocOpt Данные геолокации.
-  * @param bleBeacons Данные BLE-локации на основе маячков.
+  * @param beacons Данные видимых radio-маячков.
   */
 case class MLocEnv(
                     geoLocOpt     : Option[MGeoLoc]    = None,
-                    bleBeacons    : Seq[MUidBeacon]    = Nil
+                    beacons       : Seq[MUidBeacon]    = Nil
                   )
   extends EmptyProduct
 {
 
   override def toString: String = {
     StringUtil.toStringHelper(this, 64) { renderF =>
-      geoLocOpt foreach renderF(GEO_LOC_FN)
-      if (bleBeacons.nonEmpty)
-        renderF(BLE_BEACONS_FN)( bleBeacons.mkString("[", ", ", "]") )
+      val F = MLocEnv.Fields
+      geoLocOpt foreach renderF( F.GEO_LOC_FN )
+      if (beacons.nonEmpty)
+        renderF( F.BEACONS_FN )( beacons.mkString("[", ", ", "]") )
     }
   }
 

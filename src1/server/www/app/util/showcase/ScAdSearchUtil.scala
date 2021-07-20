@@ -55,12 +55,12 @@ final class ScAdSearchUtil @Inject() (
     * Код эвакуирован из models.AdSearch.qsb.bind().
     * @param args Данные по выборке карточек, пришедшие из qs.
     * @param innerHits Возвращать в ответе в inner_hits указанные поля с поддержкой doc_values.
-    * @param bleSearchCtx Контекст поиска в BLE-маячках.
+    * @param subSearches Other subsearch. Like result of bleSearchCtx.subSearches() for radio-beacons subsearches.
     */
   def qsArgs2nodeSearch(
                          args: MScQs,
                          innerHits: Option[MEsInnerHitsInfo] = None,
-                         bleSearchCtx: MRadioBeaconsSearchCtx = MRadioBeaconsSearchCtx.empty,
+                         subSearches: List[MSubSearch] = Nil,
                        ): MNodeSearch = {
 
     val _outEdges: Seq[Criteria] = {
@@ -142,7 +142,9 @@ final class ScAdSearchUtil @Inject() (
 
     val _nodeTypes  = MNodeTypes.Ad :: Nil
 
-    val normalSearches = if (_outEdges.nonEmpty) {
+    var _subSearchesAcc = subSearches
+
+    if (_outEdges.nonEmpty) {
       val normalSearch = new MNodeSearch {
         override val outEdges = MEsNestedSearch(
           clauses = _outEdges,
@@ -161,11 +163,8 @@ final class ScAdSearchUtil @Inject() (
         search = normalSearch,
         must   = IMust.SHOULD
       )
-      subSearch :: Nil
-    } else {
-      Nil
+      _subSearchesAcc ::= subSearch
     }
-
 
     // Собрать итоговый запрос.
     val _limit = args.search.limit.fold(LIMIT_DFLT) {
@@ -176,14 +175,6 @@ final class ScAdSearchUtil @Inject() (
       Math.min(OFFSET_MAX_ABS, _)
     }
 
-    // Сборка поисков.
-    val _subSearches = (
-      normalSearches #::
-      bleSearchCtx.subSearches #::
-      LazyList.empty
-    )
-      .flatten
-
     // Собрать и вернуть результат.
     // Пока что всё работает синхронно.
     // Но для маячков скорее всего потребуется фоновая асинхронная работа по поиску id нод ble-маячков.
@@ -191,7 +182,7 @@ final class ScAdSearchUtil @Inject() (
       override def limit = _limit
       override def offset = _offset
       override def nodeTypes = _nodeTypes
-      override def subSearches = _subSearches
+      override def subSearches = _subSearchesAcc
     }
   }
 
@@ -201,9 +192,8 @@ final class ScAdSearchUtil @Inject() (
     * Карточки в маячках ищутся отдельно от основного набора параметров, вне всяких продьюсеров-ресиверов-географии.
     * Результаты объединяются в общий выхлоп, но маячковые результаты -- поднимаются в начало этого списка.
     * Причём, чем ближе маячок -- тем выше результат.
-    * @param innerHits Возвращать ли данные inner_hits?
     */
-  def radioBeaconsSearch(bcnsQs: Seq[MUidBeacon], innerHits: Option[MEsInnerHitsInfo]): Future[MRadioBeaconsSearchCtx] = {
+  def radioBeaconsSearch(bcnsQs: Seq[MUidBeacon]): Future[MRadioBeaconsSearchCtx] = {
     if (bcnsQs.isEmpty) {
       Future.successful( MRadioBeaconsSearchCtx.empty )
 
@@ -259,7 +249,7 @@ final class ScAdSearchUtil @Inject() (
             }
           }
 
-          override lazy val subSearches: List[MSubSearch] = {
+          override def subSearches(innerHits: Option[MEsInnerHitsInfo] = None): List[MSubSearch] = {
             // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
             val _qsBeacons2 = qsBeacons2
 
@@ -296,7 +286,7 @@ final class ScAdSearchUtil @Inject() (
   * Содержит в себе разные промежуточные значения обсчёта обстановки, которые могут быть нужны где-то выше по stacktrace.
   * Трейт, т.к. содержит в себе ленивые поля.
   */
-protected trait MRadioBeaconsSearchCtx {
+sealed trait MRadioBeaconsSearchCtx {
   /** id запрошенных в qs маячков. */
   def uidsQs      : Set[String] = Set.empty
   /** id найденных в БД маячков. */
@@ -304,7 +294,7 @@ protected trait MRadioBeaconsSearchCtx {
   /** Отчищенные от мусора qs-данные по мячкам. */
   def qsBeacons2: Seq[MUidBeacon] = Nil
   /** Данные для поиска по маячкам в elasticsearch. */
-  def subSearches : List[MSubSearch] = Nil
+  def subSearches(innerHits: Option[MEsInnerHitsInfo] = None): List[MSubSearch] = Nil
 }
 object MRadioBeaconsSearchCtx {
   def empty = new MRadioBeaconsSearchCtx {}

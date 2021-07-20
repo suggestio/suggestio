@@ -289,7 +289,7 @@ class ShowcaseUtil @Inject() (
     */
   def collectScRcvrFlags(qs: MScQs, mad: MNode): Iterable[MEdgeFlagData] = {
     val rcvrIds = (
-      qs.common.locEnv.bleBeacons ::
+      qs.common.locEnv.beacons ::
       qs.search.rcvrId.toList ::
       Nil
     )

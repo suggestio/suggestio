@@ -1,7 +1,6 @@
 package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
-import LocationConst._
 import io.suggest.xplay.qsb.{QsbSeq, AbstractQueryStringBindable}
 import play.api.mvc.QueryStringBindable
 import io.suggest.url.bind.QueryStringBindableUtil._
@@ -25,9 +24,10 @@ object MLocEnvJvm {
     new AbstractQueryStringBindable[MLocEnv] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLocEnv]] = {
         val k = key1F(key)
+        val F = MLocEnv.Fields
         for {
-          geoLocOptE    <- geoLocOptB.bind (k(GEO_LOC_FN),     params)
-          beaconsE      <- beaconsB.bind   (k(BLE_BEACONS_FN), params)
+          geoLocOptE    <- geoLocOptB.bind (k( F.GEO_LOC_FN ),     params)
+          beaconsE      <- beaconsB.bind   (k( F.BEACONS_FN ), params)
         } yield {
           for {
             geoLocOpt   <- geoLocOptE
@@ -35,7 +35,7 @@ object MLocEnvJvm {
           } yield {
             MLocEnv(
               geoLocOpt   = geoLocOpt,
-              bleBeacons  = beacons.items
+              beacons  = beacons.items
             )
           }
         }
@@ -43,9 +43,10 @@ object MLocEnvJvm {
 
       override def unbind(key: String, value: MLocEnv): String = {
         val k = key1F(key)
+        val F = MLocEnv.Fields
         _mergeUnbinded1(
-          geoLocOptB.unbind (k(GEO_LOC_FN),     value.geoLocOpt),
-          beaconsB.unbind   (k(BLE_BEACONS_FN), QsbSeq(value.bleBeacons) )
+          geoLocOptB.unbind (k( F.GEO_LOC_FN ), value.geoLocOpt),
+          beaconsB.unbind   (k( F.BEACONS_FN ), QsbSeq(value.beacons) )
         )
       }
     }

@@ -68,6 +68,7 @@ trait ScIndex
 
     /** qs-аргументы реквеста. */
     def _qs: MScQs
+    def _geoIpInfo: GeoIpInfo
 
     /** Быстрый доступ к MScIndexArgs. По идее, это безопасно, т.к. запрос должен быть вместе с index args. */
     final def _scIndexArgs = _qs.index.get
@@ -76,29 +77,6 @@ trait ScIndex
     def respActionType = MScRespActionTypes.Index
 
     lazy val logPrefix = s"scIndex[${ctx.timestamp}]"
-
-    /** Подчищенные нормализованные данные о remote-адресе. */
-    lazy val _remoteIp = geoIpUtil.fixedRemoteAddrFromRequest
-
-    /** Пошаренный результат ip-geo-локации. */
-    lazy val geoIpResOptFut: Future[Option[IGeoFindIpResult]] = {
-      val remoteIp = _remoteIp
-      val findFut = geoIpUtil.findIpCached(remoteIp.remoteAddr)
-      if (LOGGER.underlying.isTraceEnabled()) {
-        findFut.onComplete { res =>
-          LOGGER.trace(s"$logPrefix geoIpResOptFut[$remoteIp]:: tried to geolocate by ip => $res")
-        }
-      }
-      findFut
-    }
-
-    /** Результат ip-геолокации. приведённый к MGeoLoc. */
-    lazy val geoIpLocOptFut = geoIpUtil.geoIpRes2geoLocOptFut( geoIpResOptFut )
-
-    /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
-    lazy val reqGeoLocFut: Future[Option[MGeoLoc]] = {
-      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpLocOptFut )
-    }
 
 
     /** #00: поиск узла по id ресивера, указанного в qs.
@@ -138,7 +116,7 @@ trait ScIndex
       val searchOpt = bleUtil.scoredByDistanceBeaconSearch(
         maxBoost    = 100000F,
         predicates  = MPredicates.PlacedIn :: Nil,
-        bcns        = _qs.common.locEnv.bleBeacons
+        bcns        = _qs.common.locEnv.beacons
       )
       searchOpt.fold [Future[Seq[MIndexNodeInfo]]] {
         Future.successful( Nil )
@@ -174,7 +152,7 @@ trait ScIndex
     /** поискать покрывающий ТЦ/город/район. */
     def l50_detectUsingCoords: Future[Seq[MIndexNodeInfo]] = {
       for {
-        geoLocOpt <- reqGeoLocFut
+        geoLocOpt <- _geoIpInfo.reqGeoLocFut
 
         // Пусть будет сразу NSEE, если нет данных геолокации.
         geoLoc = {
@@ -527,7 +505,7 @@ trait ScIndex
         val _isMyNodeFut         = isMyNodeFut
         // Возвращать геолокацию юзера только если затребовано в исходном запросе.
         val _reqGeoLocOptFut =
-          if (_scIndexArgs.retUserLoc) geoIpLocOptFut
+          if (_scIndexArgs.retUserLoc) _geoIpInfo.geoIpLocOptFut
           else Future.successful(None)
 
         for {
@@ -560,10 +538,10 @@ trait ScIndex
       // Запуск асинхронных задач в фоне.
       val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
       val _indexNodeFut     = indexNodeFutVal
-      val _geoIpResOptFut   = logic.geoIpResOptFut
+      val _geoIpResOptFut   = _geoIpInfo.geoIpResOptFut
 
       // Исполнение синхронных задач.
-      val _remoteIp         = logic._remoteIp
+      val _remoteIp         = _geoIpInfo.remoteIp
 
       // Сборка асинхронного результата.
       for {
@@ -668,10 +646,10 @@ trait ScIndex
   }
 
   object ScIndexLogic {
-    def apply(qs: MScQs)(implicit request: IReq[_]): ScIndexLogic = {
+    def apply(qs: MScQs, geoIpInfo: GeoIpInfo)(implicit request: IReq[_]): ScIndexLogic = {
       val scApiVsn = qs.common.apiVsn
       if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-        ScIndexLogicV3(qs)(request)
+        ScIndexLogicV3(qs, geoIpInfo)(request)
       } else {
         throw new UnsupportedOperationException("Unknown API vsn: " + scApiVsn)
       }
@@ -686,7 +664,8 @@ trait ScIndex
     *
     * Сервер отвечает только параметрами для рендера, без html.
     */
-  case class ScIndexLogicV3(override val _qs: MScQs)
+  case class ScIndexLogicV3(override val _qs: MScQs,
+                            override val _geoIpInfo: GeoIpInfo)
                            (override implicit val _request: IReq[_]) extends ScIndexLogic
 
 

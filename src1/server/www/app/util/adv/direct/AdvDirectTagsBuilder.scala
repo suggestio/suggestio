@@ -33,7 +33,7 @@ trait AdvDirectTagsBuilder extends IAdvBuilder {
 
   /** Установка данного тега в карточку. */
   override def installNode(items: Iterable[MItem]): IAdvBuilder = {
-    lazy val logPrefix = s"AGT.installNode(${System.currentTimeMillis}):"
+    lazy val logPrefix = s"${classOf[AdvDirectTagsBuilder].getSimpleName}.installNode(${System.currentTimeMillis}):"
 
     val itype = _ITYPE
     val (tagsItems, other) = items.partition { i =>

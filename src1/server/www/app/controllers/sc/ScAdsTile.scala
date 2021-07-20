@@ -1,7 +1,7 @@
 package controllers.sc
 
 import _root_.util.blocks.IBlkImgMakerDI
-import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
+import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil, MRadioBeaconsSearchCtx}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{MEsInnerHitsInfo, MEsNestedSearch, MEsUuId}
@@ -70,11 +70,12 @@ trait ScAdsTile
   trait TileAdsLogic extends LogicCommonT with IRespActionFut with TypeT {
 
     def _qs: MScQs
+    def radioSearchCtxFut: Future[MRadioBeaconsSearchCtx]
 
     private val scQs_common_locEnv_beacons_LENS =
       MScQs.common
         .composeLens( MScCommonQs.locEnv )
-        .composeLens( MLocEnv.bleBeacons )
+        .composeLens( MLocEnv.beacons )
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
@@ -99,27 +100,14 @@ trait ScAdsTile
 
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
 
-    /** Данные для поиска bluetooth-маячков. */
-    lazy val radioSearchCtxFut = scAdSearchUtil.radioBeaconsSearch(
-      bcnsQs = scQs_common_locEnv_beacons_LENS.get( _qs ),
-      innerHits = Some {
-        MEsInnerHitsInfo(
-          fields = (
-            MNodeFields.Edges.EO_PREDICATE_FN ::
-            MNodeFields.Edges.EO_NODE_IDS_FN ::
-            Nil
-          ),
-        )
-      }
-    )
-
     // Часть операций по проверке и чистке qs требуют асинхронных шагов. Делаем:
     lazy val _qsClearedFut = for {
       radioBeaconsCtx <- radioSearchCtxFut
     } yield {
       val beacons0 = scQs_common_locEnv_beacons_LENS.get( _qs )
-      if (beacons0 !=* radioBeaconsCtx.qsBeacons2) {
-        scQs_common_locEnv_beacons_LENS.set(radioBeaconsCtx.qsBeacons2)( _qs )
+      val qsBeacons2 = radioBeaconsCtx.qsBeacons2
+      if (beacons0 !=* qsBeacons2) {
+        (scQs_common_locEnv_beacons_LENS set qsBeacons2)( _qs )
       } else {
         _qs
       }
@@ -131,7 +119,17 @@ trait ScAdsTile
     } yield {
       scAdSearchUtil.qsArgs2nodeSearch(
         args                  = clearedQs,
-        bleSearchCtx          = radioSearchCtx,
+        subSearches           = radioSearchCtx.subSearches(
+          innerHits = Some {
+            MEsInnerHitsInfo(
+              fields = (
+                MNodeFields.Edges.EO_PREDICATE_FN ::
+                  MNodeFields.Edges.EO_NODE_IDS_FN ::
+                  Nil
+                ),
+            )
+          },
+        ),
       )
     }
 
@@ -439,13 +437,13 @@ trait ScAdsTile
   }
 
   /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
-  protected object TileAdsLogic {
+  object TileAdsLogic {
 
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
-    def apply(adSearch: MScQs)(implicit request: IReq[_]): TileAdsLogic = {
+    def apply(adSearch: MScQs, radioSearchCtxFut: Future[MRadioBeaconsSearchCtx])(implicit request: IReq[_]): TileAdsLogic = {
       val v = adSearch.common.apiVsn
       if (v.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-        new TileAdsLogicV3( adSearch )
+        new TileAdsLogicV3( adSearch, radioSearchCtxFut )
       } else {
         throw new UnsupportedOperationException("Unsupported API version: " + v)
       }
@@ -454,8 +452,9 @@ trait ScAdsTile
   }
 
 
-  case class TileAdsLogicV3(override val _qs: MScQs)
-                           (override implicit val _request: IReq[_]) extends TileAdsLogic {
+  case class TileAdsLogicV3(override val _qs: MScQs,
+                            override val radioSearchCtxFut: Future[MRadioBeaconsSearchCtx],
+                           )(override implicit val _request: IReq[_]) extends TileAdsLogic {
 
     override type T = MSc3AdData
 
