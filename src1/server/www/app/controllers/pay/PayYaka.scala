@@ -147,7 +147,8 @@ final class PayYaka @Inject() (
   private def _payOrderFormCsp(profile: IYakaProfile) = {
     cspUtil.mkCustomPolicyHdr {
       CspPolicy.formAction.modify {
-        _ + profile.eshopActionUrl
+        // yoomoney.ru: really it not needed here, because it is redirected from money.yandex.ru => yoomoney.ru. But, who knows future of browsers CSP implementations...
+        _ + profile.eshopActionUrl + "https://yoomoney.ru/*"
       }
     }
   }
