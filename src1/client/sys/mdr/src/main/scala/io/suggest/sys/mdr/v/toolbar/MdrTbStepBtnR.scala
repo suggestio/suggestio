@@ -72,13 +72,15 @@ final class MdrTbStepBtnR {
           override val title: React.Node = Messages( p.titleMsgCode )
         }
       } (
-        MuiIconButton(
-          new MuiIconButtonProps {
-            override val onClick  = _btnClickJsCbF
-            override val disabled = p.isDisabled
-          }
-        )(
-          p.icon()()
+        <.span(
+          MuiIconButton(
+            new MuiIconButtonProps {
+              override val onClick  = _btnClickJsCbF
+              override val disabled = p.isDisabled
+            }
+          )(
+            p.icon()()
+          )
         )
       )
     }

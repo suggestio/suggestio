@@ -45,6 +45,16 @@ object MJdRrrProps {
 
   def gridBuildResult = GenLens[MJdRrrProps](_.gridBuildRes)
 
+  def fromJdArgs(jdArgs: MJdArgs, gridBuildRes: Option[MGridBuildResult] = None)(renderArgs: MJdRenderArgs = jdArgs.renderArgs): MJdRrrProps = {
+    MJdRrrProps(
+      subTree = jdArgs.data.doc.template,
+      tagId   = jdArgs.data.doc.tagId,
+      jdArgs  = jdArgs,
+      renderArgs = renderArgs,
+      gridBuildRes = gridBuildRes,
+    )
+  }
+
 }
 
 

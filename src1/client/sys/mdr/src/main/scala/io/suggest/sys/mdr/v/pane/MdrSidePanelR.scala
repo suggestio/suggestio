@@ -161,68 +161,63 @@ class MdrSidePanelR(
                           val itemId = mitem.id.get
                           val itemIdStr = itemId.toString
 
-                          // Часть данных, не значимых для модерации, скрывается в tool-tip.
-                          MuiToolTip.component.withKey(itemId) {
-                            val _title = <.span(
+                          mdrRowR.component.withKey( itemIdStr + HtmlConstants.MINUS )(mdrRowPropsProxy)(
+
+                            // Рендерить данные по гео-размещению.
+                            mitem.tagFaceOpt.whenDefinedNode { tagFace =>
+                              VdomArray(
+                                <.strong(
+                                  HtmlConstants.DIEZ,
+                                  tagFace,
+                                  // TODO Нужна ссылка на узел-тег.
+                                ),
+                                HtmlConstants.NBSP_STR,
+                              )
+                            },
+
+                            // Рендер названия rcvr-узла. Но не нужно рендерить название, если это текущий узел.
+                            mitem
+                              .rcvrIdOpt
+                              .filterNot(nodeProps.currentRcvrId.contains)
+                              .fold [VdomNode] {
+                                ReactCommonUtil.maybeNode( mitem.rcvrIdOpt.nonEmpty && mitem.tagFaceOpt.isEmpty )( itypeName )
+                              } { rcvrId =>
+                                // Рендерить название узла, присланное сервером.
+                                nodeProps
+                                  .nodesMap
+                                  .get(rcvrId)
+                                  .map(_.nameOrIdOrEmpty)
+                                  // TODO Нужна ссылка на узел-ресивер для суперюзеров.
+                              },
+
+                            HtmlConstants.NBSP_STR,
+
+                            // Рендерить данные гео-шейпа.
+                            mitem.geoShape.whenDefinedNode {
+                              // TODO Сделать ссылкой, открывающий диалог с картой и шейпом.
+                              case circleGs: CircleGs =>
+                                PriceReasonI18n.i18nPayloadCircle( circleGs )
+                              // PointGs здесь - Это скорее запасной костыль и для совместимости, нежели какое-то нужное обоснованное логичное решение.
+                              case point: PointGs =>
+                                point.coord.toHumanFriendlyString
+                              case other =>
+                                VdomArray(
+                                  other.getClass.getSimpleName,
+                                  HtmlConstants.DIEZ,
+                                  other.hashCode()
+                                )
+                            },
+
+                            // This was inside outer tooltip, but too buggy to use such big overall tooltips
+                            <.span(
                               RangeYmdR(
                                 RangeYmdR.Props(
                                   capFirst    = true,
                                   rangeYmdOpt = mitem.dtToRangeYmdOpt
                                 )
                               )
-                            )
-                            new MuiToolTipProps {
-                              override val title = _title.rawNode
-                            }
-                          } (
-                            mdrRowR.component.withKey( itemIdStr + HtmlConstants.MINUS )(mdrRowPropsProxy)(
+                            ),
 
-                              // Рендерить данные по гео-размещению.
-                              mitem.tagFaceOpt.whenDefinedNode { tagFace =>
-                                VdomArray(
-                                  <.strong(
-                                    HtmlConstants.DIEZ,
-                                    tagFace,
-                                    // TODO Нужна ссылка на узел-тег.
-                                  ),
-                                  HtmlConstants.NBSP_STR,
-                                )
-                              },
-
-                              // Рендер названия rcvr-узла. Но не нужно рендерить название, если это текущий узел.
-                              mitem
-                                .rcvrIdOpt
-                                .filterNot(nodeProps.currentRcvrId.contains)
-                                .fold [VdomNode] {
-                                  ReactCommonUtil.maybeNode( mitem.rcvrIdOpt.nonEmpty && mitem.tagFaceOpt.isEmpty )( itypeName )
-                                } { rcvrId =>
-                                  // Рендерить название узла, присланное сервером.
-                                  nodeProps
-                                    .nodesMap
-                                    .get(rcvrId)
-                                    .map(_.nameOrIdOrEmpty)
-                                    // TODO Нужна ссылка на узел-ресивер для суперюзеров.
-                                },
-
-                              HtmlConstants.NBSP_STR,
-
-                              // Рендерить данные гео-шейпа.
-                              mitem.geoShape.whenDefinedNode {
-                                // TODO Сделать ссылкой, открывающий диалог с картой и шейпом.
-                                case circleGs: CircleGs =>
-                                  PriceReasonI18n.i18nPayloadCircle( circleGs )
-                                // PointGs здесь - Это скорее запасной костыль и для совместимости, нежели какое-то нужное обоснованное логичное решение.
-                                case point: PointGs =>
-                                  point.coord.toHumanFriendlyString
-                                case other =>
-                                  VdomArray(
-                                    other.getClass.getSimpleName,
-                                    HtmlConstants.DIEZ,
-                                    other.hashCode()
-                                  )
-                              }
-
-                            )
                           )
 
                         }

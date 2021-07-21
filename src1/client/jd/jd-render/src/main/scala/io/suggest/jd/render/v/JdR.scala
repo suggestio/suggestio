@@ -117,6 +117,12 @@ final class JdR(
   }
 
 
+  /** Legacy rendering over MJdArgs.
+    * Will fail on DOCUMENT rendering, because gridBuildRes is missing in MJdArgs.
+    */
   def apply(jdArgsProxy: Props) = JdRrr.anyTagComp( jdArgsProxy )
+
+  /** Render JD-document or any other tag without any runtime issues. */
+  def render(jdRrrProps: ModelProxy[MJdRrrProps]) = JdRrr.renderTag( jdRrrProps )
 
 }

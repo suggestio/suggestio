@@ -492,6 +492,7 @@ final class JsMessagesUtil @Inject() (
       MC.`No.incoming.adv.requests` ::
       MC.`Lost.node` ::
       MC.`Approve` ::
+      MC.`Reload` ::
       MC.`Refuse` ::
       MC.`Reason` ::
       MC.`Cancel` ::

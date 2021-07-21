@@ -1,12 +1,14 @@
 package io.suggest.sys.mdr
 
 import diode.react.ReactConnector
+import io.suggest.jd.render.c.JdAh
+import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.CircuitLog
 import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
 import io.suggest.sys.mdr.m.{MMdrNodeS, MSysMdrRootS, MdrNextNode}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.spa.StateInp
+import io.suggest.spa.{CircuitUtil, StateInp}
 import io.suggest.sys.mdr.u.SysMdrUtil
 import play.api.libs.json.Json
 
@@ -30,11 +32,6 @@ object SysMdrCircuit {
 
     // Сборка root-модели, готовой к работе.
     MSysMdrRootS(
-      node = MMdrNodeS(
-        jdRuntime = SysMdrUtil.mkJdRuntime(
-          docs = LazyList.empty
-        ),
-      ),
       conf  = mconf,
     )
   }
@@ -55,7 +52,17 @@ class SysMdrCircuit extends CircuitLog[MSysMdrRootS] with ReactConnector[MSysMdr
 
   // Model
   val rootRW = zoomRW[MSysMdrRootS](identity)((_, v2) => v2)
+  val nodeRW = CircuitUtil.mkLensRootZoomRW(this, MSysMdrRootS.node)
+  val jdArgsOptRW = CircuitUtil.mkLensZoomRW( nodeRW, MMdrNodeS.jdArgsOpt )
 
+  val jdAh = new JdAh(
+    // JdAh not purely fits into sys-mdr form logic. Let'a add some ephemeral crunches...
+    modelRW = jdArgsOptRW.zoomRW[MJdRuntime] { jdArgsOpt =>
+      jdArgsOpt.fold( SysMdrUtil.mkJdRuntime(LazyList.empty) )( _.jdRuntime )
+    } { (jdArgsOpt0, jdRuntime2) =>
+      jdArgsOpt0.map( MJdArgs.jdRuntime.set(jdRuntime2) )
+    },
+  )
 
   // Controllers
   val nodeMdrAh = new NodeMdrAh(
@@ -63,8 +70,11 @@ class SysMdrCircuit extends CircuitLog[MSysMdrRootS] with ReactConnector[MSysMdr
     modelRW = rootRW
   )
 
-  override protected def actionHandler: HandlerFunction = {
-    nodeMdrAh
+  override protected val actionHandler: HandlerFunction = {
+    composeHandlers(
+      nodeMdrAh,
+      jdAh,
+    )
   }
 
   // После конструктора, запустить получение начальных данных с сервера:

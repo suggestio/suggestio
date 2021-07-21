@@ -3,6 +3,8 @@ package io.suggest.sys.mdr.c
 import diode.data.{PendingBase, Pot}
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.grid.GridBuilderUtilJs
+import io.suggest.jd.render.m.{GridRebuild, MJdArgs}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sys.mdr.{MMdrActionInfo, MMdrConf, MMdrNextResp, MMdrResolution, MNodeMdrInfo, MdrSearchArgs}
 import io.suggest.sys.mdr.m._
@@ -298,22 +300,28 @@ class NodeMdrAh[M](
         // Это ожидаемый ответ сервера. Обработать его:
         val infoRespPot2 = v0.node.info
           .withTry( m.tryResp.map(MMdrNextRespJs.apply) )
-        val jdRuntime2 = SysMdrUtil.mkJdRuntime(
-          jdRuntimeOpt = Some(v0.node.jdRuntime),
-          docs = (for {
-            infoResp2 <- infoRespPot2.iterator
-            node      <- infoResp2.nodeOpt
-            nodeAd    <- node.info.ad
-          } yield {
-            nodeAd.doc
-          })
-            .to( LazyList )
-        )
+
+        val jdArgsOpt2 = for {
+          resp <- infoRespPot2.toOption
+          node <- resp.nodeOpt
+          nodeAd <- node.ad
+        } yield {
+          MJdArgs(
+            data = nodeAd,
+            jdRuntime = SysMdrUtil.mkJdRuntime(
+              jdRuntimeOpt = v0.node.jdArgsOpt
+                .map(_.jdRuntime),
+              docs = nodeAd.doc #:: LazyList.empty,
+            ),
+            conf = SysMdrUtil.JD_CONF,
+          )
+        }
 
         val v2 = MSysMdrRootS.node.modify(
           _.copy(
             info        = infoRespPot2,
-            jdRuntime   = jdRuntime2,
+            jdArgsOpt   = jdArgsOpt2,
+            gridBuild   = jdArgsOpt2.map( GridBuilderUtilJs.buildGridFromJdArgs ),
             mdrPots     = Map.empty,
             nodeOffset = {
               // Если успешный ответ содержит список ошибок узлов, то значит сервер перешагнул какие-то узлы автоматом. Надо тут их тоже прошагать с помощью offset:
@@ -334,6 +342,24 @@ class NodeMdrAh[M](
         logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
+
+
+    case m: GridRebuild =>
+      val v0 = value
+      (for {
+        jdArgs <- v0.node.jdArgsOpt
+      } yield {
+        val v2 = MSysMdrRootS.node
+          .composeLens( MMdrNodeS.gridBuild )
+          .set {
+            Some( GridBuilderUtilJs.buildGridFromJdArgs( jdArgs ) )
+          }(v0)
+        updated(v2)
+      })
+        .getOrElse {
+          logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+          noChange
+        }
 
 
     // Юзер кликнул по кнопке запуска авто-ремонта узла.

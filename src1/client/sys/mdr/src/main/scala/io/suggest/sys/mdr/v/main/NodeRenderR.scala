@@ -6,8 +6,9 @@ import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.css.Css
+import io.suggest.grid.build.MGridBuildResult
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
+import io.suggest.jd.render.m.{MJdArgs, MJdRrrProps}
 import io.suggest.jd.render.v.JdR
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
@@ -29,17 +30,17 @@ class NodeRenderR(
                  ) {
 
   case class PropsVal(
-                       adData       : Option[MJdDataJs],
-                       jdRuntime    : MJdRuntime,
+                       jdArgsOpt    : Option[MJdArgs],
+                       gridBuildRes : Option[MGridBuildResult],
                        adnNodeOpt   : Option[MSc3IndexResp],
                        isSu         : Boolean,
                      )
   implicit object NodeRenderRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.adData ===* b.adData) &&
-      (a.jdRuntime ===* b.jdRuntime) &&
+      (a.jdArgsOpt ===* b.jdArgsOpt) &&
       (a.adnNodeOpt ===* b.adnNodeOpt) &&
-      (a.isSu ==* b.isSu)
+      (a.isSu ==* b.isSu) &&
+      (a.gridBuildRes ===* b.gridBuildRes)
     }
   }
 
@@ -95,15 +96,10 @@ class NodeRenderR(
             <.div(
 
               // Рендер jd-карточки:
-              props.adData.whenDefined { adDataJs =>
-                val mproxy = propsOptPotProxy.resetZoom(
-                  MJdArgs(
-                    data      = adDataJs,
-                    jdRuntime = props.jdRuntime,
-                    conf      = props.jdRuntime.jdCss.jdCssArgs.conf,
-                  )
-                )
-                jdR( mproxy )
+              props.jdArgsOpt.whenDefined { jdArgs =>
+                val rrrProps = MJdRrrProps.fromJdArgs(jdArgs, props.gridBuildRes)()
+                val mproxy = propsOptPotProxy.resetZoom( rrrProps )
+                jdR.render( mproxy )
               },
 
               // Рендер данных об узле

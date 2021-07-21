@@ -26,7 +26,7 @@ object MSysMdrRootS {
 
   @inline implicit def univEq: UnivEq[MSysMdrRootS] = UnivEq.derive
 
-  def node    = GenLens[MSysMdrRootS](_.node)
+  val node    = GenLens[MSysMdrRootS](_.node)
   def dialogs = GenLens[MSysMdrRootS](_.dialogs)
   def form    = GenLens[MSysMdrRootS](_.form)
   def conf    = GenLens[MSysMdrRootS](_.conf)
@@ -40,7 +40,7 @@ object MSysMdrRootS {
   * @param conf Конфиг формы.
   */
 case class MSysMdrRootS(
-                         node         : MMdrNodeS,
+                         node         : MMdrNodeS         = MMdrNodeS.empty,
                          dialogs      : MMdrDialogs       = MMdrDialogs.empty,
                          form         : MMdrFormS         = MMdrFormS.empty,
                          conf         : MMdrConf,

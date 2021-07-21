@@ -51,23 +51,25 @@ class MdrForceAllNodesR {
               override val title: React.Node = Messages( MsgCodes.`Moderate.requests.from.all.nodes` )
             }
           )(
-            MuiFormControlLabel {
-              val switchEl = MuiSwitch(
-                new MuiSwitchProps {
-                  override val checked    = js.defined( props.checked )
-                  @JSName("onChange")
-                  override val onChange2  = _onChangeJsCbF
+            <.span(
+              MuiFormControlLabel {
+                val switchEl = MuiSwitch(
+                  new MuiSwitchProps {
+                    override val checked    = js.defined( props.checked )
+                    @JSName("onChange")
+                    override val onChange2  = _onChangeJsCbF
+                    override val disabled = props.disabled
+                  }
+                )
+                new MuiFormControlLabelProps {
+                  override val control = switchEl.rawElement
+                  override val label = js.defined(
+                    Messages( MsgCodes.`Moderate.all.nodes` )
+                  )
                   override val disabled = props.disabled
                 }
-              )
-              new MuiFormControlLabelProps {
-                override val control = switchEl.rawElement
-                override val label = js.defined(
-                  Messages( MsgCodes.`Moderate.all.nodes` )
-                )
-                override val disabled = props.disabled
-              }
-            },
+              },
+            )
           )
         )
       }

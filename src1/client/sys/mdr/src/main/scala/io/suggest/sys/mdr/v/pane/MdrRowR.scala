@@ -166,9 +166,7 @@ class MdrRowBtnR {
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ApproveOrDismiss(info, isApprove) )
 
 
-    def render(propsProxy: Props): VdomElement = {
-      val p = propsProxy.value
-
+    def render(p: Props_t): VdomElement = {
       val hintSuffixNodes = p.itemIdOpt.fold {
         List.empty[VdomNode]
       } { itemId =>
@@ -191,16 +189,18 @@ class MdrRowBtnR {
           override val placement = MuiToolTipPlacements.BottomStart
         }
       } (
-        MuiIconButton {
-          val _onClickCbF = ReactCommonUtil.cbFun1ToJsCb(
-            onApproveOrDismissBtnClick( p.actionInfo, isApprove = p.isApprove )
+        <.span(
+          MuiIconButton {
+            val _onClickCbF = ReactCommonUtil.cbFun1ToJsCb(
+              onApproveOrDismissBtnClick( p.actionInfo, isApprove = p.isApprove )
+            )
+            new MuiIconButtonProps {
+              override val onClick = _onClickCbF
+              override val disabled = p.isDisabled
+            }
+          } (
+            p.icon()()
           )
-          new MuiIconButtonProps {
-            override val onClick = _onClickCbF
-            override val disabled = p.isDisabled
-          }
-        } (
-          p.icon()()
         )
       )
     }

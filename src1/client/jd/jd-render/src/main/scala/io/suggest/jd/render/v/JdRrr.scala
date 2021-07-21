@@ -605,13 +605,7 @@ final class JdRrr(
       .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
       .render_P { propsProxy =>
         propsProxy.wrap { jdArgs =>
-          MJdRrrProps(
-            subTree = jdArgs.data.doc.template,
-            tagId   = jdArgs.data.doc.tagId,
-            jdArgs  = jdArgs,
-            // Проброс renderArgs, т.к. скорее всего они уже выставлены наверху.
-            renderArgs = getRenderArgs( jdArgs ),
-          )
+          MJdRrrProps.fromJdArgs( jdArgs )( getRenderArgs( jdArgs ) )
         }( renderTag )(implicitly, MJdRrrProps.MJdRrrPropsFastEq)
       }
       .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdArgs.MJdArgsFastEq) )

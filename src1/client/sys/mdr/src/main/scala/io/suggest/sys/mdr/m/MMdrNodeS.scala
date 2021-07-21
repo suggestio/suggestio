@@ -2,8 +2,9 @@ package io.suggest.sys.mdr.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.jd.render.m.MJdRuntime
-import io.suggest.sys.mdr.{MMdrActionInfo, MMdrNextResp}
+import io.suggest.grid.build.MGridBuildResult
+import io.suggest.jd.render.m.MJdArgs
+import io.suggest.sys.mdr.MMdrActionInfo
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -17,9 +18,11 @@ import monocle.macros.GenLens
   */
 object MMdrNodeS {
 
+  def empty = apply()
+
   implicit object MMdrNodeSFastEq extends FastEq[MMdrNodeS] {
     override def eqv(a: MMdrNodeS, b: MMdrNodeS): Boolean = {
-      (a.jdRuntime    ===* b.jdRuntime) &&
+      (a.jdArgsOpt    ===* b.jdArgsOpt) &&
       (a.info         ===* b.info) &&
       (a.mdrPots      ===* b.mdrPots) &&
       (a.fixNodePots  ===* b.fixNodePots) &&
@@ -30,6 +33,8 @@ object MMdrNodeS {
   @inline implicit def univEq: UnivEq[MMdrNodeS] = UnivEq.derive
 
 
+  val jdArgsOpt = GenLens[MMdrNodeS](_.jdArgsOpt)
+  def gridBuild = GenLens[MMdrNodeS](_.gridBuild)
   def info = GenLens[MMdrNodeS](_.info)
   def mdrPots = GenLens[MMdrNodeS](_.mdrPots)
   def fixNodePots = GenLens[MMdrNodeS](_.fixNodePots)
@@ -38,7 +43,7 @@ object MMdrNodeS {
 
 /** Состояние модерации текущего узла.
   *
-  * @param jdRuntime Стили рендера рекламной карточки.
+  * @param jdArgsOpt Rendering info for current ad node.
   * @param info Ответ сервера с данными для модерации.
   * @param mdrPots Состояния элементов модерации.
   * @param nodeOffset Сдвиг среди модерируемых узлов.
@@ -48,14 +53,10 @@ object MMdrNodeS {
   * @param fixNodePots Запросы ремонта.
   */
 case class MMdrNodeS(
-                      jdRuntime       : MJdRuntime,
+                      jdArgsOpt       : Option[MJdArgs]                       = None,
+                      gridBuild       : Option[MGridBuildResult]              = None,
                       info            : Pot[MMdrNextRespJs]                   = Pot.empty,
                       mdrPots         : Map[MMdrActionInfo, Pot[None.type]]   = Map.empty,
                       fixNodePots     : Map[String, Pot[None.type]]           = Map.empty,
                       nodeOffset      : Int                                   = 0,
-                    ) {
-
-  def withMdrPots( mdrPots: Map[MMdrActionInfo, Pot[None.type]] ) = copy(mdrPots = mdrPots)
-  def withFixNodePots( fixNodePots: Map[String, Pot[None.type]] ) = copy(fixNodePots = fixNodePots)
-
-}
+                    )

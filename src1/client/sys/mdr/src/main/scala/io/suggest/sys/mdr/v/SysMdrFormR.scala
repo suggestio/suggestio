@@ -7,6 +7,7 @@ import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.react.ReactCommonUtil.Implicits.VdomElOptionExt
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import io.suggest.sys.mdr.v.dia.MdrDiaRefuseR
@@ -38,7 +39,7 @@ class SysMdrFormR(
 
 
   case class State(
-                    jdCssC              : ReactConnectProxy[JdCss],
+                    jdCssOptC           : ReactConnectProxy[Option[JdCss]],
                     nodeInfoC           : ReactConnectProxy[mdrSidePanelR.Props_t],
                     nodeRenderC         : ReactConnectProxy[nodeRenderR.Props_t],
                     mdrErrorsC          : ReactConnectProxy[mdrErrorsR.Props_t],
@@ -56,7 +57,10 @@ class SysMdrFormR(
 
         // Рендер jd css карточки:
         p.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
-        s.jdCssC { CssR.compProxied.apply },
+        s.jdCssOptC {
+          _ .value
+            .whenDefinedEl( CssR.component.apply )
+        },
 
         // Тулбар, без AppBar, т.к. он неуместен и делает неконтрастный фон.
         MuiToolBar()(
@@ -101,7 +105,7 @@ class SysMdrFormR(
     .initialStateFromProps { mrootProxy =>
       State(
 
-        jdCssC = mrootProxy.connect(_.node.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
+        jdCssOptC = mrootProxy.connect(_.node.jdArgsOpt.map(_.jdRuntime.jdCss))( OptFastEq.Wrapped(JdCss.JdCssFastEq) ),
 
         nodeInfoC = mrootProxy.connect { mroot =>
           for (nextResp <- mroot.node.info) yield {
@@ -131,10 +135,10 @@ class SysMdrFormR(
           for (nextResp <- mroot.node.info) yield {
             for (req <- nextResp.nodeOpt) yield {
               nodeRenderR.PropsVal(
-                adData      = req.ad,
-                jdRuntime   = mroot.node.jdRuntime,
+                jdArgsOpt   = mroot.node.jdArgsOpt,
+                gridBuildRes = mroot.node.gridBuild,
                 adnNodeOpt  = req.mdrNodeOpt,
-                isSu        = mroot.conf.isSu
+                isSu        = mroot.conf.isSu,
               )
             }
           }
