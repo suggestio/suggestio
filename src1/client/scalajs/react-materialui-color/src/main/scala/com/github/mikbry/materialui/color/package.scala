@@ -10,6 +10,10 @@ import scala.scalajs.js.|
   */
 package object color {
 
+  // For mui v5.alpha to v5.beta migration, we use some crunches: See https://github.com/mikbry/material-ui-color/issues/166
+  final val PACKAGE_NAME = "string-replace-loader?search=core/styles&replace=styles!./node_modules/material-ui-color/index.js"
+  //final val PACKAGE_NAME = "material-ui-color"
+
   /** @see [[https://github.com/mikbry/material-ui-color/blob/master/src/helpers/commonTypes.js#L10]] */
   type Color_t = Color | String | Double
 

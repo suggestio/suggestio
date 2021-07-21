@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssStatic}
+import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
@@ -51,7 +52,7 @@ class SysMdrFormR(
 
     def render(p: Props, s: State): VdomElement = {
       // Панель управления модерации.
-      <.div(
+      val form = <.div(
 
         // Рендер jd css карточки:
         p.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
@@ -89,6 +90,8 @@ class SysMdrFormR(
         s.diaRefuseC { mdrDiaRefuseR.apply },
 
       )
+
+      MaterialUiUtil.postprocessTopLevel( form )
     }
 
   }

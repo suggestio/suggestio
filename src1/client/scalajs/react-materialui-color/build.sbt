@@ -17,7 +17,8 @@ libraryDependencies ++= Seq(
 
 npmDependencies in Compile ++= Seq(
   "material-ui-color"  -> version.value,
-  "styled-components"  -> Common.Vsn.STYLED_COMPONENTS,
+  //"styled-components"  -> Common.Vsn.STYLED_COMPONENTS,
+  "string-replace-loader" -> Common.Vsn.STRING_REPLACE_LOADER_JS,
 )
 
 useYarn := true

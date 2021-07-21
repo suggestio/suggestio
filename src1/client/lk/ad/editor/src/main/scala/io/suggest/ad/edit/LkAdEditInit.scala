@@ -1,5 +1,6 @@
 package io.suggest.ad.edit
 
+import com.materialui.{Mui, MuiThemeProvider}
 import com.softwaremill.macwire._
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.init.routed.InitRouter
@@ -44,6 +45,8 @@ trait LkAdEditInit extends InitRouter {
     modules.quillSioModule.quillInit.forAdEditor()
 
     val rootRO = circuit.rootRO
+
+    val defaultTheme = Mui.Styles.createTheme()
 
     // Произвести рендер компонента формы:
     val formComponent = circuit.wrap(rootRO)( modules.lkAdEditFormR.component.apply )

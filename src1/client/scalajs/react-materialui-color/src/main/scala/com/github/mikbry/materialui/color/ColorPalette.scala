@@ -16,7 +16,7 @@ object ColorPalette {
 
 
   @js.native
-  @JSImport("material-ui-color", "ColorPalette")
+  @JSImport(PACKAGE_NAME, "ColorPalette")
   object Js extends js.Object
 
 

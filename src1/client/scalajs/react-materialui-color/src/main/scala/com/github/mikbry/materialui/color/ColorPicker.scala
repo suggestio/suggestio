@@ -16,7 +16,7 @@ object ColorPicker {
   val component = JsComponent[Props, Children.None, Null]( Js )
 
   @js.native
-  @JSImport("material-ui-color", "ColorPicker")
+  @JSImport(PACKAGE_NAME, "ColorPicker")
   object Js extends js.Object
 
 

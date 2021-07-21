@@ -152,7 +152,7 @@ object Common {
     /** Замена кода в js-файлах при сборке.
       * @see [[https://www.npmjs.com/package/string-replace-loader]]
       */
-    val STRING_REPLACE_LOADER_JS = "2.1.1"
+    val STRING_REPLACE_LOADER_JS = "2.3.0"
 
     /** AsmCrypto.js hi-speed crypto routines.
       *
@@ -257,25 +257,22 @@ object Common {
     val FLOW_JS = "2.14.1"
 
 
-    // 5.0.0-alpha.35 - removed core/styles and etc. Breaks mui-treasury 1.13.1.
-    val MATERIAL_UI = "5.0.0-alpha.34"
-    val MATERIAL_UI_ICONS = "5.0.0-alpha.34"
+    val MATERIAL_UI = "5.0.0-beta.1"
+    val MATERIAL_UI_ICONS = "5.0.0-beta.1"
+    val MATERIAL_UI_LAB = "5.0.0-alpha.40"
 
     /** @see [[https://www.npmjs.com/package/@emotion/react]] */
-    val EMOTION_REACT = "11.1.5"
+    val EMOTION_REACT = "11.4.0"
     /** @see [[https://www.npmjs.com/package/@emotion/styled]] */
-    def EMOTION_STYLED = EMOTION_REACT
+    val EMOTION_STYLED = "11.3.0"
 
     /** The lightest colorpicker for React Material-Ui.
       * @see [[https://github.com/mikbry/material-ui-color]]
       */
-    val MATERIALUI_COLOR = "1.1.0"
-
-    /** material-ui-color зачем-то зависит от styled-components. */
-    val STYLED_COMPONENTS = "5.2.2"
+    val MATERIALUI_COLOR = "1.2.0"
 
     /** @see [[https://github.com/siriwatknp/mui-treasury]] */
-    val MUI_TREASURY = "1.13.1"
+    val MUI_TREASURY = "2.0.0-alpha.1"
 
   }
 

@@ -18,7 +18,6 @@ import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.AdvExtRunnerInitRouter
 import io.suggest.xplay.json.PlayJsonSjsUtil
 
-import scala.scalajs.js
 import scala.util.Try
 
 /**

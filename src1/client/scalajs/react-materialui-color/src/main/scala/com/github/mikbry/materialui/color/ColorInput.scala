@@ -17,7 +17,7 @@ object ColorInput {
 
 
   @js.native
-  @JSImport("material-ui-color", "ColorInput")
+  @JSImport(PACKAGE_NAME, "ColorInput")
   object Js extends js.Object
 
 

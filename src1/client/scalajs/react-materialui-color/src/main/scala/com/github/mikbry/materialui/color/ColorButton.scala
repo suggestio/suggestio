@@ -15,7 +15,7 @@ object ColorButton {
   val component = JsComponent[Props, Children.None, Null]( Js )
 
   @js.native
-  @JSImport("material-ui-color", "ColorButton")
+  @JSImport(PACKAGE_NAME, "ColorButton")
   object Js extends js.Object
 
   /** @see [[https://github.com/mikbry/material-ui-color/blob/master/src/components/ColorButton.jsx#L86]] */

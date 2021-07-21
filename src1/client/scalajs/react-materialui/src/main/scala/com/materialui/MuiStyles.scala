@@ -13,10 +13,9 @@ trait MuiColor extends js.Object {
 
 @js.native
 trait MuiStyles extends js.Object {
-  /** @see [[https://material-ui.com/customization/themes/#createmuitheme-options-theme]] */
-  def createTheme(options: MuiRawTheme): MuiTheme = js.native
 
-  val ThemeProvider: js.Dynamic = js.native
+  /** @see [[https://material-ui.com/customization/themes/#createmuitheme-options-theme]] */
+  def createTheme(options: MuiRawTheme = js.native): MuiTheme = js.native
 
   /**
     * Link a style sheet with a component.

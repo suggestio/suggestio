@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import com.materialui.{MuiTheme, MuiThemeProvider, MuiThemeProviderProps}
+import com.materialui.{MuiTheme, MuiThemeProvider}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColors
@@ -13,7 +13,6 @@ import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.m.MScRoot
-import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.dia.login.ScLoginR
@@ -135,13 +134,12 @@ class ScRootR (
             val _theme = scThemes.muiDefault( mcolorsProxy.value )
             // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
             muiThemeCtxP.provide( _theme )(
-              MuiThemeProvider(
-                new MuiThemeProviderProps {
+              MuiThemeProvider.component(
+                new MuiThemeProvider.Props {
                   override val theme = _theme
                 }
               )(
                 scWithSideBars,
-
               ),
 
               loginDia,
@@ -182,7 +180,7 @@ class ScRootR (
         scCssP.provide( scCssProxy.value )( scWithJsRouterCtx )
       }
 
-      MaterialUiUtil.postprocessTopLevel( result )
+      MaterialUiUtil.postprocessTopLevelOnlyStyles( result )
     }
 
   }
