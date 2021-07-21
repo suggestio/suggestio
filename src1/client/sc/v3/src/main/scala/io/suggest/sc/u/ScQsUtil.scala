@@ -142,23 +142,35 @@ object ScQsUtil {
     * @param allow404 Разрешить серверу возвращать 404-карточки?
     * @return Инстанс MScQs для Sc API.
     */
-  def gridAdsOnlyBleBeaconed(mroot: MScRoot, allow404: Boolean): MScQs = {
+  def gridAdsOnlyRadioBeaconed(mroot: MScRoot, allow404: Boolean): MScQs = {
     MScQs(
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some( screenForGridAds(mroot) ),
-        locEnv = getLocEnv(mroot, withGeoLoc = false, withRadioBeacons = true),
+        locEnv = getLocEnv(
+          mroot,
+          // geoLoc will be ignored by ScAdsTile, because of MScQs().grid.onlyRadioBeacons is set.
+          withGeoLoc = false,
+          withRadioBeacons = true,
+        ),
       ),
       search = MAdsSearchReq(
         genOpt = Some( mroot.index.state.generation ),
         offset = Some(0),
         limit  = Some( adsPerReqLimit ),
+        textQuery = mroot.index.search.text.searchQuery.toOption,
+        // rcvrId will be ignored by ScAdsTile, because of MScQs().grid.onlyRadioBeacons is set.
+        rcvrId    = mroot.index.state.rcvrId.toEsUuIdOpt,
       ),
+      nodes = Some( MScNodesArgs(
+        _searchNodes = false,
+      )),
       grid = Some( MScGridArgs(
         focAfterJump = OptionUtil.SomeBool.someFalse,
         // Надо возвращать названия карточек с сервера, чтобы их можно было отрендерить текстом в системной нотификации.
         withTitle = true,
         allow404 = allow404,
+        onlyRadioBeacons = true,
       )),
     )
   }

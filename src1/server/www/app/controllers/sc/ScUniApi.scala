@@ -230,7 +230,7 @@ trait ScUniApi
         logic       = TileAdsLogic(qs2, radioBeaconsCtxFut)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
           // Обход перехватчика NSEE - пусть пойдёт по нормальному логгированию.
-          .recover { case ex: Throwable =>
+          .recover { case ex: NoSuchElementException =>
             throw new RuntimeException(ex)
           }
       } yield {

@@ -559,23 +559,22 @@ object OutEdges extends MacroLogsImpl {
         _qOpt.iterator
       }
     } yield {
-      val nestPath = EF.E_OUT_FN
-      // TODO ScoreMode.Avg -- с потолка взято, надо разобраться на тему оптимального варианта.
-      var _qn = QueryBuilders.nestedQuery(nestPath, q, ScoreMode.Max)
-
-      for (esInnerHit <- outEdges.innerHits)
-        _qn = _qn.innerHit( esInnerHit )
-
-      // TODO Организовать сборку .innerHits().
       if (withQname)
-        _qn.queryName(s"nested: $nestPath must?${oe.must} cr=$oe")
+        q.queryName(s"Edges: must?${oe.must} cr=$oe")
 
-      MWrapClause(oe.must, _qn)
+      MWrapClause(oe.must, q)
     })
       .toSeq
 
-    // Объеденить запросы в единый запрос.
-    clauses.toBoolQuery
+    var overallNestedQuery = QueryBuilders.nestedQuery( EF.E_OUT_FN, clauses.toBoolQuery, ScoreMode.Max )
+
+    for (esInnerHit <- outEdges.innerHits)
+      overallNestedQuery = overallNestedQuery.innerHit( esInnerHit )
+
+    if (withQname)
+      overallNestedQuery = overallNestedQuery.queryName(s"Nested overall edge-queries. InnerHits?${outEdges.innerHits}")
+
+    overallNestedQuery
   }
 
 }

@@ -72,7 +72,7 @@ object Sc3JsApi extends Log {
       case intervalId: Int =>
         DomQuick.clearInterval( intervalId )
       case arr: IterableOnce[_] =>
-        emitCancel( arr )
+        arr.iterator.foreach( emitCancel )
       case arr: js.Array[_] =>
         emitCancel( arr.iterator )
     }

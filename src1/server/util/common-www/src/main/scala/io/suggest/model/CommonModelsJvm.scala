@@ -979,16 +979,19 @@ object CommonModelsJvm extends MacroLogsDyn {
           adTitlesE           <- boolB.bind( k(F.WITH_TITLE), params )
           focAfterJumpOptE    <- boolOptB.bind( k(F.FOC_AFTER_JUMP), params )
           allow404OptE        <- boolOptB.bind( k(F.ALLOW_404), params )
+          onlyRadioBeaconsE   <- boolOptB.bind( k(F.ONLY_RADIO_BEACONS), params )
         } yield {
           for {
             adTitles          <- adTitlesE
             focAfterJumpOpt   <- focAfterJumpOptE
             allow404Opt       <- allow404OptE
+            onlyRadioBeaconsO <- onlyRadioBeaconsE
           } yield {
             MScGridArgs(
               withTitle        = adTitles,
               focAfterJump    = focAfterJumpOpt,
               allow404        = allow404Opt.getOrElseTrue,
+              onlyRadioBeacons = onlyRadioBeaconsO.getOrElseFalse,
             )
           }
         }
@@ -1000,7 +1003,8 @@ object CommonModelsJvm extends MacroLogsDyn {
         _mergeUnbinded1(
           boolB.unbind( k(F.WITH_TITLE), value.withTitle ),
           boolOptB.unbind( k(F.FOC_AFTER_JUMP), value.focAfterJump ),
-          boolOptB.unbind( k(F.ALLOW_404), if (value.allow404) None else Some(value.allow404) ),
+          boolOptB.unbind( k(F.ALLOW_404), Option.when( !value.allow404 )(value.allow404) ),
+          boolOptB.unbind( k(F.ONLY_RADIO_BEACONS), Option.when( !value.onlyRadioBeacons )(value.onlyRadioBeacons) ),
         )
       }
     }

@@ -1,7 +1,7 @@
 package util.ble
 
 import io.suggest.ble.MUidBeacon
-import io.suggest.es.model.{MEsInnerHitsInfo, MEsNestedSearch}
+import io.suggest.es.model.{IMust, MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicate
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
@@ -25,7 +25,7 @@ final class BleUtil {
     * поисковый запрос для всех id маячков.
     */
   def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: Iterable[MUidBeacon],
-                                   innerHits: Option[MEsInnerHitsInfo] = None): Option[MNodeSearch] = {
+                                   innerHits: Option[MEsInnerHitsInfo] = None, tagNodeIdOpt: Option[String] = None): Option[MNodeSearch] = {
     Option.when( bcns.nonEmpty ) {
       // Строим карту маячков, где ключ -- Uid маячка
       val bcnsMap = (for {
@@ -52,12 +52,29 @@ final class BleUtil {
 
         // Искать исходные ноды по наличию эджей на искомые маячки
         override val outEdges: MEsNestedSearch[Criteria] = {
-          val cr = Criteria(
-            predicates    = predicates,
-            nodeIds       = bcnsMap.keys.toSeq
-          )
+          val crs = tagNodeIdOpt.fold {
+            Criteria(
+              predicates    = predicates,
+              nodeIds       = bcnsMap.keys.toSeq
+            ) :: Nil
+          } { tagNodeId =>
+            val should = IMust.SHOULD
+            val tagNodeIds = tagNodeId :: Nil
+            (for {
+              beacon <- bcns.iterator
+            } yield {
+              Criteria(
+                predicates = predicates,
+                nodeIds = beacon.node.nodeId :: tagNodeIds,
+                nodeIdsMatchAll = true,
+                must = should,
+              )
+            })
+              .toList
+          }
+
           MEsNestedSearch(
-            clauses   = cr :: Nil,
+            clauses   = crs,
             innerHits = MEsInnerHitsInfo.buildInfoOpt( innerHits ),
           )
         }

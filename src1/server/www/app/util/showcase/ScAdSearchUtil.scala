@@ -50,9 +50,7 @@ final class ScAdSearchUtil @Inject() (
   private def OFFSET_MAX_ABS      = OFFSET_MAX * LIMIT_MAX
 
 
-  /**
-    * Компиляция параметров поиска в MNodeSearch.
-    * Код эвакуирован из models.AdSearch.qsb.bind().
+  /** Convert showcase query string args into MNodeSearch instance.
     * @param args Данные по выборке карточек, пришедшие из qs.
     * @param innerHits Возвращать в ответе в inner_hits указанные поля с поддержкой doc_values.
     * @param subSearches Other subsearch. Like result of bleSearchCtx.subSearches() for radio-beacons subsearches.
@@ -106,19 +104,18 @@ final class ScAdSearchUtil @Inject() (
         }
 
       } { tagNodeId =>
-        var preds = List.empty[MPredicate]
-
         val tagPredParent = MPredicates.TaggedBy
+        var predsAcc = List.empty[MPredicate]
 
         if (args.search.rcvrId.nonEmpty)
-          preds ::= tagPredParent.DirectTag
+          predsAcc ::= tagPredParent.DirectTag
 
         if (args.common.locEnv.geoLocOpt.nonEmpty)
-          preds ::= tagPredParent.AdvGeoTag
+          predsAcc ::= tagPredParent.AdvGeoTag
 
         // Указан тег. Ищем по тегу с учетом геолокации:
         eacc ::= Criteria(
-          predicates = preds,
+          predicates = predsAcc,
           nodeIds    = (tagNodeId :: args.search.rcvrId.toList)
             .map(_.id),
           nodeIdsMatchAll = true,
@@ -249,7 +246,9 @@ final class ScAdSearchUtil @Inject() (
             }
           }
 
-          override def subSearches(innerHits: Option[MEsInnerHitsInfo] = None): List[MSubSearch] = {
+          override def subSearches(innerHits: Option[MEsInnerHitsInfo] = None,
+                                   tagNodeId: Option[String] = None,
+                                  ): List[MSubSearch] = {
             // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
             val _qsBeacons2 = qsBeacons2
 
@@ -257,12 +256,19 @@ final class ScAdSearchUtil @Inject() (
               LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
               Nil
             } else {
+              // Difference between tag search and main-screen search in predicate level and nodes-level:
+              val pred = if (tagNodeId.isEmpty)
+                // TODO Need MPredicates.Receiver.AdvDirect, but need to debug problems with LkNodes/LkAds forms, where Receiver.Self may be used.
+                MPredicates.Receiver
+              else
+                MPredicates.TaggedBy.DirectTag
+
               val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
                 maxBoost    = 20000000F,
-                // TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
-                predicates  = MPredicates.Receiver :: Nil,
+                predicates  = pred :: Nil,
                 bcns        = _qsBeacons2,
                 innerHits   = innerHits,
+                tagNodeIdOpt = tagNodeId,
               )
 
               val sub = MSubSearch(
@@ -291,10 +297,19 @@ sealed trait MRadioBeaconsSearchCtx {
   def uidsQs      : Set[String] = Set.empty
   /** id найденных в БД маячков. */
   def uidsClear   : Set[String] = Set.empty
+  lazy val uidsClearSeq = uidsClear.toList
   /** Отчищенные от мусора qs-данные по мячкам. */
   def qsBeacons2: Seq[MUidBeacon] = Nil
-  /** Данные для поиска по маячкам в elasticsearch. */
-  def subSearches(innerHits: Option[MEsInnerHitsInfo] = None): List[MSubSearch] = Nil
+
+  /** SubSearches for beacons needs.
+    *
+    * @param innerHits If inner hits collection info needed, innerHits must be defined here.
+    * @param tagNodeId If in-tag search, must contain tag node id.
+    * @return MNodeSearch sub-searches list.
+    */
+  def subSearches(innerHits: Option[MEsInnerHitsInfo] = None,
+                  tagNodeId: Option[String] = None,
+                 ): List[MSubSearch] = Nil
 }
 object MRadioBeaconsSearchCtx {
   def empty = new MRadioBeaconsSearchCtx {}

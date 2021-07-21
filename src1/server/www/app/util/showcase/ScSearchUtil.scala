@@ -69,12 +69,11 @@ final class ScSearchUtil {
     val distanceSort = geoLocOpt2.map(_.point)
 
     // LocEnv tags from radio-beacons: Also do tags search in all visible beacons:
-    val beaconUidsClear = radioCtx.uidsClear
-    if (beaconUidsClear.nonEmpty) {
+    if (radioCtx.uidsClear.nonEmpty) {
       edgesCrs ::= Criteria(
-        predicates  = MPredicates.TaggedBy :: Nil,
+        predicates  = MPredicates.TaggedBy.Self :: Nil,
         tags        = tagCrs,
-        nodeIds     = beaconUidsClear.toSeq,
+        nodeIds     = radioCtx.uidsClearSeq,
         must        = should,
       )
     }

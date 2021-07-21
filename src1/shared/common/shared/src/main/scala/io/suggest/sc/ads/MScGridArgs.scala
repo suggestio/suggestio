@@ -14,9 +14,10 @@ import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 object MScGridArgs {
 
   object Fields {
-    val WITH_TITLE = "t"
-    val FOC_AFTER_JUMP = "f"
-    val ALLOW_404 = "a4"
+    final def WITH_TITLE = "t"
+    final def FOC_AFTER_JUMP = "f"
+    final def ALLOW_404 = "a4"
+    final def ONLY_RADIO_BEACONS = "b"
   }
 
   implicit def scGridArgsJson: OFormat[MScGridArgs] = {
@@ -24,7 +25,8 @@ object MScGridArgs {
     (
       (__ \ F.WITH_TITLE).format[Boolean] and
       (__ \ F.FOC_AFTER_JUMP).formatNullable[Boolean] and
-      (__ \ F.ALLOW_404).formatNullable[Boolean].formatBooleanOrTrue
+      (__ \ F.ALLOW_404).formatNullable[Boolean].formatBooleanOrTrue and
+      (__ \ F.ONLY_RADIO_BEACONS).formatNullable[Boolean].formatBooleanOrFalse
     )(apply, unlift(unapply))
   }
 
@@ -45,9 +47,11 @@ object MScGridArgs {
   *                     true - автофокус на карточку при запуске в рамках index+grid+foc.
   * @param withTitle Рендерить в ответе заголовки (meta.name) карточек.
   * @param allow404 Разрешить возвращать 404-карточки?
+  * @param onlyRadioBeacons
   */
 final case class MScGridArgs(
                               withTitle                   : Boolean                       = false,
                               focAfterJump                : Option[Boolean]               = None,
                               allow404                    : Boolean                       = true,
+                              onlyRadioBeacons       : Boolean                       = false,
                             )

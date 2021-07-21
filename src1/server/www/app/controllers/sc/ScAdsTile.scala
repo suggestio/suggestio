@@ -15,7 +15,7 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{IMNodes, MNode, MNodeFields, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp, MScAdInfo, MScAdMatchInfo, MScNodeMatchInfo}
+import io.suggest.sc.ads.{MAdsSearchReq, MSc3AdData, MSc3AdsResp, MScAdInfo, MScAdMatchInfo, MScNodeMatchInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScCommonQs, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
@@ -69,7 +69,33 @@ trait ScAdsTile
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends LogicCommonT with IRespActionFut with TypeT {
 
-    def _qs: MScQs
+    def qsRaw: MScQs
+
+    // TODO No lazy val here. Need "override val _qs = super._qs" on sub-classes.
+    def _qs: MScQs = {
+      val _qsRaw = qsRaw
+
+      OptionUtil.maybeOpt( _qsRaw.grid.exists(_.onlyRadioBeacons) ) {
+        // Grid patching for radio-beacons-only grid search. Remove all geoLoc and receiver data, if any:
+        var modsAcc = List.empty[MScQs => MScQs]
+
+        if (_qsRaw.common.locEnv.geoLocOpt.nonEmpty) {
+          modsAcc ::= MScQs.common
+            .composeLens( MScCommonQs.locEnv )
+            .composeLens( MLocEnv.geoLocOpt )
+            .set( None )
+        }
+
+        if (_qsRaw.search.rcvrId.nonEmpty) {
+          modsAcc ::= MScQs.search
+            .composeLens( MAdsSearchReq.rcvrId )
+            .set( None )
+        }
+
+        modsAcc.reduceOption(_ andThen _)
+      }
+        .fold(_qsRaw)( _(_qsRaw) )
+    }
     def radioSearchCtxFut: Future[MRadioBeaconsSearchCtx]
 
     private val scQs_common_locEnv_beacons_LENS =
@@ -115,10 +141,10 @@ trait ScAdsTile
 
     lazy val adSearch2Fut = for {
       radioSearchCtx  <- radioSearchCtxFut
-      clearedQs       <- _qsClearedFut
+      qsCleared       <- _qsClearedFut
     } yield {
       scAdSearchUtil.qsArgs2nodeSearch(
-        args                  = clearedQs,
+        args                  = qsCleared,
         subSearches           = radioSearchCtx.subSearches(
           innerHits = Some {
             MEsInnerHitsInfo(
@@ -129,6 +155,7 @@ trait ScAdsTile
                 ),
             )
           },
+          tagNodeId = qsCleared.search.tagNodeId,
         ),
       )
     }
@@ -452,11 +479,13 @@ trait ScAdsTile
   }
 
 
-  case class TileAdsLogicV3(override val _qs: MScQs,
+  case class TileAdsLogicV3(override val qsRaw: MScQs,
                             override val radioSearchCtxFut: Future[MRadioBeaconsSearchCtx],
                            )(override implicit val _request: IReq[_]) extends TileAdsLogic {
 
     override type T = MSc3AdData
+
+    override val _qs = super._qs
 
     /** Список ресиверов, в которых допускается рендер карточек в-раскрытую. */
     private lazy val _adDisplayOpenedRcvrIds = {

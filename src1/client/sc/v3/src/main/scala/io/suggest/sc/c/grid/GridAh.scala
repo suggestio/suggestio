@@ -444,7 +444,7 @@ class GridAh[M](
                   // Есть видимые маячки. И наверное надо cделать запрос на сервер.
                   // TODO А может просто перетасовать карточки, если порядок маячков просто немного изменился? Или это BleBeaconer уже отрабатывает?
                   // allow404 обычно false, т.к. обычно есть карточки помимо маячковых.
-                  val qs4Ble = ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value, allow404 = isReturn404 )
+                  val qs4Ble = ScQsUtil.gridAdsOnlyRadioBeaconed( scRootRO.value, allow404 = isReturn404 )
                   Some(qs4Ble)
                 },
 
