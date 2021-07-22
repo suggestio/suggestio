@@ -162,7 +162,7 @@ abstract class AdvsUpdate
   def runForNodeId(nodeId: String): Future[_] = {
     val madOptFut = mNodes.getByIdCache( nodeId )
 
-    lazy val logPrefix = s"runForAdId($nodeId/${System.currentTimeMillis}):"
+    lazy val logPrefix = s"runForNodeId($nodeId)#${System.currentTimeMillis}:"
     LOGGER.trace(s"$logPrefix Starting...")
 
     // Нужны только item'ы, которые поддерживаются adv-билдерами

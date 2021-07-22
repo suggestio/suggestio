@@ -1,5 +1,5 @@
 @(title: String, leftCurrEl: Option[mlk.LkLeftPanelLink] = None, nodeOpt: Option[MNode] = None,
-  headAfter:Option[Html] = None, popupContent: Option[Html] = None,
+  headAfter:Option[Html] = None, popupContent: Option[Html] = None, adIdOpt: Option[String] = None,
   showSwitchNodeBtn: Boolean = true)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин). *@
@@ -93,7 +93,7 @@
 
     @_flashMsgTpl()
 
-    @_nodeLeftBarTpl(nodeIdOpt, leftCurrEl)
+    @_nodeLeftBarTpl(nodeIdOpt, leftCurrEl, sysNodeIdOpt = adIdOpt)
 
     @content
 

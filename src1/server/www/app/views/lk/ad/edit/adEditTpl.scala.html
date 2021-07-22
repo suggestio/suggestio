@@ -9,7 +9,8 @@
 
 @adEditBase(
   title       = messages( mad.fold("Ad.card.create")(_ => "Ad.card.edit") ),
-  parent      = parent
+  parent      = parent,
+  adIdOpt     = mad.flatMap(_.id),
 ) {
 
   @_formStateInputTpl( state0 )

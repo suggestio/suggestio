@@ -17,7 +17,7 @@ import scala.concurrent.Future
 case class Acc(
                 mnode             : MNode,
                 dbActions         : List[DBIOAction[_, NoStream, RWT]]  = Nil,
-                ctxOuterFut       : Future[MCtxOuter]                   = MCtxOuter.emptyFut,
+                ctxOuterFut       : Future[MCtxOuter],
                 interruptedTypes  : Set[MItemType]                      = Set.empty
               )
 

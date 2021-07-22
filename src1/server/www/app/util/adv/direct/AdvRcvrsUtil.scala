@@ -1,8 +1,8 @@
 package util.adv.direct
 
 import java.time.OffsetDateTime
-
 import io.suggest.adn.MAdnRights
+
 import javax.inject.Inject
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -13,7 +13,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
-import models.adv.build.{Acc, TryUpdateBuilder}
+import models.adv.build.{Acc, MCtxOuter, TryUpdateBuilder}
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
@@ -77,7 +77,7 @@ class AdvRcvrsUtil @Inject()(
     val needProducer = rcvrEdgeOpt.isDefined
 
     // Заготавливаем билдер, нужно это заранее сделать для выборки item'ов только поддерживаемых типов.
-    val acc0 = Acc(mad)
+    val acc0 = _mkBuilderAcc(mad)
     val b0 = advBuilderFactory
       .builder( Future.successful(acc0), OffsetDateTime.now )
       .clearNode(full = true)  // С чистого листа, т.к. у нас полный пересчёт
@@ -171,7 +171,7 @@ class AdvRcvrsUtil @Inject()(
       LOGGER.info(logPrefix + "Starting removing advs with rcvrs: " + rcvrIds.mkString(", "))
     }
 
-    val acc0 = Acc(mad)
+    val acc0 = _mkBuilderAcc(mad)
     val now = OffsetDateTime.now
     val b0 = advBuilderFactory.builder( Future.successful(acc0), now )
 
@@ -241,6 +241,13 @@ class AdvRcvrsUtil @Inject()(
     slick.db.run( txnLogic.transactionally )
   }
 
+  private def _mkBuilderAcc(mnode: MNode) = {
+    LOGGER.warn(s"_mkBuilderAcc(${mnode.id.orNull}): Not fully implemented: tagNodesMap is empty")
+    Acc(mnode, ctxOuterFut = Future.successful(MCtxOuter(
+      // TODO Missing tags map may break tags (re)building.
+      tagNodesMap = Map.empty,
+    )))
+  }
 
   /**
     * Выполнить всеобщий пересчёт карт ресиверов.
@@ -255,7 +262,7 @@ class AdvRcvrsUtil @Inject()(
     import esModel.api._
     mNodes.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
       // Запустить пересчет ресиверов с сохранением.
-      val tub2Fut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
+      val tub2Fut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(_mkBuilderAcc(mnode0)) ) { tub0 =>
         for {
           acc1 <- calculateReceiversFor(tub0.acc.mnode)
         } yield {
@@ -306,7 +313,7 @@ class AdvRcvrsUtil @Inject()(
     * @return
     */
   def resetReceiversFor(mad0: MNode): Future[MNode] = {
-    val fut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
+    val fut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(_mkBuilderAcc(mad0)) ) { tub0 =>
       for {
         acc2 <- calculateReceiversFor(tub0.acc.mnode)
       } yield {

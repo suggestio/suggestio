@@ -76,10 +76,13 @@ class GeoTagsUtil @Inject() (
     * @return Карта с названиями исходных тегов и id узлов n2.
     */
   def ensureTags(tags: Set[String]): Future[Map[String, MNode]] = {
+    lazy val logPrefix = s"ensureTags( [${tags.size}]=[${tags.mkString(" | ")}] )"
     if (tags.isEmpty) {
+      LOGGER.trace(s"$logPrefix Nothing to do: ${tags.size} tags requested")
       Future.successful( Map.empty )
 
     } else {
+      LOGGER.trace(s"$logPrefix Start ensuring...")
       for {
         tNodes <- {
           Future.traverse(tags) { tagFace =>
@@ -103,6 +106,7 @@ class GeoTagsUtil @Inject() (
     */
   def findTagNode(tagFace: String): Future[Option[MNode]] = {
     lazy val logPrefix = s"findTagNode($tagFace):"
+    LOGGER.trace(s"$logPrefix Looking for node of tag#[[$tagFace]]")
 
     val msearch = new MNodeSearch {
       override val outEdges: MEsNestedSearch[Criteria] = {
@@ -132,7 +136,9 @@ class GeoTagsUtil @Inject() (
         LOGGER.warn(s"$logPrefix Too many tag-nodes found for single-tag request:\n ${tagNodes.iterator.map(n => n.idOrNull -> n.guessDisplayName.orNull).mkString(", ")}")
       }
       // TODO Нужно запускать тут мерж tag-узлов при выявлении коллизии: 2+ узлов относяться к одному и тому же тегу.
-      tagNodes.headOption
+      val r = tagNodes.headOption
+      LOGGER.trace(s"$logPrefix Found ${tagNodes.size} nodes, returning node#${r.flatMap(_.id)}")
+      r
     }
   }
 
@@ -144,10 +150,10 @@ class GeoTagsUtil @Inject() (
     * @return Фьючерс с id узла-тега.
     */
   def ensureTag(tagFace: String): Future[MNode] = {
-    val findTagFut = findTagNode(tagFace)
     lazy val logPrefix = s"ensureTag($tagFace):"
+    LOGGER.trace(s"$logPrefix Ensuring tag [[$tagFace]]...")
 
-    findTagFut
+    findTagNode(tagFace)
       .map(_.get)
       .recoverWith { case _: NoSuchElementException =>
         // Собрать заготовку узла.
@@ -171,7 +177,7 @@ class GeoTagsUtil @Inject() (
           )
         )
 
-        LOGGER.trace(s"$logPrefix Tag not exists, creating new one: $tagNode0")
+        LOGGER.trace(s"$logPrefix Tag not exists, creating new one...")
 
         // Запустить сохранение нового узла.
         mNodes
@@ -264,6 +270,7 @@ class GeoTagsUtil @Inject() (
 
     val startTs = System.currentTimeMillis()
     lazy val logPrefix = s"rebuildTag(#${mnode.guessDisplayName.orNull} $mnodeId)#$startTs:"
+    LOGGER.trace(s"$logPrefix Starting")
 
     // Для наиболее оптимального сбора данных тега, параллельно и реактивно собираем данные сразу с нескольких колонок.
     // Общий код SQL-запроса здесь:
@@ -371,7 +378,7 @@ class GeoTagsUtil @Inject() (
               }
               LOGGER.trace(s"$logPrefix Updated self-tag edge: $e1")
 
-              if (e0Opt contains e1) {
+              if (e0Opt contains[MEdge] e1) {
                 // Новый и старый эджи эквивалентны. Значит, обновлять этот tag-node не требуется.
                 LOGGER.trace(s"$logPrefix Self-tag edge not modified. Do not update")
                 null
@@ -407,17 +414,22 @@ class GeoTagsUtil @Inject() (
     * @return Фьючерс со списком отребилденных тегов.
     */
   def rebuildTags(tagNodes: Iterable[MNode]): Future[Seq[MNode]] = {
+    lazy val logPrefix = s"rebuildTag([${tagNodes.size}]):"
     if (tagNodes.isEmpty) {
+      LOGGER.trace(s"$logPrefix Nothing to do")
       Future.successful( Nil )
     } else {
+      LOGGER.trace(s"$logPrefix Rebuild tag nodes:\n [${tagNodes.map(_.idOrNull).mkString(" | ")}]")
       for {
         res <- Future.traverse(tagNodes)(rebuildTag)
       } yield {
-        // Явно ленивый список обновлённых тегов. Результат этого метода игнорируется.
-        res
+        // Явно ленивый список обновлённых тегов. Результат этого метода игнорируется (кроме logger.trace).
+        val r = res
           .iterator
           .flatten
           .to( LazyList )
+        LOGGER.trace(s"$logPrefix Done, ${r.size} tag ids returned:\n [${r.iterator.map(_.orNull).mkString(" | ")}]")
+        r
       }
     }
   }
@@ -429,6 +441,8 @@ class GeoTagsUtil @Inject() (
     * @return Кол-во обновлённый и кол-во удалённых тегов-узлов.
     */
   def rebuildAllTagNodes(): Future[(Int, Int)] = {
+    val logPrefix = "rebuildAllTagNodes():"
+    LOGGER.info(s"$logPrefix Starting")
     mNodes
       .source( (new AllTagNodesSearch).toEsQuery )
       // Пересобираем все теги одновременно.
@@ -436,6 +450,7 @@ class GeoTagsUtil @Inject() (
         rebuildTag(mnode)
       }
       .runFold( (0,0) ) { case ((countUpdated, countDeleted), mnodeOpt) =>
+        LOGGER.debug(s"$logPrefix Folding... (updated=$countUpdated deleted=${countDeleted}) node#${mnodeOpt.flatMap(_.id).orNull}")
         if (mnodeOpt.isEmpty) {
           (countUpdated, countDeleted + 1)
         } else {

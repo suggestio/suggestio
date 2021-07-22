@@ -26,20 +26,6 @@ object AdvDirectBuilder {
     PRED.parent.value :: Nil
   }
 
-  /**
-    * Маппер поддерживаемых типов item'ов на предикаты эджей размещения.
-    */
-  def itypeToPredicate(ntype: MItemType): MPredicate = {
-    ntype match {
-      case MItemTypes.AdvDirect           => MPredicates.Receiver.AdvDirect
-      case MItemTypes.TagDirect           => MPredicates.TaggedBy.DirectTag
-
-      // should never happen:
-      case other =>
-        throw new IllegalArgumentException("Unsupported item type: " + other)
-    }
-  }
-
 }
 
 trait AdvDirectBuilder extends IAdvBuilder {

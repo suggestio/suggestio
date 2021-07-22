@@ -76,6 +76,7 @@ class LkAdEditCss
 
     val editorsCont = style(
       addClassName( _PREFIX + "__editor" ),
+      paddingLeft( 16.px ),
       overflow.hidden,
       transition := {
         val t = Css.Anim.Transition

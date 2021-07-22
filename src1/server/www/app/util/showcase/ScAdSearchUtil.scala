@@ -2,7 +2,7 @@ package util.showcase
 
 import javax.inject.Inject
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
-import io.suggest.es.model.{EsModel, IMust, MEsInnerHitsInfo, MEsNestedClause, MEsNestedSearch}
+import io.suggest.es.model.{EsModel, IMust, MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{GeoShapeJvm, MNodeGeoLevels, PointGs}
 import io.suggest.n2.edge.{MPredicate, MPredicates}

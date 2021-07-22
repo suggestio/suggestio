@@ -155,7 +155,9 @@ final class MNodes @Inject() (
         AggregationBuilders
           .terms( aggName )
           .field( MNodeFields.Common.NODE_TYPE_FN )
+          .size( MNodeTypes.values.length )
       )
+      .setSize(0)
       .executeFut()
       .map { resp =>
         resp

@@ -1,6 +1,6 @@
 @(title: String, leftCurrEl: Option[mlk.LkLeftPanelLink] = None, nodeOpt: Option[MNode] = None,
   headAfter:Option[Html] = None, rightBar: Option[Html] = None,
-  popupContent:Option[Html] = None,
+  popupContent:Option[Html] = None, adIdOpt: Option[String] = None,
   showSwitchNodeBtn: Boolean = true)(content: Html)(implicit ctx: Context)
 
 @lkBase(
@@ -9,7 +9,8 @@
   headAfter     = headAfter,
   popupContent  = popupContent,
   leftCurrEl    = leftCurrEl,
-  showSwitchNodeBtn = showSwitchNodeBtn
+  showSwitchNodeBtn = showSwitchNodeBtn,
+  adIdOpt       = adIdOpt,
 ) {
 
   <aside class="right-bar">

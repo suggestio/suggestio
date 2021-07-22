@@ -66,7 +66,8 @@ trait AdvDirectTagsBuilder extends IAdvBuilder {
               // Найти узел тега. Он или уже существует, или должен быть уже создан.
               val tagNodeOpt = ctxOuter.tagNodesMap.get(tagFace)
               if (tagNodeOpt.isEmpty)
-                LOGGER.warn(s"$logPrefix No tag-node found for face: $tagFace")
+                throw new IllegalStateException(s"$logPrefix No tag-node found for face: [[$tagFace]] in tagNodesMap[${ctxOuter.tagNodesMap.size}]=[${ctxOuter.tagNodesMap.keys.mkString("|")}];\n Known tag ids=[${tagItems.iterator.flatMap(_.tagNodeIdOpt).toSet.mkString(", ")}] of tag items list:\n -${tagItems.mkString("\n -")}")
+
               val tagNodeIdOpt = tagNodeOpt.flatMap(_.id)
 
               val edgeNodeIds = tagItems

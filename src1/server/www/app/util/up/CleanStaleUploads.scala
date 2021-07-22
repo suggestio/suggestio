@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.stream.Materializer
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.{BulkProcessorListener, EsModel, IMust, MEsNestedSearch}
+import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.n2.edge.{MEdgeFlags, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, EdgeFlagCriteria, EsRange, EsRangeClause, EsRangeOps}
 import io.suggest.n2.media.storage.IMediaStorages

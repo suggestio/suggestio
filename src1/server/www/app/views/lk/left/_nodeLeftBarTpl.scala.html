@@ -1,4 +1,4 @@
-@(nodeIdOpt: Option[String], leftCurrEl: Option[mlk.LkLeftPanelLink])(implicit ctx: Context)
+@(nodeIdOpt: Option[String], leftCurrEl: Option[mlk.LkLeftPanelLink], sysNodeIdOpt: Option[String])(implicit ctx: Context)
 
 @* Реализация левой панели для ноды. *@
 
@@ -55,7 +55,7 @@
       }
     }
 
-    @__sysBtn( routes.SysMarket.showAdnNode(nodeId) )
+    @__sysBtn( routes.SysMarket.showAdnNode( sysNodeIdOpt getOrElse nodeId ) )
 
 
   } @* nodeId *@
