@@ -51,9 +51,7 @@ class MPersonIdentModel @Inject()(
               nodeIds     = remoteUserId :: Nil,
               extService  = Some(extService :: Nil),
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil
-            )
+            MEsNestedSearch.plain( cr )
           }
         }
         mNodes.dynSearchOne( msearch )
@@ -64,7 +62,7 @@ class MPersonIdentModel @Inject()(
         * @param emailOrPhone Выверенный нормализованный адрес электронной почты.
         * @return Фьючерс с узлами, подходящими под запрос.
         */
-      def findUsersByEmailPhoneWithPw(emailOrPhone: String): Future[LazyList[MNode]] = {
+      def findUsersByEmailPhoneWithPw(emailOrPhone: String): Future[Seq[MNode]] = {
         mNodes.dynSearch {
           new MNodeSearch {
             // По идее, тут не более одного.
@@ -80,21 +78,23 @@ class MPersonIdentModel @Inject()(
                   MPredicates.Ident.Email ::
                   MPredicates.Ident.Phone ::
                   Nil,
-                nodeIds     = (Set.empty +
-                  Validators.normalizeEmail(emailOrPhone) +
-                  Validators.normalizePhoneNumber(emailOrPhone)
-                ).toSeq,
+                nodeIds     = (
+                  Validators.normalizeEmail(emailOrPhone) ::
+                  Validators.normalizePhoneNumber(emailOrPhone) ::
+                  Nil
+                )
+                  .filter(_.nonEmpty)
+                  .distinct,
                 flag        = OptionUtil.SomeBool.someTrue,
-                must        = must
+                must        = must,
+                nodeIdsMatchAll = false,
               )
               // И есть пароль
               val pwCr = Criteria(
                 predicates  = MPredicates.Ident.Password :: Nil,
                 must        = must,
               )
-              MEsNestedSearch(
-                clauses = emailCr :: pwCr :: Nil
-              )
+              MEsNestedSearch.plain( emailCr, pwCr )
             }
           }
         }

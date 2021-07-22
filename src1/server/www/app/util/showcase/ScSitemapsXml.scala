@@ -65,12 +65,12 @@ class ScSitemapsXml @Inject() (
           MPredicates.TaggedBy.AdvGeoTag ::
           MPredicates.TaggedBy.DirectTag ::
           Nil
-        MEsNestedSearch(
-          clauses = for (p <- preds) yield {
+        MEsNestedSearch.plain(
+          (for (p <- preds) yield {
             Criteria(
               predicates = p :: Nil,
             )
-          },
+          }): _*,
         )
       }
 

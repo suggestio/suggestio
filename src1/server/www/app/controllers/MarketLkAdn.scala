@@ -110,9 +110,7 @@ final class MarketLkAdn @Inject() (
               predicates  = MPredicates.OwnedBy :: Nil,
               nodeIds     = nodeId :: Nil
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
           override val nodeTypes = {
             MNodeTypes.adnTreeMemberTypes

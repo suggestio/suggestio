@@ -332,9 +332,7 @@ class AdvRcvrsUtil @Inject()(
           nodeIds    = parentIds,
           predicates = MPredicates.OwnedBy :: Nil,
         )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
+        MEsNestedSearch.plain( cr )
       }
       override val withAdnRights  = MAdnRights.RECEIVER :: Nil
       override val withNameSort   = Some( SortOrder.ASC )

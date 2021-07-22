@@ -43,9 +43,7 @@ final class IdentUtil @Inject() (
               nodeIds     = personId :: Nil,
               predicates  = MPredicates.OwnedBy :: Nil
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
           override val nodeTypes = MNodeTypes.AdnNode :: Nil
           // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
@@ -101,9 +99,7 @@ final class IdentUtil @Inject() (
                   predicates = MPredicates.Ident.Id :: Nil,
                   extService = Some(Nil),
                 )
-                MEsNestedSearch(
-                  clauses = cr :: Nil,
-                )
+                MEsNestedSearch.plain( cr )
               }
             }
           }

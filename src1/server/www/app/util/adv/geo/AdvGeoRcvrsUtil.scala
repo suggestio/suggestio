@@ -99,12 +99,10 @@ final class AdvGeoRcvrsUtil @Inject()(
         val crNodeLoc = Criteria(
           predicates  = MPredicates.NodeLocation :: Nil
         )
-        MEsNestedSearch(
-          clauses = crNodeLoc :: Nil,
-        )
+        MEsNestedSearch.plain( crNodeLoc )
       }
-      override val isEnabled  = Some(true)
-      override val testNode   = Some(false)
+      override def isEnabled  = OptionUtil.SomeBool.someTrue
+      override def testNode   = OptionUtil.SomeBool.someFalse
       // проверка типа узла на верхнем уровне НЕ нужна. MPredicate.AdnMap идёт через биллинг и надо подчиняться
       // воле финансов, даже если узел не очень Adn.
       override val withAdnRights = MAdnRights.RECEIVER :: Nil
@@ -547,9 +545,7 @@ final class AdvGeoRcvrsUtil @Inject()(
           predicates = pred :: Nil,
           must = IMust.MUST
         )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
+        MEsNestedSearch.plain( cr )
       }
     }
 

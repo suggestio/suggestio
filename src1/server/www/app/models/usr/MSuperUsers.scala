@@ -107,9 +107,7 @@ final class MSuperUsers @Inject()(
               nodeIdsMatchAll   = false,
               flag              = OptionUtil.SomeBool.someTrue,
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
         }
       }

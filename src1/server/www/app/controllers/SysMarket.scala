@@ -241,9 +241,7 @@ final class SysMarket @Inject() (
         val msearch = new MNodeSearch {
           override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(nodeIds = nodeId :: Nil)
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
           override def limit = 200
         }

@@ -129,7 +129,7 @@ final class ScSearchUtil {
     // Собрать итоговый поиск.
     val r = new MNodeSearch {
       override val outEdges: MEsNestedSearch[Criteria] =
-        MEsNestedSearch( clauses = edgesCrs )
+        MEsNestedSearch.plain( edgesCrs: _* )
       override val limit = qs.search.limit getOrElse LIMIT_DFLT
       override val offset = qs.search.offset getOrElse 0
       override val nodeTypes = _nodeTypes4search

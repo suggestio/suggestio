@@ -78,11 +78,11 @@ final class NodesUtil @Inject() (
   def personNodesSearch(personId: String, limit1: Int = 200, withoutIds1: Seq[String] = Nil): MNodeSearch = {
     new MNodeSearch {
       override val outEdges: MEsNestedSearch[Criteria] = {
-        MEsNestedSearch(
-          clauses = Criteria(
+        MEsNestedSearch.plain(
+          Criteria(
             nodeIds     = personId :: Nil,
             predicates  = MPredicates.OwnedBy :: Nil
-          ) :: Nil,
+          ),
         )
       }
       override def limit      = limit1
@@ -199,9 +199,7 @@ final class NodesUtil @Inject() (
               nodeIds     = prodIds,
               predicates  = MPredicates.OwnedBy :: Nil
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
           override def limit = _limit
           override def offset = 0
@@ -330,9 +328,7 @@ final class NodesUtil @Inject() (
                   nodeIds     = parentNodeIdsCurrent.toSeq,
                   predicates  = _predicates
                 )
-                MEsNestedSearch(
-                  clauses = cr :: Nil,
-                )
+                MEsNestedSearch.plain( cr )
               }
               override def limit = perStepLimit
             }

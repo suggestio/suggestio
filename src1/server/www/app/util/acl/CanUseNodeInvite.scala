@@ -116,9 +116,7 @@ final class CanUseNodeInvite @Inject()(
                     predicates = MPredicates.Ident.Email :: Nil,
                     nodeIds    = qs.email :: Nil,
                   )
-                  MEsNestedSearch(
-                    clauses = cr :: Nil,
-                  )
+                  MEsNestedSearch.plain( cr )
                 }
                 override def limit = 2
               }

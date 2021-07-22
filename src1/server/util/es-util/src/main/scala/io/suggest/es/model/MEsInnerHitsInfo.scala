@@ -18,9 +18,10 @@ object MEsInnerHitsInfo {
   @inline implicit def univEq: UnivEq[MEsInnerHitsInfo] = UnivEq.derive
 
 
-  def buildInfoOpt(esIhInfoOpt: Option[MEsInnerHitsInfo]): Option[InnerHitBuilder] =
-    esIhInfoOpt.map(buildInfo)
-  def buildInfo(esIhInfo: MEsInnerHitsInfo): InnerHitBuilder = {
+  def buildInfoOpt(esIhInfoOpt: Option[MEsInnerHitsInfo], nameSuffix: Option[String] = None): Option[InnerHitBuilder] =
+    esIhInfoOpt.map( buildInfo(_, nameSuffix) )
+
+  def buildInfo(esIhInfo: MEsInnerHitsInfo, nameSuffix: Option[String] = None): InnerHitBuilder = {
     // Включён возврат предикатов, на основе которых отобраны карточки:
     val b = new InnerHitBuilder()
       .setFetchSourceContext( FetchSourceContext.DO_NOT_FETCH_SOURCE )
@@ -36,7 +37,12 @@ object MEsInnerHitsInfo {
         )
       )
 
-    esIhInfo.name foreach b.setName
+    var nameOpt = esIhInfo.name
+
+    for (suffix <- nameSuffix)
+      nameOpt = Some( nameOpt.fold(suffix)(_ + suffix) )
+
+    nameOpt foreach b.setName
 
     b
   }

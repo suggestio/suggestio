@@ -118,9 +118,7 @@ final class LkAds @Inject() (
             predicates  = MPredicates.OwnedBy :: Nil,
             nodeIds     = parentNodeId :: Nil
           )
-          MEsNestedSearch(
-            clauses = crOwn :: Nil,
-          )
+          MEsNestedSearch.plain( crOwn )
         }
         override def limit     = maxAdsPerTime
         override val withDateCreatedSort = Some(SortOrder.DESC)

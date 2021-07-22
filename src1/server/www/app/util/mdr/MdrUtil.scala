@@ -235,9 +235,7 @@ final class MdrUtil @Inject() (
                   val cr = Criteria(
                     predicates = MPredicates.Ident.Email :: Nil
                   )
-                  MEsNestedSearch(
-                    clauses = cr :: Nil,
-                  )
+                  MEsNestedSearch.plain( cr )
                 }
               }
             }
@@ -680,9 +678,7 @@ final class MdrUtil @Inject() (
           must        = Some( args.isAllowed.isDefined )
         )
 
-        MEsNestedSearch(
-          clauses = srp :: isAllowedCr :: Nil,
-        )
+        MEsNestedSearch.plain( srp, isAllowedCr )
       }
 
       override val withoutIds = args.hideAdIdOpt.toSeq

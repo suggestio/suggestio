@@ -172,7 +172,7 @@ final class ImgMaintainUtil @Inject()(
         override def withIds = nodeIds
         override val nodeTypes = _nodeTypes
         override val outEdges: MEsNestedSearch[Criteria] = {
-          MEsNestedSearch( crsAcc0 )
+          MEsNestedSearch.plain( crsAcc0: _* )
         }
       }
     }
@@ -345,10 +345,10 @@ final class ImgMaintainUtil @Inject()(
               // nodeIds должен содержать id текущего-сервера узла sio, на котором и размещены файлы.
               var crsAcc = Criteria(
                 predicates      = filePred :: Nil,
-                fileStorType    = Set.empty + MStorages.SeaWeedFs,
+                fileStorType    = Set.empty[MStorage] + MStorages.SeaWeedFs,
                 fileStorShards  = Option.when( onlyShardsMissing )( Set.empty ),
               ) :: Nil
-              MEsNestedSearch( crsAcc )
+              MEsNestedSearch.plain( crsAcc: _* )
             }
           }).toEsQuery,
         )

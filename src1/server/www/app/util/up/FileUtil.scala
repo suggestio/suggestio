@@ -158,9 +158,7 @@ class FileUtil @Inject()(
                   fileStorType      = Set.empty + storageDelete.storage,
                   fileStorMetaData  = Set.empty + storageDelete.data.meta,
                 )
-                MEsNestedSearch(
-                  clauses = cr :: Nil,
-                )
+                MEsNestedSearch.plain( cr )
               }
               override val withoutIds = mnode.id.toList
               override def limit = 1

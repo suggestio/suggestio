@@ -2,7 +2,7 @@ package util.showcase
 
 import javax.inject.Inject
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
-import io.suggest.es.model.{EsModel, IMust, MEsInnerHitsInfo, MEsNestedSearch}
+import io.suggest.es.model.{EsModel, IMust, MEsInnerHitsInfo, MEsNestedClause, MEsNestedSearch}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{GeoShapeJvm, MNodeGeoLevels, PointGs}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
@@ -143,10 +143,7 @@ final class ScAdSearchUtil @Inject() (
 
     if (_outEdges.nonEmpty) {
       val normalSearch = new MNodeSearch {
-        override val outEdges = MEsNestedSearch(
-          clauses = _outEdges,
-          innerHits = MEsInnerHitsInfo.buildInfoOpt( innerHits ),
-        )
+        override val outEdges = MEsNestedSearch.innerHitsBuildIndexed( innerHits, _outEdges )
         override def nodeTypes = _nodeTypes
         override val randomSort = Some {
           MRandomSortData(

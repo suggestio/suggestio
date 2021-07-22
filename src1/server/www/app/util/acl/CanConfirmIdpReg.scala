@@ -63,9 +63,7 @@ final class CanConfirmIdpReg @Inject() (
                 predicates  = MPredicates.OwnedBy :: Nil,
                 nodeIds     = personId :: Nil,
               )
-              MEsNestedSearch(
-                clauses = cr :: Nil,
-              )
+              MEsNestedSearch.plain( cr )
             }
             override def limit = 5
           }
@@ -80,7 +78,7 @@ final class CanConfirmIdpReg @Inject() (
                   predicates = MPredicates.Ident.Id :: Nil,
                   extService = Some(Nil)
                 )
-                MEsNestedSearch( cr :: Nil )
+                MEsNestedSearch.plain( cr )
               }
               override def limit = 1
             }

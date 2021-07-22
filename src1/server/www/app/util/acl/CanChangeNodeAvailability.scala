@@ -83,9 +83,7 @@ final class CanChangeNodeAvailability @Inject() (
             val cr = Criteria(
               nodeIds    = nodeId :: Nil
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
         }
       }

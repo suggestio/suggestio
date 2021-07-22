@@ -73,10 +73,7 @@ final class BleUtil {
               .toList
           }
 
-          MEsNestedSearch(
-            clauses   = crs,
-            innerHits = MEsInnerHitsInfo.buildInfoOpt( innerHits ),
-          )
+          MEsNestedSearch.innerHitsBuildIndexed( innerHits, crs )
         }
 
         // Нетривиальный механизм function score для маячков реализован прямо здесь, потому что очень
@@ -93,9 +90,7 @@ final class BleUtil {
                     predicates = predicates,
                     nodeIds    = uid :: Nil,
                   )
-                  MEsNestedSearch(
-                    clauses = bcnEdgeCr :: Nil,
-                  )
+                  MEsNestedSearch.plain( bcnEdgeCr )
                 }
               }
               val filter = bcnFilterDynSearch.toEsQuery

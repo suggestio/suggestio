@@ -63,9 +63,7 @@ final class SysPerson @Inject() (
             val cr = Criteria(
               predicates = MPredicates.Ident :: Nil
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
         }
       )
@@ -108,9 +106,7 @@ final class SysPerson @Inject() (
               val cr = Criteria(
                 predicates = MPredicates.Ident :: Nil
               )
-              MEsNestedSearch(
-                clauses = cr :: Nil,
-              )
+              MEsNestedSearch.plain( cr )
             }
           }
         )
@@ -150,9 +146,7 @@ final class SysPerson @Inject() (
               nodeIds    = personId :: Nil,
               predicates = MPredicates.OwnedBy :: Nil,
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
           override val withNameSort = Some(SortOrder.ASC)
         }

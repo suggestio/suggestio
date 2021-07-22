@@ -196,9 +196,7 @@ trait ScIndex
                       )
                     },
                   )
-                  MEsNestedSearch(
-                    clauses = cr :: Nil,
-                  )
+                  MEsNestedSearch.plain( cr )
                 }
                 override def withAdnRights = withAdnRights1
                 override def adnRightsMustOrNot = adnRightsMustOrNot1

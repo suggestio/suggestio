@@ -205,10 +205,10 @@ trait ScAdsTile
             val ihAdMatchInfos = (for {
               edgeInnerHits <- Option( searchHit.getInnerHits )
                 .iterator
-              edgesIhHits <- Option {
-                edgeInnerHits.get( MNodeFields.Edges.E_OUT_FN )
-              }
-                .iterator
+              // Process all innerHits without names, because many nested queries in OutEdges have different keys here.
+              edgesIhHits <- edgeInnerHits
+                .asScala
+                .valuesIterator
 
               edgeIhHit <- edgesIhHits
                 .getHits
@@ -312,9 +312,7 @@ trait ScAdsTile
             nodeIds = _nodeId404 :: Nil,
             predicates = MPredicates.Receiver :: Nil
           )
-          MEsNestedSearch(
-            clauses = cr :: Nil,
-          )
+          MEsNestedSearch.plain( cr )
         }
         override val randomSort: Option[MRandomSortData] = {
           for (gen <- _qs.search.genOpt) yield

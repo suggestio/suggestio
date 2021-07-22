@@ -385,9 +385,7 @@ final class DynImgUtil @Inject() (
               fileIsOriginal  = OptionUtil.SomeBool.someFalse,
               fileMimes       = MImgFormats.allMimesIter.toSeq,
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
           override def limit = 20
         }
@@ -534,9 +532,7 @@ final class DynImgUtil @Inject() (
         val cr = Criteria(
           predicates = MPredicates.JdContent.Image :: Nil
         )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
+        MEsNestedSearch.plain( cr )
       }
       override def withIds = nodeIds
       override def limit = nodesPerTime

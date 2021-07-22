@@ -77,7 +77,7 @@ final class ShortUrls @Inject() (
               nodeIds     = urlCode :: Nil,
               predicates  = MPredicates.ShortUrl :: Nil,
             )
-            MEsNestedSearch( cr :: Nil )
+            MEsNestedSearch.plain( cr )
           }
         }
       )

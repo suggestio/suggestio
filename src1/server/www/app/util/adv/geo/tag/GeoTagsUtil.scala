@@ -115,9 +115,7 @@ class GeoTagsUtil @Inject() (
           predicates  = _PRED :: Nil,
           tags        = tcr :: Nil
         )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
+        MEsNestedSearch.plain( cr )
       }
 
       override val nodeTypes = MNodeTypes.Tag :: Nil

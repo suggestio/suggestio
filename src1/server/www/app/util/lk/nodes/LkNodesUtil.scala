@@ -31,9 +31,7 @@ final class LkNodesUtil {
           nodeIds     = nodeId :: Nil,
           predicates  = MPredicates.OwnedBy :: Nil
         )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
+        MEsNestedSearch.plain( cr )
       }
       override val withNameSort = Some( SortOrder.ASC )
       override val nodeTypes = MNodeTypes.lkNodesUserCanCreate

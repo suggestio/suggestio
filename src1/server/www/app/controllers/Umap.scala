@@ -132,9 +132,7 @@ final class Umap @Inject() (
                 gjsonCompat = Some(true)
               ))
             )
-            MEsNestedSearch(
-              clauses = cr :: Nil,
-            )
+            MEsNestedSearch.plain( cr )
           }
 
           override def limit                = 600

@@ -1,6 +1,6 @@
 package io.suggest.n2.edge.search
 
-import io.suggest.es.model.{IMust, MEsNestedSearch, MWrapClause}
+import io.suggest.es.model.{IMust, MEsNestedClause, MEsNestedSearch, MWrapClause}
 import io.suggest.es.search.DynSearchArgs
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.n2.node.MNodeFields
@@ -21,12 +21,13 @@ object OutEdges extends MacroLogsImpl {
   private def _isToAssignQueryName = LOGGER.underlying.isTraceEnabled
 
   /** Сборка edge-критериев в nested query. */
-  private def _crs2query(crs: IterableOnce[Criteria], outEdges: MEsNestedSearch[Criteria]): QueryBuilder = {
+  private def _crs2query(nestClauses: IterableOnce[MEsNestedClause[Criteria]]): QueryBuilder = {
     val EF = MNodeFields.Edges
     val withQname = _isToAssignQueryName
 
-    val clauses = (for {
-      oe <- crs.iterator
+    (for {
+      nestClause <- nestClauses.iterator
+      oe = nestClause.clause
       // Сборка nested queries.
       q <- {
         // TODO Opt Тут куча вложенных bool-query, а можно сделать одну bool-query. Это это будет проще и красивее.
@@ -559,22 +560,29 @@ object OutEdges extends MacroLogsImpl {
         _qOpt.iterator
       }
     } yield {
+      // Inner nesting is THE ONLY possible solution here: many nested queries, merged into single bool query.
+      // For example, outer nesting means to use nested(bool(q + q + ...)).
+      // If outer nesting (nestedQuery() outside for-yield), then every MEdge will be matched against ALL criterias simulateosly.
+      // We use inner nesting here: bool(nested(q) + nested(q) + ...) query.
+      // Just never think about outer nesting here: Queries may silently fail to find any nested results,
+      // because ALL clauses will be merged (via bool) and fully matched against
+      // each nested document. So, if you searching for two+ different nested documents with oe.must=MUST via two
+      // different clauses, you will find nothing with outer nesting. For single-clauses searches it doesn't make any sence.
       if (withQname)
-        q.queryName(s"Edges: must?${oe.must} cr=$oe")
+        q.queryName(s"Edge: must?${oe.must} cr=$oe")
 
-      MWrapClause(oe.must, q)
+      val crNestedQuery = QueryBuilders.nestedQuery( EF.E_OUT_FN, q, ScoreMode.Max )
+
+      for (esInnerHit <- nestClause.innerHits)
+        crNestedQuery.innerHit( esInnerHit )
+
+      if (withQname)
+        crNestedQuery.queryName(s"Nested Edge. InnerHits?${nestClause.innerHits}")
+
+      MWrapClause(oe.must, crNestedQuery)
     })
       .toSeq
-
-    var overallNestedQuery = QueryBuilders.nestedQuery( EF.E_OUT_FN, clauses.toBoolQuery, ScoreMode.Max )
-
-    for (esInnerHit <- outEdges.innerHits)
-      overallNestedQuery = overallNestedQuery.innerHit( esInnerHit )
-
-    if (withQname)
-      overallNestedQuery = overallNestedQuery.queryName(s"Nested overall edge-queries. InnerHits?${outEdges.innerHits}")
-
-    overallNestedQuery
+      .toBoolQuery
   }
 
 }
@@ -592,7 +600,7 @@ trait OutEdges extends DynSearchArgs {
     val _outEdgesIter = oes
       .clauses
       .iterator
-      .filter { _.nonEmpty }
+      .filter { _.clause.nonEmpty }
 
     val qbOpt0 = super.toEsQueryOpt
 
@@ -600,12 +608,12 @@ trait OutEdges extends DynSearchArgs {
       qbOpt0
 
     } else {
-      val qb2 = OutEdges._crs2query(_outEdgesIter, oes)
+      val qb2 = OutEdges._crs2query( _outEdgesIter )
       // Сборка основной query
       qbOpt0.map { qb0 =>
         val q = QueryBuilders.boolQuery()
           .must(qb0)
-        if (oes.clauses.exists(_.isContainsSort)) {
+        if (oes.clauses.exists(_.clause.isContainsSort)) {
           // не-filter, когда внутри _score
           q.must(qb2)
         } else {

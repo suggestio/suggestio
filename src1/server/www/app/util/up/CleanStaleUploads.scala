@@ -101,7 +101,7 @@ final class CleanStaleUploads @Inject() (
               ) :: Nil,
             )
 
-            MEsNestedSearch( myNodeFileCr :: Nil )
+            MEsNestedSearch.plain( myNodeFileCr )
           }
 
           override val nodeTypes = MNodeTypes.Media.children

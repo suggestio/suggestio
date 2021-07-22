@@ -149,9 +149,7 @@ final class Upload @Inject()(
                   })
                     .toSeq,
                 )
-                MEsNestedSearch(
-                  clauses = cr :: Nil,
-                )
+                MEsNestedSearch.plain( cr )
               }
               override def limit = 1
             }

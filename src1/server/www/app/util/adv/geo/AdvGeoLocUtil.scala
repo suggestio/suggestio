@@ -139,9 +139,7 @@ final class AdvGeoLocUtil @Inject() (
           // Заодно выставляем текущего юзера в id продьюсеров, вдруг чего...
           nodeIds     = producerIds
         )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
+        MEsNestedSearch.plain( cr )
       }
       override def limit = 100
       // Отфильтровываем текущую карточку, т.к. по ней всё равно уже ничего не найдено.

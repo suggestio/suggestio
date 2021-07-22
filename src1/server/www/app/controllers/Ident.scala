@@ -780,9 +780,7 @@ final class Ident @Inject() (
                       nodeIds    = regCreds.phone :: Nil,
                       predicates = MPredicates.Ident.Phone :: Nil,
                     )
-                    MEsNestedSearch(
-                      clauses = cr :: Nil,
-                    )
+                    MEsNestedSearch.plain( cr )
                   }
                   // Надо падать на ситуации, когда есть несколько узлов с одним номером телефона.
                   override def limit = 2
@@ -1027,9 +1025,7 @@ final class Ident @Inject() (
                     nodeIds = personId :: Nil,
                     predicates = MPredicates.OwnedBy :: Nil
                   )
-                  MEsNestedSearch(
-                    clauses = cr :: Nil,
-                  )
+                  MEsNestedSearch.plain( cr )
                 }
                 // Не важно, сколько точно узлов. Надо понять лишь: 0, 1 или более, чтобы сформулировать правильный редирект.
                 override def limit = 2

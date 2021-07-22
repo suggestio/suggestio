@@ -43,9 +43,7 @@ final class LkTagsSearchUtil @Inject() (
           predicates  = MPredicates.TaggedBy.Self :: Nil,
           tags        = tcrOpt.toSeq
         )
-        MEsNestedSearch(
-          clauses = _edgeSearchCr :: Nil,
-        )
+        MEsNestedSearch.plain( _edgeSearchCr )
       }
       override val limit = qs.limit getOrElse LIMIT_DFLT
       override val offset = qs.offset getOrElse 0

@@ -78,9 +78,7 @@ final class CanRecoverPw @Inject() (
                   predicates  = MPredicates.Ident.Email :: Nil,
                   nodeIds     = qs.email :: Nil,
                 )
-                MEsNestedSearch(
-                  clauses = cr :: Nil,
-                )
+                MEsNestedSearch.plain( cr )
               }
               // Макс. 2 юзера, чтобы определить неопределённую ситуацию.
               override def limit = 2
