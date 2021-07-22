@@ -81,6 +81,9 @@ object MItemStatuses extends StringEnum[MItemStatus] {
   def advDone = values.iterator.filter { it => !it.isAdvActual }
   def advDoneIds = advDone.onlyIds
 
+  def advBusyApproved = values.iterator.filter(_.isAdvBusyApproved)
+  def advBusyApprovedIds = advBusyApproved.onlyIds
+
 }
 
 

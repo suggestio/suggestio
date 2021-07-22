@@ -190,25 +190,34 @@ class GeoTagsUtil @Inject() (
   }
 
 
-
-  /**
-    * Подготовка данных и внешнего контекста для билдера, который будет содержать дополнительные данные,
-    * необходимые для работы внутри самого билдера.
-    *
-    * @param itemsSql Заготовка запроса поиска
-    * @return Фьючерс с outer-контекстом для дальнейшей передачи его в билдер.
-    *         Карта tag-нод в outer-контексте имеет tagFace-ключи.
+  /** Common code between prepareInstall() and prepareUninstall().
+    * Generate content.
+    * @param itemsSql Select query for collecting items to be processed.
+    * @param getTagIdOrFace Rep for get tag_node_id or tag_face column.
+    * @param tagsToNodes Getter for tag strings.
+    * @return Future with tags nodes map (wrapped into context by now).
     */
-  def prepareInstallNew(itemsSql: Query[MItems#MItemsTable, MItem, Seq]): Future[MCtxOuter] = {
+  private def _prepareTagsCtx(
+                               itemsSql: Query[MItems#MItemsTable, MItem, Seq],
+                               getTagIdOrFace: MItems#MItemsTable => Rep[Option[String]],
+                               tagsToNodes: Set[String] => Future[Map[String, MNode]],
+                             ): Future[MCtxOuter] = {
     val startTs = System.currentTimeMillis
-    lazy val logPrefix = s"prepareInstallNew($startTs):"
+    lazy val logPrefix = s"prepareTagsCtx($startTs):"
 
     for {
       // Найти все теги, которые затрагиваются грядующим инсталлом.
       tagFacesOpts <- slick.db.run {
-        itemsSql
-          .filter(_.iTypeStr inSet TAG_ITEM_TYPES)
-          .map(_.tagFaceOpt)
+        // We need ALL tag faces (online and offline) related to all nodes to be processed.
+        // So, using node ids set, we collecting all active tag names.
+        // TODO Opt: Maybe, also to collect tag_node_id here, and pass it into ensureTags (via tagToNodes)?
+        mItems.query
+          .filter { item =>
+            (item.nodeId in itemsSql.map(_.nodeId)) &&
+            (item.iTypeStr inSet TAG_ITEM_TYPES) &&
+            (item.statusStr inSet MItemStatuses.advBusyApprovedIds.toSet)
+          }
+          .map(getTagIdOrFace)
           .distinct
           .result
       }
@@ -229,19 +238,32 @@ class GeoTagsUtil @Inject() (
       }
 
       // Собрать карту узлов-тегов, создав при необходимости какие-то новые узлы-теги.
-      gtMap <- ensureTags(tagFaces)
+      tagNodesMap <- tagsToNodes(tagFaces)
 
     } yield {
-
-      val mSize = gtMap.size
-      if (mSize > 0)
-        LOGGER.debug(s"$logPrefix Have Map[tagFace,node] with $mSize keys. Took ${System.currentTimeMillis - startTs}ms.")
+      LOGGER.debug(s"$logPrefix Have Map[tagFace,node] with ${tagNodesMap.size} keys. Took ${System.currentTimeMillis - startTs}ms.")
+      if (tagNodesMap.nonEmpty)
+        LOGGER.trace(s"$logPrefix Tag nodes map contains:\n ${tagNodesMap.view.mapValues(_.id.orNull).mkString("\n ")}")
 
       // Собрать и вернуть результат.
       MCtxOuter(
-        tagNodesMap = gtMap
+        tagNodesMap = tagNodesMap,
       )
     }
+  }
+
+
+  /**
+    * Подготовка данных и внешнего контекста для билдера, который будет содержать дополнительные данные,
+    * необходимые для работы внутри самого билдера.
+    *
+    * @param itemsSql Заготовка запроса поиска
+    * @return Фьючерс с outer-контекстом для дальнейшей передачи его в билдер.
+    *         Карта tag-нод в outer-контексте имеет tagFace-ключи.
+    */
+  def prepareInstallNew(itemsSql: Query[MItems#MItemsTable, MItem, Seq]): Future[MCtxOuter] = {
+    LOGGER.trace("prepareInstallNew():")
+    _prepareTagsCtx( itemsSql, _.tagFaceOpt, ensureTags )
   }
 
 
@@ -468,36 +490,8 @@ class GeoTagsUtil @Inject() (
     *         Карта узлов-тегов содержит nodeId в качестве ключей.
     */
   def prepareUnInstall(itemsSql: Query[MItems#MItemsTable, MItem, Seq]): Future[MCtxOuter] = {
-    val startTs = System.currentTimeMillis
-
-    for {
-      // Найти все теги, которые затрагиваются грядующим инсталлом.
-      tagIdsOpts <- slick.db.run {
-        itemsSql
-          .filter(_.iTypeStr inSet TAG_ITEM_TYPES)
-          .map(_.tagNodeIdOpt)
-          .distinct
-          .result
-      }
-
-      // Нормализовать множество id узлов-тегов.
-      tagIds = tagIdsOpts
-        .iterator
-        .flatten
-        .toSet
-
-      // Получить узлы через кеш
-      tagNodesMap <- mNodes.multiGetMapCache(tagIds)
-
-    } yield {
-      val tnMapSize = tagNodesMap.size
-      if (tnMapSize > 0)
-        LOGGER.trace(s"prepareUnInstall(): Found $tnMapSize nodes for ${tagIds.size} tagIds. Took ${System.currentTimeMillis - startTs}ms.")
-
-      MCtxOuter(
-        tagNodesMap = tagNodesMap
-      )
-    }
+    LOGGER.trace("prepareUnInstall():")
+    _prepareTagsCtx( itemsSql, _.tagNodeIdOpt, mNodes.multiGetMapCache )
   }
 
 
