@@ -172,7 +172,7 @@ final class MStatsModel @Inject()(
             if {
               val isValueValid = agg.getValue > 1000 && agg.getValue < Double.PositiveInfinity
               if (!isValueValid)
-                LOGGER.debug( s"$logPrefix Agg value dropped as invalid: ${agg.getValue}. This usually means, that all stat indices are empty." )
+                LOGGER.trace( s"$logPrefix Agg value dropped as invalid: ${agg.getValue}. This usually means, that all stat indices are empty." )
               isValueValid
             }
             dtStr <- {

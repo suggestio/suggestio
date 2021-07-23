@@ -890,7 +890,7 @@ final class EsModel @Inject()(
        * @param retry Счетчик попыток.
        * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
        * @return Тоже самое, что и save().
-       *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
+       *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(null).
        */
       def tryUpdate(inst0: T1, retry: Int = 0)(updateF: T1 => T1): Future[T1] = {
         // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
@@ -1977,14 +1977,14 @@ final class EsModel @Inject()(
     val data1Fut = updateF(data0)
 
     if (data1Fut == null) {
-      LOGGER.debug(s"$logPrefix updateF() returned `null`, leaving update")
+      LOGGER.trace(s"$logPrefix updateF() returned `null`, leaving update")
       Future.successful(data0)
 
     } else {
       data1Fut.flatMap { data1 =>
         val m2 = data1._saveable
         if (m2 == null) {
-          LOGGER.debug(s"$logPrefix updateF() data with `null`-saveable, leaving update")
+          LOGGER.trace(s"$logPrefix updateF() returned null, don't update")
           Future.successful(data1)
         } else {
           companion

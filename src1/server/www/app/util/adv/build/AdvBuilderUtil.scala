@@ -396,9 +396,9 @@ final class AdvBuilderUtil @Inject() (
                 .flatMap { tagFace =>
                   val tnOpt = ctxOuter.tagNodesMap.get(tagFace)
                   val tnIdOpt = tnOpt.flatMap(_.id)
-                  // Сообщать о проблеме с тегом: неправильно вызывать этот код, если узел тега ещё не существует. TODO Может сразу делать throw?
+                  // If tag is missing in state, do crash: logical error here and it need attention.
                   if (tnIdOpt.isEmpty)
-                    LOGGER.error(s"$logPrefix No tag-node found for tag-face or _id missing: $tnOpt")
+                    throw new IllegalStateException(s"$logPrefix No tag-node found for tag-face or _id missing: $tnOpt")
                   tnIdOpt
                 }
                 .toSet

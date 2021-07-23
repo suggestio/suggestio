@@ -241,7 +241,12 @@ class GeoTagsUtil @Inject() (
       tagNodesMap <- tagsToNodes(tagFaces)
 
     } yield {
-      LOGGER.debug(s"$logPrefix Have Map[tagFace,node] with ${tagNodesMap.size} keys. Took ${System.currentTimeMillis - startTs}ms.")
+      // Do not render periodical garbage, if nothing to do here:
+      def haveMapLogMsg = s"$logPrefix Have Map[tagFace,node] with ${tagNodesMap.size} keys. Took ${System.currentTimeMillis - startTs}ms."
+      if (tagNodesMap.isEmpty) LOGGER.trace(haveMapLogMsg)
+      else LOGGER.debug(haveMapLogMsg)
+
+      // If trace, render full map into logs:
       if (tagNodesMap.nonEmpty)
         LOGGER.trace(s"$logPrefix Tag nodes map contains:\n ${tagNodesMap.view.mapValues(_.id.orNull).mkString("\n ")}")
 
@@ -284,8 +289,11 @@ class GeoTagsUtil @Inject() (
     *
     * @param mnode Исходный инстанс тега.
     * @return Фьючерс с результатом ребилда тега-узла.
+    *         Left(None) = tag node deleted.
+    *         Right(None) = not changed
+    *         Right(Some()) = tag node updated.
     */
-  def rebuildTag(mnode: MNode): Future[Option[MNode]] = {
+  def rebuildTag(mnode: MNode): Future[Either[None.type, Option[MNode]]] = {
     import streamsUtil.Implicits._
 
     val mnodeId = mnode.id.get
@@ -366,7 +374,7 @@ class GeoTagsUtil @Inject() (
             isDeleted <- mNodes.deleteById( mnode.id.get )
           } yield {
             LOGGER.info(s"$logPrefix Empty tag node deleted ok?$isDeleted")
-            Option.empty[MNode]
+            Left( None )
           }
 
         } else {
@@ -418,13 +426,15 @@ class GeoTagsUtil @Inject() (
               }
             }
             // Надо помнить, что tryUpdate() тут может вернуть null.
-            .map( Option.apply )
+            .map { mnodeOrNull =>
+              // If tryUpdate() returns null, it means update has been ignored.
+              Right( Option( mnodeOrNull ) )
+            }
         }
-
       }
 
     } yield {
-      LOGGER.trace(s"$logPrefix Tag rebuilded, took ${System.currentTimeMillis - startTs}ms. savedOrDeleted?${mnodeOpt2.isDefined}")
+      LOGGER.trace(s"$logPrefix Tag rebuilded, took ${System.currentTimeMillis - startTs}ms. savedOrDeleted?${mnodeOpt2.isRight}")
       mnodeOpt2
     }
   }
@@ -448,6 +458,7 @@ class GeoTagsUtil @Inject() (
         // Явно ленивый список обновлённых тегов. Результат этого метода игнорируется (кроме logger.trace).
         val r = res
           .iterator
+          .flatMap(_.toOption)
           .flatten
           .to( LazyList )
         LOGGER.trace(s"$logPrefix Done, ${r.size} tag ids returned:\n [${r.iterator.map(_.orNull).mkString(" | ")}]")
@@ -464,20 +475,19 @@ class GeoTagsUtil @Inject() (
     */
   def rebuildAllTagNodes(): Future[(Int, Int)] = {
     val logPrefix = "rebuildAllTagNodes():"
-    LOGGER.info(s"$logPrefix Starting")
+    LOGGER.debug(s"$logPrefix Starting")
     mNodes
       .source( (new AllTagNodesSearch).toEsQuery )
       // Пересобираем все теги одновременно.
       .mapAsyncUnordered(10) { mnode =>
         rebuildTag(mnode)
       }
-      .runFold( (0,0) ) { case ((countUpdated, countDeleted), mnodeOpt) =>
-        LOGGER.debug(s"$logPrefix Folding... (updated=$countUpdated deleted=${countDeleted}) node#${mnodeOpt.flatMap(_.id).orNull}")
-        if (mnodeOpt.isEmpty) {
-          (countUpdated, countDeleted + 1)
-        } else {
-          (countUpdated + 1, countDeleted)
-        }
+      .runFold( (0,0) ) { case (acc0 @ (countUpdated, countDeleted), mnodeOptE) =>
+        LOGGER.trace(s"$logPrefix Folding... (updated=$countUpdated deleted=${countDeleted}) node#${mnodeOptE.toOption.flatten.flatMap(_.id).orNull}")
+        mnodeOptE.fold(
+          _ => (countUpdated, countDeleted + 1),
+          _.fold( acc0 )( _ => (countUpdated + 1, countDeleted) )
+        )
       }
   }
 

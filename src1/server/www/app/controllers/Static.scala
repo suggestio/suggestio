@@ -16,7 +16,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.proto.http.model.MCsrfToken
 import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
 import io.suggest.util.logs.MacroLogsImpl
-import models.mctx.Context
+import models.mctx.{Context, ContextUtil}
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{BodyParser, Result, WebSocket}
@@ -34,6 +34,7 @@ import play.filters.csrf.CSRF
 import play.twirl.api.Xml
 import views.txt.static.robotsTxtTpl
 
+import java.net.URI
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -71,6 +72,7 @@ final class Static @Inject() (
   private lazy val canOpenWsChannel = injector.instanceOf[CanOpenWsChannel]
   private lazy val wsChannelActors = injector.instanceOf[WsChannelActors]
   private lazy val assets = injector.instanceOf[Assets]
+  private lazy val contextUtil = injector.instanceOf[ContextUtil]
 
 
   private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"
@@ -209,8 +211,8 @@ final class Static @Inject() (
 
             for {
               _userSaOpt <- userSaOptFut
-
-              stat2 = new statUtil.Stat2 {
+            } yield {
+              lazy val stat2 = new statUtil.Stat2 {
                 override def logMsg = Some("CSP-report")
                 override def ctx = _ctx
                 override def uri = Some( cspViol.documentUri )
@@ -230,10 +232,18 @@ final class Static @Inject() (
                 }
               }
 
+              // Check, if CSP report host related.
+              val reportedHostname = URI.create(cspViol.documentUri).getHost.toLowerCase
+              val isPossiblyUnrelated = contextUtil.SIO_HOSTS contains reportedHostname
+
               // Принудительно НЕ сохраняем статистику, т.к. это требует системы фильтрации и дедубликации мегатонн статистики.
               //r <- statUtil.maybeSaveGarbageStat( stat2, logTail =  )
-              r = statUtil.dontSaveStat( stat2, logTail = Json.prettyPrint(request.body) )
-            } yield {
+              val r = statUtil.dontSaveStat(
+                stat2,
+                infoLogLevel = isPossiblyUnrelated,
+                logTail = Json.prettyPrint(request.body)
+              )
+
               LOGGER.trace( s"$logPrefix Done: CSP-report#$r from ${stat2.remoteAddr.remoteAddr}" )
               NoContent
             }

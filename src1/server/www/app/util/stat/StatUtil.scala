@@ -401,15 +401,30 @@ final class StatUtil @Inject()(
         stat2     = stat2,
         prefix    = s"$msg not saving, logging:\n",
         logTail   = logTail,
+        infoLogLevel = true,
       )
       Future.successful(())
     }
   }
 
-  /** Рендер статистики только в лог. */
-  def dontSaveStat(stat2: Stat2, prefix: String = "", logTail: => String = ""): Unit = {
-    val _logTail: String = logTail
-    LOGGER.info(s"$prefix${stat2.mstat.toString}${if (_logTail.nonEmpty) "\n" else ""}${_logTail}")
+  /** Render statistic object into logger.
+    *
+    * @param stat2 Statistics info.
+    * @param infoLogLevel Use info log level (means: mostly always logged)?
+    *                     If false, debug loglevel will be used, and message may be NOT logged. Use false for garbage flow.
+    * @param prefix Log message prefix.
+    * @param logTail Log message suffix.
+    */
+  def dontSaveStat(
+                    stat2: => Stat2,
+                    infoLogLevel: Boolean,
+                    prefix: => String = "",
+                    logTail: => String = ""
+                  ): Unit = {
+    lazy val _logTail: String = logTail
+    def logMsg = s"$prefix${stat2.mstat.toString}${if (_logTail.nonEmpty) "\n" else ""}${_logTail}"
+    if (infoLogLevel) LOGGER.info(logMsg)
+    else LOGGER.debug(logMsg)
   }
 
 
