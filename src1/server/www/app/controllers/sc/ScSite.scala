@@ -3,7 +3,7 @@ package controllers.sc
 import io.suggest.adn.MAdnRights
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
-import io.suggest.i18n.{I18nConst, MsgCodes}
+import io.suggest.i18n.{I18nConst, MLanguages, MsgCodes}
 import io.suggest.maps.MMapProps
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.extra.domain.{DomainCriteria, MDomainModes}
@@ -375,6 +375,7 @@ final class ScSite @Inject() (
             debug             = SC_JS_DEBUG,
             // Хост-порт для запросов через CDN:
             rcvrsMapUrl       = rcvrsMapUrlArgs,
+            language          = Option( MLanguages.byCode( ctx.messages.lang.language ) ),
           )
         )
 

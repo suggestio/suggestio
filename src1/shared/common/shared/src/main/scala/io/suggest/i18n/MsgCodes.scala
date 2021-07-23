@@ -526,4 +526,9 @@ object MsgCodes {
   val `_nfc._to.current.node` = "_nfc._to.current.node"
   val `Also.you.can.make.nfc.tag.non.writable` = "Also.you.can.make.nfc.tag.non.writable"
 
+  val `Language` = "Language"
+  //val `Switch.language` = "Switch.lang"
+  val `Select.your.lang` = "Select.your.lang"
+  val `System._adjective` = "System._adjective"
+
 }

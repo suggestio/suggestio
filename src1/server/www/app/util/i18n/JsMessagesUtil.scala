@@ -7,7 +7,7 @@ import io.suggest.bill.MCurrencies
 import io.suggest.bill.price.dsl.MReasonTypes
 import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.interval.QuickAdvPeriods
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MLanguages, MsgCodes}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
 import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
@@ -336,7 +336,8 @@ final class JsMessagesUtil @Inject() (
       MC.`Ad.adv.manage` ::
       MC.`Bg.location` :: MC.`Bg.location.hint` ::
       ErrorMsgs.SC_FSM_EVENT_FAILED ::
-      Nil
+      MC.`Language` :: MC.`System._adjective` ::
+      MLanguages.values.iterator.map(_.singular).toList
 
     (
       SC_ONLY_MSGS #::

@@ -6,6 +6,7 @@ import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.univeq.UnivEq
 
 import scala.scalajs.js
+import scala.scalajs.js.WrappedDictionary
 import scala.scalajs.js.annotation.JSGlobal
 import scala.util.Try
 
@@ -81,7 +82,7 @@ sealed trait Messages extends Log {
     }
   }
 
-  /** Нативный запрос к JSON-словарю или JS-API. */
+  /** Implementation-specific logic to underlying data. */
   protected def _applyJs(message: String, argsJs: Seq[js.Any]): String
 
 }
@@ -96,5 +97,33 @@ object Messages extends Messages {
 
   override protected def _applyJs(message: String, argsJs: Seq[js.Any]): String =
     JsMessagesSingleLangNative( message, argsJs: _* )
+
+}
+
+
+/** JSON-based messages v2. Implements abities purely to switch language in runtime. */
+final class JsonPlayMessages(
+                              private val langMessages      : WrappedDictionary[String],
+                            )
+  extends Messages
+{
+
+  override protected def _applyJs(message: String, argsJs: Seq[js.Any]): String = {
+    langMessages
+      .get( message )
+      .fold( message ) { msgString =>
+        // Render args into message string:
+        if (argsJs.isEmpty) {
+          msgString
+        } else {
+          argsJs
+            .iterator
+            .zipWithIndex
+            .foldLeft( msgString ) { case (acc, (arg, i)) =>
+              acc.replace("{" + i.toString + "}", arg.toString)
+            }
+        }
+      }
+  }
 
 }

@@ -1,18 +1,22 @@
 package controllers.sc
 
-import io.suggest.adn.{MAdnRight, MAdnRights}
+import io.suggest.adn.MAdnRights
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModel
-import io.suggest.n2.node.{MNodeType, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.index.MScIndexes
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
+import play.api.i18n.{Lang, Messages, MessagesImpl}
 
 import javax.inject.Inject
 import play.api.libs.json.Json
 import util.acl.{BruteForceProtect, MaybeAuth, SioControllerApi}
 import util.adv.geo.AdvGeoRcvrsUtil
+import util.i18n.JsMessagesUtil
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -36,6 +40,7 @@ final class ScStuff @Inject()(
   private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+  private lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
 
 
   /** Обработка списка узлов, чтобы был актуальный логотип, название, цвета.
@@ -97,6 +102,52 @@ final class ScStuff @Inject()(
           Ok.chunked( outSrc, contentType = Some(JSON) )
         }
       }
+    }
+  }
+
+
+  /** Return play messages for current language in pure JSON format.
+    *
+    * @param langOpt Language code, or session default.
+    * @return JSON messages for lang choosen.
+    *         404, if language not found.
+    */
+  def scMessagesJson(langOpt: Option[String]) = {
+    // TODO Maybe to somehow compile messages string into assets? So everything will be rendered and compressed once in compile-time.
+    maybeAuth().async { implicit request =>
+      lazy val logPrefix = s"scMessagesJson(${langOpt.orNull}):"
+
+      langOpt
+        .fold [Option[Messages]] { Some(request2Messages) } { langCode =>
+          Lang
+            .get( langCode )
+            .map { lang =>
+              MessagesImpl( lang, messagesApi )
+            }
+        }
+        .flatMap { messages =>
+          val tryRes = Try( jsMessagesUtil.sc.messagesString( messages ) )
+
+          if (LOGGER.underlying.isDebugEnabled)
+            for (ex <- tryRes.failed)
+              LOGGER.debug( s"$logPrefix Failed to generate messages.json", ex )
+
+          tryRes.toOption
+        }
+        // messagesString() returns "{}", if no data found.
+        .filter(_.length > 3)
+        .fold {
+          LOGGER.trace(s"$logPrefix Not found messages for lang, 404")
+          errorHandler.onClientError( request, NOT_FOUND )
+        } { jsonStr =>
+          Ok( jsonStr )
+            .as( JSON )
+            // TODO Implement aggressive caching (with cache key inside URL). See previous TODO for possible implementation.
+            .cacheControl( 3600 )
+            .withHeaders(
+              CONTENT_DISPOSITION -> s"""inline; filename="messages${langOpt.fold("")("-" + _)}.json"""",
+            )
+        }
     }
   }
 

@@ -3,7 +3,7 @@ package io.suggest.sc
 import diode.{Effect, FastEq, ModelRW}
 import diode.data.Pot
 import diode.react.ReactConnector
-import io.suggest.radio.beacon.{BeaconerAh, IBeaconsListenerApi, IBeaconerAction, MBeaconerS}
+import io.suggest.radio.beacon.{BeaconerAh, IBeaconerAction, IBeaconsListenerApi, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
@@ -72,7 +72,7 @@ import io.suggest.os.notify.IOsNotifyAction
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.c.android.{IIntentAction, ScIntentsAh}
-import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
+import io.suggest.sc.c.in.{BootAh, ScDaemonAh, ScLangAh}
 import io.suggest.sc.m.dia.first.IWz1Action
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.styl.MScCssArgs
@@ -365,6 +365,8 @@ class Sc3Circuit(
   private def logOutRW            = mkLensZoomRW( scLoginRW, MScLoginS.logout )
 
   private def delayerRW           = mkLensZoomRW( internalsRW, MScInternals.delayer )
+
+  private def reactCtxRW          = mkLensZoomRW( internalsInfoRW, MInternalInfo.reactCtx )
 
   /** Текущая открытая карточка, пригодная для операций над ней: размещение в маячке, например. */
   private[sc] def focusedAdRO     = gridRW.zoom [Option[MScAdData]] { mgrid =>
@@ -711,6 +713,11 @@ class Sc3Circuit(
     modelRW = rootRW,
   )
 
+  private def scLangAh = new ScLangAh(
+    modelRW    = reactCtxRW,
+    scStuffApi = scStuffApi,
+  )
+
   //private def nfcAh = new NfcAh(
   //)
 
@@ -751,6 +758,7 @@ class Sc3Circuit(
       case _: ILogoutAction             => logOutAh
       case _: IBootAction               => bootAh
       case _: IWz1Action                => wzFirstDiaAh
+      case _: IScLangAction             => scLangAh
       case _: IRcvrMarkersInitAction    => rcvrMarkersInitAh
       case _: IScJsRouterInitAction     => jsRouterInitAh
       case _: IDelayAction              => delayerAh

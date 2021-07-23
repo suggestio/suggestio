@@ -150,7 +150,7 @@ final class StatIndexUtil @Inject() (
       }
       // Если проверка пройдена, то ничего reNew'ить не требуется.
       .map { infoOpt =>
-        LOGGER.debug(s"$logPrefix Nothing to do, index info = $infoOpt")
+        LOGGER.trace(s"$logPrefix Nothing to do, index info = $infoOpt")
         None
       }
       // Если одна из проверок была зафейлена, то произвести обновление индекса:

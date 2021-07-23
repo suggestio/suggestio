@@ -46,6 +46,14 @@ case class NavigatorVm(_underlying: Navigator) extends IVm {
       .toOption
   }
 
+  def language: Option[String] = {
+    stub
+      .language
+      .toOption
+      // It may return null...
+      .flatMap(Option.apply)
+  }
+
 }
 
 
@@ -60,6 +68,7 @@ sealed trait NavStub extends js.Object {
   def geolocation: js.UndefOr[Geolocation] = js.native
   val userAgent: UndefOr[String] = js.native
   val standalone: UndefOr[Boolean] = js.native
+  val language: UndefOr[String] = js.native
 }
 
 

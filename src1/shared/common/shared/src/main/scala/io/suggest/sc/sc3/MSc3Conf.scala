@@ -7,6 +7,7 @@ import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.i18n.MLanguage
 import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 import monocle.macros.GenLens
 import io.suggest.ueq.UnivEqUtil._
@@ -27,6 +28,7 @@ object MSc3Conf {
     def SERVER_GENERATED_AT         = "g"
     def CLIENT_UPDATED_AT           = "u"
     def GEN                         = "e"
+    def LANGUAGE                    = "lang"
   }
 
   /** Поддержка play-json.
@@ -43,7 +45,8 @@ object MSc3Conf {
       (__ \ F.RCVRS_MAP_URL).format[MRcvrsMapUrlArgs] and
       (__ \ F.SERVER_GENERATED_AT).format[Long] and
       (__ \ F.CLIENT_UPDATED_AT).formatNullable[Long] and
-      (__ \ F.GEN).formatNullable[Long]
+      (__ \ F.GEN).formatNullable[Long] and
+      (__ \ F.LANGUAGE).formatNullable[MLanguage]
     )(apply, unlift(unapply))
   }
 
@@ -62,6 +65,7 @@ object MSc3Conf {
   def rcvrsMapUrl = GenLens[MSc3Conf](_.rcvrsMapUrl)
   def clientUpdatedAt = GenLens[MSc3Conf](_.clientUpdatedAt)
   def gen = GenLens[MSc3Conf]( _.gen )
+  def language = GenLens[MSc3Conf]( _.language )
 
 }
 
@@ -72,6 +76,9 @@ object MSc3Conf {
   * @param serverCreatedAt Timestamp генерации сервером данных этого конфига.
   * @param clientUpdatedAt Timestamp сохранение данных на клиенте.
   * @param debug Значение debug-флага в конфиге.
+  * @param language Pre-configured language.
+  *                 On server+browser: language detected from current session on server and forwarded via index.html.
+  *                 On cordova: always None in index.html. May be set by user via ScSettings.
   */
 final case class MSc3Conf(
                            // TODO aboutSioNodeId унести в Messages(), чтобы при смене языка этот id тоже менялся.
@@ -82,4 +89,5 @@ final case class MSc3Conf(
                            serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
                            clientUpdatedAt    : Option[Long]      = None,
                            gen                : Option[Long]      = None,
+                           language           : Option[MLanguage] = None,
                          )

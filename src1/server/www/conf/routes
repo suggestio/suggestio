@@ -46,6 +46,7 @@ GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.
 GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
 GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m: io.suggest.sc.app.MScAppManifestQs )
 POST /sc/nodes/fill                     @controllers.sc.ScStuff.fillNodesList()
+GET  /sc/lang/messages.json             @controllers.sc.ScStuff.scMessagesJson(lang: Option[String] ?= None)
 
 ## Personal cabinets entrypoints.
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)

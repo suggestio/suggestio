@@ -604,9 +604,13 @@ Geotargeted.ad=Geotargeted ad
 Advertise=Advertise
 How.it.works=How it works
 
-Select.your.lang=Select your language
+Select.your.lang=Select interface language
 __This.lang.name__=English
 Switch.lang=Switch language
+Language=Language
+Russian=Russian
+English=English
+System._adjective=System
 
 Login.page.title=Login
 Login=Sign in

@@ -24,6 +24,7 @@ object ConfConst {
     final def BLUETOOTH_BEACONS_BACKGROUND_SCAN   = "bluetooth.beacons.background.scan" + _ENABLED
     final def LOCATION_ENABLED            = "location" + _ENABLED
     final def NOTIFICATIONS_ENABLED       = "notifications" + _ENABLED
+    final def LANGUAGE                    = "language"
   }
 
 

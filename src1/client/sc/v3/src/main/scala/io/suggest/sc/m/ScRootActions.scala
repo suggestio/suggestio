@@ -3,7 +3,9 @@ package io.suggest.sc.m
 import diode.{ActionResult, Effect}
 import diode.data.Pot
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
+import io.suggest.i18n.MLanguage
 import io.suggest.lk.nodes.form.m.MLkNodesMode
+import io.suggest.msg.JsonPlayMessages
 import io.suggest.routes.routes
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MOnLineInfo}
@@ -319,3 +321,22 @@ case class ScNodesModeChanged( mode: MLkNodesMode ) extends IScNodesAction
 
 /** Экшен управление подпиской sc-nodes на события BLE beaconer. */
 case class ScNodesBcnrSubscribeStatus(unSubsCribeF: Pot[() => Unit] = Pot.empty ) extends IScNodesAction
+
+
+/** Actions for runtime language switching. */
+sealed trait IScLangAction extends IScRootAction
+
+/** Start/continue switching language to new value.
+  *
+  * @param langOpt Language to switch to.
+  *                None means "system default" (cordova).
+  * @param state Current step state of lang-switch.
+  */
+case class LangSwitch(
+                       langOpt    : Option[MLanguage],
+                       state      : Pot[JsonPlayMessages] = Pot.empty,
+                     )
+  extends IScLangAction
+
+/** Initialize language. */
+case object LangInit extends IScLangAction

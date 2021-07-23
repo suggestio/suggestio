@@ -609,9 +609,13 @@ Geotargeted.ad=Геотаргетированная реклама
 Advertise=Разместить
 How.it.works=Как это работает
 
-Select.your.lang=Выберите свой язык
+Select.your.lang=Выберите язык интерфейса
 __This.lang.name__=Русский
 Switch.lang=Сменить язык
+Language=Язык
+Russian=Русский
+English=Английский
+System._adjective=Системный
 
 Login.page.title=Вход
 Login=Войти

@@ -35,3 +35,5 @@ Any ads can be categorized via tags mechanism in all levels: tags can be placed 
 Tags are much cheaper than publication on main screen and helps system to organize content,
 and end-users can search for interesting items via text search.
 ![LkAdvGeo geo and node tags advertising demo](../../images/lk-adv-geo-tags-demo.gif)
+
+Of course, any content can be published in one or more tags and on main screen at once.

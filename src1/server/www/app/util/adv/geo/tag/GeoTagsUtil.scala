@@ -475,7 +475,7 @@ class GeoTagsUtil @Inject() (
     */
   def rebuildAllTagNodes(): Future[(Int, Int)] = {
     val logPrefix = "rebuildAllTagNodes():"
-    LOGGER.debug(s"$logPrefix Starting")
+    LOGGER.trace(s"$logPrefix Starting")
     mNodes
       .source( (new AllTagNodesSearch).toEsQuery )
       // Пересобираем все теги одновременно.
@@ -649,8 +649,12 @@ final class GeoTagsUtilJmx @Inject() (
     awaitString( fut )
   }
 
-  /** Список задач, которые надо вызывать по таймеру.
-    * Засунут в JMX, т.к. GeoTagsUtil не синглтон и быть им не обязан. А сингтоном является этот JMX-класс.
+  /** Cron task for periodical rebuilding of all current tags.
+    * Placed into JMX, because GeoTagsUtil is not a singleton by-design.
+    * Current JMX class is a singleton.
+    *
+    * This cron-related stuff here due to previous problems with tags.
+    * TODO Possibly, it is not actual anymore and may be removed or make not so frequent.
     */
   override def cronTasks(): Iterable[MCronTask] = {
     val rebuildAllCron = MCronTask(

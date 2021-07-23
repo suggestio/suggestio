@@ -38,7 +38,7 @@ final class ScNotifications(
     Option.when( unNotifiedAds.nonEmpty ) {
       Effect.action {
         val mroot = rootRO.value
-        val messages = mroot.internals.info.commonReactCtx.messages
+        val messages = mroot.internals.info.reactCtx.context.messages
 
         // Надо собрать title'ы карточек, добавив расстояния до маячков.
         val adTitlesWithDistRendered = (for {
@@ -170,7 +170,7 @@ final class ScNotifications(
     */
   def daemonNotifyOpts(): MDaemonNotifyOpts = {
     val mroot = rootRO.value
-    val messages = mroot.internals.info.commonReactCtx.messages
+    val messages = mroot.internals.info.reactCtx.context.messages
 
     MDaemonNotifyOpts(
       channelTitle        = Some( messages( MsgCodes.`Background.mode` ) ),

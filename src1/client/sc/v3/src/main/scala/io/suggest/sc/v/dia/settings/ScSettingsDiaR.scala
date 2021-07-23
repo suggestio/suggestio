@@ -25,6 +25,7 @@ class ScSettingsDiaR(
                       blueToothUnAvailInfoR   : BlueToothUnAvailInfoR,
                       unsafeOffsetSettingR    : UnsafeOffsetSettingR,
                       notificationSettingsR   : NotificationSettingsR,
+                      langSettingR            : LangSettingR,
                       platformComponents      : PlatformComponents,
                       onOffSettingR           : OnOffSettingR,
                       versionR                : VersionR,
@@ -72,6 +73,9 @@ class ScSettingsDiaR(
 
             // Переключалка уведомлений.
             p.wrap(_.dev.osNotify)( notificationSettingsR.component.apply ),
+
+            // UI language switcher:
+            p.wrap(_.internals.info.reactCtx)( langSettingR.component.apply ),
 
             // debug-функции не должны тормозить работу выдачи, если нет флага при запуске.
             s.debugSomeC { isDebugEnabled =>

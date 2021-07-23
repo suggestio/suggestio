@@ -14,6 +14,7 @@ final class JsRoutesUtil {
   def sc(): LazyList[JavaScriptReverseRoute] = {
     routes.javascript.Sc.pubApi #::
     controllers.sc.routes.javascript.ScStuff.fillNodesList #::
+    controllers.sc.routes.javascript.ScStuff.scMessagesJson #::
     routes.javascript.RemoteLogs.receive #::
     routes.javascript.Static.advRcvrsMapJson #::
     routes.javascript.Static.csrfToken #::

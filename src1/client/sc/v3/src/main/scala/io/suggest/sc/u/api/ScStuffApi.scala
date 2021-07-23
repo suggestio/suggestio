@@ -1,5 +1,10 @@
 package io.suggest.sc.u.api
 
+import io.suggest.cordova.CordovaConstants
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.i18n.MLanguage
+import io.suggest.msg.JsonPlayMessages
+import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReq, HttpReqData}
 import io.suggest.routes.routes
@@ -7,6 +12,7 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -22,6 +28,14 @@ trait IScStuffApi {
     * @return Фьючерс со списком узлов из ответа.
     */
   def fillNodesList( currNodes: MScIndexes ): Future[List[MSc3IndexResp]]
+
+  /** Read JSON messages from server.
+    *
+    * @param language language code.
+    *                 None asks server to return session-current language.
+    * @return Ready to use JSON Play messages.
+    */
+  def scMessagesJson( language: Option[MLanguage] ): Future[JsonPlayMessages]
 
 }
 
@@ -50,6 +64,36 @@ final class ScStuffApiHttp(
       )
       .resultFut
       .unJson[List[MSc3IndexResp]]
+  }
+
+
+  override def scMessagesJson(language: Option[MLanguage]): Future[JsonPlayMessages] = {
+    val (method, url) = (for {
+      lang <- language
+      if CordovaConstants.isCordovaPlatform()
+    } yield {
+      // For cordova with known language, use locally-stored JSON files:
+      val fsUrl = "www/lang/" + lang + ".json"
+      (HttpConst.Methods.GET, fsUrl)
+    })
+      .getOrElse {
+        val route = routes.controllers.sc.ScStuff.scMessagesJson(
+          langCode = language.fold[String](null)(_.value),
+        )
+        (route.method, HttpClient.route2url(route))
+      }
+
+    HttpClient
+      .execute(
+        HttpReq(
+          method  = method,
+          url     = url,
+          data    = HttpReqData.justAcceptJson,
+        )
+      )
+      .resultFut
+      .nativeJsonFut[js.Dictionary[String]]
+      .map( new JsonPlayMessages(_) )
   }
 
 }

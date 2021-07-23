@@ -126,6 +126,22 @@ object Sc3JsApi extends Log {
     }
   }
 
+  /** WiFi networks example names for emitter. */
+  private def _WIFI_SSID_EXAMPLES = List[String](
+    "TENIY",
+    "190",
+    "GUVD",
+    "kv222",
+    "DLINK_DIR_235235",
+    "CF-NT-WIFI",
+    "TP-Link_363F",
+    "Android-5323fff2",
+    "DOM-2.4G",
+    "HELLO WORLD NET",
+    "Keenetic-664444",
+    "Zyxel-535fff",
+    "THE XATA XATA XATA XATA XAXAXATA",
+  )
 
   private def _wifiEmitter(ids: Seq[String], rnd: Random = new Random()) = _ifDevOpt {
     // Activate timed wifi-scan-results imitation:
@@ -133,36 +149,47 @@ object Sc3JsApi extends Log {
       _initializeBeaconer()
 
       // For wifi scan imitation - used single interval for list of networks.
-      DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
-        val radioType = MRadioSignalTypes.WiFi
-        val action = RadioSignalsDetected(
-          signals = ids
-            // randomize list:
-            .iterator
-            .map { _ -> (rnd.nextInt(1000) - 600) }
-            .filter(_._2 > 0)   // Add some signals miss randomly...
-            .toSeq
-            .sortBy(_._2)
-            .iterator
-            .map(_._1)
-            // Emulate radio signals:
-            .zipWithIndex
-            .map { case (macAddr, i) =>
-              MRadioSignalJs(
-                signal = MRadioSignal(
-                  rssi        = Some( -5 - rnd.nextInt(90) ),
-                  typ         = radioType,
-                  factoryUid  = Some( macAddr ),
-                  customName  = Some( "WiFi Emit #" + i ),
-                ),
-              )
-            }
-            .to( LazyList ),
-          radioType = radioType,
-        )
+      if (ids.nonEmpty) {
+        val seed = rnd.nextInt( 20 )
+        DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
+          val radioType = MRadioSignalTypes.WiFi
+          val exampleNames = _WIFI_SSID_EXAMPLES
+          val exampleNamesCount = exampleNames.length
+          val action = RadioSignalsDetected(
+            signals = ids
+              // randomize list:
+              .iterator
+              .map { _ -> (rnd.nextInt(1000) - 600) }
+              .filter(_._2 > 0)   // Add some signals miss randomly...
+              .toSeq
+              .sortBy(_._2)
+              .iterator
+              .map(_._1)
+              // Emulate radio signals:
+              .zipWithIndex
+              .map { case (macAddr, i) =>
+                MRadioSignalJs(
+                  signal = MRadioSignal(
+                    rssi        = Some( -5 - rnd.nextInt(90) ),
+                    typ         = radioType,
+                    factoryUid  = Some( macAddr ),
+                    customName  = Some {
+                      val index = (seed + i) % exampleNamesCount
+                      var name = exampleNames( index )
+                      if (i > exampleNamesCount)
+                        name = name + " #" + i
+                      name
+                    },
+                  ),
+                )
+              }
+              .to( LazyList ),
+            radioType = radioType,
+          )
 
-        if (action.signals.nonEmpty)
-          _d( action )
+          if (action.signals.nonEmpty)
+            _d( action )
+        }
       }
     }
   }

@@ -69,7 +69,10 @@ class ScSettingsDiaAh[M](
 
       var fxAcc = actRes.effectOpt.toList
 
-      val v2Opt = for (settings2 <- actRes.newModelOpt if settings2 !===* data0) yield {
+      val v2Opt = for {
+        settings2 <- actRes.newModelOpt
+        if settings2 !===* data0
+      } yield {
         if (!actRes.isInstanceOf[UpdateSilent])
           fxAcc ::= _saveSettingFx( settings2 )
 

@@ -202,7 +202,7 @@ class ScRootR (
             .fold(ScCss.COLORS_DFLT)(_.colors)
         }( FastEqUtil.AnyRefFastEq ),
 
-        commonReactCtxC = propsProxy.connect( _.internals.info.commonReactCtx )( FastEq.AnyRefEq ),
+        commonReactCtxC = propsProxy.connect( _.internals.info.reactCtx.context )( FastEq.AnyRefEq ),
 
         jsRouterOptC = propsProxy.connect( _.internals.jsRouter.jsRouterOpt ),
 

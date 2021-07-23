@@ -223,6 +223,9 @@ sealed trait ScStuffCtlRoutes extends js.Object {
 
   def fillNodesList(): PlayRoute = js.native
 
+  /** Link to messages.json */
+  def scMessagesJson(langCode: String = js.native): PlayRoute = js.native
+
 }
 
 

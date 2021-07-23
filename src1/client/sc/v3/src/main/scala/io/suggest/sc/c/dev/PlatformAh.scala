@@ -17,7 +17,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LangInit, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.c.android.ScIntentsAh
@@ -337,6 +337,9 @@ final class PlatformAh[M](
         var fxAcc = List.empty[Effect]
 
         if (isReadyNow) {
+          // Let's initialize current language info from ready settings or ready-to-use system enviroment:
+          fxAcc ::= LangInit.toEffectPure
+
           // Возможно, что HwScreenUtil не смогло определить точные размеры экрана, и нужно повторить определение экрана после наступления cordova ready.
           fxAcc ::= ScreenResetPrepare.toEffectPure
 

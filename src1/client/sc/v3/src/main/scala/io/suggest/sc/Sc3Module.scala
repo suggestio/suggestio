@@ -218,6 +218,7 @@ class Sc3Module extends Log { outer =>
   lazy val onOffSettingR = wire[OnOffSettingR]
   lazy val blueToothUnAvailInfoR = wire[BlueToothUnAvailInfoR]
   lazy val notificationSettingsR = wire[NotificationSettingsR]
+  lazy val langSettingR = wire[LangSettingR]
 
   // sc3
   lazy val scThemes = wire[ScThemes]

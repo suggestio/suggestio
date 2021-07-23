@@ -2,7 +2,6 @@ package io.suggest.sc.m.in
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.i18n.MCommonReactCtx
 import io.suggest.proto.http.model.MCsrfToken
 import io.suggest.sc.index.MScIndexInfo
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
@@ -24,7 +23,7 @@ object MInternalInfo {
     override def eqv(a: MInternalInfo, b: MInternalInfo): Boolean = {
       (a.geoLockTimer ===* b.geoLockTimer) &&
       (a.currRoute ===* b.currRoute) &&
-      (a.commonReactCtx ===* b.commonReactCtx) &&
+      (a.reactCtx ===* b.reactCtx) &&
       (a.indexesRecents ===* b.indexesRecents)
     }
   }
@@ -33,7 +32,7 @@ object MInternalInfo {
 
   def geoLockTimer  = GenLens[MInternalInfo]( _.geoLockTimer )
   def currRoute     = GenLens[MInternalInfo]( _.currRoute )
-  def messages      = GenLens[MInternalInfo]( _.commonReactCtx )
+  def reactCtx      = GenLens[MInternalInfo]( _.reactCtx )
   def inxRecents    = GenLens[MInternalInfo]( _.indexesRecents )
   def csrfToken     = GenLens[MInternalInfo]( _.csrfToken )
 
@@ -44,14 +43,14 @@ object MInternalInfo {
   *
   * @param geoLockTimer Таймер ожидания геолокации.
   * @param currRoute Текущая роута.
-  * @param commonReactCtx Инстанс с сообщениями.
+  * @param reactCtx State of common react context and language switching.
   * @param indexesRecents Предпоследнее состояние списка недавних посещённых узлов.
   * @param csrfToken Токен CSRF от сервера.
   */
 final case class MInternalInfo(
                                 geoLockTimer      : Option[Int]             = None,
                                 currRoute         : Option[Sc3]             = None,
-                                commonReactCtx    : MCommonReactCtx         = MCommonReactCtx.default,
+                                reactCtx          : MScReactCtx             = MScReactCtx.default,
                                 indexesRecents    : MIndexesRecentOuter,
                                 csrfToken         : Pot[MCsrfToken]         = Pot.empty,
                               ) {
