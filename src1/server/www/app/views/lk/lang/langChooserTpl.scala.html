@@ -9,6 +9,7 @@
 @import helper._
 @import util.FC.langSelectFc
 @import io.suggest.i18n.MsgCodes
+@import io.suggest.i18n.I18nConst
 
 @lkBaseLayout(
   title   = english("Select.your.lang") + (if(!isNowEnglish) {" | " + messages("Select.your.lang")} else ""),
@@ -17,10 +18,10 @@
 ) {
 
   <div id="allLangsDiv">
-    @form( CSRF(routes.LkLang.selectLangSubmit(rr)) ) {
+    @form( CSRF(routes.LkLang.selectLangSubmit(async = false, r = rr)) ) {
       @* TODO Сделать автопереключение. Кнопку завернуть наверное в noscript-тег. *@
       @inputRadioGroup(
-        lf("lang"),
+        lf( I18nConst.LANG_SUBMIT_FN ),
         options = langs.map( l =>
           l.code -> langCode2msgs.get(l.code).fold(l.code)(_.apply( MsgCodes.`__This.lang.name__` ))
         )

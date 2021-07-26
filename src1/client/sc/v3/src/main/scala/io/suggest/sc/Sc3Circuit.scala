@@ -64,6 +64,7 @@ import io.suggest.id.login.c.session.{LogOutAh, SessionAh}
 import io.suggest.id.login.m.ILogoutAction
 import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.jd.render.m.{IGridAction, IJdAction}
+import io.suggest.lk.api.ILkLangApi
 import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi}
 import io.suggest.lk.m.{ICsrfTokenAction, ISessionAction}
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
@@ -103,10 +104,10 @@ class Sc3Circuit(
                   sc3UniApi                 : => IScUniApi,
                   scAppApi                  : => IScAppApi,
                   scStuffApi                : => IScStuffApi,
+                  lkLangApi                 : => ILkLangApi,
                   csrfTokenApi              : => ICsrfTokenApi,
                   geoLocApis                : () => LazyList[GeoLocApi],
                   beaconApis                : () => LazyList[IBeaconsListenerApi],
-                  //nfcApiOpt                 : => Option[INfcApi],
                   mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
                 )
   extends CircuitLog[MScRoot]
@@ -584,7 +585,6 @@ class Sc3Circuit(
     hasBleRO      = hasBleRO,
     modelRW       = firstRunDiaRW,
     dispatcher    = this,
-    //nfcApi        = nfcApiOpt,
   )
 
   private def bootAh = new BootAh(
@@ -716,10 +716,10 @@ class Sc3Circuit(
   private def scLangAh = new ScLangAh(
     modelRW    = reactCtxRW,
     scStuffApi = scStuffApi,
+    isLoggedIn = loggedInRO,
+    lkLangApi  = lkLangApi,
   )
 
-  //private def nfcAh = new NfcAh(
-  //)
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 

@@ -63,17 +63,27 @@ trait AdvDirectTagsBuilder extends IAdvBuilder {
             .groupBy(_.tagFaceOpt.get)
             .iterator
             .map { case (tagFace, tagItems) =>
-              // Найти узел тега. Он или уже существует, или должен быть уже создан.
+              // Find tag node by tag face. On install phase, map of tags is build using tagFaces as keys.
               val tagNodeOpt = ctxOuter.tagNodesMap.get(tagFace)
-              if (tagNodeOpt.isEmpty)
-                throw new IllegalStateException(s"$logPrefix No tag-node found for face: [[$tagFace]] in tagNodesMap[${ctxOuter.tagNodesMap.size}]=[${ctxOuter.tagNodesMap.keys.mkString("|")}];\n Known tag ids=[${tagItems.iterator.flatMap(_.tagNodeIdOpt).toSet.mkString(", ")}] of tag items list:\n -${tagItems.mkString("\n -")}")
 
-              val tagNodeIdOpt = tagNodeOpt.flatMap(_.id)
-
-              val edgeNodeIds = tagItems
-                .iterator
-                .flatMap(_.rcvrIdOpt)
-                .++( tagNodeIdOpt )
+              val edgeNodeIds = (for {
+                mitem <- tagItems.iterator
+                rcvrId <- mitem.rcvrIdOpt.iterator
+                tagNodeId = tagNodeOpt
+                  .orElse {
+                    // Lookup for tag node using tagNodeIdOpt of current item. On unInstall phase, tagNodesMap is keyed by tagNode.id.
+                    mitem
+                      .tagNodeIdOpt
+                      .flatMap( ctxOuter.tagNodesMap.get )
+                  }
+                  .flatMap(_.id)
+                  .getOrElse {
+                    throw new IllegalStateException(s"$logPrefix No valid tag-node found item#${mitem.id.orNull} for tag[[$tagFace]] on rcvr#$rcvrId in tagNodesMap[${ctxOuter.tagNodesMap.size}]=[${ctxOuter.tagNodesMap.keys.mkString("|")}];\n Known tag ids=[${tagItems.iterator.flatMap(_.tagNodeIdOpt).toSet.mkString(", ")}] of tag items list:\n -${tagItems.mkString("\n -")}")
+                  }
+              } yield {
+                rcvrId :: tagNodeId :: Nil
+              })
+                .flatten
                 .toSet
 
               MEdge(
@@ -81,7 +91,7 @@ trait AdvDirectTagsBuilder extends IAdvBuilder {
                 nodeIds   = edgeNodeIds,
                 info = MEdgeInfo(
                   tags = Set.empty + tagFace,
-                )
+                ),
               )
             }
 

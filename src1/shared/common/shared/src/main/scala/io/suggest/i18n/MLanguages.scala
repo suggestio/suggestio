@@ -11,11 +11,15 @@ object MLanguages extends StringEnum[MLanguage] {
   // Keep alphabetical order here.
 
   case object English extends MLanguage("en") {
-    override def singular = "English"
+    override def countryFlagEmoji = "\uD83C\uDDEC\uD83C\uDDE7"
+    override def singularNative = singularMsgCode
+    override def singularMsgCode = "English"
   }
 
   case object Russian extends MLanguage("ru") {
-    override def singular = "Russian"
+    override def countryFlagEmoji = "\uD83C\uDDF7\uD83C\uDDFA"
+    override def singularNative = "Русский"
+    override def singularMsgCode = "Russian"
   }
 
   override def values = findValues
@@ -37,8 +41,16 @@ object MLanguages extends StringEnum[MLanguage] {
 
 
 sealed abstract class MLanguage(override val value: String) extends StringEnumEntry {
-  def singular: String
-  override final def toString = singular
+
+  /** Country Flag UTF emoji. */
+  def countryFlagEmoji: String
+
+  /** Singular name in this native language. Displayed for end-user as-is, without translation. */
+  def singularNative: String
+
+  /** Code string for translatable value name. */
+  def singularMsgCode: String
+
 }
 
 object MLanguage {

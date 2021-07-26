@@ -17,6 +17,7 @@ import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConfig}
 import io.suggest.lk.IPlatformComponentsModule
+import io.suggest.lk.api.{ILkLangApi, LkLangApiHttpImpl}
 import io.suggest.lk.c.CsrfTokenApi
 import io.suggest.lk.m.{CsrfTokenEnsure, SessionSet}
 import io.suggest.lk.nodes.form.LkNodesModuleBase
@@ -245,8 +246,15 @@ class Sc3Module extends Log { outer =>
     wire[ScAppApiHttp]
   }
 
+  def lkLangApi: ILkLangApi = {
+    import ScHttpConfCsrf._
+    wire[LkLangApiHttpImpl]
+  }
+
   object ScHttpConf {
-    /** Сборка HTTP-конфига для всей выдачи, без CSRF. */
+    /** HTTP-config maker function.
+      * ** WITHOUT CSRF support! **
+      */
     val mkRootHttpClientConfigF = { () =>
       val isCordova = sc3Circuit.platformRW.value.isCordova
 

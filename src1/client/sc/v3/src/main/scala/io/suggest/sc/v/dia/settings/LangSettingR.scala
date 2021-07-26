@@ -3,6 +3,7 @@ package io.suggest.sc.v.dia.settings
 import com.materialui.{MuiListItem, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MLanguages, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.LangSwitch
@@ -59,8 +60,23 @@ class LangSettingR(
                   override val value = lang.value
                 }
               )(
-                // TODO Country flag: use UNICODE Emoji table.
-                crCtxProv.message( lang.singular ),
+                {
+                  val content = TagMod(
+                    // Country flag using unicode Emoji table:
+                    <.span(
+                      lang.countryFlagEmoji,
+                    ),
+                    HtmlConstants.SPACE,
+                    lang.singularNative,
+                  )
+                  crCtxProv.consume { crCtx =>
+                    <.span(
+                      ^.title := crCtx.messages( lang.singularMsgCode ),
+                      content,
+                    )
+                  }
+                }
+
               ): VdomNode
             })
               .toList

@@ -2,26 +2,33 @@ package io.suggest.sc.c.in
 
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.data.Pot
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.conf.ConfConst
+import io.suggest.cordova.CordovaConstants
 import io.suggest.i18n.{MLanguage, MLanguages}
+import io.suggest.lk.api.ILkLangApi
+import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{LangInit, LangSwitch, SettingEffect}
+import io.suggest.sc.m.{LangInit, LangSwitch, SettingEffect, SettingSet}
 import io.suggest.sc.m.in.MScReactCtx
 import io.suggest.sc.u.api.IScStuffApi
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.spa.DoNothing
+import play.api.libs.json.{JsNull, JsString, JsValue}
 
 import scala.util.Success
 
 class ScLangAh[M](
                    modelRW      : ModelRW[M, MScReactCtx],
                    scStuffApi   : => IScStuffApi,
+                   lkLangApi    : => ILkLangApi,
+                   isLoggedIn   : ModelRO[Boolean],
                  )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -42,7 +49,36 @@ class ScLangAh[M](
           langSwitch  = Pot.empty,
           language    = m.langOpt,
         )
-        updated(v2)
+
+        var fxAcc = List.empty[Effect]
+
+        if (CordovaConstants.isCordovaPlatform()) {
+          // Cordova: Save settings locally:
+          fxAcc ::= Effect.action {
+            SettingSet(
+              key = ConfConst.ScSettings.LANGUAGE,
+              value = m.langOpt.fold[JsValue]( JsNull ) { lang =>
+                JsString( lang.value )
+              },
+              save = true,
+            )
+          }
+        }
+
+        // If logged in, also save on server:
+        for (lang <- m.langOpt if isLoggedIn.value) {
+          fxAcc ::= Effect.action {
+            CsrfTokenEnsure(
+              onComplete = Some( Effect {
+                lkLangApi
+                  .selectLangSubmit( lang )
+                  .map( _ => DoNothing )
+              })
+            )
+          }
+        }
+
+        ah.updatedMaybeEffect(v2, fxAcc.mergeEffects)
 
       } else if (m.state.isEmpty) {
         // Fetch JSON data from server via ScSite API.

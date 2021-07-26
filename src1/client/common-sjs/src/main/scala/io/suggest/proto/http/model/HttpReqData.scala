@@ -37,6 +37,8 @@ object HttpReqData {
   def headersJsonSend = Map.empty[String, String] +
     (HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON)
 
+  def headersFormUrlEncodedSend = Map.empty[String, String] +
+    (HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_FORM_URL_ENCODED)
 
   /** Хидеры, обозначающие что отсылается json и ожидается json в ответ. */
   def headersJsonSendAccept: Map[String, String] =

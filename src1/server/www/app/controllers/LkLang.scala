@@ -51,7 +51,7 @@ final class LkLang @Inject() (
 
   private def chooseLangFormM(currLang: Lang): Form[Lang] = {
     Form(
-      "lang" -> uiLangM(Some(currLang))
+      I18nConst.LANG_SUBMIT_FN -> uiLangM(Some(currLang))
     )
   }
 
@@ -104,13 +104,17 @@ final class LkLang @Inject() (
 
 
   /** Сабмит формы выбора текущего языка. Нужно выставить язык в куку и текущему юзеру в MPerson. */
-  def selectLangSubmit(r: Option[String]) = csrf.Check {
+  def selectLangSubmit(async: Boolean, r: Option[String]) = csrf.Check {
     maybeAuth().async { implicit request =>
       chooseLangFormM( request.messages.lang ).bindFromRequest().fold(
         {formWithErrors =>
-          LOGGER.debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
-          _showLangSwitcher(formWithErrors, r, NotAcceptable)
+          lazy val errorsFmt = formatFormErrors( formWithErrors )
+          LOGGER.debug(s"selectLangSubmit(): Failed to bind lang form:\n $errorsFmt")
+          val status = NotAcceptable
+          if (async) status( errorsFmt )
+          else _showLangSwitcher( formWithErrors, r, status )
         },
+
         {newLang =>
           import esModel.api._
           val saveUserLangFut = FutureUtil.optFut2futOpt( request.user.personIdOpt ) { _ =>
@@ -134,8 +138,12 @@ final class LkLang @Inject() (
             LOGGER.error("Failed to save lang for mperson", ex)
 
           // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
-          RdrBackOr(r)( routes.Ident.rdrUserSomewhere() )
-            .withLang(newLang)
+          if (async) {
+            Ok("Done.")
+          } else {
+            RdrBackOr(r)( routes.Ident.rdrUserSomewhere() )
+              .withLang(newLang)
+          }
         }
       )
     }

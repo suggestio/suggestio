@@ -154,7 +154,7 @@ GET  /lk/h/about                        @controllers.LkHelp.companyAbout(nodeId:
 
 ## Languages & localization.
 GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
-POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
+POST /lang                              @controllers.LkLang.selectLangSubmit(async: Boolean, r: Option[String] ?= None)
 GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
 GET  /syslang/:lang/:hash/messages.js   @controllers.LkLang.sysMessagesJs(lang: String, hash: Int)
 

@@ -4,6 +4,7 @@ import scalacss.ScalaCssReact._
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.LogoutStep
@@ -39,8 +40,9 @@ class LogOutR(
 
     private def _onClick = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactCommonUtil.preventDefaultCB(e) >>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, CsrfTokenEnsure() ) >>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, LogoutStep() )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, CsrfTokenEnsure(
+        onComplete = Some( LogoutStep().toEffectPure ),
+      ))
     }
 
     def render(s: State): VdomElement = {

@@ -21,6 +21,7 @@ final class JsRoutesUtil {
     routes.javascript.Ident.rdrUserSomewhere #::
     routes.javascript.LkAds.adsPage #::
     routes.javascript.LkAdEdit.editAd #::
+    routes.javascript.LkLang.selectLangSubmit #::
     // Роуты для скачивания приложения:
     routes.javascript.ScApp.appDownloadInfo #::
     routes.javascript.ScApp.iosInstallManifest #::

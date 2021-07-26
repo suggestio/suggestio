@@ -14,4 +14,6 @@ object I18nConst {
   /** Глобальное имя на клиенте, в которое будет залита функция локализации. */
   def WINDOW_JSMESSAGES_NAME = "window." + MESSAGES_JSNAME
 
+  def LANG_SUBMIT_FN = "lang"
+
 }

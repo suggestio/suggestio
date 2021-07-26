@@ -18,6 +18,7 @@ object MimeConst {
     final def APPLICATION_ = "application" + DELIM1
     final def TEXT_ = "text" + DELIM1
     final def JSON = "json"
+    final def FORM_URL_ENCODED = "x-www-form-urlencoded"
 
     // Картинки живут полностью в MImgFmts.
 
@@ -34,6 +35,7 @@ object MimeConst {
   final def TEXT_HTML                   = Words.TEXT_ + "html"
   final def TEXT_PLAIN                  = Words.TEXT_ + "plain"
   final def APPLICATION_OCTET_STREAM    = Words.APPLICATION_ + "octet-stream"
+  final def APPLICATION_FORM_URL_ENCODED = Words.APPLICATION_ + Words.FORM_URL_ENCODED
 
   // !!! Если выставлять это в запросы вручную, то надо не зыбывать обязательный "; boundary=..."
   final def MULTIPART_FORM_DATA         = Words.MULTIPART + Words.DELIM1 + Words.FORM + "-" + Words.DATA

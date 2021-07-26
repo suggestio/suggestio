@@ -55,6 +55,8 @@ sealed trait Controllers extends js.Object {
   /** Доступ к HTTP-роутам до серверного контроллера LkAdEdit. */
   def LkAdEdit: LkAdEditCtlRoutes = js.native
 
+  def LkLang: LkLangCtlRoutes = js.native
+
   /** Доступ к роутам выдачи. */
   def Sc: ScCtlRoutes = js.native
   def sc: ScSubControllers = js.native
@@ -83,6 +85,14 @@ sealed trait Controllers extends js.Object {
   def SysNodeEdges: SysNodeEdgesRoutes = js.native
 
   def Upload: UploadCtlRoutes = js.native
+
+}
+
+
+@js.native
+sealed trait LkLangCtlRoutes extends js.Object {
+
+  def selectLangSubmit(async: Boolean, redirect: String = js.native): PlayRoute = js.native
 
 }
 
