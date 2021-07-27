@@ -257,9 +257,9 @@ object Common {
     val FLOW_JS = "2.14.1"
 
 
-    val MATERIAL_UI = "5.0.0-beta.1"
+    val MATERIAL_UI = "5.0.0-beta.2"
     val MATERIAL_UI_ICONS = "5.0.0-beta.1"
-    val MATERIAL_UI_LAB = "5.0.0-alpha.40"
+    val MATERIAL_UI_LAB = "5.0.0-alpha.41"
 
     /** @see [[https://www.npmjs.com/package/@emotion/react]] */
     val EMOTION_REACT = "11.4.0"
