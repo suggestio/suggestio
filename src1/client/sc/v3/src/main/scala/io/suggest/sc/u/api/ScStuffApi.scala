@@ -68,19 +68,19 @@ final class ScStuffApiHttp(
 
 
   override def scMessagesJson(language: Option[MLanguage]): Future[JsonPlayMessages] = {
-    val (method, url) = (for {
+    val (method, url, isLocalFile) = (for {
       lang <- language
       if CordovaConstants.isCordovaPlatform()
     } yield {
       // For cordova with known language, use locally-stored JSON files:
-      val fsUrl = "www/lang/" + lang + ".json"
-      (HttpConst.Methods.GET, fsUrl)
+      val fsUrl = "lang/" + lang.value + ".json"
+      (HttpConst.Methods.GET, fsUrl, true)
     })
       .getOrElse {
         val route = routes.controllers.sc.ScStuff.scMessagesJson(
           langCode = language.fold[String](null)(_.value),
         )
-        (route.method, HttpClient.route2url(route))
+        (route.method, HttpClient.route2url(route), false)
       }
 
     HttpClient
@@ -88,7 +88,12 @@ final class ScStuffApiHttp(
         HttpReq(
           method  = method,
           url     = url,
-          data    = HttpReqData.justAcceptJson,
+          data    = HttpReqData(
+            headers = HttpReqData.headersJsonAccept,
+            config  = if (isLocalFile) HttpClientConfig.empty else httpClientConfig(),
+            // Fetch API and cordovaFetch - both doesn't support file:/// URLs. Forcing XHR (or need to install and use cordova file plugin)
+            forceXhr = isLocalFile,
+          ),
         )
       )
       .resultFut

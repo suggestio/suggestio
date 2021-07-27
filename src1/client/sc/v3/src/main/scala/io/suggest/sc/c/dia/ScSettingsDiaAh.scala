@@ -5,11 +5,12 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW, UpdateSilent}
 import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.conf.ConfConst
+import io.suggest.i18n.MLanguages
 import io.suggest.kv.MKvStorage
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.{NotificationPermAsk, NotifyStartStop}
-import io.suggest.sc.m.{GeoLocOnOff, ResetUrlRoute, SettingEffect, SettingSet, SettingsDiaOpen, SettingsRestore, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, LangSwitch, ResetUrlRoute, SettingEffect, SettingSet, SettingsDiaOpen, SettingsRestore, WithSettings}
 import io.suggest.sc.m.dia.settings.MScSettingsDia
 import io.suggest.sc.sc3.MScSettingsData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -139,6 +140,16 @@ class ScSettingsDiaAh[M](
             NotificationPermAsk( isVisible = true )
           else
             NotifyStartStop( isStart = isEnabled2 )
+        }
+        Some(fx)
+
+      } else if (m.key ==* K.LANGUAGE) {
+        val fx = Effect.action {
+          LangSwitch(
+            langOpt = m.value
+              .asOpt[String]
+              .flatMap( MLanguages.withValueOpt ),
+          )
         }
         Some(fx)
 

@@ -46,7 +46,6 @@ case class XhrAdpInstance( override val httpReq: HttpReqAdp ) extends HttpAdpIns
   }
 
   override def doRequest(requestUrl: String): Future[HttpResp] = {
-    println("**   " + requestUrl)
     val promise = Promise[XhrHttpResp]()
     val httpRes = XhrHttpResp(xhr)
 

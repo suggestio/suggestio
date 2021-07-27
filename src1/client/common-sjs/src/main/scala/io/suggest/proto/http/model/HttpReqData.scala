@@ -108,4 +108,5 @@ case class HttpReqData(
                         onProgress    : Option[ITransferProgressInfo => Unit] = None,
                         config        : HttpClientConfig      = HttpClientConfig.empty,
                         credentials   : Option[Boolean]       = None,
+                        forceXhr      : Boolean               = false,
                       )

@@ -17,6 +17,8 @@ import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import play.api.libs.json.{JsNull, JsString, JsValue}
+import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
 
 import scala.util.Success
 
@@ -34,9 +36,13 @@ class ScLangAh[M](
 
     // Switch language signal.
     case m: LangSwitch =>
+      println( m )
       val v0 = value
 
       if (m.state.isFailed || m.state.isPending) {
+        for (ex <- m.state.exceptionOption)
+          logger.error( ErrorMsgs.EXPECTED_FILE_MISSING, ex, m )
+
         val v2 = (MScReactCtx.langSwitch set m.state)(v0)
         updated(v2)
 
@@ -46,7 +52,7 @@ class ScLangAh[M](
           context = v0.context.copy(
             messages  = m.state.get,
           ),
-          langSwitch  = Pot.empty,
+          langSwitch  = Pot.empty.unavailable(),
           language    = m.langOpt,
         )
 
@@ -79,6 +85,13 @@ class ScLangAh[M](
         }
 
         ah.updatedMaybeEffect(v2, fxAcc.mergeEffects)
+
+      } else if (
+        (m.langOpt ==* v0.language) &&
+        (v0.langSwitch !=* Pot.empty)
+      ) {
+        logger.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, v0) )
+        noChange
 
       } else if (m.state.isEmpty) {
         // Fetch JSON data from server via ScSite API.
@@ -113,7 +126,8 @@ class ScLangAh[M](
 
 
     // Initialize language data.
-    case LangInit =>
+    case m @ LangInit =>
+      println( m )
       val fx = Effect.action {
         SettingEffect(
           key = ConfConst.ScSettings.LANGUAGE,

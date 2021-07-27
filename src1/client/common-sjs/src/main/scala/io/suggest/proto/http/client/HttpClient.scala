@@ -1,7 +1,8 @@
 package io.suggest.proto.http.client
 
-import java.net.URI
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
+import java.net.URI
 import io.suggest.common.html.HtmlConstants
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
@@ -124,7 +125,7 @@ object HttpClient extends Log {
     */
   def execute(httpReq: HttpReq): IHttpResultHolder[HttpResp] = {
     // Выбрать адаптер и запустить обработку.
-    val adp = if (httpReq.data.onProgress.nonEmpty && XhrAdp.isAvailable) {
+    val adp = if ((httpReq.data.forceXhr || httpReq.data.onProgress.nonEmpty) && XhrAdp.isAvailable) {
       XhrAdp
     } else if (httpReq.data.config.fetchApi.nonEmpty) {
       // Явно задана fetch-функция в данных реквеста -- отправляем запрос через Fetch-адаптер:
@@ -172,9 +173,16 @@ object HttpClient extends Log {
               // Определить исходный домен из ссылки в js-роутере
               httpReq.data.config.cookieDomainDflt.map(_())
             }
-          var reqDomain = reqUri.getHost
-          val r = cookieDomainOpt.exists( reqDomain.equalsIgnoreCase )
-          if (!r) logger.warn( ErrorMsgs.COOKIE_DOMAIN_UNEXPECTED, msg = (reqDomain, cookieDomainOpt, httpReq.method, httpReq.url) )
+          var reqDomainOpt = Option( reqUri.getHost )  // getHost returns null for file:/// URLs.
+          val r = (for {
+            reqDomain <- reqDomainOpt
+            cookieDomain <- cookieDomainOpt
+          } yield {
+            reqDomain equalsIgnoreCase cookieDomain
+          })
+            .getOrElseFalse
+
+          if (!r) logger.warn( ErrorMsgs.COOKIE_DOMAIN_UNEXPECTED, msg = (reqDomainOpt, cookieDomainOpt, httpReq.method, httpReq.url) )
           r
         }
       } {
