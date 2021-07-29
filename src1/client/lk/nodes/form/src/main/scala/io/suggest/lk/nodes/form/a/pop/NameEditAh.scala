@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.lk.nodes.form.m.{MBeaconScan, MEditNodeState, MNodeState, NodeEditCancelClick, NodeEditClick, NodeEditNameChange, NodeEditOkClick, NodeEditSaveResp}
+import io.suggest.lk.nodes.form.m.{MEditNodeState, MNodeState, NodeEditCancelClick, NodeEditClick, NodeEditNameChange, NodeEditOkClick, NodeEditSaveResp, NodesDiConf}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.text.StringUtil
@@ -25,11 +25,11 @@ class NameEditAh[M](
                      api              : ILkNodesApi,
                      modelRW          : ModelRW[M, Option[MEditNodeState]],
                      currNodeRO       : ModelRO[Option[MNodeState]],
-                     beaconsRO        : ModelRO[MBeaconScan],
+                     diConfig         : NodesDiConf,
                    )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   // Нормализация, не срезая пробелы по краям.
   def earlyNormalizeName(name: String): String = {
@@ -162,9 +162,10 @@ class NameEditAh[M](
         // Отработать ошибку или успех:
         m.tryResp.fold(
           {ex =>
+            logger.error( ErrorMsgs.XHR_UNEXPECTED_RESP, ex, m )
             val edit2 = MEditNodeState.saving.modify( _.fail(ex) )(edit0)
             val v2 = Some(edit2)
-            updated(v2)
+            ah.updatedMaybeEffect( v2, diConfig.onErrorFxOpt )
           },
           {_ =>
             updated( None )

@@ -91,6 +91,8 @@ object MNodeTypes extends StringEnum[MNodeType] {
   private def _lkNodesUserCanCreate: LazyList[MNodeType] =
     RadioSource.children
 
+  def lkNodesCanEdit: Seq[MNodeType] = AdnNode #:: _lkNodesUserCanCreate
+
   /** Normal user can create nodes of these types (via lk-nodes): */
   def lkNodesUserCanCreate: Seq[MNodeType] =
     _lkNodesUserCanCreate

@@ -56,7 +56,8 @@ import io.suggest.sc.v.snack._
 import io.suggest.sc.v.styl._
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.dom2.DomQuick
-import io.suggest.spa.{DoNothing, SioPages}
+import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
+import io.suggest.spa.{DAction, DoNothing, SioPages}
 import io.suggest.wifi.CdvWifiWizard2BeaconsApi
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -196,7 +197,7 @@ class Sc3Module extends Log { outer =>
   lazy val editAdR = wire[EditAdR]
   lazy val dlAppMenuItemR = wire[DlAppMenuItemR]
   lazy val indexesRecentR = wire[IndexesRecentR]
-  lazy val scNodesBtnR = wire[ScNodesBtnR]
+  lazy val scNodesMenuItemR = wire[ScNodesMenuItemR]
   lazy val logOutR = wire[LogOutR]
 
 
@@ -498,16 +499,23 @@ class Sc3Module extends Log { outer =>
       override def needLogInVdom(chs: VdomNode*) =
         outer.sc3Circuit.wrap( identity(_) )( scNodesNeedLoginR.component(_)(chs: _*) )
       override def withBleBeacons = true
+
+      override def onErrorFxOpt: Option[Effect] =
+        Some( _toSc3CircuitFx(OnlineCheckConn) )
+
       override def retryErrorFx(effect: Effect): Effect = {
-        val retryFx = CsrfTokenEnsure(
-          force = true,
-          onComplete = Some(effect),
-        ).toEffectPure
-        val checkOnlineFx = Effect.action {
-          sc3Circuit.dispatch( OnlineCheckConn )
-          DoNothing
-        }
-        checkOnlineFx + retryFx
+        (
+          CsrfTokenEnsure(
+            force = true,
+            onComplete = Some(effect),
+          ) ::
+          OnlineCheckConn ::
+          Nil
+        )
+          .iterator
+          .map( _toSc3CircuitFx )
+          .mergeEffects
+          .get
       }
       override def nfcApi = nfcApiOpt
       override def contextAdId() = {
@@ -524,5 +532,13 @@ class Sc3Module extends Log { outer =>
     wire[ScNodesR]
   }
   lazy val scNodesNeedLoginR = wire[ScNodesNeedLoginR]
+
+
+  private def _toSc3CircuitFx(action: DAction): Effect = {
+    Effect.action {
+      sc3Circuit.dispatch( action )
+      DoNothing
+    }
+  }
 
 }

@@ -44,6 +44,8 @@ trait NodesDiConf extends IMHttpClientConfig {
     */
   def retryErrorFx(effect: Effect): Effect
 
+  def onErrorFxOpt: Option[Effect]
+
   /** Define NFC API for use. */
   def nfcApi: Option[INfcApi]
 
@@ -66,6 +68,7 @@ object NodesDiConf {
     override def isUserLoggedIn() = true
     override def needLogInVdom(chs: VdomNode*) = EmptyVdom
     override def withBleBeacons = false
+    override def onErrorFxOpt = None
     override def retryErrorFx(effect: Effect) = effect
     override lazy val nfcApi = {
       // Standard WebNFC API will is tried automatically.

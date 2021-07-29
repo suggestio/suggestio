@@ -41,7 +41,7 @@ final class LkNodesUtil {
 
   def validateNodeReq(nodeInfo: MLknNodeReq, isEdit: Boolean): ValidationNel[String, MLknNodeReq] = {
     val nodeInfo1 = nodeInfo.copy(
-      name  = FormUtil.strTrimSanitizeF(nodeInfo.name),
+      name  = FormUtil.strTrimF( nodeInfo.name ),
       id    = nodeInfo.id.map( FormUtil.strTrimSanitizeLowerF )
     )
     MLknNodeReq.validate( nodeInfo1, isEdit )

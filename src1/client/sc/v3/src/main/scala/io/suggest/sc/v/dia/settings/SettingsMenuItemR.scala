@@ -51,7 +51,7 @@ class SettingsMenuItemR(
           R.rowContent,
           crCtxProv.message( MsgCodes.`Settings` ),
         ),
-        // Иконка закачки.
+        // Settings icon:
         Mui.SvgIcons.Settings {
           val css = new MuiSvgIconClasses {
             override val root = R.rightIcon.htmlClass

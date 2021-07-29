@@ -12,6 +12,7 @@ import io.suggest.n2.node.{MNodeIdType, MNodeType, MNodeTypes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
 import japgolly.univeq._
 
 import scala.util.Success
@@ -26,10 +27,11 @@ class CreateNodeAh[M](
                        api          : ILkNodesApi,
                        modelRW      : ModelRW[M, Option[MCreateNodeS]],
                        treeRO       : ModelRO[MTree],
+                       diConfig     : NodesDiConf,
                      )
   extends ActionHandler(modelRW)
   with Log
-{
+{ ah =>
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -235,7 +237,7 @@ class CreateNodeAh[M](
               saving = cs.saving.fail(LknException(ex)),
             )
           }
-          updated(v2)
+          ah.updatedMaybeEffect( v2, diConfig.onErrorFxOpt )
         },
 
         // Всё ок. Удалить addState для текущего rcvrKey

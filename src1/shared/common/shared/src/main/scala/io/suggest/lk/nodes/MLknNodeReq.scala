@@ -28,27 +28,36 @@ object MLknNodeReq {
     * @return Validation result with validated instance.
     */
   def validate(req: MLknNodeReq, isEdit: Boolean): ValidationNel[String, MLknNodeReq] = {
+    val isCreate = !isEdit
     (
       // no String.trim(), because everything should be already sanitized and trimmed.
       NodeEditConstants.Name.validateNodeName( req.name ) |@|
       ScalazUtil
         // First, ensure optional id is mandatory for node editing:
-        .liftNelOptMust( req.id, mustBeSome = true, reallyMust = isEdit, error = "NodeID missing" )( _.successNel )
+        .liftNelOptMust( req.id, mustBeSome = isCreate, reallyMust = isCreate, error = "NodeID missing" )( _.successNel )
         // Do node-type-dependend checks:
-        .andThen { idOpt =>
-          req.nodeType match {
-            case MNodeTypes.RadioSource.WifiAP =>
-              ScalazUtil.liftNelSome( idOpt, "MAC-address expected" )( NetworkingUtil.validateMacAddress )
-            case MNodeTypes.RadioSource.BleBeacon =>
-              ScalazUtil.liftNelSome( idOpt, "EddyStone-UID expected" )( MRadioSignal.validateEddyStoneNodeId )
-            case _ =>
-              "ID validation unsupported for current node-type".failureNel[Option[String]]
-          }
-        } |@|
-      Validation.liftNel( req.nodeType )(
-        !MNodeTypes.lkNodesUserCanCreate.contains[MNodeType](_),
-        "Node-type unexpected"
-      )
+        .andThen {
+          case idOpt @ None if isEdit =>
+            idOpt.successNel
+          case idOpt =>
+            req.nodeType match {
+              case MNodeTypes.RadioSource.WifiAP =>
+                ScalazUtil.liftNelSome( idOpt, "MAC-address expected" )( NetworkingUtil.validateMacAddress )
+              case MNodeTypes.RadioSource.BleBeacon =>
+                ScalazUtil.liftNelSome( idOpt, "EddyStone-UID expected" )( MRadioSignal.validateEddyStoneNodeId )
+              case _ =>
+                "ID validation unsupported for current node-type".failureNel[Option[String]]
+            }
+        } |@| {
+        val ntypesAllowed =
+          if (isEdit) MNodeTypes.lkNodesCanEdit
+          else MNodeTypes.lkNodesUserCanCreate
+
+        Validation.liftNel( req.nodeType )(
+          !ntypesAllowed.contains[MNodeType](_),
+          "Node-type unexpected"
+        )
+      }
     )( apply )
   }
 

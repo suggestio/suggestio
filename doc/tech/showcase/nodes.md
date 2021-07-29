@@ -1,4 +1,4 @@
-# Nodes manager inside showcase
+# Showcase nodes manager
 
 On menu bar (left) nodes management button opens a window, containing several features
 - Created, edit, delete user's nodes (if logged-in).
@@ -6,3 +6,5 @@ On menu bar (left) nodes management button opens a window, containing several fe
 - Register and manage radio-signal sources as own nodes (by WiFi MAC-address, by Bluetooth beacon UID, etc).
 - Write NFC tags.
 - Publish/unpublish currently-opened ad on user's nodes.
+
+

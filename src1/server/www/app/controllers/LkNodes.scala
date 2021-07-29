@@ -655,8 +655,9 @@ final class LkNodes @Inject() (
 
         lkNodesUtil.validateNodeReq( request.body, isEdit = true ).fold(
           {violations =>
-            LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.iterator.mkString(", ")}")
-            errorHandler.onClientError(request, NOT_ACCEPTABLE, "Invalid name.")
+            val msg = violations.iterator.mkString(", ")
+            LOGGER.debug(s"$logPrefix Failed to bind form:\n $msg")
+            errorHandler.onClientError(request, NOT_ACCEPTABLE, s"Invalid name: $msg")
           },
 
           {binded =>

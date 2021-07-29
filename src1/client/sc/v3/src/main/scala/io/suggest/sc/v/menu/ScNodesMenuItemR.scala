@@ -1,7 +1,8 @@
 package io.suggest.sc.v.menu
 
-import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
+import com.materialui.{Mui, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconClasses, MuiSvgIconProps}
 import diode.react.ModelProxy
+import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
@@ -17,11 +18,11 @@ import scalacss.ScalaCssReact._
   * Created: 24.08.2020 16:20
   * Description: Пункт меню для доступа к форме управления узлами.
   */
-class ScNodesBtnR(
-                   menuItemR     : MenuItemR,
-                   scCssP        : React.Context[ScCss],
-                   crCtxProv     : React.Context[MCommonReactCtx],
-                 ) {
+class ScNodesMenuItemR(
+                        menuItemR     : MenuItemR,
+                        scCssP        : React.Context[ScCss],
+                        crCtxProv     : React.Context[MCommonReactCtx],
+                      ) {
 
   type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
@@ -36,6 +37,22 @@ class ScNodesBtnR(
     val render: VdomElement = {
       import ScCssStatic.Menu.{Rows => R}
 
+      val content = List[VdomElement](
+        <.span(
+          R.rowContent,
+          crCtxProv.message( MsgCodes.`Nodes.management` ),
+          // TODO Show currently-visible radio-beacons counter?
+        ),
+        Mui.SvgIcons.GroupWork {
+          val css = new MuiSvgIconClasses {
+            override val root = R.rightIcon.htmlClass
+          }
+          new MuiSvgIconProps {
+            override val classes = css
+          }
+        }(),
+      )
+
       MuiListItem(
         new MuiListItemProps {
           override val disableGutters = menuItemR.DISABLE_GUTTERS
@@ -44,21 +61,19 @@ class ScNodesBtnR(
           override val classes = menuItemR.MENU_LIST_ITEM_CSS
         }
       )(
-        MuiListItemText()(
-          {
-            val span0 = <.span(
-              R.rowContent,
-              crCtxProv.message( MsgCodes.`Nodes.management` ),
-            )
-            scCssP.consume { scCss =>
-              span0(
-                scCss.fgColor,
-              )
+        // TODO Wrap into a+href?
+        scCssP.consume { scCss =>
+          MuiListItemText(
+            new MuiListItemTextProps {
+              override val classes = new MuiListItemTextClasses {
+                override val root = Css.flat (
+                  scCss.fgColor.htmlClass,
+                  R.rowLink.htmlClass,
+                )
+              }
             }
-          },
-
-          // TODO Вывести счётких текущих видимых маячков.
-        )
+          )( content: _* )
+        }
       )
     }
 

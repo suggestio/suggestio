@@ -64,7 +64,6 @@ case class LkNodesFormCircuit(
     val popupsRW = CircuitUtil.mkLensRootZoomRW(this, MLkNodesRoot.popups)
 
     val treeRW = CircuitUtil.mkLensZoomRW(treeOuterRW, MTreeOuter.tree)
-    val beaconsRO = CircuitUtil.mkLensZoomRO( treeOuterRW, MTreeOuter.beacons )
     val currNodeRcvrKeyRO = treeRW.zoom(_.openedRcvrKey)( FastEq.ValueEq )
     val openedPathRO = CircuitUtil.mkLensZoomRO( treeRW, MTree.opened )
     val openedNodeRO = treeRW.zoom( _.openedNode )
@@ -83,6 +82,7 @@ case class LkNodesFormCircuit(
       api         = lkNodesApi,
       modelRW     = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.createNodeS ),
       treeRO      = treeRW,
+      diConfig    = diConfig,
     )
 
     // Реактор на события, связанные с окошком удаления узла.
@@ -104,7 +104,7 @@ case class LkNodesFormCircuit(
       api = lkNodesApi,
       modelRW = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.editName ),
       currNodeRO = openedNodeRO,
-      beaconsRO = beaconsRO,
+      diConfig   = diConfig,
     )
 
     val popupsHandler = composeHandlers( createNodeAh, deleteNodeAh, editTfDailyAh, nameEditAh )

@@ -163,8 +163,8 @@ object MuiSvgIcons {
   object Gif extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/grade", JSImport.Default)
   object ActionGrade extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/group-work", JSImport.Default)
-  object ActionGroupWork extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/GroupWork", JSImport.Default)
+  object GroupWork extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/help-outline", JSImport.Default)
   object ActionHelpOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/help", JSImport.Default)

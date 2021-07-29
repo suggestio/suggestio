@@ -36,7 +36,6 @@ class ScLangAh[M](
 
     // Switch language signal.
     case m: LangSwitch =>
-      println( m )
       val v0 = value
 
       if (m.state.isFailed || m.state.isPending) {
@@ -127,7 +126,6 @@ class ScLangAh[M](
 
     // Initialize language data.
     case m @ LangInit =>
-      println( m )
       val fx = Effect.action {
         SettingEffect(
           key = ConfConst.ScSettings.LANGUAGE,
