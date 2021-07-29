@@ -29,6 +29,8 @@ during advertising. Note: radio-beacons scanning/location no supported inside we
 Also, link to any node could be written into [NFC-tag](../nfc.md), so any end-user can scan NFC tag and see
 content in web-browser or Suggest.io application, if installed.
 
+If you need to register your Wi-Fi/Bluetooth/radio-signals as your nodes, take a look to
+[Suggest.io mobile app. radio-scanner](../showcase/nodes.md#registering-radio-beacon).
 
 ## Tags advertising
 Any ads can be categorized via tags mechanism in all levels: tags can be placed on map, inside nodes, etc.

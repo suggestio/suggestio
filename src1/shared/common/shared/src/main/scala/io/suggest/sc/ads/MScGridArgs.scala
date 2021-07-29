@@ -32,10 +32,11 @@ object MScGridArgs {
 
   @inline implicit def univEq: UnivEq[MScGridArgs] = UnivEq.derive
 
+  def ALLOW_404_BY_DEFAULT = true
 
   implicit final class ScGridAdsOptOpsExt(private val scGridArgsOpt: Option[MScGridArgs]) extends AnyVal {
     def allow404: Boolean =
-      scGridArgsOpt.fold(true)(_.allow404)
+      scGridArgsOpt.fold(ALLOW_404_BY_DEFAULT)(_.allow404)
   }
 
 }
@@ -52,6 +53,6 @@ object MScGridArgs {
 final case class MScGridArgs(
                               withTitle                   : Boolean                       = false,
                               focAfterJump                : Option[Boolean]               = None,
-                              allow404                    : Boolean                       = true,
-                              onlyRadioBeacons       : Boolean                       = false,
+                              allow404                    : Boolean                       = MScGridArgs.ALLOW_404_BY_DEFAULT,
+                              onlyRadioBeacons            : Boolean                       = false,
                             )

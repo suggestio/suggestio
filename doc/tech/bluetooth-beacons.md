@@ -24,7 +24,10 @@ There are two ways to register a beacon.
 Internally, "register a beacon" means to create a node with beacon `_id` and beacon node-type.
 
 ### Add via mobile app
-0. Ensure your EddyStone-UID enabled.
+Suggest.io mobile app. node manager is used to [catch radio-beacon signal](showcase/nodes.md#registering-radio-beacon).
+
+Step-by-step:
+0. Ensure your EddyStone-UID is powered-on.
 1. Install & run Suggest.io mobile application
    for [Android](https://play.google.com/store/apps/details?id=io.suggest.appsuggest)
    or [iOS](https://apps.apple.com/ru/app/id1501737715).
