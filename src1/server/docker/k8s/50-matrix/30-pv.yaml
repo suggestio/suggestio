@@ -1,0 +1,74 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  finalizers:
+  - kubernetes.io/pv-protection
+  labels:
+    app: postgresql
+    release: matrix-sio
+    role: master
+  name: data-matrix-sio-postgresql-0
+  namespace: matrix
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 8Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: data-matrix-sio-postgresql-0
+    namespace: matrix
+  hostPath:
+    path: /var/lib/containers/matrix/postgresql
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  finalizers:
+  - kubernetes.io/pv-protection
+  name: matrix-sio-media-store
+  namespace: matrix
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: matrix-sio-media-store
+    namespace: matrix
+  hostPath:
+    path: /var/lib/containers/matrix/media-store
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  finalizers:
+  - kubernetes.io/pv-protection
+  name: matrix-sio-signing-key
+  namespace: matrix
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 1Mi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: matrix-sio-signing-key
+    namespace: matrix
+  hostPath:
+    path: /var/lib/containers/matrix/signing-key
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---

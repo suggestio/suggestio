@@ -1,0 +1,21 @@
+## Apply patch using command:
+##   kubectl patch ds "matrix-sio-coturn" -n "matrix" -p "$(cat 41-patch-coturn-daemonset.yaml)"
+## 
+## TODO FIXME .volumeMounts doesn't patch properly due to unknown silent error in syntax. Use:
+## kubectl edit ds "matrix-sio-coturn" -n "matrix"
+## and finalize patching by hands.
+---
+spec:
+  template:
+    spec:
+      contrainers:
+      - name: coturn
+        volumeMounts:
+        - mountPath: "/tls"
+          name: tls
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: "coturn-tls"
+---

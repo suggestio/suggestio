@@ -1,0 +1,6 @@
+dependencies:
+- name: matrix
+  repository: https://dacruz21.github.io/helm-charts
+  version: 2.7.0
+digest: sha256:44723309de4312a7b8e9c890b04659daccf1999c7e0c4046c5f5760b0ce773dd
+generated: "2021-08-02T13:48:09.100238641+03:00"

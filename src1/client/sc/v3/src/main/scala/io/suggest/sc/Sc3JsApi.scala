@@ -222,4 +222,16 @@ object Sc3JsApi extends Log {
   @JSExport
   def wifiEmitById(ids: String*) = _wifiEmitter( ids )
 
+
+  /** Return current showcase root state. */
+  @JSExport
+  def rootState() = _ifDev( Sc3Module.ref.sc3Circuit.rootRW.value ).orNull
+
+  @JSExport
+  def gridAdsTree(): String = {
+    rootState()
+      .grid.core.ads.adsTreePot
+      .fold("")(_.drawTree)
+  }
+
 }
