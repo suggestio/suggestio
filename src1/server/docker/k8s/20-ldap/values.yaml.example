@@ -1,0 +1,41 @@
+--
+adminPassword: "TODO"
+configPassword: "TODO"
+nodeSelector:
+  "io.suggest.ldap": here
+replicaCount: 1
+env:
+  LDAP_ORGANISATION: "Suggest.io"
+  LDAP_DOMAIN: "suggest.io"
+  LDAP_READONLY_USER: "true"
+  LDAP_READONLY_USER_PASSWORD: "TODO"
+service:
+  type: ClusterIP
+persistence:
+  enabled: true
+  storageClass: "local-storage"
+phpldapadmin:
+  enabled: true
+  ingress:
+    enabled: true
+    annotations: {}
+    path: /
+    hosts:
+    - ldap.cbca.ru
+  env:
+    PHPLDAPADMIN_LDAP_HOSTS: ldap-sio-openldap-stack-ha.ldap.svc.cluster.local
+tls:
+  enabled: false
+ltb-passwd:
+  enabled : true
+  ingress:
+    enabled: true
+    annotations: {}
+    hosts:
+    - password.cbca.ru
+  ldap:
+    server: ldap://ldap-sio-openldap-stack-ha
+    searchBase: dc=suggest,dc=io
+    bindDN: cn=admin,dc=suggest,dc=io
+    #bindPWKey: LDAP_ADMIN_PASSWORD
+---

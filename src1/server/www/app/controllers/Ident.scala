@@ -8,7 +8,7 @@ import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
-import io.suggest.err.MCheckException
+import io.suggest.err.{HttpResultingException, MCheckException}
 import io.suggest.es.model.{EsModel, MEsNestedSearch, MEsUuId}
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
@@ -21,11 +21,9 @@ import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPredicates}
-import io.suggest.n2.node.common.MNodeCommon
-import io.suggest.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sec.util.{PgpUtil, ScryptUtil}
+import io.suggest.sec.util.PgpUtil
 import io.suggest.session.{CustomTtl, LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.spa.SioPages
 import io.suggest.streams.JioStreamsUtil
@@ -48,6 +46,7 @@ import models.req.IReqHdr
 import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.libs.json.Json
 import play.api.mvc.Result
+import util.ident.store.{ICredentialsStorage, MRegContext}
 import util.sec.CspUtil
 import util.sms.SmsSendUtil
 import util.xplay.LangUtil
@@ -75,7 +74,6 @@ final class Ident @Inject() (
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
-  private lazy val mPersonIdentModel = injector.instanceOf[MPersonIdentModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val mailer = injector.instanceOf[IMailerWrapper]
   private lazy val identUtil = injector.instanceOf[IdentUtil]
@@ -83,7 +81,6 @@ final class Ident @Inject() (
   private lazy val captchaUtil = injector.instanceOf[CaptchaUtil]
   private lazy val canConfirmEmailPwReg = injector.instanceOf[CanConfirmEmailPwReg]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
-  private lazy val scryptUtil = injector.instanceOf[ScryptUtil]
   private lazy val canConfirmIdpReg = injector.instanceOf[CanConfirmIdpReg]
   private lazy val langUtil = injector.instanceOf[LangUtil]
   private lazy val pgpUtil = injector.instanceOf[PgpUtil]
@@ -97,9 +94,9 @@ final class Ident @Inject() (
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
   private lazy val canLoginVia = injector.instanceOf[CanLoginVia]
   private lazy val lkLoginTpl = injector.instanceOf[LkLoginTpl]
+  private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
 
   import esModel.api._
-  import mPersonIdentModel.api._
   import slick.profile.api._
 
 
@@ -166,76 +163,68 @@ final class Ident @Inject() (
         lazy val logPrefix = s"epwSubmit()#${System.currentTimeMillis()}"
         LOGGER.trace(s"$logPrefix Login request from ${request.remoteClientAddress}: name'${request.body.name}' pw#${request.body.password.hashCode} foreign?${request.body.isForeignPc}")
 
-        for {
+        (for {
           // Запуск поиска юзеров, имеющих указанное имя пользователя.
-          personsFound <- mNodes.findUsersByEmailPhoneWithPw( request.body.name )
+          personsFound <- credentialsStorage.findByEmailPhoneWithPw(
+            emailOrPhone = request.body.name,
+            password = request.body.password,
+          )
 
-          res <- {
+          _ = {
             // Проверить пароль, вернуть ответ.
             if (personsFound.isEmpty) {
               // Не найдена ни одного юзера с таким именем.
               LOGGER.debug(s"$logPrefix User'${request.body.name}' not found")
-              Future.successful( NotFound )
+              throw HttpResultingException( NotFound )
+            }
 
-            } else if (personsFound.lengthCompare(1) > 0) {
+            if (personsFound.lengthCompare(1) > 0) {
               // Сразу несколько юзеров. Это может быть какая-то ошибка или уязвимость.
-              val ex = new IllegalStateException(s"$logPrefix Many nodes with same username: internal data-defect or vulnerability: [${personsFound.iterator.flatMap(_.id).mkString(", ")}] Giving up.")
-              Future.failed( ex )
+              throw new IllegalStateException(s"$logPrefix Many nodes with same username: internal data-defect or vulnerability: [${personsFound.iterator.flatMap(_.id).mkString(", ")}] Giving up.")
+            }
+          }
 
-            } else {
-              // Один юзер с таким именем.
-              val mperson = personsFound.head
-              LOGGER.trace(s"$logPrefix Found user#${mperson.idOrNull} name'${request.body.name}'")
+          // The only user with such id:
+          mperson = personsFound.head
 
-              if (
-                mperson.edges
-                  .withPredicateIter( MPredicates.Ident.Password )
-                  .flatMap( _.info.textNi )
-                  .exists { pwHash =>
-                    scryptUtil.checkHash( request.body.password, pwHash )
-                  }
-              ) {
-                // Пароль подходит - залогинить юзера.
-                val personId = mperson.id.get
-                LOGGER.debug(s"$logPrefix Epw login ok, person#$personId from ${request.remoteClientAddress}")
+          res <- {
+            // Password checked ok. Return logged-in session cookie for user.
+            val personId = mperson.id.get
+            LOGGER.debug(s"$logPrefix Epw login ok, person#$personId from ${request.remoteClientAddress}")
 
-                val rdrPathFut = getRdrUrl(r) {
-                  identUtil.redirectCallUserSomewhere(personId)
-                }
-                // Реализация длинной сессии при наличии флага rememberMe.
-                val ttl: Ttl =
-                  if (request.body.isForeignPc) ShortTtl
-                  else LongTtl
+            val rdrPathFut = getRdrUrl(r) {
+              identUtil.redirectCallUserSomewhere(personId)
+            }
 
-                val addToSession = ttl.addToSessionAcc(
-                  (MSessionKeys.PersonId.value -> personId) ::
-                  Nil
-                )
+            // Long-running session via "rememberMe" flag:
+            val ttl: Ttl =
+              if (request.body.isForeignPc) ShortTtl
+              else LongTtl
 
-                // Выставить язык, сохраненный ранее в MPerson
-                val langOpt = langUtil.getLangFrom( Some(mperson) )
-                for (rdrPath <- rdrPathFut) yield {
-                  LOGGER.trace(s"$logPrefix rdrPath=>$rdrPath r=${r.orNull} lang=${langOpt.orNull}")
-                  var rdr2 = Ok(rdrPath)
-                    .addingToSession( addToSession : _* )
-                  for (lang <- langOpt)
-                    rdr2 = rdr2.withLang( lang )( mCommonDi.messagesApi )
-                  rdr2
-                }
+            val addToSession = ttl.addToSessionAcc(
+              (MSessionKeys.PersonId.value -> personId) ::
+                Nil
+            )
 
-              } else {
-                // Пароль не совпадает.
-                LOGGER.debug(s"$logPrefix Password does not match.")
-                Future.successful( NotFound )
-              }
-
+            // Set session language from stored inside person node:
+            val langOpt = langUtil.getLangFrom( Some(mperson) )
+            for (rdrPath <- rdrPathFut) yield {
+              LOGGER.trace(s"$logPrefix rdrPath=>$rdrPath r=${r.orNull} lang=${langOpt.orNull}")
+              var rdr2 = Ok(rdrPath)
+                .addingToSession( addToSession : _* )
+              for (lang <- langOpt)
+                rdr2 = rdr2.withLang( lang )( mCommonDi.messagesApi )
+              rdr2
             }
           }
 
         } yield {
           res
-        }
-
+        })
+          .recoverWith {
+            case httpResEx: HttpResultingException =>
+              httpResEx.httpResFut
+          }
       }
     }
   }
@@ -731,7 +720,7 @@ final class Ident @Inject() (
       } { implicit request =>
         val now = Instant.now()
         val (cfReq, ottId) = request.body
-        val password = cfReq.formData.code.get
+        val _password = cfReq.formData.code.get
         lazy val logPrefix = s"regFinalSubmit($ottId)#${now.toEpochMilli}:"
         implicit lazy val ctx = implicitly[Context]
 
@@ -770,7 +759,7 @@ final class Ident @Inject() (
           regCreds = idToken0.payload.as[MRegCreds0]
 
           // Поискать уже существующего юзера в узлах:
-          existingPersonNodeOpt <- DBIO.from {
+          existingPersonNodeOpt0 <- DBIO.from {
             for {
               existingPersonNodes <- mNodes.dynSearch {
                 new MNodeSearch {
@@ -799,117 +788,28 @@ final class Ident @Inject() (
           }
 
           // Узел юзера. Может быть, он уже существует.
-          personNodeSaved <- {
-            // Эдж пароля:
-            val passwordEdge = MEdge(
-              predicate = MPredicates.Ident.Password,
-              info = MEdgeInfo(
-                textNi = Some( scryptUtil.mkHash( password ) ),
-              )
+          personNodeSaved <- DBIO.from {
+            val mRegCtx = MRegContext(
+              password      = _password,
+              email         = Option( regCreds.email ),
+              phoneNumber   = Option( regCreds.phone ),
+              lang          = Option( ctx.messages.lang.code ),
             )
-            val emailEdge = MEdge(
-              predicate = MPredicates.Ident.Email,
-              nodeIds = Set.empty + regCreds.email,
-              info = MEdgeInfo(
-                flag = Some(false),
-              )
-            )
-            existingPersonNodeOpt.fold [DBIOAction[MNode, NoStream, Effect]] {
-              // Как и ожидалось, такого юзера нет в базе. Собираем нового юзера:
-              LOGGER.debug(s"$logPrefix For phone[${regCreds.phone}] no user exists. Creating new...")
-              // Собрать узел для нового юзера.
-              val mperson0 = MNode(
-                common = MNodeCommon(
-                  ntype       = MNodeTypes.Person,
-                  isDependent = false,
-                  isEnabled   = true,
-                ),
-                meta = MMeta(
-                  basic = MBasicMeta(
-                    techName = Some(
-                      idToken0.idMsgs
-                        .iterator
-                        .filter { m =>
-                          idPreds contains[MPredicate] m.rcptType
-                        }
-                        .flatMap(_.rcpt)
-                        .mkString(" | ")
-                    )
-                  )
-                ),
-                edges = MNodeEdges(
-                  out = MNodeEdges.edgesToMap(
-                    passwordEdge,
-                    // Номер телефона.
-                    MEdge(
-                      predicate = MPredicates.Ident.Phone,
-                      nodeIds   = Set.empty + regCreds.phone,
-                      info = MEdgeInfo(
-                        flag = OptionUtil.SomeBool.someTrue,
-                      )
-                    ),
-                    // Электронная почта.
-                    emailEdge,
-                  )
-                ),
-              )
-              // Создать узел для юзера:
-              for {
-                docMetaSaved <- DBIO.from {
-                  mNodes.save( mperson0 )
-                }
-              } yield {
-                LOGGER.info(s"$logPrefix Created new user#${docMetaSaved.id.orNull} for cred[$regCreds]")
-                mNodes.withDocMeta( mperson0, docMetaSaved )
-              }
-
-            } { personNode0 =>
-              // Уже существует узел. Организовать сброс пароля.
-              val nodeId = personNode0.id.get
-              LOGGER.info(s"$logPrefix Found already existing user#$nodeId for phone[${regCreds.phone}]")
-              val mnode1 = MNode.edges
-                .composeLens(MNodeEdges.out)
-                .modify { edges0 =>
-                  // Убрать гарантировано ненужные эджи:
-                  val edges1 = edges0
+            existingPersonNodeOpt0.fold {
+              credentialsStorage.signUp(
+                mRegCtx,
+                nodeTechName = Some(
+                  idToken0.idMsgs
                     .iterator
-                    .filter { e0 =>
-                      e0.predicate match {
-                        // Эджи пароля удаляем безусловно
-                        case MPredicates.Ident.Password =>
-                          LOGGER.trace(s"$logPrefix Drop edge Password $e0 of node#$nodeId\n $e0")
-                          false
-                        // Эджи почты: неподтвердённые - удалить.
-                        case MPredicates.Ident.Email if !e0.info.flag.contains(true) =>
-                          LOGGER.trace(s"$logPrefix Drop edge Email#${e0.nodeIds.mkString(",")} with flag=false on node#$nodeId\n $e0")
-                          false
-                        // Остальные эджи - пускай живут.
-                        case _ => true
-                      }
+                    .filter { m =>
+                      idPreds contains[MPredicate] m.rcptType
                     }
-                    .to( LazyList )
-
-                  // Отработать email-эдж. Если он уже есть для текущей почты, то оставить как есть. Иначе - создать новый, неподтверждённый эдж.
-                  val edges2 = edges1
-                    .find { e =>
-                      (e.predicate ==* MPredicates.Ident.Email) &&
-                      (e.nodeIds contains regCreds.email)
-                    }
-                    .fold {
-                      // Создать email-эдж
-                      LOGGER.trace(s"$logPrefix Inserting Email-edge#${regCreds.email} on node#$nodeId\n $emailEdge")
-                      emailEdge #:: edges1
-                    } { emailExistsEdge =>
-                      LOGGER.trace(s"$logPrefix Keep edge Email#${regCreds.email} as-is on node#$nodeId\n $emailExistsEdge")
-                      edges1
-                    }
-
-                  MNodeEdges.edgesToMap1( passwordEdge #:: edges2 )
-                }( personNode0 )
-
-              DBIO.from {
-                mNodes.saveReturning( mnode1 )
-              }
+                    .flatMap(_.rcpt)
+                    .mkString(" | ")
+                ),
+              )
+            } { mnode =>
+              credentialsStorage.updateEmailPw( mnode, mRegCtx, emailFlag = false )
             }
           }
 
@@ -955,7 +855,7 @@ final class Ident @Inject() (
 
         } yield {
           LOGGER.debug(s"$logPrefix Updated ott#${mott2.id} with finalized id-token.")
-          (personNodeSaved, regCreds, existingPersonNodeOpt.nonEmpty)
+          (personNodeSaved, regCreds, existingPersonNodeOpt0.nonEmpty)
         }
 
         // Запустить транзацию обновления состояния хранимого токена и создания узла юзера.
@@ -1106,13 +1006,6 @@ final class Ident @Inject() (
   }
 
 
-  /** На будущее, если необходимо явно перехэшировать пароль, который вроде бы не изменился. */
-  private def _isForceReHashPassword(e: MEdge): Boolean = {
-    // Если изменится формат пароля с исходного scrypt на что-либо ещё, то тут можно организовать проверку.
-    false
-  }
-
-
   /** Сабмит формы изменения пароля.
     *
     * @return 200, когда всё ок.
@@ -1143,88 +1036,47 @@ final class Ident @Inject() (
         implicit lazy val ctx = implicitly[Context]
 
         // 2018-02-27 Менять пароль может только юзер, уже имеющий логин. Остальные - идут на госуслуги.
-        val resOkFut = for {
+        (for {
           personNode0 <- request.user.personNodeFut
 
-          p = MPredicates.Ident
-
-          pwEdges = personNode0.edges
-            .withPredicateIter( p.Password )
-            .toList
-
-          oldPwEdgeOpt = pwEdges.find { e =>
-            e.info.textNi
-              .exists( scryptUtil.checkHash(request.body.pwOld, _) )
-          }
-
-          if {
-            val r = oldPwEdgeOpt.nonEmpty
-            if (!r) {
+          isOldPasswordCorrect <- credentialsStorage.checkPassword( personNode0, request.body.pwOld )
+          _ = {
+            if (!isOldPasswordCorrect) {
               LOGGER.warn(s"$logPrefix Current password does not match to pw.typed by user.")
               val msgCode = MsgCodes.`Invalid.password`
-              throw new MCheckException(
+              throw MCheckException(
                 getMessage       = msgCode,
                 fields           = MPwChangeForm.Fields.PW_OLD_FN :: Nil,
                 localizedMessage = Some( ctx.messages(msgCode) )
               )
             }
-            r
-          }
 
-          oldPwEdge = oldPwEdgeOpt.get
-
-          // Залить обновлённые эджи в узел юзера:
-          _ <- {
-            if (
-              (request.body.pwOld ==* request.body.pwNew) ||
-              _isForceReHashPassword(oldPwEdge)
-            ) {
-              // Пароль не изменился - ничего пересохранять и надо.
+            val isPwChanged = request.body.pwOld !=* request.body.pwNew
+            if (!isPwChanged) {
+              // Password not changed (old == new), nothing to save/update.
               LOGGER.info(s"$logPrefix Password not changed - keeping node as-is.")
-              Future.successful( personNode0 )
-            } else {
-              LOGGER.trace(s"$logPrefix Found matching password-edge, will update:\n $oldPwEdge")
-              val pwNewHashSome = Some( scryptUtil.mkHash( request.body.pwNew ) )
-
-              val pwEdgeModF = MEdge.info
-                .composeLens( MEdgeInfo.textNi )
-                .set( pwNewHashSome )
-
-              val mnodeModF = MNode.edges
-                .composeLens( MNodeEdges.out )
-                .modify { edges0 =>
-                  for (e <- edges0) yield {
-                    // Заменяем пароль в эдже старого пароля.
-                    // TODO Возможно, надо сохранять эдж старого пароля с flag=false, а при логине по старому паролю сообщать, что использованный старый пароль был ранее изменён?
-                    // Сравниваем по == вместо eq, на случай теоретического конфликта версий в tryUpdate()
-                    if (e ==* oldPwEdge) pwEdgeModF(e)
-                    else e
-                  }
-                }
-
-              mNodes.tryUpdate(personNode0)( mnodeModF )
+              throw HttpResultingException( NoContent )
             }
           }
 
+          mnode2 <- credentialsStorage.resetPassword( personNode0, request.body.pwNew )
         } yield {
-          // Вернуть ответ о том, что всё ок.
-          LOGGER.info(s"$logPrefix User successfully changed password.")
+          // Just return ok.
+          LOGGER.info(s"$logPrefix User successfully changed password, node.v: ${personNode0.versioning}=>${mnode2.versioning}.")
           NoContent
-        }
+        })
+          .recoverWith {
+            case checkException: MCheckException =>
+              NotAcceptable( Json.toJson(checkException) )
+            case resEx: HttpResultingException =>
+              resEx.httpResFut
+            case ex: Throwable =>
+              val msg = s"$logPrefix Failed to update password for user#${request.user.personIdOpt.orNull}"
+              if (ex.isInstanceOf[NoSuchElementException]) LOGGER.warn(msg)
+              else LOGGER.error(msg, ex)
 
-        resOkFut.recoverWith {
-          case ex: Throwable =>
-            ex match {
-              case mce: MCheckException =>
-                NotAcceptable( Json.toJson(mce) )
-              case _ =>
-                val msg = s"$logPrefix Failed to update password for user#${request.user.personIdOpt.orNull}"
-                if (ex.isInstanceOf[NoSuchElementException]) LOGGER.warn(msg)
-                else LOGGER.error(msg, ex)
-
-                ExpectationFailed
-            }
-        }
+              ExpectationFailed
+          }
       }
     }
   }
@@ -1354,72 +1206,26 @@ final class Ident @Inject() (
 
       case authenticated: AuthenticationResult.Authenticated =>
         import esModel.api._
-        import mPersonIdentModel.api._
 
         // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
         val profile = authenticated.profile
 
         for {
           // Поиск уже известного юзера:
-          knownUserOpt <- mNodes.getByUserIdProv( extService, profile.userId )
+          knownUsers <- credentialsStorage.findByExtServiceUserId( extService, profile.userId )
+          knownUserOpt = {
+            if (knownUsers.lengthIs > 1)
+              throw new IllegalStateException(s"Too many users[${knownUsers.length}] found with same id: [${knownUsers.iterator.flatMap(_.id).mkString(" ")}]")
+
+            knownUsers.headOption
+          }
 
           // Обработка результата поиска существующего юзера.
           mperson2 <- {
             knownUserOpt.fold {
               // Юзер отсутствует. Создать нового юзера:
               // TODO Для сохранения перс.данных показать вопрос.
-              val mperson0 = MNode(
-                common = MNodeCommon(
-                  ntype       = MNodeTypes.Person,
-                  isDependent = false
-                ),
-                meta = MMeta(
-                  basic = MBasicMeta(
-                    nameOpt   = profile.fullName,
-                    techName  = Some(profile.providerId + ":" + profile.userId),
-                    langs     = request.messages.lang.code :: Nil
-                  ),
-                  person  = MPersonMeta(
-                    nameFirst   = profile.firstName,
-                    nameLast    = profile.lastName,
-                    extAvaUrls  = profile.avatarUrl.toList,
-                    emails      = profile.emails.toList
-                  )
-                  // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
-                ),
-                edges = MNodeEdges(
-                  out = {
-                    val extIdentEdge = MEdge(
-                      predicate = MPredicates.Ident.Id,
-                      nodeIds   = Set.empty + profile.userId,
-                      info      = MEdgeInfo(
-                        extService = Some( extService )
-                      )
-                    )
-                    var identEdgesAcc: List[MEdge] = extIdentEdge :: Nil
-
-                    def _maybeAddTrustedIdents(pred: MPredicate, keys: Iterable[String]) = {
-                      if (keys.nonEmpty) {
-                        identEdgesAcc ::= MEdge(
-                          predicate = pred,
-                          nodeIds   = keys.toSet,
-                          info = MEdgeInfo(
-                            flag = Some(true)
-                          )
-                        )
-                      }
-                    }
-
-                    _maybeAddTrustedIdents( MPredicates.Ident.Email, profile.emails )
-                    _maybeAddTrustedIdents( MPredicates.Ident.Phone, profile.phones )
-
-                    MNodeEdges.edgesToMap1( identEdgesAcc )
-                  }
-                )
-              )
-
-              LOGGER.debug(s"$logPrefix Registering new user via service#${extService}:\n $profile ...")
-              mNodes.saveReturning(mperson0)
+              credentialsStorage.signUpExtService( extService, profile, lang = Option(request.messages.lang.code) )
 
             } { knownPerson0 =>
               // Юзер с таким id уже найден.

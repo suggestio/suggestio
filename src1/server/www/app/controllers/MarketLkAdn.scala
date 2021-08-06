@@ -6,14 +6,14 @@ import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.n2.edge.search.Criteria
-import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
-import io.suggest.n2.node.common.MNodeCommon
-import io.suggest.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.{Csrf, ScryptUtil}
 import io.suggest.session.MSessionKeys
+import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.Inject
 import models.mctx.Context
 import models.mlk.MNodeShowArgs
@@ -26,6 +26,7 @@ import util.FormUtil
 import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
+import util.ident.store.{ICredentialsStorage, MRegContext}
 import util.img.{DynImgUtil, GalleryUtil, LogoUtil}
 import util.showcase.ShowcaseUtil
 import views.html.lk.adn._
@@ -63,6 +64,7 @@ final class MarketLkAdn @Inject() (
   private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
   private lazy val scryptUtil = injector.instanceOf[ScryptUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
 
   import mCommonDi.{slick, ec}
 
@@ -247,47 +249,22 @@ final class MarketLkAdn @Inject() (
 
           } else {
             import esModel.api._
+            val emailSome = Some( Validators.normalizeEmail( qs.email ) )
+
             for {
+              // TODO Search for already existing user via email address.
+              // Create new person node with pre-defined email:
               personIdOpt <- {
                 if (!isAuth) {
-                  val mperson0 = MNode(
-                    common = MNodeCommon(
-                      ntype = MNodeTypes.Person,
-                      isDependent = false
-                    ),
-                    meta = MMeta(
-                      basic = MBasicMeta(
-                        nameOpt = Some( qs.email ),
-                        langs = request.messages.lang.code :: Nil
-                      ),
-                      person = MPersonMeta(
-                        emails = qs.email :: Nil
-                      )
-                    ),
-                    edges = MNodeEdges(
-                      out = {
-                        val emailIdent = MEdge(
-                          predicate = MPredicates.Ident.Email,
-                          nodeIds   = Set.empty + qs.email,
-                          info = MEdgeInfo(
-                            flag = Some(true)
-                          )
-                        )
-                        val pwIdent = MEdge(
-                          predicate = MPredicates.Ident.Password,
-                          info = MEdgeInfo(
-                            textNi = Some( scryptUtil.mkHash(passwordOpt.get) )
-                          )
-                        )
-                        val edges = emailIdent :: pwIdent :: Nil
-                        MNodeEdges.edgesToMap1( edges )
-                      }
-                    )
-                  )
-
                   // Сохранение данных.
                   for {
-                    meta <- mNodes.save( mperson0 )
+                    meta <- credentialsStorage.signUp(
+                      regContext = MRegContext(
+                        password = passwordOpt.get,
+                        email = emailSome,
+                      ),
+                      nodeTechName = emailSome,
+                    )
                   } yield {
                     meta.id
                   }

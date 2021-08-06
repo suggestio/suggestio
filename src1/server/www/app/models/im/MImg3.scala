@@ -3,7 +3,6 @@ package models.im
 import java.io.FileNotFoundException
 import java.time.OffsetDateTime
 import java.util.NoSuchElementException
-
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.es.model.EsModel
@@ -18,6 +17,7 @@ import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.streams.StreamsUtil
+import io.suggest.text.StringUtil
 import io.suggest.up.UploadConstants
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.mproj.ICommonDi
@@ -358,8 +358,6 @@ class MImgs3 @Inject() (
     }
   }
 
-  private def ORIG_META_CACHE_SECONDS = 60
-
   /** Сохранённые в узле  метаданные картинки. */
   def imgMetaData(mimg: MImgT): Future[Option[ImgSzDated]] = {
     for (mmediaOpt <- mediaOptFut(mimg)) yield {
@@ -509,5 +507,11 @@ case class MImg3(
   }
 
   def withDynImgId(dynImgId: MDynImgId) = copy(dynImgId = dynImgId)
+
+  override def toString: String = StringUtil.toStringHelper(this) { helperF =>
+    val helperF2 = helperF("")
+    helperF2( dynImgId )
+    userFileName foreach helperF2
+  }
 
 }

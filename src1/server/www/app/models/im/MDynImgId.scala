@@ -230,5 +230,7 @@ final case class MDynImgId(
     }
   }
 
+  override def toString = fileName
+
 }
 

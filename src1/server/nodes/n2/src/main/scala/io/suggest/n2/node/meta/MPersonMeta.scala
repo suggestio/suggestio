@@ -22,15 +22,10 @@ object MPersonMeta
     val NAME_FIRST_FN   = "firstName"
     val NAME_LAST_FN    = "lastName"
     val EXT_AVA_URL_FN  = "avatarUrl"
-    val EMAIL_FN        = "email"
   }
 
   /** Вернуть пустой экземпляр модели, используется очень часто. */
-  override val empty: MPersonMeta = {
-    new MPersonMeta() {
-      override def nonEmpty = false
-    }
-  }
+  override def empty = MPersonMeta()
 
 
   import Fields._
@@ -43,11 +38,6 @@ object MPersonMeta
       .inmap[List[String]](
         { _ getOrElse Nil },
         { urls => if (urls.isEmpty) None else Some(urls) }
-      ) and
-    (__ \ EMAIL_FN).formatNullable[List[String]]
-      .inmap [List[String]] (
-        _ getOrElse Nil,
-        { emails => if (emails.isEmpty) None else Some(emails) }
       )
   )(apply, unlift(unapply))
 
@@ -59,18 +49,16 @@ object MPersonMeta
       F.NAME_FIRST_FN   -> FText.indexedJs,
       F.NAME_LAST_FN    -> FText.indexedJs,
       F.EXT_AVA_URL_FN  -> FText.notIndexedJs,
-      F.EMAIL_FN        -> FText.notIndexedJs,
     )
   }
 
 }
 
 
-case class MPersonMeta(
+final case class MPersonMeta(
   nameFirst     : Option[String]    = None,
   nameLast      : Option[String]    = None,
   extAvaUrls    : List[String]      = Nil,
-  emails        : List[String]      = Nil
 )
   extends EmptyProduct
 

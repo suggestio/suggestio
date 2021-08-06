@@ -1,0 +1,26 @@
+## Joint TCP-forwarding config map.
+## nginx-ingress handles only one last --tcp-services-configmap value,
+## so everything needed must be tabled here.
+##
+## After update, need to check nginx-ingress args at:
+## $ kubectl -n ingress-nginx edit deploy
+## List of args in spec/template/spec/container/args:
+## Ensure line appended:
+##          - --tcp-services-configmap=default/nginx-tcp-services
+##
+## If pod shows no ports on node available,
+## reset replicasCount to 0, save-apply and then back to 2
+##   kubectl -n ingress-nginx edit deploy
+## https://github.com/kubernetes/ingress-nginx/issues/4626
+##
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-tcp-services
+  namespace: default
+data:
+  "222": "gitlab-ce/gitlab-gitlab-shell:22"
+  "389": "ldap/ldap-sio-openldap-stack-ha:389"
+  "636": "ldap/ldap-sio-openldap-stack-ha:636"
+---

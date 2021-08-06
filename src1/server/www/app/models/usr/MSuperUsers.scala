@@ -1,21 +1,13 @@
 package models.usr
 
-import io.suggest.common.empty.OptionUtil
-
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModel, MEsNestedSearch}
-import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.n2.node.common.MNodeCommon
-import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
-import io.suggest.n2.edge.search.Criteria
-import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
 import io.suggest.text.StringUtil
 import play.api.{Configuration, Environment, Mode}
 import play.api.inject.Injector
+import util.ident.store.{ICredentialsStorage, MRegContext}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -84,12 +76,8 @@ final class MSuperUsers @Inject()(
 
   /** Reset SU_IDS, possibly initialize neede person nodes. */
   def resetSuperuserIds(suEmails: Set[String], createIfMissing: Boolean): Future[_] = {
-    val mNodes = injector.instanceOf[MNodes]
-    val scryptUtil = injector.instanceOf[ScryptUtil]
-    val esModel = injector.instanceOf[EsModel]
+    val credentialsStorage = injector.instanceOf[ICredentialsStorage]
     implicit val ec = injector.instanceOf[ExecutionContext]
-
-    import esModel.api._
 
     val logPrefix = s"resetSuperuserIds(#${suEmails.size}, $createIfMissing): "
     LOGGER.debug(s"${logPrefix}Let's do it. There are ${suEmails.size} superuser emails: [${suEmails.mkString(", ")}]")
@@ -97,20 +85,7 @@ final class MSuperUsers @Inject()(
     val resFut = for {
 
       // Find existing person nodes, related to superuser emails.
-      userNodes <- mNodes.dynSearch {
-        new MNodeSearch {
-          override val nodeTypes = MNodeTypes.Person :: Nil
-          override val outEdges: MEsNestedSearch[Criteria] = {
-            val cr = Criteria(
-              predicates        = MPredicates.Ident.Email :: Nil,
-              nodeIds           = suEmails.toSeq,
-              nodeIdsMatchAll   = false,
-              flag              = OptionUtil.SomeBool.someTrue,
-            )
-            MEsNestedSearch.plain( cr )
-          }
-        }
-      }
+      userNodes <- credentialsStorage.findByEmail( suEmails.toSeq: _* )
 
       // Collect missing person nodes:
       email2nodeMap = (for {
@@ -128,42 +103,17 @@ final class MSuperUsers @Inject()(
           // Initialize superuser with email and random password.
           LOGGER.debug(s"$logPrefix Installing new superuser for $email ...")
           val password = StringUtil.randomId(20)
-
-          val mperson0 = MNode(
-            common = MNodeCommon(
-              ntype = MNodeTypes.Person,
-              isDependent = false
-            ),
-            meta = MMeta(
-              basic = MBasicMeta(
-                nameOpt = Some(email),
-                langs   = "ru" :: Nil,
-              )
-            ),
-            edges = MNodeEdges(
-              out = {
-                val emailIdentEdge = MEdge(
-                  predicate = MPredicates.Ident.Email,
-                  nodeIds   = Set.empty + email,
-                  info = MEdgeInfo(
-                    flag = Some(true)
-                  )
-                )
-                val pwIdentEdge = MEdge(
-                  predicate = MPredicates.Ident.Password,
-                  info = MEdgeInfo(
-                    textNi = Some( scryptUtil.mkHash( password ) ),
-                    // For future: flag to ask user to reset password after login.
-                    flag = Some(false)
-                  ),
-                )
-                emailIdentEdge :: pwIdentEdge :: Nil
-              }
-            )
-          )
+          val someEmail = Some(email)
 
           for {
-            meta <- mNodes.save( mperson0 )
+            meta <- credentialsStorage.signUp(
+              regContext = MRegContext(
+                password  = password,
+                email     = Some( email ),
+                lang      = Some( "ru" ),
+              ),
+              nodeTechName = someEmail,
+            )
           } yield {
             LOGGER.info(s"$logPrefix New superuser created as node#${meta.id.orNull}\n *** login: $email\n *** password: $password")
             meta.id

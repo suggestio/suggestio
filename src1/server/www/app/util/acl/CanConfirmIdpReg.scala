@@ -13,6 +13,7 @@ import models.req.MReq
 import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.ident.IdentUtil
+import util.ident.store.ICredentialsStorage
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,6 +36,7 @@ final class CanConfirmIdpReg @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
@@ -57,32 +59,22 @@ final class CanConfirmIdpReg @Inject() (
           import esModel.api._
 
           // Запустить подсчет имеющихся у юзера магазинов
-          val msearch = new MNodeSearch {
-            override val outEdges = {
-              val cr = Criteria(
-                predicates  = MPredicates.OwnedBy :: Nil,
-                nodeIds     = personId :: Nil,
-              )
-              MEsNestedSearch.plain( cr )
-            }
-            override def limit = 5
-          }
-          val pcntFut = mNodes.dynCount(msearch)
-          // Запустить поиск имеющихся внешних идентов
-          val hasExtIdentFut = mNodes.dynExists {
+          val pcntFut = mNodes.dynCount {
             new MNodeSearch {
-              override val withIds = personId :: Nil
-              override val nodeTypes = MNodeTypes.Person :: Nil
-              override val outEdges: MEsNestedSearch[Criteria] = {
+              override val outEdges = {
                 val cr = Criteria(
-                  predicates = MPredicates.Ident.Id :: Nil,
-                  extService = Some(Nil)
+                  predicates  = MPredicates.OwnedBy :: Nil,
+                  nodeIds     = personId :: Nil,
                 )
                 MEsNestedSearch.plain( cr )
               }
-              override def limit = 1
+              override def limit = 5
             }
           }
+
+          // Запустить поиск имеющихся внешних идентов
+          val hasExtIdentFut = credentialsStorage.hasAnyExtServiceCreds( personId )
+
           // Дождаться результата поиска узлов.
           pcntFut.flatMap { pcnt =>
             if (pcnt > 0L) {

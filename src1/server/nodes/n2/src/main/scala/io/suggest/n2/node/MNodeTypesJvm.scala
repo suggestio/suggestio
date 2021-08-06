@@ -27,15 +27,12 @@ object MNodeTypesJvm {
 
       // Для юзера: можно поковыряться в email'ах.
       case MNodeTypes.Person =>
-        mnode.meta.person
-          .emails.headOption
-          .orElse {
-            import mnode.meta.person._
-            OptionUtil.maybe( nameFirst.nonEmpty || nameLast.nonEmpty ) {
-              nameFirst.fold("")(_ + HtmlConstants.SPACE) + nameLast.getOrElse("")
-            }
+        val p = mnode.meta.person
+        OptionUtil
+          .maybe( p.nonEmpty || p.nonEmpty ) {
+            p.nameFirst.fold("")(_ + HtmlConstants.SPACE) + p.nameLast.getOrElse("")
           }
-          // Переезд идентов внутрь узлов позволяет использовать иденты вместо имени.
+          // Try to use possible idents, stored inside nodes.
           .orElse {
             val I = MPredicates.Ident
             val iter0 = mnode.edges

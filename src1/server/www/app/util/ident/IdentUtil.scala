@@ -11,6 +11,7 @@ import models.usr.MSuperUsers
 import play.api.mvc._
 import japgolly.univeq._
 import play.api.inject.Injector
+import util.ident.store.ICredentialsStorage
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,6 +28,7 @@ final class IdentUtil @Inject() (
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+  private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
@@ -90,19 +92,7 @@ final class IdentUtil @Inject() (
 
         // TODO Отправить на форму регистрации, если логин через внешнего id прова.
         for {
-          n <- mNodes.dynExists {
-            new MNodeSearch {
-              override def limit = 1
-              override val withIds = personId :: Nil
-              override val outEdges: MEsNestedSearch[Criteria] = {
-                val cr = Criteria(
-                  predicates = MPredicates.Ident.Id :: Nil,
-                  extService = Some(Nil),
-                )
-                MEsNestedSearch.plain( cr )
-              }
-            }
-          }
+          n <- credentialsStorage.hasAnyExtServiceCreds( personId )
         } yield {
           if (n) {
             // Есть идентификации через соц.сети. Вероятно, юзер не закончил регистрацию.
