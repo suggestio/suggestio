@@ -5,7 +5,6 @@ import java.security.cert.X509Certificate
 import java.security.{PrivateKey, PublicKey, Security, Signature}
 import java.time.{Instant, OffsetDateTime, ZoneId}
 import java.util.{Base64, UUID}
-
 import controllers.routes
 import io.jsonwebtoken.{Claims, Jwts}
 import io.jsonwebtoken.impl.FixedClock
@@ -16,10 +15,11 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.sec.m.MKeyStore
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ueq.UnivEqUtil._
+
 import javax.inject.Inject
 import util.ident.IExtLoginAdp
-import java.{util => ju}
 
+import java.{util => ju}
 import io.suggest.err.ErrorConstants
 import io.suggest.session.MSessionKeys
 
@@ -35,6 +35,7 @@ import org.bouncycastle.cms.{CMSProcessableByteArray, CMSSignedData, CMSSignedDa
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.jcajce.{JcaContentSignerBuilder, JcaDigestCalculatorProviderBuilder}
 import play.api.Configuration
+import play.api.inject.Injector
 import play.api.libs.json.JsError
 import play.api.libs.ws.{EmptyBody, WSClient}
 import play.api.mvc.{AnyContent, QueryStringBindable, Results, Session}
@@ -50,15 +51,18 @@ import scala.util.Try
   * не особо дружащий с одноимённым протоколом.
   */
 final class EsiaLoginUtil @Inject()(
-                                     mKeyStore                : MKeyStore,
-                                     configuration            : Configuration,
-                                     contextUtil              : ContextUtil,
-                                     wsClient                 : WSClient,
-                                     implicit private val ec  : ExecutionContext,
+                                     injector                 : Injector,
                                    )
   extends IExtLoginAdp
   with MacroLogsImpl
 {
+
+  private lazy val mKeyStore = injector.instanceOf[MKeyStore]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  private lazy val contextUtil = injector.instanceOf[ContextUtil]
+  private lazy val wsClient = injector.instanceOf[WSClient]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   def KEYSTORE_ALIASES_PREFIX = "esia."
   def KEYSTORE_ALIAS =  KEYSTORE_ALIASES_PREFIX + "mykey"

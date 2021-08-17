@@ -3,7 +3,7 @@ package io.suggest.ctx
 import java.util.UUID
 import java.util.regex.Pattern
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.sec.{HmacAlgos, HmacUtil}
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -24,15 +24,14 @@ import play.api.mvc.{PathBindable, QueryStringBindable}
   *
   * Модель [[MCtxId]] защищает ctxId от модификаций с помощью сигнатуры.
   */
-@Singleton
-class MCtxIds @Inject() (
-                          configuration: Configuration
-                        )
+final class MCtxIds @Inject() (
+                                configuration: Configuration
+                              )
   extends MacroLogsImplLazy
 {
 
   /** Ключ для подписи. */
-  private val SECRET_KEY = configuration.get[String]( MCtxId.SECKET_KEY_CONF_NAME )
+  private lazy val SECRET_KEY = configuration.get[String]( MCtxId.SECKET_KEY_CONF_NAME )
 
 
   /** Посчитать сигнатуру для указанного UUID-ключа. */
@@ -98,9 +97,8 @@ case class MCtxId private[ctx](
                                 sig       : String
                               ) {
 
-  override def toString: String = {
+  override def toString: String =
     MCtxId.intoString( this )
-  }
 
 }
 
@@ -116,13 +114,11 @@ object MCtxId extends MacroLogsImplLazy {
   }
 
 
-  private val SPLIT_RE = Pattern.quote(TO_STRING_SEP).r
-
   /** Десериализация из строки. */
   def fromString(s: String): Option[MCtxId] = {
     try {
       // TODO Opt Использовать indexOf() + substring() вместо регэкспов?
-      SPLIT_RE.split(s) match {
+      Pattern.quote(TO_STRING_SEP).r.split(s) match {
         case Array(key, personIdOrEmpty, sig) =>
           val personIdOpt = if (personIdOrEmpty.isEmpty) {
             None

@@ -49,8 +49,7 @@ trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
 
 trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
-  import esModelJmxDi.ec
-  import esModelJmxDi.esModel.api._
+  import esModel.api._
   import io.suggest.util.JmxBase._
 
   override type X <: EsModelT

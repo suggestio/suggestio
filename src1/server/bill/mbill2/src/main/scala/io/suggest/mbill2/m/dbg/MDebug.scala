@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.dbg
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import slick.lifted.ProvenShape
@@ -11,7 +11,6 @@ import slick.lifted.ProvenShape
   * Created: 22.05.17 22:30
   * Description: slick-модель, представляющая хранилище отладочной инфы по биллинга.
   */
-@Singleton
 class MDebugs @Inject() (
                           protected val profile  : SioPgSlickProfileT
                         ) {
@@ -86,11 +85,6 @@ class MDebugs @Inject() (
       .headOption
   }
 
-}
-
-/** Интерфейс для поля с DI-инстансом [[MDebugs]]. */
-trait IMDebugs {
-  def mDebugs: MDebugs
 }
 
 

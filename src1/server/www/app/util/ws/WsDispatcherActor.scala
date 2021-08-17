@@ -25,12 +25,12 @@ class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) extends MacroLogsImpl 
 
   import mCommonDi._
 
-  val ACTOR_NAME = "wsd"
+  def ACTOR_NAME = "wsd"
 
-  implicit val ASK_TIMEOUT = Timeout(5.seconds)
+  implicit def ASK_TIMEOUT = Timeout(5.seconds)
 
-  private val siowebSup = current.injector.instanceOf[SiowebSup]
-  val ACTOR_PATH = siowebSup.actorPath / ACTOR_NAME
+  private lazy val siowebSup = current.injector.instanceOf[SiowebSup]
+  def ACTOR_PATH = siowebSup.actorPath / ACTOR_NAME
 
   def actorSelection = actorSystem.actorSelection(ACTOR_PATH)
 

@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.contract
 
 import java.time.OffsetDateTime
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.m.sql.ITableName
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.dt.DateCreatedSlick
@@ -42,7 +42,6 @@ object MContract extends ITableName {
 
 
 /** slick-модель таблицы контрактов. */
-@Singleton
 final class MContracts @Inject()(
                                   injector: Injector,
                                   override protected val profile    : SioPgSlickProfileT,

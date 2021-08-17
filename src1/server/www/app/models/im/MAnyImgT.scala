@@ -1,6 +1,6 @@
 package models.im
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.suggest.common.geom.d2.ISize2di
@@ -71,17 +71,19 @@ trait MAnyImgsT[T <: MAnyImgT] extends IMCommonDi {
 
 
 /** Статическая над-модель, реализующая разные общие методы для любых картинок. */
-@Singleton
 class MAnyImgs @Inject() (
-                           mLocalImgs               : MLocalImgs,
-                           mImgs3                   : MImgs3,
                            override val mCommonDi   : ICommonDi
                          )
   extends MAnyImgsT[MAnyImgT]
   with MacroLogsImpl
 {
 
-  import mCommonDi._
+  import mCommonDi.current.injector
+
+  private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
+  private lazy val mImgs3 = injector.instanceOf[MImgs3]
+
+  import mCommonDi.ec
 
   /** Удалить картинку из всех img-моделей. */
   override def delete(mimg: MAnyImgT): Future[_] = {

@@ -2,16 +2,15 @@ package util.img.cron
 
 import java.nio.file.Files
 import javax.inject.Inject
-
 import io.suggest.async.AsyncUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.{MDynImgId, MImgs3, MLocalImg, MLocalImgs}
+import models.im.{MDynImgId, MImgs3, MLocalImg, MLocalImgsConf}
 import models.mcron.MCronTask
-import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
+import play.api.inject.Injector
 import util.cron.ICronTasksProvider
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.Success
@@ -24,16 +23,17 @@ import scala.util.Success
   * а в permanent ещё/уже нет картинок с данным id.
   */
 class LocalImgsDeleteNotExistingInPermanent @Inject()(
-                                                       mLocalImgs  : MLocalImgs,
-                                                       mImgs3      : MImgs3,
-                                                       asyncUtil   : AsyncUtil,
-                                                       mCommonDi   : ICommonDi
+                                                       injector        : Injector,
                                                      )
   extends ICronTasksProvider
   with MacroLogsImpl
 {
 
-  import mCommonDi._
+  private def mLocalImgsConf = injector.instanceOf[MLocalImgsConf]
+  private def mImgs3 = injector.instanceOf[MImgs3]
+  private def asyncUtil = injector.instanceOf[AsyncUtil]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
+
 
   private def DNEIP_CONF_PREFIX = "m.img.local.dneip"
 
@@ -68,7 +68,7 @@ class LocalImgsDeleteNotExistingInPermanent @Inject()(
   }
 
   def dneipFindAndDelete(): Unit = {
-    val dirStream = Files.newDirectoryStream( mLocalImgs.DIR.toPath )
+    val dirStream = Files.newDirectoryStream( mLocalImgsConf.DIR.toPath )
     try {
       val oldNow = System.currentTimeMillis() - DNEIP_OLD_DIR_AGE.toMillis
       dirStream

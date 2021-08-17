@@ -28,12 +28,12 @@ class Bill2Conf @Inject() (
   private def mNodes = injector.instanceOf[MNodes]
   private def _esModel = injector.instanceOf[EsModel]
   private def actorSystem = injector.instanceOf[ActorSystem]
+  private def configuration = injector.instanceOf[Configuration]
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
   lazy val CBCA_NODE_ID: String = {
     val ck = "bill.cbca.node.id"
-    val res = injector
-      .instanceOf[Configuration]
+    val res = configuration
       .getOptional[String](ck)
       .getOrElse {
         val r = "-vr-hrgNRd6noyQ3_teu_A"

@@ -1,6 +1,6 @@
 package util.adv.geo
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
@@ -27,7 +27,6 @@ import scala.concurrent.Future
   * Created: 30.09.16 15:19
   * Description: Утиль для форм георазмещения для нужд геолокации.
   */
-@Singleton
 final class AdvGeoLocUtil @Inject() (
                                       mCommonDi         : ICommonDi
                                     )
@@ -281,9 +280,4 @@ final class AdvGeoLocUtil @Inject() (
 
   }
 
-}
-
-
-trait IAdvGeoLocUtilDi {
-  val advGeoLocUtil: AdvGeoLocUtil
 }

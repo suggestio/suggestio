@@ -2,8 +2,7 @@ package models.im
 
 import java.io.File
 import java.time.{Instant, ZoneOffset}
-
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import akka.stream.scaladsl.FileIO
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.MSize2di
@@ -15,6 +14,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
 import org.im4java.core.Info
+import play.api.{Configuration, Environment}
 import util.img.ImgFileUtil
 
 import scala.concurrent.duration._
@@ -35,35 +35,26 @@ import scala.util.Try
  *
  * В итоге, получилась эта модель.
  */
-
-@Singleton
 class MLocalImgs @Inject() (
-                             imgFileUtil                 : ImgFileUtil,
-                             asyncUtil                   : AsyncUtil,
                              override val mCommonDi      : ICommonDi
                            )
   extends MAnyImgsT[MLocalImg]
   with MacroLogsImpl
 {
 
-  import mCommonDi._
+  import mCommonDi.{ec, cacheApiUtil}
+  import mCommonDi.current.injector
 
-  def mimeUtilJvm = current.injector.instanceOf[MimeUtilJvm]
+  private lazy val mLocalImgsConf = injector.instanceOf[MLocalImgsConf]
+  private lazy val imgFileUtil = injector.instanceOf[ImgFileUtil]
+  private lazy val asyncUtil = injector.instanceOf[AsyncUtil]
+  private lazy val mimeUtilJvm = injector.instanceOf[MimeUtilJvm]
 
   /** Сколько модель должна кешировать в голове результат вызова identify? */
   private def IDENTIFY_CACHE_TTL_SECONDS = 120
 
-  /** Адрес img-директории, который используется для хранилища. */
-  private def DIR_REL = configuration.getOptional[String]("m.local.img.dir.rel")
-    .getOrElse("picture/local")
-
-  /** Экземпляр File, точно указывающий на директорию с данными этой модели. */
-  def DIR = current.environment.getFile(DIR_REL)
-
-  DIR.mkdirs()
-
   def getFsImgDir(mimg: MLocalImg): File    = getFsImgDir(mimg.dynImgId.origNodeId)
-  def getFsImgDir(rowKeyStr: String): File  = new File(DIR, rowKeyStr)
+  def getFsImgDir(rowKeyStr: String): File  = new File( mLocalImgsConf.DIR, rowKeyStr )
 
 
   def deleteSync(mimg: MLocalImg): Boolean = {
@@ -239,12 +230,27 @@ class MLocalImgs @Inject() (
 
 }
 
+/** Minimal dependencies configuration class for MLocalImgs. Need to be single-used eagerly. */
+final class MLocalImgsConf @Inject()(
+                                      environment: Environment,
+                                      configuration: Configuration
+                                    ) {
 
-/** Интерфейс для поля с DI-инстансом [[MLocalImgs]]. */
-trait IMLocalImgs {
-  def mLocalImgs: MLocalImgs
+  /** Адрес img-директории, который используется для хранилища. */
+  private def DIR_REL = configuration.getOptional[String]("m.local.img.dir.rel")
+    .getOrElse("picture/local")
+
+  /** Экземпляр File, точно указывающий на директорию с данными этой модели. */
+  lazy val DIR = environment.getFile(DIR_REL)
+
+  /** Initialize base filesystem directory for MLocalImgs model.
+    * To run this code only when application loads.
+    */
+  def ensureStorageDirectories(): Unit = {
+    DIR.mkdirs()
+  }
+
 }
-
 
 
 /** Экземпляр класса локально хранимой картинки в ФС. */

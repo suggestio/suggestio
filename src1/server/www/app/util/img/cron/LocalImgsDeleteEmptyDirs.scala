@@ -1,16 +1,15 @@
 package util.img.cron
 
 import java.nio.file.{Files, Path}
-
 import javax.inject.Inject
 import io.suggest.async.AsyncUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.MLocalImgs
+import models.im.MLocalImgsConf
 import models.mcron.MCronTask
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 import util.cron.ICronTasksProvider
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
@@ -22,15 +21,15 @@ import scala.jdk.CollectionConverters._
   * Внутри, для работы с ФС, используется java.nio.
   */
 class LocalImgsDeleteEmptyDirs @Inject()(
-                                          mLocalImgs    : MLocalImgs,
-                                          asyncUtil     : AsyncUtil,
-                                          mCommonDi     : ICommonDi
+                                          injector      : Injector,
                                         )
   extends ICronTasksProvider
   with MacroLogsImpl
 {
 
-  import mCommonDi._
+  private def mLocalImgsConf = injector.instanceOf[MLocalImgsConf]
+  private def asyncUtil = injector.instanceOf[AsyncUtil]
+  implicit def ec = injector.instanceOf[ExecutionContext]
 
 
   /** Как часто инициировать проверку? */
@@ -63,7 +62,7 @@ class LocalImgsDeleteEmptyDirs @Inject()(
 
   /** Пройтись по списку img-директорий, немножко заглянуть в каждую из них. */
   def findAndDeleteEmptyDirs(): Unit = {
-    val dirStream = Files.newDirectoryStream( mLocalImgs.DIR.toPath )
+    val dirStream = Files.newDirectoryStream( mLocalImgsConf.DIR.toPath )
     try {
       dirStream
         .iterator()

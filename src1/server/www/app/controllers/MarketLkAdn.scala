@@ -9,7 +9,7 @@ import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sec.util.{Csrf, ScryptUtil}
+import io.suggest.sec.util.Csrf
 import io.suggest.session.MSessionKeys
 import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
@@ -62,7 +62,6 @@ final class MarketLkAdn @Inject() (
   private lazy val isAdnNodeAdminOptOrAuth = injector.instanceOf[IsAdnNodeAdminOptOrAuth]
   private lazy val canUseNodeInvite = injector.instanceOf[CanUseNodeInvite]
   private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
-  private lazy val scryptUtil = injector.instanceOf[ScryptUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
 

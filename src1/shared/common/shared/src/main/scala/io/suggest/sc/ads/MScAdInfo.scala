@@ -3,6 +3,7 @@ package io.suggest.sc.ads
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.n2.edge.{MEdgeFlagData, MPredicates}
 import io.suggest.sc.ScConstants
+import io.suggest.text.StringUtil
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -88,6 +89,13 @@ case class MScAdInfo(
         nodeMatchInfo.nodeId.exists( ScConstants.Mad404.is404Node )
       }
     }
+  }
+
+  override def toString = StringUtil.toStringHelper( this ) { f =>
+    f("edit")(canEdit)
+    if (flags.nonEmpty) f("flags")(flags)
+    if (matchInfos.nonEmpty) f("match")(matchInfos)
+    if (isMad404) f("404")()
   }
 
 }

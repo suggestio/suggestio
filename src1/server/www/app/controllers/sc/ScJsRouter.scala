@@ -6,7 +6,7 @@ import util.acl.{IgnoreAuth, SioControllerApi}
 import views.js.sc.ScJsRouterTpl
 import japgolly.univeq._
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import scala.concurrent.duration._
 
 /**
@@ -15,9 +15,7 @@ import scala.concurrent.duration._
  * Created: 19.05.15 17:22
  * Description: Раздача js-router'а выдачи всем страждущим.
  */
-@Singleton
 final class ScJsRouter @Inject() (
-                                   ignoreAuth           : IgnoreAuth,
                                    sioControllerApi     : SioControllerApi,
                                  )
   extends MacroLogsImplLazy
@@ -27,6 +25,7 @@ final class ScJsRouter @Inject() (
   import mCommonDi.current.injector
 
   private lazy val scJsRouterTpl = injector.instanceOf[ScJsRouterTpl]
+  private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
 
 
   def jsRouterCacheHash(implicit ctx: Context): Int = {

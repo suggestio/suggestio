@@ -124,7 +124,7 @@ trait ScAdsTile
 
     def renderMadAsync(brArgs: blk.RenderArgs, adInfo: MAdInfo): Future[T]
 
-    lazy val logPrefix = s"findAds(${ctx.timestamp}):"
+    lazy val logPrefix = s"#${ctx.timestamp}:"
 
     // Часть операций по проверке и чистке qs требуют асинхронных шагов. Делаем:
     lazy val _qsClearedFut = for {
@@ -487,33 +487,43 @@ trait ScAdsTile
 
     /** Список ресиверов, в которых допускается рендер карточек в-раскрытую. */
     private lazy val _adDisplayOpenedRcvrIds = {
-      MEsUuId(nodeId404) ::
+      val r = MEsUuId(nodeId404) ::
         _qs.search.rcvrId.toList reverse_:::
         _qs.search.tagNodeId.toList
+
+      LOGGER.trace(s"_adDisplayOpenedRcvrIds: qsRaw=$qsRaw => [${r.length}][${r.mkString(", ")}]")
+      r
     }
 
     // TODO brArgs содержит кучу неактуального мусора, потому что рендер уехал на клиент. Следует удалить лишние поля следом за v2-выдачей.
     override def renderMadAsync(brArgs: RenderArgs, adInfo: MAdInfo): Future[T] = {
       // Требуется рендер только main-блока карточки.
       Future {
+        lazy val logPrefix2 = s"renderMadAsync(${brArgs.mad.idOrNull})$logPrefix:"
+
         // Можно рендерить карточку сразу целиком, если на данном узле карточка размещена как заранее открытая.
         // 404-узел сюда же на правах костыля:
+        val advEdges = brArgs.mad.edges
+          .withPredicate( MPredicates.Receiver, MPredicates.TaggedBy )
         val isDisplayOpened = _adDisplayOpenedRcvrIds
           .exists { nodeId =>
-            brArgs.mad.edges
-              .withPredicateIter( MPredicates.Receiver, MPredicates.TaggedBy )
-              .exists { medge =>
+            advEdges.out.exists { medge =>
+              val r =
                 (medge.nodeIds contains nodeId.id) &&
                 (medge.info.flagsMap contains MEdgeFlags.AlwaysOpened)
-              }
+
+              if (r) LOGGER.trace(s"$logPrefix2 Found AlwaysOpened edge on node#$nodeId\n $medge")
+              r
+            }
           }
 
         // Узнать, какой шаблон рендерить.
         val (tpl2, selPathRev): (Tree[JdTag], List[Int]) = if (isDisplayOpened) {
-          LOGGER.trace(s"$logPrefix Ad#${brArgs.mad.idOrNull} renders focused by default.")
+          LOGGER.trace(s"$logPrefix2 Render as focused...")
           adInfo.doc.template -> Nil
         } else {
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
+          LOGGER.trace(s"$logPrefix2 Render main block#${adInfo.mainBlockIndex} only")
           jdAdUtil.resetBlkWide( adInfo.mainBlock ) -> (adInfo.mainBlockIndex :: Nil)
         }
 
@@ -548,13 +558,16 @@ trait ScAdsTile
           jd <- jdFut
           canEditOpt <- canEditFocusedOptFut
         } yield {
+          val scAdInfo = MScAdInfo(
+            canEditOpt      = canEditOpt,
+            flags           = scUtil.collectScRcvrFlags( _qs, brArgs.mad ),
+            matchInfos      = adInfo.matchInfos,
+          )
+          LOGGER.trace(s"$logPrefix2 Done ${jd.doc.tagId}\n Edges: [${brArgs.mad.edges.out.length}]=>[${edges2.out.length}] = [${edges2.out.iterator.flatMap(_.doc.id).mkString(",")}]\n scAdInfo = $scAdInfo")
+
           MSc3AdData(
             jd   = jd,
-            info = MScAdInfo(
-              canEditOpt      = canEditOpt,
-              flags           = scUtil.collectScRcvrFlags( _qs, brArgs.mad ),
-              matchInfos      = adInfo.matchInfos,
-            )
+            info = scAdInfo,
           )
         }
       }

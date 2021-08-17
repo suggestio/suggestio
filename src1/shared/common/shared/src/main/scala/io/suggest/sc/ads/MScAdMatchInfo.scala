@@ -6,6 +6,7 @@ import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.n2.node.MNodeType
+import io.suggest.text.StringUtil
 
 /**
   * Suggest.io
@@ -42,7 +43,12 @@ object MScAdMatchInfo {
 case class MScAdMatchInfo(
                            predicates         : Set[MPredicate]           = Set.empty,
                            nodeMatchings      : Seq[MScNodeMatchInfo]     = Nil,
-                         )
+                         ) {
+  override def toString = StringUtil.toStringHelper(null) { f =>
+    if (predicates.nonEmpty) f("pred")(predicates)
+    if (nodeMatchings.nonEmpty) f("node")(nodeMatchings)
+  }
+}
 
 
 object MScNodeMatchInfo {
@@ -57,4 +63,9 @@ object MScNodeMatchInfo {
 case class MScNodeMatchInfo(
                              nodeId   : Option[String]    = None,
                              ntype    : Option[MNodeType] = None,
-                           )
+                           ) {
+  override def toString = StringUtil.toStringHelper( null ) { f =>
+    nodeId foreach f("id")
+    ntype foreach f("ntype")
+  }
+}

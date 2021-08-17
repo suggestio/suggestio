@@ -1,3 +1,4 @@
+@this(cdnConf: util.cdn.CdnConf)
 @(args: msc.MScSiteArgs)(implicit ctx: Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
@@ -62,7 +63,7 @@
   @* CDN может быть отключен в конфиге, чтобы Same-Origin не резал webfonts. CORS работает как-то ненадежно на ^старых^ iOS на iphone через webapp. *@
   @defining( "stylesheets/market/showcase.css" ) { scCss =>
     <link type="text/css" rel="stylesheet" media="screen"
-          href="@(if(cdn.FONTS_ENABLED) cdn.asset(scCss) else routes.Assets.versioned(scCss))"/>
+          href="@(if(cdnConf.FONTS_ENABLED) cdn.asset(scCss) else routes.Assets.versioned(scCss))"/>
   }
 
   @args.headAfter

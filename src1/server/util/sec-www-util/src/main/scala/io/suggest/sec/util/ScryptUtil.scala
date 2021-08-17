@@ -1,9 +1,10 @@
 package io.suggest.sec.util
 
-import javax.inject.{Inject, Singleton}
-
-import com.lambdaworks.crypto.SCryptUtil
+import javax.inject.Inject
+import com.lambdaworks.crypto.{SCryptUtil => UnderlyingScryptUtil}
 import io.suggest.util.JmxBase
+import play.api.{Configuration, Environment}
+import play.api.inject.{Binding, Injector, Module}
 
 /**
   * Suggest.io
@@ -18,23 +19,19 @@ import io.suggest.util.JmxBase
 // Можно и bouncycastle, но у неё формат хэша другой, а хеши уже хранятся в БД идентов.
 // http://stackoverflow.com/a/41992593
 
-@Singleton
-class ScryptUtil {
-
-  // Конструктор класса.
-  // Запретить использование нативных либ. См.коммент к disableNativeCode().
-  disableNativeCode()
-
+final class ScryptUtil {
 
   // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
   // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
-  // По дефолту жрём 16 метров с запретом параллелизации.
+  // Default values from docs (16384==2^14, 8, 1)==2^24 == 16 MiB RAM, single-thread.
+  // Such default gueesed as "scrypt (64 ms)" in https://www.tarsnap.com/scrypt/scrypt.pdf page 14 - table middle.
+  // Complexity reduced to 1024, because 16 MiB looks too much to password check, by now.
   /** Cложность хеша scrypt. */
-  def SCRYPT_COMPLEXITY     = 16384 //current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse
+  def SCRYPT_COMPLEXITY     = 1024
   /** Размер блока памяти. */
-  def SCRYPT_RAM_BLOCKSIZE  = 8 //current.configuration.getInt("ident.pw.scrypt.ram.blocksize") getOrElse 8
+  def SCRYPT_RAM_BLOCKSIZE  = 8
   /** Параллелизация. Позволяет ускорить вычисление функции. */
-  def SCRYPT_PARALLEL       = 1 //current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
+  def SCRYPT_PARALLEL       = 1
 
   /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
     *
@@ -42,7 +39,7 @@ class ScryptUtil {
     * @return Текстовый хеш в стандартном формате \$s0\$params\$salt\$key.
     */
   def mkHash(password: String): String = {
-    SCryptUtil.scrypt(password, SCRYPT_COMPLEXITY, SCRYPT_RAM_BLOCKSIZE, SCRYPT_PARALLEL)
+    UnderlyingScryptUtil.scrypt(password, SCRYPT_COMPLEXITY, SCRYPT_RAM_BLOCKSIZE, SCRYPT_PARALLEL)
   }
 
   /** Проверить хеш scrypt с помощью переданного пароля.
@@ -52,9 +49,8 @@ class ScryptUtil {
     * @return true, если пароль ок. Иначе false.
     */
   def checkHash(password: String, hash: String): Boolean = {
-    SCryptUtil.check(password, hash)
+    UnderlyingScryptUtil.check(password, hash)
   }
-
 
   /** Запрещаем бородатому scrypt'у грузить в jvm нативную amd64-либу, ибо она взрывоопасна без перекомпиляции
     * под свежие libcrypto.so (пакет openssl):
@@ -76,12 +72,6 @@ class ScryptUtil {
 
 }
 
-/** Интерфейс для DI-поля с инстансом [[ScryptUtil]]. */
-trait IScryptUtilDi {
-  def scryptUtil: ScryptUtil
-}
-
-
 /** Интерфейс для JMX MBean'а для [[ScryptUtil]]. */
 trait SCryptUtilJmxMBean {
 
@@ -92,9 +82,9 @@ trait SCryptUtilJmxMBean {
 }
 
 
-/** Реализация JMX Mbean'а [[SCryptUtilJmx]] для [[SCryptUtil]]. */
+/** Реализация JMX Mbean'а [[SCryptUtilJmx]] для [[ScryptUtil]]. */
 class SCryptUtilJmx @Inject() (
-                                scryptUtil      : ScryptUtil,
+                                injector        : Injector
                               )
   extends JmxBase
   with SCryptUtilJmxMBean
@@ -102,6 +92,8 @@ class SCryptUtilJmx @Inject() (
   import JmxBase._
 
   override def _jmxType: String = Types.UTIL
+
+  private def scryptUtil = injector.instanceOf[ScryptUtil]
 
   override def mkHash(password: String): String = {
     scryptUtil.mkHash(password)

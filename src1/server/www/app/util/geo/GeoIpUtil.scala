@@ -1,16 +1,17 @@
 package util.geo
 
 import java.net.InetAddress
-
 import io.suggest.common.empty.OptionUtil
-import javax.inject.{Inject, Singleton}
+
+import javax.inject.Inject
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoLoc}
 import io.suggest.geo.ipgeobase.IpgbUtil
+import io.suggest.playx.CacheApiUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{IRemoteAddrInfo, IReqHdr, MRemoteAddrInfo}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -22,10 +23,8 @@ import scala.concurrent.duration._
   *
   * Изначально поддерживалась только IPGeoBase.
   */
-@Singleton
 class GeoIpUtil @Inject() (
-                            ipgbUtil    : IpgbUtil,
-                            mCommonDi   : ICommonDi
+                            injector    : Injector,
                           )
   extends IGeoFindIp
   with MacroLogsImpl
@@ -33,7 +32,10 @@ class GeoIpUtil @Inject() (
 
   override type FindIpRes_t = IGeoFindIpResult
 
-  import mCommonDi._
+  private lazy val ipgbUtil = injector.instanceOf[IpgbUtil]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Сколько секунд кешировать результат работы findIdCached()? */
   def CACHE_TTL_SEC = 10

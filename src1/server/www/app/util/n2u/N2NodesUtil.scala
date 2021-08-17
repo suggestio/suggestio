@@ -1,6 +1,5 @@
 package util.n2u
 
-import javax.inject.Singleton
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.extra.domain.MDomainModes
@@ -12,8 +11,7 @@ import io.suggest.n2.node.MNode
   * Created: 11.11.15 15:44
   * Description: Утиль для узлов N2.
   */
-@Singleton
-class N2NodesUtil {
+final class N2NodesUtil {
 
   /** Попытаться узлать продьюсера узла. */
   def madProducerId(mad: MNode): Option[String] = {

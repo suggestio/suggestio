@@ -1,7 +1,8 @@
 package io.suggest.sec.util
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import play.api.http.HeaderNames
+import play.api.inject.Injector
 import play.api.mvc._
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 
@@ -15,22 +16,23 @@ import scala.language.higherKinds
   * Description: Поддержка CSRF-защиты в HTTP-контроллерах.
   */
 
-@Singleton
-class Csrf @Inject() (
-                       csrfAddToken            : CSRFAddToken,
-                       csrfCheck               : CSRFCheck,
-                       defaultActionBuilder    : DefaultActionBuilder,
-                       implicit private val ec : ExecutionContext
-                     ) {
+final class Csrf @Inject() (
+                             injector: Injector,
+                           ) {
+
+  private lazy val csrfAddToken = injector.instanceOf[CSRFAddToken]
+  private lazy val csrfCheck = injector.instanceOf[CSRFCheck]
+  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
-  /** Доп.заголовки, чтобы не пересобирать их при каждом запросе. */
-  val HEADERS = {
+  /** Additional headers to enforce no-caching responces.. */
+  def HEADERS = {
     HeaderNames.VARY -> "Set-Cookie,Cookie" ::
-      // Cache-Control подавляет токен внутри CSRFAddToken.
-      // Но только если хидер НЕ пустой, либо НЕ содержит no-cache.
-      HeaderNames.CACHE_CONTROL -> "private, no-cache, no-store" ::
-      Nil
+    // Cache-Control подавляет токен внутри CSRFAddToken.
+    // Но только если хидер НЕ пустой, либо НЕ содержит no-cache.
+    HeaderNames.CACHE_CONTROL -> "private, no-cache, no-store" ::
+    Nil
   }
 
   /** Накинуть доп.заголовки на ответ по запросу. */

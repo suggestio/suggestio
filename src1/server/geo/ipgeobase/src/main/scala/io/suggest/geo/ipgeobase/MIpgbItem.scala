@@ -2,8 +2,9 @@ package io.suggest.geo.ipgeobase
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.{EsDocVersion, EsModel, EsModelJMXBaseImpl, EsModelJMXMBeanI, EsModelJmxDi, EsModelJsonWrites, EsModelStatic, EsModelT, EsmV2Deserializer, EsDocMeta}
+import io.suggest.es.model.{EsDocMeta, EsDocVersion, EsModel, EsModelJMXBaseImpl, EsModelJMXMBeanI, EsModelJsonWrites, EsModelStatic, EsModelT, EsmV2Deserializer}
 import io.suggest.geo.MGeoPoint
+import io.suggest.util.JmxBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import japgolly.univeq._
 import org.elasticsearch.index.query.QueryBuilders
@@ -11,7 +12,7 @@ import play.api.inject.Injector
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -136,10 +137,9 @@ object MIpgbItems {
 
 
 /** Extended injected implicit API for EsModel implementation [[MIpgbItems]]. */
-@Singleton
 final class MIpgbItemsModel @Inject()(
-                                      injector: Injector
-                                    )
+                                       injector: Injector
+                                     )
   extends MacroLogsImplLazy
 {
 
@@ -319,8 +319,7 @@ trait MIpgbItemsJmxMBean extends EsModelJMXMBeanI {
 }
 /** MBean implementatiopn for [[MIpgbItemsJmxMBean]]. */
 final class MIpgbItemsJmx @Inject() (
-                                     injector                  : Injector,
-                                     override val esModelJmxDi : EsModelJmxDi,
+                                     override val injector: Injector,
                                    )
   extends EsModelJMXBaseImpl
   with MIpgbItemsJmxMBean
@@ -333,9 +332,6 @@ final class MIpgbItemsJmx @Inject() (
 
 
   override def getByCityId(cityId: CityId_t): String = {
-    import esModelJmxDi.ec
-    import io.suggest.util.JmxBase._
-
     val m = mIpgbItemModel
     import m.api._
 
@@ -344,21 +340,18 @@ final class MIpgbItemsJmx @Inject() (
     } yield {
       mCityOpt.toString
     }
-    awaitString(strFut)
+    JmxBase.awaitString(strFut)
   }
 
 
   override def findForIp(ip: String): String = {
-    import esModelJmxDi.ec
-    import io.suggest.util.JmxBase._
-
     val m = mIpgbItemModel
     import m.api._
 
     val strFut = for (ranges <- companion.findForIp(ip)) yield {
       ranges.mkString("[\n", ",\n", "\n]")
     }
-    awaitString(strFut)
+    JmxBase.awaitString(strFut)
   }
 
 }

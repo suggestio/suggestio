@@ -1,7 +1,7 @@
 package util.ext.fb
 
 import io.suggest.adv.ext.model.im.FbImgSizes
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFormats
@@ -17,7 +17,6 @@ import util.ext.IExtServiceHelper
   * Created: 17.08.16 11:06
   * Description: Класс с утилью для взаимодействия с facebook.
   */
-@Singleton
 class FacebookHelper @Inject() (
                                  override val advUtil: AdvUtil,
                                  override val mCommonDi: ICommonDi

@@ -3,7 +3,7 @@ package controllers
 import io.suggest.file.MimeUtilJvm
 import io.suggest.util.logs.MacroLogsImpl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.im._
 import play.api.inject.Injector
 import play.api.mvc.Result
@@ -17,12 +17,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 19.04.13 14:45fo
  * Description: Управление картинками, относящихся к поисковой выдаче и к разным другим вещам.
- * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
-@Singleton
 final class Img @Inject() (
-                            isFileNotModified               : IsFileNotModified,
-                            canDynImg                       : CanDynImg,
                             injector                        : Injector,
                             sioCtlApi                       : SioControllerApi,
                           )
@@ -31,12 +27,15 @@ final class Img @Inject() (
 
   import sioCtlApi._
 
+  private val isFileNotModified = injector.instanceOf[IsFileNotModified]
+  private val canDynImg = injector.instanceOf[CanDynImg]
+
   private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
   private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
-  private def mimeUtilJvm = injector.instanceOf[MimeUtilJvm]
-  private def uploadCtl = injector.instanceOf[Upload]
-  private def errorHandler = injector.instanceOf[ErrorHandler]
-  implicit private def ec = injector.instanceOf[ExecutionContext]
+  private lazy val mimeUtilJvm = injector.instanceOf[MimeUtilJvm]
+  private lazy val uploadCtl = injector.instanceOf[Upload]
+  private lazy val errorHandler = injector.instanceOf[ErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   def dynImg(mimg: MImgT) = _dynImg( mimg, returnBody = true )

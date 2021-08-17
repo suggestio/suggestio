@@ -3,7 +3,7 @@ package util.up
 import java.nio.file.Path
 
 import io.suggest.crypto.hash.HashesHex
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mup.{MDownLoadQs, MUploadFileHandler, MUploadFileHandlers}
 import play.api.Configuration
 import play.api.inject.Injector
@@ -19,7 +19,6 @@ import scala.concurrent.duration._
   * Description: Утиль для аплоада файлов второго поколения.
   * Ориентирована на возможность балансировки файлов между нодами.
   */
-@Singleton
 final class UploadUtil @Inject()(
                                   injector: Injector,
                                 ) {

@@ -1,6 +1,6 @@
 package util.img
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MPxRatios, MScreen}
@@ -8,6 +8,7 @@ import io.suggest.n2.node.MNode
 import io.suggest.sc.ScConstants
 import models.blk._
 import models.im._
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -17,13 +18,14 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 29.10.14 18:37
  * Description: Утиль для работы с логотипами. Исторически, она была разбросана по всему проекту.
  */
-@Singleton
 class LogoUtil @Inject() (
-                           implicit private val ec   : ExecutionContext
+                           injector: Injector,
                          ) {
 
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
   /**
-   * Доставание картинки логотипа без подгонки под свойства экрана.
+    * Доставание картинки логотипа без подгонки под свойства экрана.
    * @param mnode Узел, к которому прилинкован логотип.
    * @return Фьючерс с результатом: None -- логотип не выставлен.
    */

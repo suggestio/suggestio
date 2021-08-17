@@ -3,7 +3,7 @@ package models.im
 import java.io.FileNotFoundException
 import java.time.OffsetDateTime
 import java.util.NoSuchElementException
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.es.model.EsModel
 import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
@@ -15,7 +15,6 @@ import io.suggest.n2.media._
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.playx.CacheApiUtil
 import io.suggest.streams.StreamsUtil
 import io.suggest.text.StringUtil
 import io.suggest.up.UploadConstants
@@ -37,7 +36,6 @@ import scala.concurrent.Future
   *
  * TODO Надо удалить эту модель, дораспилив на MDynImgId + DynImgUtil.
  */
-@Singleton
 class MImgs3 @Inject() (
                          override val mCommonDi    : ICommonDi,
                        )
@@ -52,7 +50,6 @@ class MImgs3 @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val fileUtil = injector.instanceOf[FileUtil]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
-  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
   private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
 
   import mCommonDi._

@@ -393,13 +393,15 @@ object MNode {
 
 trait MNodesJmxMBean extends EsModelJMXMBeanI
 final class MNodesJmx @Inject() (
-                                  override val companion      : MNodes,
-                                  override val esModelJmxDi   : EsModelJmxDi,
+                                  override val injector: Injector,
                                 )
   extends EsModelJMXBaseImpl
     with MNodesJmxMBean
 {
+
+  override def companion = injector.instanceOf[MNodes]
   override type X = MNode
+
 }
 
 /** Интерфейс для DI-поля, содержащего инстанс MNodes. */

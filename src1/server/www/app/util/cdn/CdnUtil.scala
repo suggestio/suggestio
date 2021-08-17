@@ -3,12 +3,12 @@ package util.cdn
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
-import io.suggest.n2.media.storage.{MStorages, _}
+import io.suggest.n2.media.storage._
 import io.suggest.n2.media.storage.swfs.SwfsVolumeCache
 import io.suggest.playx.ExternalCall
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.url.MHostInfo
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.mctx.Context
 import models.mup.MSwfsFidInfo
 import play.api.Configuration
@@ -28,87 +28,26 @@ import scala.concurrent.{ExecutionContext, Future}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 09.10.14 18:31
-  * Description: Утиль для работы с CDN.
-  *
-  * 2018-03-01 В дополнение к первому варианту CDN добавлена утиль для dist+cdn.
-  * Сюда замержен небольшой DistUtil.
+  * Description: Утиль для работы с CDN и распределением-балансировки контента по серверам
+  * (как внутри серверов s.io, так и внешней CDN).
   */
-@Singleton
-class CdnUtil @Inject() (
-                          injector                  : Injector,
-                          iMediaStorages            : IMediaStorages,
-                          implicit private val ec   : ExecutionContext
-                        )
+final class CdnUtil @Inject() (
+                                injector                  : Injector,
+                              )
   extends MacroLogsImpl
 {
 
-  private def configuration = injector.instanceOf[Configuration]
-  private def uploadUtil = injector.instanceOf[UploadUtil]
-  private def corsUtil = injector.instanceOf[CorsUtil]
-  private def swfsVolumeCache = injector.instanceOf[SwfsVolumeCache]
-
-  /** Прочитать из конфига список CDN-хостов для указанного протокола. */
-  def getCdnHostsForProto(proto: String): List[String] = {
-    configuration.getOptional[Seq[String]]("cdn.hosts." + proto)
-      .fold (List.empty[String]) (_.toList)
-  }
-
-  /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
-  val CDN_PROTO_HOSTS: Map[String, List[String]] = {
-    configuration
-      .getOptional[Seq[String]]("cdn.protocols")
-      .fold [IterableOnce[String]] (HttpConst.Proto.HTTP :: HttpConst.Proto.HTTPS :: Nil) { protosRaw =>
-        protosRaw
-          .iterator
-          .map(_.trim.toLowerCase)
-      }
-      .iterator
-      .map { proto =>
-        proto -> getCdnHostsForProto(proto)
-      }
-      .filter { _._2.nonEmpty }
-      .toMap
-  }
-
-  /** Раздавать ли шрифты через CDN? Дергается из шаблонов. Если Cors отключен, то этот параметр тоже отключается. */
-  val FONTS_ENABLED: Boolean = {
-    corsUtil.IS_ENABLED &&
-      configuration.getOptional[Boolean]("cdn.fonts.enabled").getOrElseTrue
-  }
-
-  /** Отключено использование CDN на хостах: */
-  val DISABLED_ON_HOSTS: Set[String] = {
-    configuration.getOptional[Seq[String]]("cdn.disabled.on.hosts")
-      .fold (Set.empty[String]) (_.toSet)
-  }
-
-  def hasAnyCdn = CDN_PROTO_HOSTS.nonEmpty
-
-
-  // Печатаем карту в консоль при запуске.
-  LOGGER.info {
-    val sb = new StringBuilder("CDNs map (proto -> hosts...) is:")
-    CDN_PROTO_HOSTS
-      .foreach { case (proto, hosts) =>
-        sb.append("\n  ")
-          .append(proto)
-          .append(": ")
-        hosts foreach { host =>
-          sb.append(host)
-            .append(", ")
-        }
-      }
-    sb.toString()
-  }
-
-  if (DISABLED_ON_HOSTS.nonEmpty) {
-    LOGGER.info(s"CDNs disabled on hosts: " + DISABLED_ON_HOSTS.mkString(", "))
-  }
+  private lazy val cdnConf = injector.instanceOf[CdnConf]
+  private lazy val uploadUtil = injector.instanceOf[UploadUtil]
+  private lazy val swfsVolumeCache = injector.instanceOf[SwfsVolumeCache]
+  private lazy val iMediaStorages = injector.instanceOf[IMediaStorages]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Выбрать подходящий CDN-хост для указанного протокола. */
   def chooseHostForProto(protoLc: String): Option[String] = {
-    CDN_PROTO_HOSTS
+    cdnConf
+      .CDN_PROTO_HOSTS
       .get(protoLc)
       .flatMap(_.headOption)    // TODO Выбирать рандомный хост из списка хостов.
   }
@@ -126,12 +65,12 @@ class CdnUtil @Inject() (
     if (c.isInstanceOf[ExternalCall]) {
       // Уже внешний Call, там уже хост должен быть прописан.
       c
-    } else if (!hasAnyCdn ) {
+    } else if (!cdnConf.hasAnyCdn) {
       // CDN сейчас не задана, но она обычно есть на продакшене. Поэтому используем текущий хост в качестве CDN-хоста.
       new ExternalCall( ctx.relUrlPrefix + c.url )
     } else {
       val reqHost = ctx.request.host
-      val urlPrefixOpt = OptionUtil.maybeOpt(!(DISABLED_ON_HOSTS contains reqHost)) {
+      val urlPrefixOpt = OptionUtil.maybeOpt(!(cdnConf.DISABLED_ON_HOSTS contains reqHost)) {
         val protoLc = ctx.request.myProto
         for {
           cdnHost <- chooseHostForProto(protoLc)
@@ -175,7 +114,7 @@ class CdnUtil @Inject() (
       secure = ctx.request.isTransferSecure || {
         // Есть проблема с isTransferSecure: бывает неправильное false при https-запросах, ИДУЩИХ ЧЕРЕЗ CDN, которые
         // внутри идут на голый http://backend.suggest.io и вызывающий false в isTransferSecure, если X-Forwarded-Proto не указан.
-        (DISABLED_ON_HOSTS contains ctx.request.host) &&
+        (cdnConf.DISABLED_ON_HOSTS contains ctx.request.host) &&
         ctx.api.ctxUtil.HTTPS_ENABLED
       },
     )
@@ -421,6 +360,69 @@ class CdnUtil @Inject() (
     }
   }
 
+  /** На мастере надо перезаписывать CDN-адреса для нод.
+    * s2.nodes.suggest.io => s2-suggest.cdnvideo.net
+    * На локалхосте этого всего не надо.
+    *
+    * @param host Исходный хостнейм, которому может потребоваться перезапись.
+    * @return Переписанный, либо исходный, хостнейм.
+    */
+  def reWriteHostToCdn(host: String): String = {
+    cdnConf.REWRITE_FROM_TO.fold(host) { case (from, to) =>
+      host.replace(from, to)
+    }
+  }
+
+}
+
+
+@Singleton
+final class CdnConf @Inject()(
+                               injector: Injector
+                             )
+  extends MacroLogsDyn
+{
+
+  private val configuration = injector.instanceOf[Configuration]
+  private def corsUtil = injector.instanceOf[CorsUtil]
+
+  /** Прочитать из конфига список CDN-хостов для указанного протокола. */
+  def getCdnHostsForProto(proto: String): List[String] = {
+    configuration.getOptional[Seq[String]]("cdn.hosts." + proto)
+      .fold (List.empty[String]) (_.toList)
+  }
+
+  /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
+  val CDN_PROTO_HOSTS: Map[String, List[String]] = {
+    configuration
+      .getOptional[Seq[String]]("cdn.protocols")
+      .fold [IterableOnce[String]] (HttpConst.Proto.HTTP :: HttpConst.Proto.HTTPS :: Nil) { protosRaw =>
+        protosRaw
+          .iterator
+          .map(_.trim.toLowerCase)
+      }
+      .iterator
+      .map { proto =>
+        proto -> getCdnHostsForProto(proto)
+      }
+      .filter { _._2.nonEmpty }
+      .toMap
+  }
+
+  /** Раздавать ли шрифты через CDN? Дергается из шаблонов. Если Cors отключен, то этот параметр тоже отключается. */
+  val FONTS_ENABLED: Boolean = {
+    corsUtil.IS_ENABLED &&
+      configuration.getOptional[Boolean]("cdn.fonts.enabled").getOrElseTrue
+  }
+
+  /** Отключено использование CDN на хостах: */
+  val DISABLED_ON_HOSTS: Set[String] = {
+    configuration.getOptional[Seq[String]]("cdn.disabled.on.hosts")
+      .fold (Set.empty[String]) (_.toSet)
+  }
+
+  def hasAnyCdn = CDN_PROTO_HOSTS.nonEmpty
+
   /** Правила перезаписи хостнеймов. */
   val REWRITE_FROM_TO: Option[(String, String)] = {
     for {
@@ -432,18 +434,25 @@ class CdnUtil @Inject() (
     }
   }
 
-  /** На мастере надо перезаписывать CDN-адреса для нод.
-    * s2.nodes.suggest.io => s2-suggest.cdnvideo.net
-    * На локалхосте этого всего не надо.
-    *
-    * @param host Исходный хостнейм, которому может потребоваться перезапись.
-    * @return Переписанный, либо исходный, хостнейм.
-    */
-  def reWriteHostToCdn(host: String): String = {
-    REWRITE_FROM_TO.fold(host) { case (from, to) =>
-      host.replace(from, to)
-    }
+
+  // Печатаем карту в консоль при запуске.
+  LOGGER.info {
+    val sb = new StringBuilder("CDNs map (proto -> hosts...) is:")
+    CDN_PROTO_HOSTS
+      .foreach { case (proto, hosts) =>
+        sb.append("\n  ")
+          .append(proto)
+          .append(": ")
+        hosts foreach { host =>
+          sb.append(host)
+            .append(", ")
+        }
+      }
+    sb.toString()
   }
+
+  if (DISABLED_ON_HOSTS.nonEmpty)
+    LOGGER.info(s"CDNs disabled on hosts: ${DISABLED_ON_HOSTS.mkString(", ")}")
 
 }
 

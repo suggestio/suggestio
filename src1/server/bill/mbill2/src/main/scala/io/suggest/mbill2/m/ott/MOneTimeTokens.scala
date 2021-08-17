@@ -9,7 +9,7 @@ import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateEndSlick}
 import io.suggest.mbill2.m.gid.GetByUuid
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import japgolly.univeq.UnivEq
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import monocle.macros.GenLens
 import io.suggest.ueq.UnivEqUtil._
 
@@ -20,7 +20,6 @@ import io.suggest.ueq.UnivEqUtil._
   * Description: slick-модель для хранения одноразовых токенов на стороне сервера.
   * Изначально с биллингом не пересекалась, но сам модуль плавно вырастает за пределы просто биллинга.
   */
-@Singleton
 class MOneTimeTokens @Inject() (
                                  override protected val profile      : SioPgSlickProfileT,
                                )

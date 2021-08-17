@@ -1,6 +1,6 @@
 package io.suggest.geo.ipgeobase
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.es.model.EsModel
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoPoint}
 import io.suggest.util.logs.MacroLogsImpl
@@ -16,7 +16,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Над-утиль для подсистемы ipgeobase.
   * Появилась в ходе выноса ipgb-логики на уровень этого модуля из устаревшей GeoMode.
   */
-@Singleton
 final class IpgbUtil @Inject() (
                                  injector: Injector,
                                )

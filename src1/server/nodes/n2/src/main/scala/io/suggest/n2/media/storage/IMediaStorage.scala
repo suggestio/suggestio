@@ -1,7 +1,6 @@
 package io.suggest.n2.media.storage
 
-import javax.inject.{Inject, Singleton}
-import io.suggest.compress.MCompressAlgo
+import javax.inject.Inject
 import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.n2.media.storage.swfs.SwfsStorage
 import io.suggest.url.MHostInfo
@@ -15,35 +14,19 @@ import scala.concurrent.Future
  * Created: 29.09.15 18:53
  * Description: Данные по backend-хранилищу, задействованному в хранении файлов.
  */
-@Singleton
 final class IMediaStorages @Inject() (
                                        injector  : Injector
                                      ) {
 
-  /** Инжекция инсанса клиента. */
-  def _clientInstance(storage: MStorage): IMediaStorageStatic = {
+  private lazy val swfsStorage = injector.instanceOf[SwfsStorage]
+  private lazy val classPathStorage = injector.instanceOf[ClassPathStorage]
+
+  def client(storage: MStorage): IMediaStorageStatic = {
     storage match {
-      case MStorages.SeaWeedFs =>
-        injector.instanceOf[SwfsStorage]
-      case MStorages.ClassPathResource =>
-        injector.instanceOf[ClassPathStorage]
+      case MStorages.SeaWeedFs          => swfsStorage
+      case MStorages.ClassPathResource  => classPathStorage
     }
   }
-
-  /** Карта инстансов статических моделей поддерживаемых media-сторэджей.
-    * Т.к. инстансы клиентов для картинок - сингтоны и часто дёргаются,
-    * смысл тревожить инжектор на каждый чих - мало. Кэшируем инстансы в мапе. */
-  lazy val _STORAGES_MAP: Map[MStorage, IMediaStorageStatic] = {
-    MStorages.values
-      .iterator
-      .map { mStorType =>
-        mStorType -> _clientInstance( mStorType )
-      }
-      .toMap
-  }
-
-  def client(storage: MStorage): IMediaStorageStatic =
-    _STORAGES_MAP(storage)
 
 }
 

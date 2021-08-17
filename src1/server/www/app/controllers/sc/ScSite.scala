@@ -31,7 +31,7 @@ import OptionUtil.BoolOptOps
 import com.google.inject.Inject
 import io.suggest.es.model.EsModel
 import io.suggest.sec.csp.{Csp, CspPolicy}
-import views.html.sc._
+import views.html.sc.SiteTpl
 import japgolly.univeq._
 
 import scala.concurrent.Future
@@ -68,6 +68,7 @@ final class ScSite @Inject() (
   private lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val scJsRouter = injector.instanceOf[ScJsRouter]
+  private lazy val siteTpl = injector.instanceOf[SiteTpl]
 
   import mCommonDi.{ec, configuration, cacheApiUtil, errorHandler}
   import esModel.api._

@@ -4,7 +4,7 @@ import javax.mail.Authenticator
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.ImplementedBy
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import io.suggest.async.AsyncUtil
 import io.suggest.di.IExecutionContext
@@ -219,7 +219,6 @@ trait IMailerWrapper {
 
 }
 
-@Singleton
 class MailerWrapper @Inject() (
   configuration : Configuration,
   injector      : Injector

@@ -19,6 +19,7 @@ import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.playx.CacheApiUtil
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.JmxBase
@@ -26,7 +27,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
 import models.im._
 import models.mctx.Context
-import models.mproj.ICommonDi
 import play.api.mvc.Call
 import util.adn.NodesUtil
 import util.adv.build.AdvBuilderUtil
@@ -34,6 +34,7 @@ import util.adv.direct.AdvRcvrsUtil
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, FitImgMaker, LogoUtil, WelcomeUtil}
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -45,12 +46,10 @@ import scala.util.{Failure, Success}
   * Description: Утиль для форм размещения с гео-картам.
   */
 final class AdvGeoRcvrsUtil @Inject()(
-                                       mCommonDi   : ICommonDi
+                                       injector: Injector,
                                      )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -61,8 +60,9 @@ final class AdvGeoRcvrsUtil @Inject()(
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]
   private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
   private lazy val fitImgMaker = injector.instanceOf[FitImgMaker]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi._
   import esModel.api._
 
 
@@ -531,8 +531,7 @@ final class AdvGeoRcvrsUtil @Inject()(
     */
   def updateAllGeoLocEdgeTags(): Future[Int] = {
     // Инжектим инстанс, т.к. не нужен в остальном коде, а текущий метод - временный.
-    val inj = mCommonDi.current.injector
-    lazy val advBuilderUtil = inj.instanceOf[AdvBuilderUtil]
+    lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
 
     lazy val logPrefix = s"updateAllGeoLocEdgeTags()#${System.currentTimeMillis()}:"
     LOGGER.info(s"$logPrefix Starting...")

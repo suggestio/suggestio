@@ -2,7 +2,6 @@ package util.billing
 
 import java.time.{LocalDateTime, ZoneId}
 
-import javax.inject.Singleton
 import io.suggest.mbill2.m.contract.MContract
 import play.api.data._
 import Forms._

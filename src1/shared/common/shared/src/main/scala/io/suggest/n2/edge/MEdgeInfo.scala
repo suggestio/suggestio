@@ -39,8 +39,8 @@ object MEdgeInfo
   object Fields {
 
     val DATE_FN           = "date"
-    val DATE_NI_FN        = "dateNoInx"
-    val COMMENT_NI_FN     = "comment"
+    val DATE_NO_INDEX_FN        = "dateNoInx"
+    val TEXT_NO_INDEX_FN     = "comment"
     val FLAG_FN           = "flag"
     val FLAGS_FN          = "edgeFlags"
     val GEO_SHAPES_FN     = "geoShapes"
@@ -91,8 +91,8 @@ object MEdgeInfo
     val F = Fields
     (
       (__ \ F.DATE_FN).formatNullable[OffsetDateTime] and
-      (__ \ F.DATE_NI_FN).formatNullable[OffsetDateTime] and
-      (__ \ F.COMMENT_NI_FN).formatNullable[String] and
+      (__ \ F.DATE_NO_INDEX_FN).formatNullable[OffsetDateTime] and
+      (__ \ F.TEXT_NO_INDEX_FN).formatNullable[String] and
       (__ \ F.FLAG_FN).formatNullable[Boolean] and
       (__ \ F.FLAGS_FN).formatNullable[Iterable[MEdgeFlagData]]
         .inmap[Iterable[MEdgeFlagData]](
@@ -129,8 +129,8 @@ object MEdgeInfo
         docValues       = someTrue,
         ignoreMalformed = someFalse,
       ),
-      F.DATE_NI_FN -> FDate.notIndexedJs,
-      F.COMMENT_NI_FN -> FText.notIndexedJs,
+      F.DATE_NO_INDEX_FN -> FDate.notIndexedJs,
+      F.TEXT_NO_INDEX_FN -> FText.notIndexedJs,
       F.FLAG_FN -> FBoolean.indexedJs,
       F.FLAGS_FN -> FObject.nested(
         properties = MEdgeFlagData.esMappingProps,
@@ -221,64 +221,21 @@ final case class MEdgeInfo(
     .to( Map )
 
   /** Форматирование для вывода в шаблонах. */
-  override def toString: String = {
-    val sb = new StringBuilder(32)
+  override def toString: String = StringUtil.toStringHelper(null, delimiter = ' ') { f =>
+    val F = MEdgeInfo.Fields
 
-    for (dt <- dateNi) {
-      sb.append("dateNi=")
-        .append(dt)
-        .append(' ')
-    }
+    textNi foreach f( F.TEXT_NO_INDEX_FN )
+    flag foreach f( F.FLAG_FN )
+    flags foreach f( F.FLAGS_FN )
+    if (tags.nonEmpty) f(F.TAGS_FN)(tags)
+    if (geoShapes.nonEmpty) f(F.GEO_SHAPES_FN)(geoShapes)
+    if (geoPoints.nonEmpty) f(F.GEO_POINT_FN)(geoPoints)
+    extService foreach f(F.EXT_SERVICE_FN)
+    osFamily foreach f(F.OS_FAMILY_FN)
 
-    for (comment <- textNi) {
-      sb.append("textNi=")
-        .append( StringUtil.strLimitLen(comment, 10) )
-        .append(' ')
-    }
-
-    for (flag1 <- flag)
-      sb.append(flag1)
-
-    if (flags.nonEmpty) {
-      sb.append('[')
-      for (flagData <- flags)
-        sb.append(flagData)
-          .append(',')
-      sb.append(']')
-    }
-
-    if (tags.nonEmpty) {
-      sb.append("tags=")
-      for (tag <- tags) {
-        sb.append(tag).append(',')
-      }
-      sb.append(' ')
-    }
-
-    if (geoShapes.nonEmpty) {
-      sb.append(geoShapes.size)
-        .append("gss")
-    }
-
-    if (geoPoints.nonEmpty) {
-      sb.append(",geoPoints={")
-      for (gp <- geoPoints) {
-        sb.append( MGeoPoint.toEsStr(gp) )
-      }
-      sb.append('}')
-    }
-
-    for (extService <- this.extService) {
-      sb.append(",extSvc=")
-        .append(extService)
-    }
-
-    for (osFamily <- this.osFamily) {
-      sb.append(",os=")
-        .append(osFamily)
-    }
-
-    sb.toString()
+    // low-priority information:
+    date foreach f( F.DATE_FN )
+    dateNi foreach f( F.DATE_NO_INDEX_FN )
   }
 
 }

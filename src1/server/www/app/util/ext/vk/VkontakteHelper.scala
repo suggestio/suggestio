@@ -3,7 +3,7 @@ package util.ext.vk
 import java.net.URL
 
 import io.suggest.adv.ext.model.im.VkImgSizes
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFormats
@@ -19,7 +19,6 @@ import util.ext.IExtServiceHelper
   * Created: 17.08.16 11:07
   * Description: Утиль для взаимодействия с вконтактом.
   */
-@Singleton
 class VkontakteHelper @Inject()(
                                  override val wsClient     : WSClient,
                                  override val advUtil      : AdvUtil,

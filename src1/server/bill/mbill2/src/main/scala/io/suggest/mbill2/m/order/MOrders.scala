@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.order
 
 import java.time.OffsetDateTime
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.m.sql.ITableName
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, FindByContractId, MContracts}
@@ -20,7 +20,6 @@ import slick.lifted.ProvenShape
  * Description: Модель заказов, т.е. ордеров, т.е. групп item'ов.
  */
 
-@Singleton
 final class MOrders @Inject() (
                                 injector: Injector,
                                 override protected val profile      : SioPgSlickProfileT,

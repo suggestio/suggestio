@@ -6,10 +6,10 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.proto.http.HttpConst
 import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy, CspViolationReport}
 import models.mctx.ContextUtil
+import play.api.inject.Injector
 import play.api.mvc.Result
-import util.cdn.CdnUtil
+import util.cdn.CdnConf
 import play.api.libs.json._
-
 
 /**
   * Suggest.io
@@ -19,9 +19,11 @@ import play.api.libs.json._
   */
 @Singleton
 class CspUtil @Inject() (
-                          cdnUtil        : CdnUtil,
-                          contextUtil    : ContextUtil
+                          injector       : Injector,
                         ) {
+
+  private lazy val cdnConf = injector.instanceOf[CdnConf]
+  private lazy val contextUtil = injector.instanceOf[ContextUtil]
 
   private def IFRAMES_SRCS: Set[String] = {
     // По идее, proto нужен только на dev, где всё по http. На prod будет https автоматом, т.к. там он везде.
@@ -46,7 +48,7 @@ class CspUtil @Inject() (
       val nodesWildcard = s"*.nodes.${contextUtil.HOST_PORT}"
       val commonSources = {
         // Т.к. сайт https-only, то игнорим протоколы, используем все CDN-хосты.
-        val cdnHostsIter = cdnUtil.CDN_PROTO_HOSTS.valuesIterator.flatten
+        val cdnHostsIter = cdnConf.CDN_PROTO_HOSTS.valuesIterator.flatten
         val selfHosts = Csp.Sources.SELF :: Nil
         val selfNodes = nodesWildcard :: Nil
         // TODO Добавить cdn-nodes-домены сюда же.
@@ -54,7 +56,7 @@ class CspUtil @Inject() (
           .toSet
       }
 
-      val cdnNodes = for (rewriteFromTo <- cdnUtil.REWRITE_FROM_TO.view) yield {
+      val cdnNodes = for (rewriteFromTo <- cdnConf.REWRITE_FROM_TO.view) yield {
         // Из ссылки вида -suggest.cdnvideo.ru получается *.cdnvideo.ru. Как-то это не очень хорошо.
         // *-suggest.cdnvideo.ru нельзя. Нельзя и s*-suggest.cdnvideo.ru. Поэтому разрешаем весь *.cdnvideo.ru:
         "*" + rewriteFromTo._2.replaceFirst("^[^\\.]*", "")

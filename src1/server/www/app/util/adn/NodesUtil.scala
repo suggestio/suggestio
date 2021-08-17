@@ -1,9 +1,11 @@
 package util.adn
 
+import akka.stream.Materializer
+
 import java.time.OffsetDateTime
 import akka.stream.scaladsl.Sink
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import controllers.routes
 import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.common.coll.Lists.Implicits._
@@ -26,11 +28,11 @@ import models.im.MImgT
 import models.madn.{AdnShownTypes, NodeDfltColors}
 import models.mctx.Context
 import models.mext.MExtServicesJvm
-import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
 import play.api.i18n.{Lang, Langs, Messages}
 import play.api.inject.Injector
 import play.api.mvc.Call
+import util.ident.store.ICredentialsStorage
 import util.img.DynImgUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,19 +47,21 @@ import scala.util.Random
  *
  * Обязательно singleton, т.к. инициализация 404-узлов идёт здесь.
  */
-@Singleton
 final class NodesUtil @Inject() (
-                                  esModel                 : EsModel,
-                                  mNodes                  : MNodes,
-                                  mExtTargets             : MExtTargets,
-                                  dynImgUtil              : DynImgUtil,
-                                  mCommonDi               : ICommonDi
+                                  injector                : Injector,
                                 )
   extends MacroLogsImpl
 {
 
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mExtTargets = injector.instanceOf[MExtTargets]
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
+
   import LOGGER._
-  import mCommonDi._
   import esModel.api._
 
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
@@ -388,11 +392,9 @@ final class NodesUtil @Inject() (
       val nodeNameOpt = personNodeOpt.flatMap(_.guessDisplayName)
       FutureUtil.opt2futureOpt( nodeNameOpt ) {
         val userEmailsFut = userEmailsFutOpt.getOrElse {
-          val r = personNodeOpt
-            .iterator
-            .flatMap(_.edges.withPredicateIterIds( MPredicates.Ident.Email ))
-            .toSeq
-          Future.successful(r)
+          personNodeOpt.fold [Future[Seq[String]]] { Future successful Nil } {
+            credentialsStorage.findEmailsOfPerson( _ )
+          }
         }
         for (usrEmails <- userEmailsFut) yield {
           usrEmails.headOption
@@ -419,7 +421,7 @@ final class NodesUtil @Inject() (
   def init404nodes(): Future[_] = {
     lazy val logPrefix = s"init404nodes()#${System.currentTimeMillis()}:"
 
-    val langs = current.injector.instanceOf[Langs]
+    val langs = injector.instanceOf[Langs]
     val nodesFut = Future.traverse( langs.availables ) { lang =>
       val nodeId = noAdsFound404RcvrId( lang )
       for {
@@ -491,7 +493,7 @@ final class NodesUtilJmx @Inject() (
   override def _jmxType = JmxBase.Types.UTIL
 
   private def nodesUtil = injector.instanceOf[NodesUtil]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
   override def init404nodes(): String = {
     val fut = for {

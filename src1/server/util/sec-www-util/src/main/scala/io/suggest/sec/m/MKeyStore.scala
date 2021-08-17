@@ -4,8 +4,7 @@ import java.nio.file.{Files, Paths}
 import java.security.cert.Certificate
 import java.security.{Key, KeyStore}
 
-import io.suggest.sec.util.SecInitUtil
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import play.api.Configuration
 import play.api.inject.Injector
@@ -16,13 +15,10 @@ import play.api.inject.Injector
   * Created: 11.03.19 12:07
   * Description: Утиль для работы с хранилищем ключей sio.
   */
-@Singleton
 final class MKeyStore @Inject()(
                                  injector   : Injector,
                                )
 {
-
-  injector.instanceOf[SecInitUtil]
 
   private def _configuration = injector.instanceOf[Configuration]
 

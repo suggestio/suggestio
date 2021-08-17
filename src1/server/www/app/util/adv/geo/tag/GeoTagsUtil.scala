@@ -588,7 +588,6 @@ trait GeoTagsUtilJmxMBean {
 }
 
 
-@Singleton
 final class GeoTagsUtilJmx @Inject() (
                                        injector: Injector,
                                      )

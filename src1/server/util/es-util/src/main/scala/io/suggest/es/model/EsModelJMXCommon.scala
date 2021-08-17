@@ -5,8 +5,8 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import io.suggest.util.JmxBase
 import io.suggest.xplay.json.PlayJsonUtil
 
-import javax.inject.{Inject, Singleton}
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.ExecutionContext
 
@@ -68,10 +68,12 @@ trait EsModelCommonJMXBase extends JmxBase with EsModelJMXMBeanCommonI with Macr
 
   // DI:
   def companion: EsModelCommonStaticT { type T = X }
-  val esModelJmxDi: EsModelJmxDi
 
-  import esModelJmxDi.ec
-  import esModelJmxDi.esModel.api._
+  def injector: Injector
+  implicit def ec = injector.instanceOf[ExecutionContext]
+  lazy val esModel = injector.instanceOf[EsModel]
+
+  import esModel.api._
   import JmxBase._
 
   type X <: EsModelCommonT
@@ -178,11 +180,3 @@ trait EsModelCommonJMXBase extends JmxBase with EsModelJMXMBeanCommonI with Macr
   }
 
 }
-
-
-/** Контейнер DI-инстансов для  */
-@Singleton
-final case class EsModelJmxDi @Inject() (
-                                          val esModel     : EsModel,
-                                          implicit val ec : ExecutionContext,
-                                        )

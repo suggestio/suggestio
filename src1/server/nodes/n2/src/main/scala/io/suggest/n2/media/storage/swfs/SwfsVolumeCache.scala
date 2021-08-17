@@ -1,14 +1,15 @@
 package io.suggest.n2.media.storage.swfs
 
 import akka.actor.ActorSystem
-import javax.inject.{Inject, Singleton}
+
+import javax.inject.Inject
 import io.suggest.playx.CacheApiUtil
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.lookup.{IVolumeLocation, LookupRequest}
 import io.suggest.swfs.fid.SwfsVolumeId_t
 import io.suggest.util.logs.MacroLogsImpl
-import play.api.Configuration
 import play.api.cache.AsyncCacheApi
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -20,17 +21,17 @@ import scala.concurrent.duration._
  * Description: Кеш-модель для доступа к volume urls на основе volume id.
  * Используется play-cache в качестве backend-хранилища.
  */
-@Singleton
 final class SwfsVolumeCache @Inject() (
-                                        cache                     : AsyncCacheApi,
-                                        cacheUtil                 : CacheApiUtil,
-                                        configuration             : Configuration,
-                                        client                    : ISwfsClient,
-                                        actorSystem               : ActorSystem,
-                                        implicit private val ec   : ExecutionContext,
+                                        injector                  : Injector,
                                       )
   extends MacroLogsImpl
 {
+
+  private lazy val asyncCacheApi = injector.instanceOf[AsyncCacheApi]
+  private lazy val cacheUtil = injector.instanceOf[CacheApiUtil]
+  private lazy val client = injector.instanceOf[ISwfsClient]
+  private lazy val actorSystem = injector.instanceOf[ActorSystem]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private def CACHE_PREFIX = "swfs.vloc."
 
@@ -81,7 +82,7 @@ final class SwfsVolumeCache @Inject() (
           // Удаляем из кэша ошибку, чтобы система могла по-скорее попробовать ещё раз.
           actorSystem.scheduler.scheduleOnce( 1.second ) {
             // Наверное, не надо перепроверять фьючерс в кэше - наврядли он может быть заменён.
-            cache.remove(ck)
+            asyncCacheApi.remove(ck)
           }
           Nil
         }
@@ -89,7 +90,7 @@ final class SwfsVolumeCache @Inject() (
   }
 
   def uncache(volumeId: SwfsVolumeId_t): Unit = {
-    cache.remove( _ck(volumeId) )
+    asyncCacheApi.remove( _ck(volumeId) )
   }
 
 }

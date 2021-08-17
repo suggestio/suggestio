@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.es.model._
 import org.elasticsearch.common.settings.Settings
 import io.suggest.util.logs.MacroLogsImpl
@@ -31,13 +31,13 @@ object MStatIndexes {
 }
 
 
-@Singleton
-class MStatIndexes @Inject() (
-                               injector                 : Injector,
-                             )
+final class MStatIndexes @Inject() (
+                                     injector                 : Injector,
+                                   )
   extends MacroLogsImpl
 {
 
+  private def configuration = injector.instanceOf[Configuration]
   private lazy val esClient = injector.instanceOf[org.elasticsearch.client.Client]
   private lazy val esModel = injector.instanceOf[EsModel]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
@@ -50,8 +50,7 @@ class MStatIndexes @Inject() (
     * Не val, т.е. часто оно надо только на dev-компе. В остальных случаях просто будет память занимать.
     */
   def REPLICAS_COUNT: Int = {
-    injector
-      .instanceOf[Configuration]
+    configuration
       .getOptional[Int]("stat.index.replicas_count")
       .getOrElse {
         val _isProd = injector.instanceOf[Environment].mode == Mode.Prod

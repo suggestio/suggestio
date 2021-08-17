@@ -1,11 +1,12 @@
 package util.img
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.geom.d2.{IHeight, ISize2di, IWidth, MSize2di}
 import io.suggest.dev.MPxRatios
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.im.make.{MImgMakeArgs, MakeResult}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -16,15 +17,16 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Сборка ссылок на изображения, которые нужно вписать в контейнер указанного размера.
   * Т.е. вместо fillArea здесь политика fit и пусть один из размеров будет меньше ожидаемого.
   */
-@Singleton
 class FitImgMaker @Inject()(
-                           dynImgUtil                 : DynImgUtil,
-                           imgMakerUtil               : ImgMakerUtil,
-                           implicit private val ec    : ExecutionContext
-                         )
+                             injector: Injector,
+                           )
   extends IImgMaker
   with MacroLogsImpl
 {
+
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val imgMakerUtil = injector.instanceOf[ImgMakerUtil]
+  implicit private val ec = injector.instanceOf[ExecutionContext]
 
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     // Есть два варианта: подгонка по высоте или по ширине. Т.е. подгонка по абсолютно-меньшей стороне.

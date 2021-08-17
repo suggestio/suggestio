@@ -1,17 +1,18 @@
 package models.adv
 
 import java.time.OffsetDateTime
-
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.es.MappingDsl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import javax.inject.{Inject, Singleton}
+
+import javax.inject.Inject
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.ext.svc.MExtService
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.MExtTargetSearchArgs
+import play.api.inject.Injector
 
 /**
  * Suggest.io
@@ -39,8 +40,7 @@ object MExtTargetFields {
 }
 
 
-@Singleton
-class MExtTargets
+final class MExtTargets
   extends EsModelStatic
   with MacroLogsImpl
   with EsDynSearchStatic[MExtTargetSearchArgs]
@@ -122,12 +122,14 @@ case class MExtTarget(
 // Поддержка JMX для ES-модели.
 trait MExtTargetsJmxMBean extends EsModelJMXMBeanI
 final class MExtTargetsJmx @Inject()(
-                                      override val companion      : MExtTargets,
-                                      override val esModelJmxDi   : EsModelJmxDi,
+                                      override val injector: Injector,
                                     )
   extends EsModelJMXBaseImpl
   with MExtTargetsJmxMBean
 {
+
+  override def companion = injector.instanceOf[MExtTargets]
+
   override type X = MExtTarget
 }
 

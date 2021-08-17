@@ -1,6 +1,6 @@
 package util.showcase
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.MScreen
@@ -10,12 +10,12 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{MImgMakeArgs, MakeResult}
-import models.mproj.ICommonDi
 import util.img.{IImgMaker, ImgMakerUtil}
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -25,23 +25,22 @@ import scala.concurrent.Future
  * Этот функционал заточен под отображение карточек на всю ширину экрана, которая может вообще любой.
  * Фоновые изображения в таких случаях, как правило, уезжают за пределы wide-ширины из-за квантования ширин.
  */
-@Singleton
 class ScWideMaker @Inject() (
-                              mAnyImgs      : MAnyImgs,
-                              imgMakerUtil  : ImgMakerUtil,
-                              mCommonDi     : ICommonDi
+                              injector: Injector,
                             )
   extends IImgMaker
   with MacroLogsImpl
 {
 
-  import mCommonDi._
+  private lazy val mAnyImgs = injector.instanceOf[MAnyImgs]
+  private lazy val imgMakerUtil = injector.instanceOf[ImgMakerUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Желаемые ширИны широкого бэкграунда.
     * 2018-02-06 Уменьшение списка размеров: 950 и 1250 убрано.
     * Макс.ширина - 1260 -- это
     */
-  val WIDE_WIDTHS_PX: List[Int] = List(350, 500, 650, 850, /*950,*/
+  def WIDE_WIDTHS_PX: List[Int] = List(350, 500, 650, 850, /*950,*/
     {
       // Макс.ширина равна макс.ширине плитки.
       val cols = GridConst.CELL300_COLUMNS_MAX

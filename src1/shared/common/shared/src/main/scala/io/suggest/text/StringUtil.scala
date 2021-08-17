@@ -167,18 +167,21 @@ object StringUtil {
     * }}}
     *
     * @param that Текущий case class.
+    *             null means don't render "TheClass()", only render content inside braces.
     * @param lenDflt Дефолтовая длина string-буфера.
     * @param render Функция рендера содержимого
     *               $1 - функция рендера имени поля класса и значения.
     * @return Строка для возврата наружу из перезаписываемого toString()-метода.
     */
-  def toStringHelper(that: Product, lenDflt: Int = 256)
+  def toStringHelper(that: Product, lenDflt: Int = 256, delimiter: Char = ',')
                     (render: (String => Any => Unit) => Unit): String = {
     val sb = new StringBuilder( lenDflt )
-      .append( that.productPrefix )
-      .append( '(' )
 
-    val comma = ','
+    if (that != null) {
+      sb.append( that.productPrefix )
+        .append( '(' )
+    }
+
     val eqSign = '='
 
     def __append(name: String): Any => Unit = {
@@ -188,18 +191,20 @@ object StringUtil {
             .append( eqSign )
         sb
           .append( value )
-          .append( comma )
+          .append( delimiter )
     }
 
     render( __append )
 
     // Отбросить финальную запятую:
     val lastCharIndex = sb.length() - 1
-    if (sb.charAt(lastCharIndex) ==* comma )
+    if (sb.charAt(lastCharIndex) ==* delimiter )
       sb.setLength( lastCharIndex )
 
-    sb.append( ')' )
-      .toString()
+    if (that != null)
+      sb.append( ')' )
+
+    sb.toString()
   }
 
 }

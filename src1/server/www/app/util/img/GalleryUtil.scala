@@ -1,7 +1,8 @@
 package util.img
 
 import io.suggest.adn.edit.NodeEditConstants
-import javax.inject.{Inject, Singleton}
+
+import javax.inject.Inject
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MPxRatios
 import io.suggest.n2.node.MNode
@@ -10,6 +11,7 @@ import models.im._
 import models.mctx.Context
 import play.api.mvc.Call
 import models.blk.szMulted
+import play.api.inject.Injector
 import util.cdn.CdnUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,15 +22,16 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 03.07.14 9:46
  * Description: Утиль для работы с галереей картинок.
  */
-@Singleton
 class GalleryUtil @Inject() (
-                              dynImgUtil              : DynImgUtil,
-                              cdnUtil                 : CdnUtil,
-                              implicit private val ec : ExecutionContext
+                              injector: Injector,
                             ) {
 
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
   /**
-   * Генерация dyn-img ссылки на картинку галереи, которая отображается (обычно) откропанной в ЛК на странице узла.
+    * Генерация dyn-img ссылки на картинку галереи, которая отображается (обычно) откропанной в ЛК на странице узла.
    * @param mimg id картинки.
    * @param ctx Контекст рендера шаблонов.
    * @return Экземпляр Call, пригодный для заворачивания в ссылку.

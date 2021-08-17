@@ -1,6 +1,6 @@
 package util.showcase
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.ad.blk.{BlockHeights, BlockWidths, MBlockExpandMode}
 import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.grid.{GridCalc, MGridCalcConf}
@@ -10,7 +10,6 @@ import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk
 import models.blk._
-import models.mproj.ICommonDi
 import util.adv.AdvUtil
 import util.n2u.N2NodesUtil
 import io.suggest.common.empty.OptionUtil.Implicits._
@@ -19,8 +18,9 @@ import io.suggest.es.model.EsModel
 import io.suggest.jd.MJdConf
 import io.suggest.n2.edge.{MEdgeFlagData, MPredicates}
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -28,18 +28,18 @@ import scala.concurrent.Future
  * Created: 02.07.14 14:10
  * Description: Всякая статическая утиль для выдачи.
  */
-@Singleton
-class ShowcaseUtil @Inject() (
-                               esModel      : EsModel,
-                               advUtil      : AdvUtil,
-                               n2NodesUtil  : N2NodesUtil,
-                               mNodes       : MNodes,
-                               mCommonDi    : ICommonDi
-                             )
+final class ShowcaseUtil @Inject() (
+                                     injector     : Injector,
+                                   )
   extends MacroLogsImplLazy
 {
 
-  import mCommonDi._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val advUtil = injector.instanceOf[AdvUtil]
+  private lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
   import esModel.api._
 
   /** Значение cache-control для index-выдачи. */
@@ -131,7 +131,7 @@ class ShowcaseUtil @Inject() (
 
 
   /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
-  private val TILES_SZ_MULTS: List[SzMult_t] = {
+  private def TILES_SZ_MULTS: List[SzMult_t] = {
     List(
       1.4F, 1.3F, 1.2F, 1.1F, 1.06F, 1.0F,
       MIN_SZ_MULT   // Экраны с шириной 640csspx требуют немного уменьшить карточку.
@@ -148,7 +148,7 @@ class ShowcaseUtil @Inject() (
 
 
   /** Конфиг для рассчёта кол-ва колонок плитки. */
-  val GRID_COLS_CONF = MGridCalcConf.EVEN_GRID
+  lazy val GRID_COLS_CONF = MGridCalcConf.EVEN_GRID
 
 
   def getTileArgs(dscrOpt: Option[MScreen]): MJdConf = {
@@ -162,9 +162,10 @@ class ShowcaseUtil @Inject() (
     } { getTileArgs }
   }
   def getTileArgs(dscr: MScreen): MJdConf = {
-    val colsCount = GridCalc.getColumnsCount(dscr.wh, GRID_COLS_CONF)
+    val gridColumnsConf = GRID_COLS_CONF
+    val colsCount = GridCalc.getColumnsCount(dscr.wh, gridColumnsConf)
     MJdConf(
-      szMult              = GridCalc.getSzMult4tilesScr(colsCount, dscr.wh, GRID_COLS_CONF),
+      szMult              = GridCalc.getSzMult4tilesScr(colsCount, dscr.wh, gridColumnsConf),
       gridColumnsCount    = colsCount,
       isEdit              = false,
     )

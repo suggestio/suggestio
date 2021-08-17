@@ -1,18 +1,18 @@
 package util.img
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.dev.MScreen
 import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.n2.node.MNode
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.im._
 import models.mctx.Context
-import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
+import play.api.inject.Injector
 import util.showcase.ShowcaseUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -20,17 +20,15 @@ import scala.concurrent.Future
  * Created: 03.07.14 10:54
  * Description: Утиль для картинки/карточки приветствия.
  */
-@Singleton
-class WelcomeUtil @Inject() (
-                              scUtil                 : ShowcaseUtil,
-                              mImgs3                 : MImgs3,
-                              mCommonDi              : ICommonDi
-                            )
-  extends MacroLogsImpl
+final class WelcomeUtil @Inject() (
+                                    injector               : Injector,
+                                  )
+  extends MacroLogsImplLazy
 {
 
-  import LOGGER._
-  import mCommonDi._
+  private lazy val scUtil = injector.instanceOf[ShowcaseUtil]
+  private lazy val mImgs3 = injector.instanceOf[MImgs3]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /**
@@ -99,11 +97,11 @@ class WelcomeUtil @Inject() (
               }
             Right(r)
           case _ =>
-            trace(s"$logPrefix no welcome bg WH for $bgEdge")
+            LOGGER.trace(s"$logPrefix no welcome bg WH for $bgEdge")
             colorBg(mnode)
         }
         .recover { case ex: Throwable =>
-          error(s"$logPrefix Failed to read welcome image data", ex)
+          LOGGER.error(s"$logPrefix Failed to read welcome image data", ex)
           _colorBg
         }
       }

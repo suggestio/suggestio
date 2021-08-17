@@ -22,9 +22,7 @@ final class CipherUtil @Inject() (
 
   object Cipherer {
 
-    // PKCS7Padding есть только в BouncyCastle, поэтому нужно дергать функцию регистрации JCE-провайдера
-    // BC при старте системы или тестов, поэтому требуется bc-prov.
-    injector.instanceOf[SecInitUtil]
+    //injector.instanceOf[SecInitUtil].
 
     def CIPHER_SPEC     = "aes/cbc/pkcs7padding"
     def SECRET_KEY_ALGO = "AES"

@@ -19,10 +19,10 @@ import japgolly.univeq._
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-/** Credentials storage  */
-final class NodeEdgesStorage @Inject() (
-                                         injector: Injector,
-                                       )
+/** Credentials storage inside node edges list. */
+final class NodeEdgesCredentials @Inject()(
+                                            injector: Injector,
+                                          )
   extends ICredentialsStorage
   with MacroLogsImpl
 {
@@ -61,6 +61,98 @@ final class NodeEdgesStorage @Inject() (
         flag = OptionUtil.SomeBool.someTrue,
       )
     )
+  }
+
+
+  override def write(
+                      intoNode: Option[MNode],
+                      creds: Seq[MEdge],
+                      append: Boolean,
+                    ): Future[MNode] = {
+    lazy val logPrefix = s"write(${intoNode.map(_.idOrNull)}, ${creds.length}, append?$append):"
+
+    val credsPwHashed = if (
+      creds
+        .exists(_.predicate eqOrHasParent MPredicates.Ident.Password)
+    ) {
+      // Need to do password hashing for at least one edge:
+      for (cred <- creds) yield {
+        if (cred.predicate eqOrHasParent MPredicates.Ident.Password) {
+          val plainPassword = cred.doc.text.getOrElse {
+            throw new IllegalArgumentException("Plain password needed for saving.")
+          }
+          val pwHash = scryptUtil.mkHash( plainPassword )
+          LOGGER.trace(s"$logPrefix Hashed password ##${plainPassword.hashCode} => $pwHash")
+          ICredentialsStorage.passwordEdgeOnNodeWrite(
+            passwordHash = pwHash,
+          )
+        } else {
+          cred
+        }
+      }
+    } else {
+      LOGGER.trace(s"$logPrefix No password edges, nothing to hash")
+      creds
+    }
+
+    val nodeForCreate = intoNode getOrElse {
+      ICredentialsStorage.personNode( credsPwHashed )
+    }
+
+    nodeForCreate.id.fold {
+      LOGGER.trace( s"$logPrefix Creating new person node..." )
+      mNodes.saveReturning( nodeForCreate )
+    } { _ =>
+      // Updating existing node using function:
+      mNodes.tryUpdate( nodeForCreate ) {
+        MNode.edges.modify { edges0 =>
+          val edges1 = if (append) {
+            edges0
+          } else {
+            edges0
+              .withoutPredicate( credsPwHashed.iterator.map(_.predicate).toSet.toList: _* )
+          }
+
+          MNodeEdges.out
+            .modify(_ ++ credsPwHashed)(edges1)
+        }
+      }
+    }
+  }
+
+
+  override def get(personNode: MNode, criterias: Seq[Criteria]): Future[Seq[MEdge]] = {
+    lazy val logPrefix = s"get(${personNode.idOrNull}, [${criterias.length}]##${criterias.hashCode()}):"
+    LOGGER.trace(s"$logPrefix criterias:\n ${criterias.mkString(" ||\n ")}")
+
+    val edges = if (criterias.isEmpty) {
+      val r = personNode.edges
+        .withPredicate( MPredicates.Ident )
+        .out
+      LOGGER.trace(s"$logPrefix No criterias defined. Returning all ${r.length} idents of current node.")
+      r
+    } else {
+
+      val edgesProcessor = new Criteria.EdgeMatcher {
+        override def nodeIdsIsMatch(cr: Criteria, edge: MEdge): Boolean = {
+          if (edge.predicate eqOrHasParent MPredicates.Ident.Password) {
+            // Special stuff for password comparison:
+            edge.info.textNi.exists { storedPwHash =>
+              cr.nodeIds.exists { criteriaPassword =>
+                scryptUtil.checkHash( storedPwHash, criteriaPassword )
+              }
+            }
+          } else {
+            // email, phoneNumber, etc - stored as-in in nodeIds:
+            super.nodeIdsIsMatch(cr, edge)
+          }
+        }
+      }
+
+      ???
+    }
+
+    ???
   }
 
 
@@ -166,7 +258,7 @@ final class NodeEdgesStorage @Inject() (
   }
 
 
-  def checkPasswordSync(personNode: MNode, password: String): Boolean = {
+  def _checkPasswordSync(personNode: MNode, password: String): Boolean = {
     personNode.edges
       .withPredicateIter( MPredicates.Ident.Password )
       .toList
@@ -178,13 +270,13 @@ final class NodeEdgesStorage @Inject() (
 
 
   override def checkPassword(personNode: MNode, password: String): Future[Boolean] = {
-    val isPasswordCorrect = checkPasswordSync( personNode, password )
+    val isPasswordCorrect = _checkPasswordSync( personNode, password )
     Future.successful( isPasswordCorrect )
   }
 
 
   override def resetPassword(personNode: MNode, password: String): Future[MNode] = {
-    lazy val logPrefix = s"passwordChange(#${personNode.id.orNull}, ${password.hashCode}):"
+    lazy val logPrefix = s"resetPassword(#${personNode.id.orNull}, ${password.hashCode}):"
 
     val pwEdge = MEdge(
       predicate = MPredicates.Ident.Password,
@@ -194,20 +286,19 @@ final class NodeEdgesStorage @Inject() (
     )
     LOGGER.trace(s"$logPrefix Will replace all current password-edges with:\n $pwEdge")
 
-    val mnodeModF = MNode.edges.modify { edges0 =>
-      MNodeEdges.out.set(
-        MNodeEdges.edgesToMap1(
-          edges0
-            .withoutPredicateIter( MPredicates.Ident.Password )
-            .++ {
-              Iterator.single( pwEdge )
-            }
-        )
-      )(edges0)
+    mNodes.tryUpdate( personNode ) {
+      MNode.edges.modify { edges0 =>
+        MNodeEdges.out.set(
+          MNodeEdges.edgesToMap1(
+            edges0
+              .withoutPredicateIter( MPredicates.Ident.Password )
+              .++ {
+                Iterator.single( pwEdge )
+              }
+          )
+        )(edges0)
+      }
     }
-
-    mNodes
-      .tryUpdate(personNode)( mnodeModF )
   }
 
 
@@ -251,7 +342,7 @@ final class NodeEdgesStorage @Inject() (
     } yield {
       // Filter by password:
       val r = nodesWithLogin.filter { mnode =>
-        checkPasswordSync( mnode, password )
+        _checkPasswordSync( mnode, password )
       }
       LOGGER.trace(s"findByEmailPhoneWithPw($emailOrPhone, ${password.hashCode}):\n For '$emailOrPhone' found ${nodesWithLogin.length} nodes: [${nodesWithLogin.iterator.flatMap(_.id).mkString(" ")}]\n With valid password filtered ${r.length} nodes: [${r.iterator.flatMap(_.id).mkString(" ")}]")
       r
@@ -368,5 +459,36 @@ final class NodeEdgesStorage @Inject() (
     }
   }
 
-}
 
+
+  def _findEmailsOfPersonSync(personNode: MNode, limit: Int): Seq[String] = {
+    var iter = personNode.edges
+      .withPredicateIterIds( MPredicates.Ident.Email )
+
+    if (limit > 0)
+      iter = iter.take( limit )
+
+    iter.toSeq
+  }
+
+  override def findEmailsOfPerson(personNode: MNode, limit: Int): Future[Seq[String]] = {
+    val emails = _findEmailsOfPersonSync(personNode, limit)
+    Future.successful( emails )
+  }
+
+  override def findEmailsOfPersonId(personId: String, limit: Int): Future[Seq[String]] = {
+    findEmailsOfPersonIdFut( personId, mNodes.getByIdCache( personId ), limit )
+  }
+
+  override def findEmailsOfPersonIdFut(personId: String, personOptFut: => Future[Option[MNode]], limit: Int): Future[Seq[String]] = {
+    for {
+      mnodeOpt <- personOptFut
+    } yield {
+      mnodeOpt.fold[Seq[String]] {
+        LOGGER.warn(s"findEmailsOfPersonId($personId, $limit): Person node does not exists. Returning no emails")
+        Nil
+      }( _findEmailsOfPersonSync(_, limit) )
+    }
+  }
+
+}

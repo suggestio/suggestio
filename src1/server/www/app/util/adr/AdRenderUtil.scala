@@ -2,13 +2,13 @@ package util.adr
 
 import java.io.File
 import javax.inject.Inject
-
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im.make.MakeResult
-import models.mproj.ICommonDi
+import play.api.Configuration
+import play.api.inject.Injector
 import util.adr.phantomjs.{PhantomJsRrrDiFactory, PhantomJsRrrUtil}
 import util.adr.wkhtml.{WkHtmlRrrDiFactory, WkHtmlRrrUtil}
 import util.adv.AdvUtil
@@ -23,11 +23,10 @@ import scala.concurrent.Future
  * Description: Содержимое этого модуля выросло внутри WkHtmlUtil.
  */
 final class AdRenderUtil @Inject() (
-                                     mCommonDi                 : ICommonDi
+                                     injector                  : Injector,
                                    ) {
 
-  import mCommonDi._
-  import mCommonDi.current.injector
+  private def configuration = injector.instanceOf[Configuration]
 
   private lazy val playUtil = injector.instanceOf[PlayUtil]
   private lazy val advUtil = injector.instanceOf[AdvUtil]

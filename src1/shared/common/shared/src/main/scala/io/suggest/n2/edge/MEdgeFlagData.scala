@@ -2,6 +2,7 @@ package io.suggest.n2.edge
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.primo.id.IId
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -53,5 +54,9 @@ case class MEdgeFlagData(
                         )
   extends IId[MEdgeFlag]
 {
+
   override def id = flag
+
+  override def toString = flag.toString
+
 }

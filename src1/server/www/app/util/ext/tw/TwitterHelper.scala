@@ -1,7 +1,6 @@
 package util.ext.tw
 
-import javax.inject.{Inject, Singleton}
-import controllers.routes
+import javax.inject.Inject
 import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFormats
 import io.suggest.n2.node.MNode
@@ -24,7 +23,6 @@ import scala.concurrent.Future
   * Created: 17.08.16 11:05
   * Description: Утиль для взаимодействия с твиттером.
   */
-@Singleton
 class TwitterHelper @Inject() (
                                 override val ctxUtil      : ContextUtil,
                                 override val n2NodesUtil  : N2NodesUtil,

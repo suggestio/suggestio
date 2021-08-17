@@ -1,13 +1,13 @@
 package util.img
 
-import javax.inject.{Inject, Singleton}
-
+import javax.inject.Inject
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk._
 import models.im.make.{MImgMakeArgs, MakeResult}
 import models.im._
+import play.api.inject.Injector
 
 import scala.concurrent.Future
 
@@ -27,16 +27,17 @@ import scala.concurrent.Future
  *    но совпадающей по высоте с целевой высотой: FillArea
  * 2. Gravity = center, и берётся кроп целевых размеров, упирающийся в результат (1) по высоте или ширине.
  */
-@Singleton
 class StrictWideMaker @Inject() (
-                                  imgMakerUtil  : ImgMakerUtil
+                                  injector      : Injector,
                                 )
   extends IImgMaker
   with MacroLogsImplLazy
 {
 
+  private lazy val imgMakerUtil = injector.instanceOf[ImgMakerUtil]
+
   /**
-   * Собрать ссылку на изображение и сопутствующие метаданные.
+    * Собрать ссылку на изображение и сопутствующие метаданные.
    * @param args Контейнер с аргументами вызова.
    * @return Фьючерс с экземпляром [[models.im.make.MakeResult]].
    */

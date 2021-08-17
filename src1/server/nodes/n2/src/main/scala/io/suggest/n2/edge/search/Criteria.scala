@@ -5,8 +5,12 @@ import io.suggest.dev.MOsFamily
 import io.suggest.es.model.{IMust, Must_t}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.MGeoPoint
-import io.suggest.n2.edge.MPredicate
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicate, MPredicates}
 import io.suggest.n2.media.storage.MStorage
+import io.suggest.util.logs.MacroLogsImpl
+import japgolly.univeq._
+
+import scala.annotation.tailrec
 
 /**
   * Suggest.io
@@ -120,6 +124,128 @@ final case class Criteria(
 
     sb.append(')')
       .toString()
+  }
+
+}
+
+
+object Criteria extends MacroLogsImpl {
+
+  /** Application-side edges matching against criteria.
+    * Usually, everything is matched on elasticsearch-side. Here we have application-side utils.
+    */
+  class EdgeMatcher {
+
+    def nodeIdsIsMatch( cr: Criteria, edge: MEdge ): Boolean = {
+      cr.nodeIds.exists( edge.nodeIds.contains )
+    }
+
+    def single( cr: Criteria, nodeEdges: MNodeEdges ): Seq[MEdge] = {
+      // Filtering by predicate (using MNodeEdges.edgesByPred map for speed):
+      var nodeEdges0 = (if (cr.predicates.nonEmpty) {
+        nodeEdges
+          .withPredicate( cr.predicates: _* )
+      } else {
+        nodeEdges
+      })
+        .out
+
+      // Filter by value:
+      if (cr.nodeIds.nonEmpty) {
+        nodeEdges0 = nodeEdges0.filter {
+          nodeIdsIsMatch( cr, _ )
+        }
+      }
+
+      // Filter by flag value:
+      for (flagValue <- cr.flag) {
+        nodeEdges0 = nodeEdges0.filter { e =>
+          e.info.flag contains[Boolean] flagValue
+        }
+      }
+
+      // Filter by ext service value:
+      for (crExtServices <- cr.extService) {
+        nodeEdges0 = if (crExtServices.isEmpty) {
+          nodeEdges0.filter { e =>
+            e.info.extService.nonEmpty
+          }
+        } else {
+          nodeEdges0.filter { e =>
+            e.info.extService.exists { extSvc =>
+              crExtServices contains[MExtService] extSvc
+            }
+          }
+        }
+      }
+
+      // TODO implement all other fields matchers?
+
+      nodeEdges0
+    }
+
+
+    /** Match all edges. Obey value of .must field.
+      *
+      * @param crs Criterias.
+      * @param nodeEdges Edges.
+      * @return None, if group match failed (merge using .must failed).
+      */
+    def all(crs: List[Criteria], nodeEdges: MNodeEdges): Option[Set[MEdge]] = {
+      __foldCriteriaStep( nodeEdges, crs, Set.empty, seenAtLeastOneShould = false, atLeastOneShouldIsTrue = false )
+    }
+
+
+    @tailrec
+    private def __foldCriteriaStep(nodeEdges: MNodeEdges,
+                                   restCrs: List[Criteria],
+                                   resultEdgesAcc0: Set[MEdge],
+                                   seenAtLeastOneShould: Boolean,
+                                   atLeastOneShouldIsTrue: Boolean,
+                                  ): Option[Set[MEdge]] = {
+      restCrs match {
+        case cr :: crsTail =>
+          val crEdges = single( cr, nodeEdges )
+
+          if (cr.must ==* IMust.SHOULD) {
+            __foldCriteriaStep(
+              nodeEdges,
+              crsTail,
+              resultEdgesAcc0 = resultEdgesAcc0 ++ crEdges,
+              seenAtLeastOneShould = true,
+              atLeastOneShouldIsTrue = atLeastOneShouldIsTrue || crEdges.nonEmpty,
+            )
+
+          } else if (cr.must ==* IMust.MUST) {
+            if (crEdges.isEmpty)
+              None
+            else
+              __foldCriteriaStep(
+                nodeEdges,
+                crsTail,
+                resultEdgesAcc0 = resultEdgesAcc0 ++ crEdges,
+                seenAtLeastOneShould = seenAtLeastOneShould,
+                atLeastOneShouldIsTrue = atLeastOneShouldIsTrue,
+              )
+
+          } else {
+            // MustNot
+            if (crEdges.isEmpty) {
+              __foldCriteriaStep( nodeEdges, crsTail, resultEdgesAcc0, seenAtLeastOneShould, atLeastOneShouldIsTrue = atLeastOneShouldIsTrue )
+            } else {
+              None
+            }
+          }
+
+        case _ =>
+          if ((seenAtLeastOneShould && atLeastOneShouldIsTrue) || !seenAtLeastOneShould) {
+            Some( resultEdgesAcc0 )
+          } else {
+            None
+          }
+      }
+    }
+
   }
 
 }

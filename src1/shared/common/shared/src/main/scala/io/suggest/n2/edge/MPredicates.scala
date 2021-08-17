@@ -168,8 +168,13 @@ object MPredicates extends StringEnum[MPredicate] {
       */
     case object Password extends MPredicate("qw") with _Child
 
+    /** Language predicate.
+      * Created for ability to transfer language information between different credentials storages.
+      */
+    case object Lang extends MPredicate("ql") with _Child
+
     override def children: LazyList[MPredicate] =
-      Email #:: Phone #:: Id #:: Password #:: super.children
+      Email #:: Phone #:: Id #:: Password #:: Lang #:: super.children
 
   }
 

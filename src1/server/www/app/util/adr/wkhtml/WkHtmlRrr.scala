@@ -3,7 +3,7 @@ package util.adr.wkhtml
 import java.io.File
 
 import com.google.inject.assistedinject.Assisted
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.ISize2di
@@ -20,7 +20,6 @@ import util.adr.{IAdRrr, IAdRrrDiFactory, IAdRrrUtil}
   * Created: 16.08.16 18:21
   * Description: Поддержка рендеринга карточек через wkhtmltoimage.
   */
-@Singleton
 class WkHtmlRrrUtil @Inject() (
   configuration: Configuration
 )

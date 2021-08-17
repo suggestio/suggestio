@@ -25,6 +25,7 @@ import util.acl.{SioControllerApi, _}
 import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.ident.IdentUtil
+import util.ident.store.ICredentialsStorage
 import util.mail.IMailerWrapper
 import util.mdr.MdrUtil
 import util.pay.yaka.YakaUtil
@@ -79,6 +80,7 @@ final class PayYaka @Inject() (
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
   private lazy val identUtil = injector.instanceOf[IdentUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.
@@ -154,7 +156,7 @@ final class PayYaka @Inject() (
   }
 
   private def _payForm(profile: IYakaProfile, orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
-    canPayOrder(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
+    canPayOrder(orderId, onNodeId, _alreadyPaid, U.Balance, U.Lk).async { implicit request =>
       val orderPricesFut = slick.db.run {
         bill2Util.getOrderPrices(orderId)
       }
@@ -166,17 +168,15 @@ final class PayYaka @Inject() (
       }
 
       // Попытаться определить email клиента.
-      val userEmailOptFut = for {
-        personNodeOpt <- request.user.personNodeOptFut
-      } yield {
-        (for {
-          personNode  <- personNodeOpt.iterator
-          email       <- personNode.edges.withPredicateIterIds( MPredicates.Ident.Email )
-        } yield {
-          email
-        })
-          .nextOption()
-      }
+      val userEmailOptFut = request.user.personIdOpt
+        .fold {
+          LOGGER.warn(s"_payForm($profile, order#$orderId, onNode#$onNodeId): Looks like, current user (payer) is not logged in. This is ok?")
+          Future successful Option.empty[String]
+        } { personId =>
+          credentialsStorage
+            .findEmailsOfPersonIdFut( personId, request.user.personNodeOptFut, limit = 1 )
+            .map( _.headOption )
+        }
 
       // Подготовить контекст рендера страницы личного кабинета.
       val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>

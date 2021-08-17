@@ -2,15 +2,15 @@ package util.img
 
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
-
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import akka.NotUsed
+import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.es.model.{BulkProcessorListener, EsModel, MEsNestedSearch}
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
@@ -22,16 +22,18 @@ import io.suggest.n2.extra.doc.MNodeDoc
 import io.suggest.n2.media.storage.IMediaStorages
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.playx.CacheApiUtil
 import io.suggest.url.MHostInfo
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.im._
-import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
 import util.cdn.CdnUtil
 import japgolly.univeq._
 import monocle.Traversal
+import play.api.cache.AsyncCacheApi
+import play.api.inject.Injector
 import scalaz.EphemeralStream
 import scalaz.std.option._
 
@@ -48,23 +50,26 @@ import scala.util.{Failure, Success}
  * Description: Утиль для работы с динамическими картинками.
  * В основном -- это прослойка между img-контроллером и моделью orig img и смежными ей.
  */
-@Singleton
 final class DynImgUtil @Inject() (
-                                   esModel                   : EsModel,
-                                   mImgs3                    : MImgs3,
-                                   mLocalImgs                : MLocalImgs,
-                                   im4jAsyncUtil             : Im4jAsyncUtil,
-                                   cdnUtil                   : CdnUtil,
-                                   // Для каких-то регламентных операций в MNodes:
-                                   mNodes                    : MNodes,
-                                   // Только для удаления и чистки базы:
-                                   iMediaStorages            : IMediaStorages,
-                                   mCommonDi                 : ICommonDi
+                                   injector                  : Injector,
                                  )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mImgs3 = injector.instanceOf[MImgs3]
+  private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
+  private lazy val im4jAsyncUtil = injector.instanceOf[Im4jAsyncUtil]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  // Для каких-то регламентных операций в MNodes:
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  // Только для удаления и чистки базы:
+  private lazy val iMediaStorages = injector.instanceOf[IMediaStorages]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  private lazy val cache = injector.instanceOf[AsyncCacheApi]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
   import esModel.api._
 
   /** Сколько времени кешировать результат подготовки картинки?
@@ -686,13 +691,16 @@ trait DynImgUtilJmxMBean {
 
 /** Реализация поддержки JMX для [[DynImgUtil]]. */
 final class DynImgUtilJmx @Inject() (
-                                      dynImgUtil                : DynImgUtil,
-                                      implicit private val ec   : ExecutionContext,
+                                      injector                  : Injector,
                                     )
   extends JmxBase
   with DynImgUtilJmxMBean
   with MacroLogsDyn
 {
+
+  private def dynImgUtil = injector.instanceOf[DynImgUtil]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
+
   import JmxBase._
 
   override def _jmxType = Types.IMG

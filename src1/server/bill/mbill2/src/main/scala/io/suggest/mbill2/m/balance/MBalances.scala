@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.balance
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.bill.{Amount_t, MCurrency, MPrice}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
@@ -22,7 +22,6 @@ import scala.concurrent.ExecutionContext
  * Description: Модель остатка на счетах по договору.
  */
 
-@Singleton
 final class MBalances @Inject() (
                                   injector: Injector,
                                   override protected val profile: SioPgSlickProfileT,

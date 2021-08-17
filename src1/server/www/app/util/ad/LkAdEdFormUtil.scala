@@ -196,9 +196,10 @@ final class LkAdEdFormUtil @Inject() (
         val edgeTexts0 = for {
           s <- qdTree.deepEdgesUids
           et <- edgeTextsMap.get(s)
-          if et.trim.nonEmpty && et.length >= 2
+          trimmed = et.trim
+          if trimmed.nonEmpty && trimmed.length >= 3
         } yield {
-          et.replace("\\s+", " ")
+          trimmed.replace("\\s+", " ")
         }
         // Добавить разделитель, если требутся.
         if (i > 0 && delim.nonEmpty)

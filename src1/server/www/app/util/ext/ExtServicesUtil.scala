@@ -1,7 +1,7 @@
 package util.ext
 
 import io.suggest.ext.svc.{MExtService, MExtServices}
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mctx.Context
 import models.mext.MExtServicesJvm
 import play.api.inject.Injector
@@ -12,7 +12,6 @@ import play.api.inject.Injector
   * Created: 17.08.16 12:14
   * Description: Утиль для овладевания хелперами внешних сервисов.
   */
-@Singleton
 class ExtServicesUtil @Inject() (
                                   injector: Injector,
                                 ) {

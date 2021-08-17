@@ -1,8 +1,8 @@
 package models.im
 
-import javax.inject.{Inject, Singleton}
-
+import javax.inject.Inject
 import org.im4java.process.{ProcessEvent, ProcessEventListener}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Promise}
 
@@ -12,10 +12,11 @@ import scala.concurrent.{ExecutionContext, Promise}
  * Created: 30.10.14 17:26
  * Description: Утиль для упрощения асинхронной работы с im4java.
  */
-@Singleton
 class Im4jAsyncUtil @Inject() (
-                                implicit private val ec: ExecutionContext
+                                injector: Injector,
                               ) {
+
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Трейт, содранный с org.im4java.test.TestCase16. */
   sealed trait Im4jAsyncProcessListenerT extends ProcessEventListener {

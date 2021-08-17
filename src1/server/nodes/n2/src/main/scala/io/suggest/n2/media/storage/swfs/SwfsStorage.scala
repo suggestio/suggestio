@@ -1,6 +1,6 @@
 package io.suggest.n2.media.storage.swfs
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.n2.media.storage._
 import io.suggest.swfs.client.ISwfsClient
@@ -27,7 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
  *
  * @see [[https://github.com/chrislusf/seaweedfs]]
  */
-@Singleton
 final class SwfsStorage @Inject()(
                                    injector                      : Injector,
                                  )
@@ -36,16 +35,17 @@ final class SwfsStorage @Inject()(
 {
 
   private def configuration = injector.instanceOf[Configuration]
-  private val client = injector.instanceOf[ISwfsClient]
-  private val volCache = injector.instanceOf[SwfsVolumeCache]
-  implicit private val ec = injector.instanceOf[ExecutionContext]
+  private lazy val swfsClient = injector.instanceOf[ISwfsClient]
+  private lazy val swfsVolumeCache = injector.instanceOf[SwfsVolumeCache]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private lazy val (_REPLICATION_DFLT, _DATA_CENTER_DFLT) = {
+    val _configuration = configuration
     /** Инстанс с дефолтовыми настройками репликации. */
-    val rep = configuration.getOptional[String]("swfs.assign.replication")
+    val rep = _configuration.getOptional[String]("swfs.assign.replication")
       .map { Replication.apply }
     /** Дефолтовые настройки дата-центра в assign-request. */
-    val dcDflt = configuration.getOptional[String]("swfs.assign.dc")
+    val dcDflt = _configuration.getOptional[String]("swfs.assign.dc")
     LOGGER.debug(s"Assign settings: dc = $dcDflt, replication = $rep")
     (rep, dcDflt)
   }
@@ -57,7 +57,7 @@ final class SwfsStorage @Inject()(
   override def assignNew(): Future[MAssignedStorage] = {
     val areq = AssignRequest(_DATA_CENTER_DFLT, _REPLICATION_DFLT)
     for {
-      resp <- client.assign(areq)
+      resp <- swfsClient.assign(areq)
     } yield {
       MAssignedStorage(
         host    = resp.hostInfo,
@@ -75,7 +75,7 @@ final class SwfsStorage @Inject()(
   override def getStorageHost(ptr: MStorageInfoData): Future[Seq[MHostInfo]] = {
     val fid = ptr.swfsFid.get
     for {
-      lookupResp <- volCache.getLocations( fid.volumeId )
+      lookupResp <- swfsVolumeCache.getLocations( fid.volumeId )
     } yield {
       LOGGER.trace(s"getAssignedStorage($ptr): Resp => ${lookupResp.mkString(", ")}")
       // TODO Берём только первый ответ, с остальными что делать-то?
@@ -95,7 +95,7 @@ final class SwfsStorage @Inject()(
       for {
         perVol <- Future.traverse( volumeId2ptrs.toSeq ) { case (volumeId, volPtrs) =>
           for {
-            lookupResp <- volCache.getLocations( volumeId )
+            lookupResp <- swfsVolumeCache.getLocations( volumeId )
           } yield {
             LOGGER.trace(s"getAssignedStorages(): Resp for vol#$volumeId => ${lookupResp.mkString(", ")}")
             for (ptr <- volPtrs) yield {
@@ -125,7 +125,7 @@ final class SwfsStorage @Inject()(
 
   /** Короткий код для получения списка локаций volume, связанного с [[SwfsStorage]]. */
   private def _vlocsFut(fid: Fid): Future[Seq[IVolumeLocation]] =
-    volCache.getLocations( fid.volumeId )
+    swfsVolumeCache.getLocations( fid.volumeId )
 
 
   /** Асинхронное поточное чтение хранимого файла.
@@ -147,7 +147,7 @@ final class SwfsStorage @Inject()(
           fid                 = fid.toString,
           params              = args.params,
         )
-        client.get( getReq )
+        swfsClient.get( getReq )
           .filter( _.nonEmpty )
           .recoverWith { case ex =>
             val errMsg = s"$logPrefix Cannot read from volume ${vlocHead.url} (public ${vlocHead.publicUrl})"
@@ -181,7 +181,7 @@ final class SwfsStorage @Inject()(
           volUrl  = vlocs.head.url,
           fid     = fid.toString
         )
-        client.delete(delReq)
+        swfsClient.delete(delReq)
       }
     } yield {
       LOGGER.trace(s"$logPrefix Delete $fid returned: $delResp")
@@ -199,7 +199,7 @@ final class SwfsStorage @Inject()(
           fid           = fid.toString,
           rr            = data
         )
-        client.put(putReq)
+        swfsClient.put(putReq)
       }
     } yield {
       putResp
@@ -213,7 +213,7 @@ final class SwfsStorage @Inject()(
         volUrl = vlocs.head.url,
         fid    = fid.toString
       )
-      client.isExist(getReq)
+      swfsClient.isExist(getReq)
     }
   }
 

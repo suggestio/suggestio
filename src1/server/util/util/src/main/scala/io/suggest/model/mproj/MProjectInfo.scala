@@ -4,7 +4,6 @@ import java.io.File
 import java.net.JarURLConnection
 import java.time.Instant
 
-import javax.inject.Singleton
 import io.suggest.util.logs.MacroLogsDyn
 
 /**
@@ -16,7 +15,6 @@ import io.suggest.util.logs.MacroLogsDyn
   *
   * 2016.jun.14 Модель стала пока неиспользуемой в web21. И с тех пор она выкинута в util.
   */
-@Singleton
 class MProjectInfo extends MacroLogsDyn {
 
   /** Дата последней модификации кода проекта. Берется на основе текущего кода. */
@@ -62,10 +60,4 @@ class MProjectInfo extends MacroLogsDyn {
       .fold(Instant.now) { Instant.ofEpochMilli }
   }
 
-}
-
-
-/** Интерфейс для поля с DI-инстансом модели [[MProjectInfo]]. */
-trait IMProjectInfo {
-  def mProjectInfo: MProjectInfo
 }

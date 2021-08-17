@@ -1,6 +1,6 @@
 package io.suggest.sec
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.session.MSessionKeys._
 import io.suggest.session.{LoginTimestamp, MSessionKeys}
 import io.suggest.ueq.UnivEqUtil._
@@ -32,7 +32,6 @@ import scala.language.higherKinds
 
 
 /** Утиль для v2 API обработки сессий в состоянии. */
-@Singleton
 final class ExpireSessionUtil @Inject() (
                                           implicit private val ec    : ExecutionContext
                                         )
@@ -171,7 +170,6 @@ final class ExpireSessionUtil @Inject() (
   * Не используется с момента создания, реализован быстренько и на всякий случай.
   * Если так и не будет использоваться, то можно будет его удалить.
   */
-@Singleton
 final class ExpireSessionAction @Inject() (
                                             defaultActionBuilder       : DefaultActionBuilder,
                                             expireSessionUtil          : ExpireSessionUtil,

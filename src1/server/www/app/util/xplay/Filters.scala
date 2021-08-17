@@ -5,7 +5,6 @@ import io.suggest.sec.ExpireSessionFilter
 import play.api.http.HttpFilters
 import play.api.mvc.EssentialFilter
 import play.filters.gzip.GzipFilter
-import util.app.CdvFetchHttpCrunchFilter
 import util.cdn.{CorsFilter, DumpXffHeaders}
 import util.tpl.HtmlCompressFilter
 
@@ -26,7 +25,6 @@ final case class Filters @Inject() (
   dumpXffHdrs             : DumpXffHeaders,
   secHeaders              : SecHeadersFilter,
   cors                    : CorsFilter,
-  //cdvFetchHttpCrunchFilter: CdvFetchHttpCrunchFilter,
 )
   extends HttpFilters
 {
