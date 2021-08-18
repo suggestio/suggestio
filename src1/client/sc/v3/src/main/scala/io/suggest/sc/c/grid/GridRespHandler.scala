@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.{ActionResult, Effect, ModelRO}
 import io.suggest.grid.GridScrollUtil
 import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
+import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.msg.ErrorMsgs
@@ -91,7 +92,7 @@ final class GridRespHandler(
       qs.search.offset.fold(true)(_ ==* 0)
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
-    val reusableAdsMap: Map[String, MScAdData] = {
+    val reusableAdsMap: Map[MJdTagId, MScAdData] = {
       if (
         // When grid patching or silent update, or totally clean load, it is allowed to re-use ads. Possibly, this ugly conditions need rethink.
         (
@@ -106,9 +107,11 @@ final class GridRespHandler(
           adsTree   <- g0.core.ads.adsTreePot.iterator
           scAd      <- adsTree.flatten.iterator
           jdData    <- scAd.data.iterator
-          nodeId    <- jdData.doc.tagId.nodeId.iterator
+          tagId = jdData.doc.tagId
+          if tagId.nodeId.nonEmpty
         } yield {
-          nodeId -> scAd
+          // info.flags needed to suppress cases, where AlwaysOpened ad cached as non-opened.
+          tagId -> scAd
         })
           .to( Map )
       } else {
@@ -126,15 +129,25 @@ final class GridRespHandler(
     } yield {
       // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
       val scAdData: MScAdData = (for {
-        nodeId <- sc3AdData.jd.doc.tagId.nodeId
-        scAd0  <- reusableAdsMap.get( nodeId )
-        if scAd0.data.nonEmpty
+        scAd0     <- reusableAdsMap.get( sc3AdData.jd.doc.tagId )
+        scAdData0 <- scAd0.data.toOption
       } yield {
+        var modAccF = List.empty[MScAdData => MScAdData]
+
         // При focused index ad open, возможна ситуация с focused.pending. Нужно сбросить pending:
         if (scAd0.data.isPending)
-          MScAdData.data.modify( _.unPending )(scAd0)
-        else
-          scAd0
+          modAccF ::= MScAdData.data.modify( _.unPending )
+
+        // Reset scAd info metadata from cached version into new, received from server:
+        if (scAdData0.info !=* sc3AdData.info) {
+          modAccF ::= MScAdData.data.modify { _.map {
+            MJdDataJs.info set sc3AdData.info
+          }}
+        }
+
+        modAccF
+          .reduceLeftOption(_ andThen _)
+          .fold(scAd0)(_(scAd0))
       })
         // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
         .getOrElse {

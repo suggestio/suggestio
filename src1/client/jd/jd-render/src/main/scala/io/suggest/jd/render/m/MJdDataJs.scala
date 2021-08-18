@@ -46,6 +46,7 @@ object MJdDataJs {
 
   def doc      = GenLens[MJdDataJs](_.doc)
   def edges    = GenLens[MJdDataJs](_.edges)
+  def info     = GenLens[MJdDataJs](_.info)
   def title    = GenLens[MJdDataJs]( _.title )
 
 
