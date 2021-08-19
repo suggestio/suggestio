@@ -1,12 +1,13 @@
 package controllers
 
 import java.time.OffsetDateTime
-
 import io.suggest.es.model.EsModel
 import io.suggest.geo._
 import io.suggest.n2.edge._
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
+
 import javax.inject.Inject
 import models.madn.AdnShownTypes
 import models.mgeo.MGsPtr
@@ -37,13 +38,13 @@ final class SysAdnGeo @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf}
-  import mCommonDi.current.injector
+  import mCommonDi.ec
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val isSuNode = injector.instanceOf[IsSuNode]
   private lazy val osmClient = injector.instanceOf[OsmClient]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
 
   private def glevelKM = "glevel" -> nodeGeoLevelM

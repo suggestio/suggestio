@@ -5,7 +5,7 @@ import java.time.Instant
 import controllers.Assets
 import io.suggest.dt.DateTimeUtil
 import io.suggest.util.logs.MacroLogsImplLazy
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.req.MFileReq
 import play.api.{Environment, Mode}
 import play.api.inject.Injector
@@ -22,7 +22,6 @@ import scala.concurrent.duration._
   * Created: 13.02.2020 16:36
   * Description: Накрутка для файло-раздавалок, чтобы организовать корректную поддержку HTTP 304 NotModified.
   */
-@Singleton
 final class IsFileNotModified @Inject()(
                                          injector: Injector,
                                        )

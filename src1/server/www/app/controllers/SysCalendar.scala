@@ -11,19 +11,21 @@ import io.suggest.n2.extra.MNodeExtras
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mcal.MCalTypesJvm
 import models.req.INodeReq
 import org.apache.commons.io.IOUtils
 import play.api.data.Forms._
 import play.api.data._
+import play.api.http.HttpErrorHandler
 import play.api.mvc._
 import play.mvc.Http.MimeTypes
 import util.FormUtil._
 import util.acl._
 import views.html.sys1.calendar._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -40,8 +42,6 @@ final class SysCalendar @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf, errorHandler}
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -49,6 +49,9 @@ final class SysCalendar @Inject() (
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val mCalTypesJvm = injector.instanceOf[MCalTypesJvm]
   private lazy val calendarAccessAny = injector.instanceOf[CalendarAccessAny]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   import esModel.api._
 

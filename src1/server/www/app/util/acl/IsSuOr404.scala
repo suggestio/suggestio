@@ -1,10 +1,12 @@
 package util.acl
 
 import io.suggest.sjs.SjsUtil
+
 import javax.inject.Inject
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Result}
 
 import scala.concurrent.Future
@@ -16,11 +18,12 @@ import scala.concurrent.Future
  * Description: Трейты-аддоны для контроллеров для IsSuperuser or 404.
  */
 final class IsSuOr404Ctl @Inject() (
-                                     val isSu   : IsSu,
-                                     mCommonDi  : ICommonDi
+                                     injector   : Injector,
                                    ) {
 
-  import mCommonDi._
+
+  val isSu = injector.instanceOf[IsSu]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
 
   sealed protected[acl] class Base
     extends isSu.Base {
@@ -56,9 +59,11 @@ final class IsSuOr404 @Inject() (
 
 
 final class IsSuOrDevelOr404 @Inject() (
-                                         val isSuOr404Ctl : IsSuOr404Ctl,
-                                         mCommonDi        : ICommonDi
+                                         injector         : Injector,
+                                         isSuOr404Ctl     : IsSuOr404Ctl,
                                        ) {
+
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
   private class ImplC extends isSuOr404Ctl.Base {

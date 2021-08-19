@@ -1,18 +1,18 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc._
 import play.api.mvc.Result
 
@@ -24,22 +24,21 @@ import play.api.mvc.Result
  */
 
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
-@Singleton
 final class IsNodeAdmin @Inject()(
-                                   mCommonDi        : ICommonDi
+                                   injector         : Injector,
                                  )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.current.injector
-  import mCommonDi.{ec, errorHandler}
-
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
-  private lazy val aclUtil = injector.instanceOf[AclUtil]
   private lazy val isAuth = injector.instanceOf[IsAuth]
-  private lazy val reqUtil = injector.instanceOf[ReqUtil]
-  private lazy val dab = injector.instanceOf[DefaultActionBuilder]
+  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
   def onUnauthNode(req: IReqHdr): Future[Result] = {
@@ -301,7 +300,7 @@ final class IsNodeAdmin @Inject()(
   }
 
   def A[A](nodeId: String, userInits: MUserInit*)(action: Action[A]): Action[A] = {
-    dab.async(action.parser) { request =>
+    defaultActionBuilder.async(action.parser) { request =>
       _applyId(nodeId, userInits, request)(action.apply)
     }
   }

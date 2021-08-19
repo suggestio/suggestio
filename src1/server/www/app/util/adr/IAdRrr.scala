@@ -1,17 +1,19 @@
 package util.adr
 
+import akka.actor.ActorSystem
+
 import java.io.File
 import java.nio.file.Files
-
-import io.suggest.async.IAsyncUtilDi
+import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.MImgFormat
+import io.suggest.playx.CacheApiUtil
 import io.suggest.primo.IToPublicString
 import io.suggest.util.logs.MacroLogsImpl
 import models.adr.IAdRenderArgs
-import models.mproj.IMCommonDi
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
@@ -24,11 +26,14 @@ import scala.jdk.CollectionConverters._
   */
 abstract class IAdRrr
   extends MacroLogsImpl
-  with IMCommonDi
-  with IAsyncUtilDi
 {
 
-  import mCommonDi._
+  def injector: Injector
+
+  protected[this] lazy val asyncUtil = injector.instanceOf[AsyncUtil]
+  protected[this] lazy val actorSystem = injector.instanceOf[ActorSystem]
+  protected[this] lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  implicit protected[this] lazy val ec = injector.instanceOf[ExecutionContext]
 
   val args: IAdRenderArgs
 

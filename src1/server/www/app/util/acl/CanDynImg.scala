@@ -1,6 +1,6 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -27,7 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: ACL-проверка доступа к Img.dynImg() и похожим экшенам, связанным со сборкой динамических картинок.
   * Этот код проверяет dist (например, ссылки на s2 не должны приходить на s3).
   */
-@Singleton
 final class CanDynImg @Inject() (
                                   injector                : Injector,
                                 )

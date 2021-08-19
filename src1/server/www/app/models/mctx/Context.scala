@@ -12,7 +12,6 @@ import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
 import io.suggest.dev.{MScreen, MScreenJvm}
 import io.suggest.proto.http.HttpConst
 import io.suggest.sc.ScConstants
-import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers
 import play.api.{Application, Configuration, Environment}
@@ -151,7 +150,9 @@ trait IContextUtilDi {
 
 
 /** Трейт-аддон для контроллеров, которым нужен доступ к сборке контекстов. */
-trait ContextT { this: ITargets with IMCommonDi =>
+trait ContextT { this: ITargets =>
+
+  def contextFactory: Context2Factory
 
   /**
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
@@ -166,7 +167,7 @@ trait ContextT { this: ITargets with IMCommonDi =>
       jsiTgs(request),
     )
     // Собрать контекст с обновлёнными данными в ctxData.
-    mCommonDi.contextFactory
+    contextFactory
       .create(request, messages, ctxData1)
   }
 }

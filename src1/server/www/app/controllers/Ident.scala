@@ -23,7 +23,7 @@ import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sec.util.PgpUtil
+import io.suggest.sec.util.{Csrf, PgpUtil}
 import io.suggest.session.{CustomTtl, LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.spa.SioPages
 import io.suggest.streams.JioStreamsUtil
@@ -44,11 +44,13 @@ import views.html.lk.login._
 import japgolly.univeq._
 import models.req.IReqHdr
 import models.sms.{ISmsSendResult, MSmsSend}
+import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.ident.store.{ICredentialsStorage, MRegContext}
 import util.sec.CspUtil
 import util.sms.SmsSendUtil
+import util.tpl.HtmlCompressUtil
 import util.xplay.LangUtil
 
 import scala.concurrent.Future
@@ -70,9 +72,9 @@ final class Ident @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf, slick, htmlCompressUtil}
-  import mCommonDi.current.injector
+  import mCommonDi.{ec, slick}
 
+  private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val mailer = injector.instanceOf[IMailerWrapper]
@@ -95,6 +97,8 @@ final class Ident @Inject() (
   private lazy val canLoginVia = injector.instanceOf[CanLoginVia]
   private lazy val lkLoginTpl = injector.instanceOf[LkLoginTpl]
   private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
+  private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
+  implicit private lazy val messagesApi = injector.instanceOf[MessagesApi]
 
   import esModel.api._
   import slick.profile.api._
@@ -213,7 +217,7 @@ final class Ident @Inject() (
               var rdr2 = Ok(rdrPath)
                 .addingToSession( addToSession : _* )
               for (lang <- langOpt)
-                rdr2 = rdr2.withLang( lang )( mCommonDi.messagesApi )
+                rdr2 = rdr2.withLang( lang )
               rdr2
             }
           }

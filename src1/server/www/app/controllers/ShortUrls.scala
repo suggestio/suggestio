@@ -10,11 +10,11 @@ import io.suggest.util.logs.MacroLogsImplLazy
 
 import javax.inject.Inject
 import models.mctx.ContextUtil
-import play.api.Mode
+import play.api.http.HttpErrorHandler
 import play.api.mvc.{RequestHeader, Result}
 import util.acl.{MaybeAuth, SioControllerApi}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -33,14 +33,15 @@ final class ShortUrls @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, errorHandler, current}
   import esModel.api._
 
-  lazy val contextUtil = current.injector.instanceOf[ContextUtil]
+  private lazy val contextUtil = injector.instanceOf[ContextUtil]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Редиректить на главную? */
-  private def IS_NOT_FOUND_RDR_TO_MAIN: Boolean = mCommonDi.current.mode == Mode.Prod
+  private def IS_NOT_FOUND_RDR_TO_MAIN = mCommonDi.isProd
 
 
   /** Рендер ответа с редиректом в выдачу. */

@@ -8,6 +8,7 @@ import io.suggest.ext.svc.MExtServices
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.n2.node.MNodes
 import io.suggest.sec.csp.{Csp, CspPolicy}
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
@@ -18,6 +19,7 @@ import models.req.{IAdProdReq, MReqNoBody}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
 import play.api.data._
+import play.api.http.HttpErrorHandler
 import play.api.libs.json.JsValue
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{Result, WebSocket}
@@ -29,7 +31,7 @@ import views.html.helper.CSRF
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -45,8 +47,7 @@ final class LkAdvExt @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.{actorSystem, mat}
 
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -60,6 +61,9 @@ final class LkAdvExt @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val aclUtil = injector.instanceOf[AclUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */

@@ -1,7 +1,6 @@
 package util.mdr
 
 import java.time.OffsetDateTime
-
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -16,6 +15,7 @@ import io.suggest.streams.StreamsUtil
 import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
+
 import javax.inject.Inject
 import models.mctx.Context
 import models.mdr.{MMdrNotifyCtx, MMdrNotifyMeta}
@@ -28,7 +28,7 @@ import views.html.sys1.mdr._mdrNeededEmailTpl
 import OptionUtil.BoolOptOps
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.i18n.MsgCodes
-import play.api.i18n.Lang
+import play.api.i18n.{Lang, Langs, MessagesApi}
 
 import scala.concurrent.Future
 import scala.util.Failure
@@ -54,8 +54,10 @@ final class MdrUtil @Inject() (
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+  private lazy val langs = injector.instanceOf[Langs]
+  private lazy val messagesApi = injector.instanceOf[MessagesApi]
 
-  import mCommonDi.{configuration, current, ec, mat, slick, messagesApi, langs}
+  import mCommonDi.{configuration, current, ec, mat, slick}
   import slick.profile.api._
 
 

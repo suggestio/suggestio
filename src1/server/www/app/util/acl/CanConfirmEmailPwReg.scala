@@ -4,6 +4,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.ott.MOneTimeTokens
 import io.suggest.n2.node.{MNodeTypes, MNodes}
+
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -16,7 +17,7 @@ import models.mctx.Context
 import play.api.http.Status
 import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -27,25 +28,24 @@ import scala.concurrent.duration._
  */
 final class CanConfirmEmailPwReg @Inject()(
                                             injector                : Injector,
+                                            aclUtil                 : AclUtil,
+                                            reqUtil                 : ReqUtil,
                                           )
   extends MacroLogsImpl
 {
 
-  private lazy val aclUtil = injector.instanceOf[AclUtil]
   private lazy val mNodes = injector.instanceOf[MNodes]
-  private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val mOneTimeTokens = injector.instanceOf[MOneTimeTokens]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mCommonDi = injector.instanceOf[ICommonDi]
-
+  private lazy val errorHandler = injector.instanceOf[controllers.ErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Максимальное время жизни. */
   def MAX_AGE = 12.hours
 
 
   def activationImpossible(implicit ctx: Context): Future[Result] = {
-    import mCommonDi.errorHandler
-
     errorHandler.onClientError(
       request     = ctx.request,
       statusCode  = Status.CONFLICT,
@@ -69,20 +69,19 @@ final class CanConfirmEmailPwReg @Inject()(
 
         val nowDiff = MEmailRecoverQs.getNowSec() - qs.nowSec
 
-        implicit lazy val ctx = mCommonDi.errorHandler.getContext2(req1)
+        implicit lazy val ctx = errorHandler.getContext2(req1)
 
         if (nowDiff <= 0L || nowDiff > MAX_AGE.toSeconds || qs.nodeId.isEmpty) {
           LOGGER.debug(s"$logPrefix [SEC] Too old. nowDiff=$nowDiff sec, user#${req1.user.personIdOpt.orNull} remote=${req1.remoteClientAddress}")
           activationImpossible( ctx )
 
         } else {
-          import mCommonDi.{ec, slick}
           import esModel.api._
 
           val personNodeId = qs.nodeId.get
 
           // Нужно поискать ott если уже использовано:
-          val mottOptFut = slick.db.run {
+          val mottOptFut = mCommonDi.slick.db.run {
             mOneTimeTokens.getById( qs.nonce )
           }
 

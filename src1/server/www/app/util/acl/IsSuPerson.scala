@@ -1,15 +1,16 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
+
 import javax.inject.Inject
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import models.req.{MPersonReq, MReq}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
-import models.mproj.ICommonDi
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -19,17 +20,16 @@ import scala.concurrent.Future
  */
 
 final class IsSuPerson @Inject()(
+                                  injector  : Injector,
                                   aclUtil   : AclUtil,
                                   reqUtil   : ReqUtil,
-                                  mCommonDi : ICommonDi
                                 ) {
-
-  import mCommonDi.{ec, errorHandler}
-  import mCommonDi.current.injector
 
   private val esModel = injector.instanceOf[EsModel]
   private val mNodes = injector.instanceOf[MNodes]
   private val isSu = injector.instanceOf[IsSu]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** @param personId id юзера. */
   def apply(personId: String): ActionBuilder[MPersonReq, AnyContent] = {

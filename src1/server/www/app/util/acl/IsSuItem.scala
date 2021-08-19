@@ -7,10 +7,11 @@ import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{MItemReq, MReq}
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -19,18 +20,21 @@ import scala.concurrent.Future
   * Description: ACL-аддон для isSuperuser + mItems.getById()
   */
 final class IsSuItem @Inject() (
-                                 aclUtil     : AclUtil,
-                                 reqUtil     : ReqUtil,
-                                 mCommonDi   : ICommonDi
+                                 injector    : Injector,
                                )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{ec, slick, errorHandler}
-  import mCommonDi.current.injector
-
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val isSu = injector.instanceOf[IsSu]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
+  import mCommonDi.slick
+
 
   /**
     * @param itemId Ключ item'а в таблице MItems.

@@ -1,6 +1,6 @@
 package util.adv.geo.tag
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -51,7 +51,7 @@ class GeoTagsUtil @Inject() (
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
 
-  import mCommonDi._
+  import mCommonDi.{ec, slick, mat}
   import slick.profile.api._
   import mNodes.Implicits.elSourcingHelper
   import esModel.api._

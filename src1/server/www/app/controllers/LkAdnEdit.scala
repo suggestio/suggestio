@@ -26,12 +26,14 @@ import scalaz.ValidationNel
 import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.sec.util.Csrf
 import io.suggest.up.UploadConstants
 import models.req.MNodeReq
 import monocle.Traversal
+import play.api.http.HttpErrorHandler
 import scalaz.std.option._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -47,9 +49,8 @@ final class LkAdnEdit @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf, errorHandler}
-  import mCommonDi.current.injector
 
+  private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
@@ -59,6 +60,8 @@ final class LkAdnEdit @Inject() (
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val upload = injector.instanceOf[Upload]
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */

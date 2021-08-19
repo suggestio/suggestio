@@ -10,6 +10,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.sec.csp.CspPolicy
+import io.suggest.sec.util.Csrf
 import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MEmailOrderPaidTplArgs
@@ -18,6 +19,7 @@ import models.mdr.MMdrNotifyMeta
 import models.mpay.yaka._
 import models.req.{INodeOrderReq, IReq, IReqHdr}
 import models.usr.MSuperUsers
+import play.api.http.HttpErrorHandler
 import play.api.i18n.Messages
 import play.api.mvc._
 import play.twirl.api.Xml
@@ -38,7 +40,7 @@ import views.html.lk.billing.pay.yaka._
 import views.html.stuff.PleaseWaitTpl
 import views.xml.lk.billing.pay.yaka._YakaRespTpl
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -61,8 +63,7 @@ final class PayYaka @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, slick, csrf, errorHandler}
-  import mCommonDi.current.injector
+  import mCommonDi.slick
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -81,6 +82,9 @@ final class PayYaka @Inject() (
   private lazy val identUtil = injector.instanceOf[IdentUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.

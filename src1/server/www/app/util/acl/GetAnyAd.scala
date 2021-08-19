@@ -1,15 +1,16 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
+
 import javax.inject.Inject
 import io.suggest.n2.node.{MNodeTypes, MNodes}
-import models.mproj.ICommonDi
 import models.req.MAdReq
 import play.api.mvc._
 import io.suggest.req.ReqUtil
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -18,14 +19,16 @@ import scala.concurrent.Future
  * Description: ActionBuild для запроса действия над любой карточкой без проверки прав.
  */
 final class GetAnyAd @Inject() (
-                                 esModel    : EsModel,
-                                 mNodes     : MNodes,
+                                 injector   : Injector,
                                  aclUtil    : AclUtil,
                                  reqUtil    : ReqUtil,
-                                 mCommonDi  : ICommonDi
                                ) {
 
-  import mCommonDi.{ec, errorHandler}
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
   import esModel.api._
 
 

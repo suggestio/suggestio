@@ -70,8 +70,3 @@ final class AsyncUtil @Inject() (
 }
 
 case class EcParInfo(parFactor: Float, parMax: Int)
-
-/** Интерфейс для DI-поля с инстансом [[AsyncUtil]]. */
-trait IAsyncUtilDi {
-  def asyncUtil: AsyncUtil
-}

@@ -30,11 +30,14 @@ import util.stat.StatUtil
 import OptionUtil.BoolOptOps
 import com.google.inject.Inject
 import io.suggest.es.model.EsModel
+import io.suggest.playx.CacheApiUtil
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc.SiteTpl
 import japgolly.univeq._
+import play.api.Configuration
+import play.api.http.HttpErrorHandler
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -42,7 +45,7 @@ import scala.util.{Failure, Success}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 07.11.14 19:42
- * Description: Трейты с экшенами для рендера "сайтов" выдачи, т.е. html-страниц, возвращаемых при непоср.реквестах.
+ * Description: Экшены для рендера "сайтов" выдачи, т.е. html-страниц, возвращаемых при непоср.реквестах.
  * Бывает рендер через geo, который ищет подходящий узел, и рендер напрямую.
  */
 
@@ -54,7 +57,6 @@ final class ScSite @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.current.injector
 
   protected val scCtlApi = injector.instanceOf[ScCtlApi]
   private lazy val statUtil = injector.instanceOf[StatUtil]
@@ -69,8 +71,11 @@ final class ScSite @Inject() (
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val scJsRouter = injector.instanceOf[ScJsRouter]
   private lazy val siteTpl = injector.instanceOf[SiteTpl]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.{ec, configuration, cacheApiUtil, errorHandler}
   import esModel.api._
   import cspUtil.Implicits._
 

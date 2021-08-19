@@ -1,8 +1,10 @@
 package controllers
 
 import io.suggest.n2.edge.MPredicates
+
 import javax.inject.Inject
 import io.suggest.n2.node.MNode
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
 import models.req.{INodeReq, IReq, IReqHdr}
@@ -13,6 +15,7 @@ import util.acl._
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import util.support.SupportUtil
+import util.tpl.HtmlCompressUtil
 import views.html.lk.support._
 import views.txt.lk.support.emailSupportRequestedTpl
 
@@ -31,7 +34,6 @@ final class LkHelp @Inject()(
 {
 
   import sioControllerApi._
-  import mCommonDi.current.injector
 
   private lazy val mailer = injector.instanceOf[IMailerWrapper]
   private lazy val identUtil = injector.instanceOf[IdentUtil]
@@ -40,8 +42,10 @@ final class LkHelp @Inject()(
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
-  import mCommonDi._
+  import mCommonDi.ec
 
   // TODO Объеденить node и не-node вызовы в единые экшены.
   // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.

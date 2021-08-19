@@ -6,8 +6,10 @@ import io.suggest.es.model.EsModel
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.index.MScIndexes
+import io.suggest.sec.util.Csrf
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
+import play.api.http.HttpErrorHandler
 import play.api.i18n.{Lang, Messages, MessagesImpl}
 
 import javax.inject.Inject
@@ -31,8 +33,6 @@ final class ScStuff @Inject()(
 {
 
   import sioControllerApi._
-  import mCommonDi.current.injector
-  import mCommonDi.{csrf, errorHandler}
 
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -41,6 +41,8 @@ final class ScStuff @Inject()(
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
 
 
   /** Обработка списка узлов, чтобы был актуальный логотип, название, цвета.

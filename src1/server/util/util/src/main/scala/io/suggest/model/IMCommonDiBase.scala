@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import akka.stream.Materializer
-import io.suggest.di.{ICacheApiUtil, ICurrentActorSystem, IExecutionContext, ISioNotifier}
+import io.suggest.di.{ICurrentActorSystem, IExecutionContext, ISioNotifier}
 import io.suggest.playx.{ICurrentAppHelpers, ICurrentConf}
 
 /**
@@ -15,7 +15,6 @@ trait ICommonDiValBase
   with ISioNotifier
   with ICurrentConf
   with ICurrentAppHelpers
-  with ICacheApiUtil
   with ICurrentActorSystem
 {
   implicit val mat                 : Materializer

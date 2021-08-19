@@ -7,6 +7,7 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.sec.util.Csrf
 import models.mctx.Context
 import models.usr._
 import org.elasticsearch.search.sort.SortOrder
@@ -30,14 +31,14 @@ final class SysPerson @Inject() (
                                 ) {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf}
-  import mCommonDi.current.injector
+  import mCommonDi.ec
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val isSuPerson = injector.instanceOf[IsSuPerson]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */

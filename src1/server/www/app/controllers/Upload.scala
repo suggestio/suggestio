@@ -47,11 +47,12 @@ import monocle.Traversal
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
+import play.api.http.HttpErrorHandler
 import play.api.inject.Injector
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.MultipartFormData.FilePart
 
-import scala.concurrent.{Future, blocking}
+import scala.concurrent.{ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success}
 import scalaz.ValidationNel
 import scalaz.std.option._
@@ -70,7 +71,6 @@ final class Upload @Inject()(
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, errorHandler}
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val uploadUtil = injector.instanceOf[UploadUtil]
@@ -91,6 +91,8 @@ final class Upload @Inject()(
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
   private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
   private lazy val localImgFileCreatorFactory = injector.instanceOf[LocalImgFileCreatorFactory]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   // TODO Opt В будущем, особенно когда будет поддержка заливки видео (или иных больших файлов), надо будет

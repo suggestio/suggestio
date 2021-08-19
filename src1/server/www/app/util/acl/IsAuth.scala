@@ -1,6 +1,6 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.req.MReq
 import play.api.mvc._
 
@@ -22,7 +22,6 @@ import play.api.http.{HeaderNames, MimeTypes}
  */
 
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
-@Singleton
 final class IsAuth @Inject() (
                                aclUtil            : AclUtil,
                                reqUtil            : ReqUtil
@@ -88,9 +87,3 @@ final class IsAuth @Inject() (
   def apply() = IsAuth
 
 }
-
-/** Интерфейс для поля с DI-инстансом [[IsAuth]]. */
-trait IIsAuth {
-  def isAuth: IsAuth
-}
-

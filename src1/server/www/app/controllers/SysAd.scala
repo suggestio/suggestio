@@ -20,6 +20,7 @@ import models.msc.{OneAdRenderVariant, OneAdRenderVariants}
 import models.msys.{MImgEdge, MShowAdRcvrsTplArgs, MShowAdTplArgs, MShowNodeAdsTplArgs, MShowOneAdFormTplArgs, MSysNodeInstallFormData}
 import models.req.{IAdReq, INodeReq}
 import play.api.data.{Form, Mapping}
+import play.api.i18n.{Langs, MessagesApi}
 import play.api.inject.Injector
 import play.api.mvc.{Call, Result}
 import util.FormUtil
@@ -66,6 +67,8 @@ final class SysAd @Inject()(
   private lazy val sysMarketUtil = injector.instanceOf[SysMarketUtil]
   private lazy val isSuNode = injector.instanceOf[IsSuNode]
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val langs = injector.instanceOf[Langs]
+  private lazy val messagesApi = injector.instanceOf[MessagesApi]
 
   import sioControllerApi._
 
@@ -487,7 +490,6 @@ final class SysAd @Inject()(
   private def _installRender(form: Form[MSysNodeInstallFormData], rs: Status)
                             (implicit ctx: Context, request: INodeReq[_]): Future[Result] = {
     import esModel.api._
-    import mCommonDi.langs
 
     for {
       srcNodes <- mNodes.multiGetCache(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
@@ -495,7 +497,7 @@ final class SysAd @Inject()(
       val allLangs = langs.availables
       val langCode2msgs = allLangs.iterator
         .map { l =>
-          l.code -> mCommonDi.messagesApi.preferred( l :: Nil )
+          l.code -> messagesApi.preferred( l :: Nil )
         }
         .toMap
       val html = installDfltMadsTpl(allLangs, langCode2msgs, request.mnode, form, srcNodes)(ctx)

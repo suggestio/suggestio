@@ -14,6 +14,7 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.sec.util.Csrf
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
@@ -41,9 +42,9 @@ final class LkAds @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.{ec, slick, mat}
 
+  private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]

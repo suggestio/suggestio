@@ -3,6 +3,7 @@ package controllers
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.empty.OptionUtil
+
 import javax.inject.Inject
 import io.suggest.ctx.CtxData
 import io.suggest.err.ErrorConstants
@@ -12,6 +13,7 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.sec.util.Csrf
 import io.suggest.sys.mdr._
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.json.Json
@@ -43,8 +45,7 @@ final class SysMdr @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.{ec, slick, mat}
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
@@ -57,6 +58,7 @@ final class SysMdr @Inject() (
   private lazy val canMdrResolute = injector.instanceOf[CanMdrResolute]
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
   private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
 
   /** react-форма для осуществления модерации в /sys/.

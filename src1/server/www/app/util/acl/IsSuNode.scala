@@ -2,14 +2,15 @@ package util.acl
 
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.MNodes
+
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{IReq, MNodeReq, MReq}
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 /**
@@ -21,19 +22,19 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
  * 2015.dec.23: Изначально назывался IsSuperuserAdnNode и обслуживал только MAdnNode.
  */
 final class IsSuNode @Inject() (
+                                 injector   : Injector,
                                  aclUtil    : AclUtil,
                                  reqUtil    : ReqUtil,
-                                 mCommonDi  : ICommonDi
                                )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.current.injector
-  import mCommonDi.{ec, errorHandler}
-
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
     * @param nodeId id запрашиваемого узла.

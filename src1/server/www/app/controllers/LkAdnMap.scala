@@ -21,11 +21,13 @@ import util.billing.Bill2Util
 import util.sec.CspUtil
 import views.html.lk.adn.mapf._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.sec.util.Csrf
 import play.api.libs.json.Json
 import play.api.mvc.BodyParser
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import japgolly.univeq._
+import play.api.http.HttpErrorHandler
 
 /**
   * Suggest.io
@@ -41,9 +43,9 @@ final class LkAdnMap @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.slick
 
+  private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val advFormUtil = injector.instanceOf[AdvFormUtil]
   private lazy val lkAdnMapFormUtil = injector.instanceOf[LkAdnMapFormUtil]
   private lazy val lkAdnMapBillUtil = injector.instanceOf[LkAdnMapBillUtil]
@@ -53,6 +55,8 @@ final class LkAdnMap @Inject() (
   private lazy val lkGeoCtlUtil = injector.instanceOf[LkGeoCtlUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Body-parser, декодирующий бинарь из запроса в инстанс MLamForm. */

@@ -19,10 +19,12 @@ import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
 import models.req.{BfpArgs, IReq}
+import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin, SioControllerApi}
@@ -33,7 +35,7 @@ import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import views.html.lk.ad.edit._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -49,10 +51,8 @@ final class LkAdEdit @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf, errorHandler}
-  import mCommonDi.current.injector
 
-  // Ленивое DI для не-Singleton-режима работы.
+  private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val canEditAd = injector.instanceOf[CanEditAd]
   private lazy val canCreateOrEditAd = injector.instanceOf[CanCreateOrEditAd]
@@ -66,6 +66,8 @@ final class LkAdEdit @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val extRscUtil = injector.instanceOf[ExtRscUtil]
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   private lazy val _BFP_ARGS = (BfpArgs.tryCountDivisor set 2)( BfpArgs.default )

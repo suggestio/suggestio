@@ -4,13 +4,13 @@ import io.suggest.es.model.EsModel
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 
 import javax.inject.Inject
-import models.mproj.ICommonDi
 import models.req.MNodeReq
 import play.api.mvc._
 import io.suggest.req.ReqUtil
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -19,15 +19,16 @@ import scala.concurrent.Future
  * Description: Доступ к календарю вообще без проверки ACL.
  */
 final class CalendarAccessAny @Inject() (
-                                          esModel               : EsModel,
+                                          injector              : Injector,
                                           aclUtil               : AclUtil,
-                                          mNodes                : MNodes,
                                           reqUtil               : ReqUtil,
-                                          mCommonDi             : ICommonDi
-                                        )
-{
+                                        ) {
 
-  import mCommonDi.{ec, errorHandler}
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
   import esModel.api._
 
 

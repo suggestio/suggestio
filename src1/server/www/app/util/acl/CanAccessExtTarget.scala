@@ -1,16 +1,17 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
+
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.MExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
-import models.mproj.ICommonDi
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -20,19 +21,20 @@ import scala.concurrent.Future
  */
 
 class CanAccessExtTarget @Inject() (
-                                     esModel            : EsModel,
-                                     aclUtil            : AclUtil,
-                                     mExtTargets        : MExtTargets,
-                                     isNodeAdmin        : IsNodeAdmin,
-                                     reqUtil            : ReqUtil,
-                                     mCommonDi          : ICommonDi
+                                     injector              : Injector,
+                                     aclUtil               : AclUtil,
+                                     reqUtil               : ReqUtil,
                                    )
   extends MacroLogsImpl
 { outer =>
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mExtTargets = injector.instanceOf[MExtTargets]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
+  import esModel.api._
 
   /** @param tgId id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */
   def apply(tgId: String): ActionBuilder[MExtTargetNodeReq, AnyContent] = {

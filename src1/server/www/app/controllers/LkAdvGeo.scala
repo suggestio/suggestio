@@ -31,14 +31,16 @@ import util.lk.LkTagsSearchUtil
 import util.sec.CspUtil
 import views.html.lk.adv.geo._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.sec.util.Csrf
 import io.suggest.streams.StreamsUtil
 import io.suggest.tags.MTagsSearchQs
 import models.adv.geo.MForAdTplArgs
 import play.api.libs.json.Json
 import util.adv.direct.AdvRcvrsUtil
 import japgolly.univeq._
+import play.api.http.HttpErrorHandler
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -53,8 +55,7 @@ final class LkAdvGeo @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.{slick, mat}
 
   private lazy val advGeoFormUtil = injector.instanceOf[AdvGeoFormUtil]
   private lazy val advGeoBillUtil = injector.instanceOf[AdvGeoBillUtil]
@@ -71,6 +72,9 @@ final class LkAdvGeo @Inject() (
   private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val tagSearchUtil = injector.instanceOf[LkTagsSearchUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */

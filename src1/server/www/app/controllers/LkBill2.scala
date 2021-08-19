@@ -22,6 +22,7 @@ import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.xplay.qsb.QsbSeq
 import japgolly.univeq._
@@ -60,8 +61,7 @@ final class LkBill2 @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.{ec, slick, mat}
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -81,6 +81,7 @@ final class LkBill2 @Inject() (
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val mOrders = injector.instanceOf[MOrders]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
 
   private def _dailyTfArgsFut(mnode: MNode, madOpt: Option[MNode] = None): Future[Option[MTfDailyTplArgs]] = {

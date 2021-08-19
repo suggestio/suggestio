@@ -11,6 +11,7 @@ import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.bill.tariff.daily.MTfDaily
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 
 import javax.inject.Inject
@@ -43,8 +44,7 @@ final class SysBilling @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.{ec, slick}
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
@@ -59,6 +59,7 @@ final class SysBilling @Inject() (
   private lazy val isSuNodeNoContract = injector.instanceOf[IsSuNodeNoContract]
   private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
 
   /**

@@ -2,13 +2,11 @@ package util.adr.phantomjs
 
 import java.io.{File, FileWriter}
 import javax.inject.Inject
-
 import com.google.inject.assistedinject.Assisted
-import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.{MImgFormat, MImgFormats}
 import models.adr.IAdRenderArgs
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 import util.adr.{IAdRrr, IAdRrrDiFactory, IAdRrrUtil}
 import views.txt.js.phantom.renderOneAdJs
 
@@ -38,8 +36,7 @@ trait PhantomJsRrrDiFactory extends IAdRrrDiFactory {
 
 class PhantomJsRrr @Inject() (
   @Assisted override val args : IAdRenderArgs,
-  override val asyncUtil      : AsyncUtil,
-  override val mCommonDi      : ICommonDi
+  override val injector       : Injector,
 )
   extends IAdRrr
 {

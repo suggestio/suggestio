@@ -9,14 +9,16 @@ import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.sys.mdr.MMdrResolution
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.Inject
 import models.req.MItemOptAdNodesChainReq
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import japgolly.univeq._
 import models.mproj.ICommonDi
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -25,21 +27,24 @@ import scala.concurrent.Future
   * Description: ACL для проверки команды модерации от обычного или необычного юзера.
   */
 final class CanMdrResolute @Inject()(
-                                      esModel                 : EsModel,
-                                      mNodes                  : MNodes,
+                                      injector                : Injector,
                                       aclUtil                 : AclUtil,
                                       reqUtil                 : ReqUtil,
-                                      mCommonDi               : ICommonDi,
                                     )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{slick, ec, errorHandler => httpErrorHandler, current}
-  import esModel.api._
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  private lazy val mItems = current.injector.instanceOf[MItems]
-  private lazy val isNodeAdmin = current.injector.instanceOf[IsNodeAdmin]
-  private lazy val isAuth = current.injector.instanceOf[IsAuth]
+  import mCommonDi.slick
+  import esModel.api._
 
   /** Проверка прав доступа на дальнейшее исполнение резолюции модерации.
     * Следует помнить, что тело экшена также должно понимать, что это su-вызов или обычный юзер это модерирует,

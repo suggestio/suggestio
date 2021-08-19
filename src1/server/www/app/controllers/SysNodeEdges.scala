@@ -15,6 +15,7 @@ import play.api.libs.json.Json
 import util.acl.{CanDownloadFile, IsFileNotModified, IsSuNodeEdge, SioControllerApi}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta}
 import io.suggest.pick.ContentTypeCheck
+import io.suggest.sec.util.Csrf
 import io.suggest.up.UploadConstants
 import views.html.sys1.market.edge.EditEdge2Tpl
 import japgolly.univeq._
@@ -37,7 +38,7 @@ final class SysNodeEdges @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{csrf, ec, current}
+  import mCommonDi.{ec, current}
 
   private lazy val mNodes = current.injector.instanceOf[MNodes]
   private lazy val esModel = current.injector.instanceOf[EsModel]
@@ -45,6 +46,7 @@ final class SysNodeEdges @Inject() (
   private lazy val uploadCtl = current.injector.instanceOf[Upload]
   private lazy val canDownloadFile = current.injector.instanceOf[CanDownloadFile]
   private lazy val isFileNotModified = current.injector.instanceOf[IsFileNotModified]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
 
   /** Страница с формой редактирования эджа.

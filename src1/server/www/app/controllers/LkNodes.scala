@@ -1,7 +1,6 @@
 package controllers
 
 import java.time.OffsetDateTime
-
 import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.adn.{MAdnRight, MAdnRights}
@@ -33,13 +32,15 @@ import io.suggest.req.ReqUtil
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.sec.util.Csrf
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import japgolly.univeq._
+import play.api.http.HttpErrorHandler
 import scalaz.{EphemeralStream, Tree}
 import util.TplDataFormatUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -62,7 +63,6 @@ final class LkNodes @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.current.injector
 
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -79,11 +79,14 @@ final class LkNodes @Inject() (
   private lazy val canCreateSubNode = injector.instanceOf[CanCreateSubNode]
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
   private lazy val nodesTpl = injector.instanceOf[NodesTpl]
   private lazy val adNodesTpl = injector.instanceOf[AdNodesTpl]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi._
+  import mCommonDi.slick
   import esModel.api._
 
 

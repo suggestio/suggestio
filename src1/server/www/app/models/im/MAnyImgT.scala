@@ -7,9 +7,9 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.IDataSource
 import io.suggest.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.{ICommonDi, IMCommonDi}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -41,9 +41,10 @@ trait MAnyImgT {
 
 
 /** Трейт для статических частей img-моделей. */
-trait MAnyImgsT[T <: MAnyImgT] extends IMCommonDi {
+trait MAnyImgsT[T <: MAnyImgT] {
 
-  import mCommonDi.ec
+  def injector: Injector
+  implicit protected[this] lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Удалить картинку из модели/моделей. */
   def delete(mimg: T): Future[_]
@@ -72,18 +73,14 @@ trait MAnyImgsT[T <: MAnyImgT] extends IMCommonDi {
 
 /** Статическая над-модель, реализующая разные общие методы для любых картинок. */
 class MAnyImgs @Inject() (
-                           override val mCommonDi   : ICommonDi
+                           override val injector: Injector,
                          )
   extends MAnyImgsT[MAnyImgT]
   with MacroLogsImpl
 {
 
-  import mCommonDi.current.injector
-
   private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
   private lazy val mImgs3 = injector.instanceOf[MImgs3]
-
-  import mCommonDi.ec
 
   /** Удалить картинку из всех img-моделей. */
   override def delete(mimg: MAnyImgT): Future[_] = {

@@ -13,7 +13,9 @@ import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
 import io.suggest.stat.m.{MComponents, MDiag}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.playx.CacheApiUtil
 import io.suggest.proto.http.model.MCsrfToken
+import io.suggest.sec.util.Csrf
 import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.{Context, ContextUtil}
@@ -29,13 +31,14 @@ import util.stat.StatUtil
 import util.ws.{MWsChannelActorArgs, WsChannelActors}
 import views.html.static._
 import japgolly.univeq._
-import play.api.http.{HeaderNames, HttpEntity, HttpProtocol}
+import play.api.Configuration
+import play.api.http.{HeaderNames, HttpEntity, HttpErrorHandler, HttpProtocol}
 import play.filters.csrf.CSRF
 import play.twirl.api.Xml
 import views.txt.static.robotsTxtTpl
 
 import java.net.URI
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -53,8 +56,7 @@ final class Static @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi._
-  import mCommonDi.current.injector
+  import mCommonDi.{isProd, isDev, mat, actorSystem}
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
@@ -73,6 +75,11 @@ final class Static @Inject() (
   private lazy val wsChannelActors = injector.instanceOf[WsChannelActors]
   private lazy val assets = injector.instanceOf[Assets]
   private lazy val contextUtil = injector.instanceOf[ContextUtil]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"

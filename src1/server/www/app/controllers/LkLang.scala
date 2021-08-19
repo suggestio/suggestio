@@ -10,7 +10,7 @@ import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mctx.Context
 import play.api.data.Form
-import play.api.i18n.{Lang, Messages}
+import play.api.i18n.{Lang, Langs, Messages}
 import play.api.mvc.Result
 import util.FormUtil.uiLangM
 import util.acl.{IsSu, MaybeAuth, SioControllerApi}
@@ -46,6 +46,7 @@ final class LkLang @Inject() (
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val langs = injector.instanceOf[Langs]
 
   import sioControllerApi._
 
@@ -68,11 +69,9 @@ final class LkLang @Inject() (
 
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String], rs: Status)(implicit ctx: Context): Future[Result] = {
 
-    val langCodes = mCommonDi.langs
-      .availables
+    val langAvailCodes = langs.availables
 
-    val langCode2msgs = mCommonDi.langs
-      .availables
+    val langCode2msgs = langAvailCodes
       .iterator
       .map { lang =>
         val msgs = messagesApi.preferred( lang :: Nil )
@@ -80,7 +79,7 @@ final class LkLang @Inject() (
       }
       .toMap
 
-    val englishLang = langCodes
+    val englishLang = langAvailCodes
       .filter(_.language ==* "en")
       .sortBy(_.country ==* "US")
       .headOption
@@ -93,7 +92,7 @@ final class LkLang @Inject() (
       english = english,
       lf      = langForm,
       isNowEnglish = ctx.messages.lang.language ==* "en",
-      langs   = langCodes.sortBy(_.code),
+      langs   = langAvailCodes.sortBy(_.code),
       nodeOpt = nodeOpt,
       rr      = r,
       langCode2msgs = langCode2msgs

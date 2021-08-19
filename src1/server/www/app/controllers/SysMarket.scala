@@ -9,6 +9,7 @@ import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.meta.MMeta
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.sec.util.Csrf
 import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -29,10 +30,12 @@ import views.html.lk.shop.ad.emailAdDisabledByMartTpl
 import views.html.sys1.market._
 import views.html.sys1.market.adn._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import japgolly.univeq._
 import models.madn.{AdnShownTypes, NodeDfltColors}
+import play.api.http.HttpErrorHandler
 import util.ident.IdentUtil
+import util.tpl.HtmlCompressUtil
 
 /**
  * Suggest.io
@@ -47,8 +50,6 @@ final class SysMarket @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{csrf, ec, errorHandler, htmlCompressUtil}
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
@@ -61,6 +62,10 @@ final class SysMarket @Inject() (
   private lazy val isSuOr404 = injector.instanceOf[IsSuOr404]
   private lazy val identUtil = injector.instanceOf[IdentUtil]
   private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   import esModel.api._
 

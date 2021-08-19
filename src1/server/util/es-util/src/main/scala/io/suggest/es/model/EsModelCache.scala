@@ -1,10 +1,10 @@
 package io.suggest.es.model
 
 import akka.actor.ActorContext
-import io.suggest.di.ICacheApi
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
+import play.api.cache.AsyncCacheApi
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -44,10 +44,10 @@ object EsModelStaticCacheableT {
 trait Sn4EsModelCache
   extends SNStaticSubscriber
   with SnClassSubscriber
-  with ICacheApi
 {
 
   val model: EsModelStaticCacheableT
+  def cache: AsyncCacheApi
 
   /**
    * Фунцкия возвращает строку id, извлеченную из полученного события.

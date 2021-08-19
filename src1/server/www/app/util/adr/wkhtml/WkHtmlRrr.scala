@@ -1,17 +1,15 @@
 package util.adr.wkhtml
 
 import java.io.File
-
 import com.google.inject.assistedinject.Assisted
-import javax.inject.Inject
 
-import io.suggest.async.AsyncUtil
+import javax.inject.Inject
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.util.logs.MacroLogsDyn
 import models.adr._
-import models.mproj.ICommonDi
 import play.api.Configuration
+import play.api.inject.Injector
 import util.adr.{IAdRrr, IAdRrrDiFactory, IAdRrrUtil}
 
 /**
@@ -66,12 +64,12 @@ trait WkHtmlRrrDiFactory extends IAdRrrDiFactory {
 /** Рендерер для wkhtml для указанных параметров.. */
 class WkHtmlRrr @Inject() (
   @Assisted override val args   : IAdRenderArgs,
-  override val asyncUtil        : AsyncUtil,
-  util                          : WkHtmlRrrUtil,
-  override val mCommonDi        : ICommonDi
+  override val injector         : Injector,
 )
   extends IAdRrr
 {
+
+  private lazy val wkHtmlRrrUtil = injector.instanceOf[WkHtmlRrrUtil]
 
   /** Сборка строки вызова wkhtml2image. */
   private def toCmdLineArgs(acc0: List[String] = Nil): List[String] = {
@@ -96,7 +94,7 @@ class WkHtmlRrr @Inject() (
     if (!args1.plugins)
       l ::= "--disable-plugins"
 
-    for (cacheDir <- util.CACHE_DIR)
+    for (cacheDir <- wkHtmlRrrUtil.CACHE_DIR)
       l = "--cache-dir" :: cacheDir :: l
 
     for (c <- args1.crop) {
@@ -113,7 +111,7 @@ class WkHtmlRrr @Inject() (
 
   /** Название проги wkhtml2image и аргументы. Можно сразу отправлять на исполнение. */
   private def toCmdLine(acc0: List[String] = Nil): List[String] = {
-    util.WKHTML2IMG :: toCmdLineArgs(acc0)
+    wkHtmlRrrUtil.WKHTML2IMG :: toCmdLineArgs(acc0)
   }
 
 

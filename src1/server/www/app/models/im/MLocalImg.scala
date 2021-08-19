@@ -10,16 +10,16 @@ import io.suggest.file.MimeUtilJvm
 import io.suggest.fio.IDataSource
 import io.suggest.img
 import io.suggest.img.ImgSzDated
+import io.suggest.playx.CacheApiUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
 import org.im4java.core.Info
+import play.api.inject.Injector
 import play.api.{Configuration, Environment}
 import util.img.ImgFileUtil
 
 import scala.concurrent.duration._
-import scala.concurrent.blocking
-import scala.concurrent.Future
+import scala.concurrent.{Future, blocking}
 import scala.util.Try
 
 /**
@@ -36,19 +36,17 @@ import scala.util.Try
  * В итоге, получилась эта модель.
  */
 class MLocalImgs @Inject() (
-                             override val mCommonDi      : ICommonDi
+                             override val injector: Injector,
                            )
   extends MAnyImgsT[MLocalImg]
   with MacroLogsImpl
 {
 
-  import mCommonDi.{ec, cacheApiUtil}
-  import mCommonDi.current.injector
-
   private lazy val mLocalImgsConf = injector.instanceOf[MLocalImgsConf]
   private lazy val imgFileUtil = injector.instanceOf[ImgFileUtil]
   private lazy val asyncUtil = injector.instanceOf[AsyncUtil]
   private lazy val mimeUtilJvm = injector.instanceOf[MimeUtilJvm]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
 
   /** Сколько модель должна кешировать в голове результат вызова identify? */
   private def IDENTIFY_CACHE_TTL_SECONDS = 120

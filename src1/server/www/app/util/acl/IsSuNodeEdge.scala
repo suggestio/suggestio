@@ -1,21 +1,23 @@
 package util.acl
 
 import controllers.routes
-import io.suggest.err.HttpResultingException, HttpResultingException._
+import io.suggest.err.HttpResultingException
+import HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.flash.FlashConstants
 import io.suggest.n2.edge.MEdge
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.node.MNodes
+
 import javax.inject.Inject
-import models.mproj.ICommonDi
 import models.req._
 import play.api.mvc._
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -24,19 +26,18 @@ import scala.concurrent.Future
   * Description: ACL-аддон для sys-контроллеров для экшенов управления эджами.
   */
 final class IsSuNodeEdge @Inject() (
+                                     injector   : Injector,
+                                     aclUtil    : AclUtil,
                                      reqUtil    : ReqUtil,
-                                     mCommonDi  : ICommonDi
                                    )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{ec, errorHandler}
-  import mCommonDi.current.injector
-
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
-  private lazy val aclUtil = injector.instanceOf[AclUtil]
   private lazy val isSu = injector.instanceOf[IsSu]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Комбинация IsSuperuser + IsAdnAdmin + доступ к эджу по индексу.

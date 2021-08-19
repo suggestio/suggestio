@@ -1,6 +1,6 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import models.req.{MReq, MUserInit, MUserInits}
 import play.api.mvc._
@@ -13,7 +13,6 @@ import scala.concurrent.Future
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-@Singleton
 final class MaybeAuth @Inject() (
                                   reqUtil: ReqUtil,
                                   aclUtil: AclUtil

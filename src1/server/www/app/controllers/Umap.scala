@@ -1,22 +1,23 @@
 package controllers
 
 import java.io.FileInputStream
-
 import _root_.util.acl._
 import _root_.util.geo.umap._
 import _root_.util.sec.CspUtil
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
+
 import javax.inject.Inject
 import io.suggest.geo.{GsTypes, MNodeGeoLevel, MNodeGeoLevels, PointGs}
 import io.suggest.n2.edge._
 import io.suggest.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.madn.AdnShownTypes
 import models.maps.umap._
 import models.req.{IReq, IReqHdr}
-import play.api.http.HttpVerbs
+import play.api.http.{HttpErrorHandler, HttpVerbs}
 import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{Call, MultipartFormData, RequestHeader, Result}
@@ -24,7 +25,7 @@ import play.api.libs.json._
 import views.html.helper.CSRF
 import views.html.umap._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -39,8 +40,6 @@ final class Umap @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf, errorHandler}
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val umapUtil = injector.instanceOf[UmapUtil]
@@ -48,6 +47,9 @@ final class Umap @Inject() (
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val isSuNode = injector.instanceOf[IsSuNode]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */

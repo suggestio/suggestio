@@ -11,11 +11,11 @@ import models.mproj.ICommonDi
 import models.req.{MItemReq, MOrderIdsReq, MUserInit, MUserInits}
 import play.api.mvc._
 import japgolly.univeq._
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
 import slick.dbio.DBIOAction
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -26,17 +26,20 @@ import scala.util.{Failure, Success}
   */
 final class CanAccessItem @Inject() (
                                       injector                : Injector,
+                                      aclUtil                 : AclUtil,
+                                      reqUtil                 : ReqUtil,
                                     )
   extends MacroLogsImpl
 {
 
-  private lazy val aclUtil = injector.instanceOf[AclUtil]
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val mOrders = injector.instanceOf[MOrders]
   private lazy val isAuth = injector.instanceOf[IsAuth]
-  private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
+  import mCommonDi.slick
 
   /** Если много ids за раз, то тут лимит по кол-ву. */
   private def MAX_ITEM_IDS_PER_REQUEST = 50
@@ -64,11 +67,11 @@ final class CanAccessItem @Inject() (
         val maxItemIdsLen = MAX_ITEM_IDS_PER_REQUEST
         if (itemIds.isEmpty) {
           LOGGER.warn(s"$logPrefix No items defined in request url")
-          mCommonDi.errorHandler.onClientError( request, Status.BAD_REQUEST, "Ids expected")
+          errorHandler.onClientError( request, Status.BAD_REQUEST, "Ids expected")
 
         } else if (itemIdsLen > maxItemIdsLen) {
           LOGGER.warn(s"$logPrefix Too many item ids: $itemIdsLen, allowed max = $maxItemIdsLen")
-          mCommonDi.errorHandler.onClientError( request, Status.BAD_REQUEST, s"Too many ids: $itemIdsLen/$maxItemIdsLen" )
+          errorHandler.onClientError( request, Status.BAD_REQUEST, s"Too many ids: $itemIdsLen/$maxItemIdsLen" )
 
         } else if (user.isAnon) {
           // Анонимус по определению не может иметь доступа к биллингу.
@@ -76,14 +79,12 @@ final class CanAccessItem @Inject() (
           isAuth.onUnauth(request)
 
         } else {
-          import mCommonDi.{ec, slick}
-
           val itemIdsSet = itemIds.toSet
           val itemIdsCount = itemIdsSet.size
           if (itemIdsCount !=* itemIdsLen) {
             // В списке есть повторяющиеся элементы. В этом нет смысла, и дальнейшие проверки невозможны.
             LOGGER.warn(s"$logPrefix Duplicate ids in itemIds, distict[$itemIdsCount, but $itemIdsLen expected] = [${itemIdsSet.mkString(", ")}]")
-            mCommonDi.errorHandler.onClientError( request, Status.BAD_REQUEST, "duplicate ids" )
+            errorHandler.onClientError( request, Status.BAD_REQUEST, "duplicate ids" )
 
           } else {
             // Запустить различные параллельные проверки. item'ов может быть много, поэтому все проверки - на стороне СУБД, без выкачивания item'ов сюда.
@@ -182,8 +183,6 @@ final class CanAccessItem @Inject() (
           isAuth.onUnauth(request)
 
         } else {
-          import mCommonDi.{ec, slick}
-
           // Получить на руки запрашиваемый MItem. Его нужно передать в action внутри реквеста.
           val mitemOptFut = slick.db.run {
             mItems.getById(itemId)
@@ -267,10 +266,4 @@ final class CanAccessItem @Inject() (
     }
   }
 
-}
-
-
-/** Интерфейс для поля с DI-инстансом [[CanAccessItem]]. */
-trait ICanAccessItemDi {
-  val canAccessItem: CanAccessItem
 }

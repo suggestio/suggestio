@@ -2,15 +2,16 @@ package util.acl
 
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.MNodes
+
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MNodeReq, MReq}
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -19,20 +20,18 @@ import scala.concurrent.Future
  * Description: Доступ суперюзера к узлу, обязательно БЕЗ контракта.
  */
 final class IsSuNodeNoContract @Inject() (
+                                           injector   : Injector,
                                            aclUtil    : AclUtil,
                                            reqUtil    : ReqUtil,
-                                           mCommonDi  : ICommonDi
                                          )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{ec, errorHandler}
-  import mCommonDi.current.injector
-
-
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /**
     * @param nodeId id запрашиваемого узла.

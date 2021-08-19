@@ -10,12 +10,12 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MNodeReq}
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
 import play.api.mvc._
 import util.billing.Bill2Util
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -29,7 +29,6 @@ import scala.concurrent.Future
 
 final class CanChangeNodeAvailability @Inject() (
                                                   injector          : Injector,
-                                                  mCommonDi         : ICommonDi
                                                 )
   extends MacroLogsImpl
 {
@@ -40,8 +39,11 @@ final class CanChangeNodeAvailability @Inject() (
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.{slick, ec}
+  import mCommonDi.slick
 
 
   /** Может ли админ узла влиять на availability указанного узла? */
@@ -111,7 +113,7 @@ final class CanChangeNodeAvailability @Inject() (
 
         def logPrefix = s"node$nodeId<-u#$user:"
         def forbidden: Future[Result] =
-          mCommonDi.errorHandler.onClientError(request, Status.FORBIDDEN, s"Not enought rights for node$nodeId.")
+          errorHandler.onClientError(request, Status.FORBIDDEN, s"Not enought rights for node$nodeId.")
 
         mnodeOptFut.flatMap {
           // Уже есть админский доступ к узлу. Проверить, есть ли у юзеров возможность влиять на availability этого узла?

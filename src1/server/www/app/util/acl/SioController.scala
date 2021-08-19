@@ -4,12 +4,13 @@ import io.suggest.fio.IDataSource
 import io.suggest.flash.FlashConstants
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import models.mctx.ContextT
+import models.mctx.{Context2Factory, ContextT}
 import models.mproj.{ICommonDi, IMCommonDi}
 import models.req.MUserInits
 import play.api.data.Form
 import play.api.http.HttpEntity
-import play.api.i18n.{I18nSupport, Lang, Messages}
+import play.api.i18n.{I18nSupport, Lang, Langs, Messages}
+import play.api.inject.Injector
 import play.api.mvc.{Result, _}
 import util.jsa.init.CtlJsInitT
 
@@ -35,17 +36,20 @@ object SioControllerApi extends MacroLogsImpl
   */
 @Singleton
 final class SioControllerApi @Inject()(
-                                        override val mCommonDi: ICommonDi
+                                        val injector: Injector,
+                                        val mCommonDi: ICommonDi
                                       )
   extends InjectedController
   with ContextT
   with I18nSupport
   with CtlJsInitT
-  with IMCommonDi
 {
 
   import SioControllerApi.LOGGER
-  import mCommonDi.{ec, isProd, langs}
+  import mCommonDi.{ec, isProd}
+
+  override val contextFactory = injector.instanceOf[Context2Factory]
+  val langs = injector.instanceOf[Langs]
 
   implicit def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)

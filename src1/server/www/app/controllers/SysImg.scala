@@ -4,6 +4,7 @@ import java.net.{MalformedURLException, URL}
 import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
 import io.suggest.dev.{MScreenJvm, MSzMults}
+import io.suggest.sec.util.Csrf
 
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -36,13 +37,13 @@ final class SysImg @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, csrf, current}
-  import mCommonDi.current.injector
+  import mCommonDi.{ec, current}
 
   private lazy val mImgs3 = injector.instanceOf[MImgs3]
   private lazy val mImgs = injector.instanceOf[MAnyImgs]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
 
 
   /** Маппинг для поисковой формы, который пытается распарсить ссылку с img qs или просто img qs. */

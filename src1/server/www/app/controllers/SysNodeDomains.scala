@@ -4,12 +4,14 @@ import io.suggest.es.model.EsModel
 import io.suggest.n2.extra.MNodeExtras
 import io.suggest.n2.extra.domain.MDomainExtra
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 
 import javax.inject.Inject
 import models.msys.{MSysNodeDomainCreateFormTplArgs, MSysNodeDomainEditFormTplArgs}
 import models.req.INodeReq
 import play.api.data.Form
+import play.api.http.HttpErrorHandler
 import play.api.inject.Injector
 import play.api.mvc.Result
 import play.twirl.api.Html
@@ -17,7 +19,7 @@ import util.acl.{IsSuNode, SioControllerApi}
 import util.sys.SysMarketUtil
 import views.html.sys1.domains._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -32,12 +34,14 @@ final class SysNodeDomains @Inject()(
   extends MacroLogsImplLazy
 {
   import sioControllerApi._
-  import mCommonDi.{ec, csrf, errorHandler}
 
   implicit private val isSuNode = injector.instanceOf[IsSuNode]
   implicit private lazy val esModel = injector.instanceOf[EsModel]
   implicit private lazy val mNodes = injector.instanceOf[MNodes]
   implicit private lazy val sysMarketUtil = injector.instanceOf[SysMarketUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Запрос страницы добавления домена к узлу. */

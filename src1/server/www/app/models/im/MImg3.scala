@@ -19,11 +19,11 @@ import io.suggest.streams.StreamsUtil
 import io.suggest.text.StringUtil
 import io.suggest.up.UploadConstants
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
-import models.mproj.ICommonDi
 import util.img.ImgFileNameParsersImpl
 import util.up.FileUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
+import play.api.inject.Injector
 
 import scala.concurrent.Future
 
@@ -37,13 +37,11 @@ import scala.concurrent.Future
  * TODO Надо удалить эту модель, дораспилив на MDynImgId + DynImgUtil.
  */
 class MImgs3 @Inject() (
-                         override val mCommonDi    : ICommonDi,
+                         override val injector: Injector,
                        )
   extends MAnyImgsT[MImgT]
   with MacroLogsImplLazy
 {
-
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val iMediaStorages = injector.instanceOf[IMediaStorages]
@@ -52,25 +50,28 @@ class MImgs3 @Inject() (
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
 
-  import mCommonDi._
   import esModel.api._
 
   override def delete(mimg: MImgT): Future[_] = {
     mediaOptFut(mimg).flatMap {
       case Some(mm) =>
-        _fileEdge( mm )
-          .flatMap(_.media)
-          .flatMap(_.storage)
-          .fold( Future.successful(false) ) { storage =>
-            for {
-              _ <- iMediaStorages
-                .client( storage.storage )
-                .delete( storage.data )
-              _ <- mNodes.deleteById( mm.id.get )
-            } yield {
-              true
-            }
-        }
+        (for {
+          edge      <- _fileEdge( mm )
+          edgeMedia <- edge.media
+          storage   <- edgeMedia.storage
+        } yield {
+          for {
+            _ <- iMediaStorages
+              .client( storage.storage )
+              .delete( storage.data )
+            _ <- mNodes.deleteById( mm.id.get )
+          } yield {
+            true
+          }
+        })
+          .getOrElse {
+            Future.successful(false)
+          }
 
       case None =>
         Future.successful(false)
