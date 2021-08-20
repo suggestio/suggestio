@@ -45,8 +45,6 @@ final class LkHelp @Inject()(
   private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
 
-  import mCommonDi.ec
-
   // TODO Объеденить node и не-node вызовы в единые экшены.
   // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.
 

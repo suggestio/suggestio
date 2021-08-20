@@ -15,7 +15,6 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
 import models.mctx.Context
-import models.mproj.ICommonDi
 import models.msc.{OneAdRenderVariant, OneAdRenderVariants}
 import models.msys.{MImgEdge, MShowAdRcvrsTplArgs, MShowAdTplArgs, MShowNodeAdsTplArgs, MShowOneAdFormTplArgs, MSysNodeInstallFormData}
 import models.req.{IAdReq, INodeReq}
@@ -35,7 +34,7 @@ import views.html.sys1.market.ad.one._
 import views.html.sys1.market.ad.{showAdRcvrsTpl, showAdTpl, showAdnNodeAdsTpl}
 import views.html.sys1.market.ad.install.installDfltMadsTpl
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -56,12 +55,10 @@ final class SysAd @Inject()(
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private val csrf = injector.instanceOf[Csrf]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private lazy val advRcvrsUtil = injector.instanceOf[AdvRcvrsUtil]
   private lazy val scAdSearchUtil = injector.instanceOf[ScAdSearchUtil]
   private lazy val lkAdUtil = injector.instanceOf[LkAdUtil]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
   private lazy val mItems = injector.instanceOf[MItems]
 
   private lazy val sysMarketUtil = injector.instanceOf[SysMarketUtil]
@@ -197,7 +194,7 @@ final class SysAd @Inject()(
         for {
           mads <- madsFut
           advs <- {
-            import mCommonDi.slick
+            import slickHolder.slick
             import slick.profile.api._
 
             lazy val adIds = mads.flatMap(_.id)

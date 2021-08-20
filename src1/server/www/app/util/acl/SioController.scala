@@ -2,11 +2,13 @@ package util.acl
 
 import io.suggest.fio.IDataSource
 import io.suggest.flash.FlashConstants
+import io.suggest.model.SlickHolder
+import io.suggest.playx.AppModeExt
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import models.mctx.{Context2Factory, ContextT}
-import models.mproj.{ICommonDi, IMCommonDi}
 import models.req.MUserInits
+import play.api.Application
 import play.api.data.Form
 import play.api.http.HttpEntity
 import play.api.i18n.{I18nSupport, Lang, Langs, Messages}
@@ -15,7 +17,7 @@ import play.api.mvc.{Result, _}
 import util.jsa.init.CtlJsInitT
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 /**
@@ -36,8 +38,12 @@ object SioControllerApi extends MacroLogsImpl
   */
 @Singleton
 final class SioControllerApi @Inject()(
-                                        val injector: Injector,
-                                        val mCommonDi: ICommonDi
+                                        val injector                  : Injector,
+                                        val slickHolder               : SlickHolder,
+                                        val current                   : Application,
+                                        override val contextFactory   : Context2Factory,
+                                        val langs                     : Langs,
+                                        implicit val ec               : ExecutionContext,
                                       )
   extends InjectedController
   with ContextT
@@ -45,11 +51,8 @@ final class SioControllerApi @Inject()(
   with CtlJsInitT
 {
 
+  // Logger is living outside class to prevent importing via `import sioControllerApi._`
   import SioControllerApi.LOGGER
-  import mCommonDi.{ec, isProd}
-
-  override val contextFactory = injector.instanceOf[Context2Factory]
-  val langs = injector.instanceOf[Langs]
 
   implicit def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
@@ -93,7 +96,7 @@ final class SioControllerApi @Inject()(
   implicit class ResultExtOps(val r: Result) {
 
     def cacheControl(seconds: Int): Result = {
-      val v = if (isProd) {
+      val v = if (current.mode.isProd) {
         "public, max-age=" + seconds
       } else {
         "no-cache"

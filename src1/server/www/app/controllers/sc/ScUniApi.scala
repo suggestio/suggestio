@@ -1,21 +1,20 @@
 package controllers.sc
 
 import io.suggest.common.empty.OptionUtil
-import OptionUtil.Implicits._
+import io.suggest.common.empty.OptionUtil.Implicits._
 import io.suggest.common.fut.FutureUtil
-import io.suggest.sc.{MScApiVsns, ScConstants}
-import io.suggest.sc.sc3._
-import util.acl.IMaybeAuth
-import japgolly.univeq._
 import io.suggest.es.model.MEsUuId.Implicits._
 import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.n2.node.MNode
+import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
+import io.suggest.sc.sc3._
+import io.suggest.sc.{MScApiVsns, ScConstants}
+import io.suggest.util.logs.MacroLogsImpl
+import japgolly.univeq._
 import models.req.IReq
 import play.api.libs.json.Json
-import util.showcase.IScUtil
-import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
-import util.cdn.CorsUtil
 
+import javax.inject.Inject
 import scala.concurrent.Future
 
 /**
@@ -29,31 +28,32 @@ import scala.concurrent.Future
   * Другой полезные случай: возможность запрашивать focused->index+grid+focused, чтобы за один запрос получался
   * переход в нужную выдачу с уже раскрытой карточкой за один запрос к Sc-контроллеру.
   */
-trait ScUniApi
-  extends ScIndex
-  with ScAdsTile
-  with ScIndexAdOpen
-  with ScSearch
-  with IMaybeAuth
-  with IScUtil
+final class ScUniApi @Inject()(
+                                val scCtlUtil: ScCtlUtil,
+                              )
+  extends MacroLogsImpl
 {
 
+  // Parts of Showcase, used for different tasks.
+  // To deduplicate instances for dynamic injections, all inject calls moved into scCtlApi.
+  protected[this] lazy val scAdsTile = new ScAdsTile( scCtlUtil )
+  protected[this] lazy val scFocusedAds = new ScFocusedAds( scCtlUtil )
+  protected[this] lazy val scSearch = new ScSearch( scCtlUtil )
+  protected[this] lazy val scIndex = new ScIndex( scCtlUtil )
+
+
+  import scCtlUtil._
   import sioControllerApi._
-  import mCommonDi.ec
 
-  def corsUtil: CorsUtil
 
-  /** Логика Sc UApi.
-    * Тело метода-экшена переусложнилось до полной невозможности им пользоваться и
-    * его расширять.
-    */
+  /** Logic of Sc UniApi action wrapped into class. */
   case class ScPubApiLogicHttpV3(qs: MScQs)
-                                (override implicit val _request: IReq[_]) extends LazyContext {
+                                (override implicit val _request: IReq[_]) extends scCtlUtil.LazyContext {
 
     // Разобрать qs, собрать на исполнение.
     lazy val logPrefix = s"PubApi#${System.currentTimeMillis()}:"
 
-    lazy val geoIpInfo = new GeoIpInfo(qs)
+    lazy val geoIpInfo = scCtlUtil.GeoIpInfo(qs)
 
     /** Надо ли выполнять перескок focused => index в какой-то другой узел?
       * Да, если фокусировка активна, перескок разрешён, и проверка перескока вернула узел.
@@ -71,15 +71,15 @@ trait ScUniApi
 
 
     /** Собрать index-логику, когда требуется. */
-    lazy val indexLogicOptFut: Future[Option[ScIndexLogic]] = {
+    lazy val indexLogicOptFut: Future[Option[scIndex.ScIndexLogic]] = {
       if (qs.index.nonEmpty) {
-        val logic = ScIndexLogic(qs, geoIpInfo)(_request)
+        val logic = scIndex.ScIndexLogic(qs, geoIpInfo)(_request)
         LOGGER.trace(s"$logPrefix Normal index-logic created: $logic")
         Future.successful( Some(logic) )
       } else if ( qs.foc.exists(_.indexAdOpen.nonEmpty) ) {
         for (toNnodeOpt <- focJumpToIndexNodeOptFut) yield {
           for (toNode <- toNnodeOpt) yield {
-            val inxLogic = ScFocToIndexLogicV3(toNode, qs, geoIpInfo)( _request )
+            val inxLogic = scIndex.ScFocToIndexLogicV3(toNode, qs, geoIpInfo)( _request )
             LOGGER.trace(s"$logPrefix Foc-index jump, index-ad-open logic $inxLogic")
             inxLogic
           }
@@ -155,14 +155,14 @@ trait ScUniApi
     }
 
     /** Собрать focused-логику, если она требуется. */
-    def focLogicOptFut: Future[Option[FocusedLogicHttpV3]] = {
+    def focLogicOptFut: Future[Option[scFocusedAds.FocusedLogicHttpV3]] = {
       for {
         // Нужно разобраться, какие параметры брать за основу в зависимости от флага в qs.
         qsAfterIndex <- qsAfterIndexFut
       } yield {
         for (focQs <- qsAfterIndex.foc) yield {
           LOGGER.trace(s"$logPrefix Focused logic active, focQs = $focQs")
-          FocusedLogicHttpV3( qsAfterIndex )(_request)
+          scFocusedAds.FocusedLogicHttpV3( qsAfterIndex )(_request)
         }
       }
     }
@@ -173,7 +173,7 @@ trait ScUniApi
       _logicOpt2stateRespActionOptFut( focLogicOptFut )
 
     /** Запустить абстрактную логику на исполнение через её интерфейс. */
-    private def _logicOpt2stateRespActionOptFut(logicOptFut: Future[Option[LogicCommonT with IRespActionFut]]): Future[Option[MSc3RespAction]] = {
+    private def _logicOpt2stateRespActionOptFut(logicOptFut: Future[Option[ScCtlUtil#LogicCommonT with IRespActionFut]]): Future[Option[MSc3RespAction]] = {
       val fut: Future[Option[MSc3RespAction]] = for {
         logicOpt  <- logicOptFut
         logic     = logicOpt.get
@@ -192,7 +192,7 @@ trait ScUniApi
       // Если logicCommon, то запустить в фоне сохранение статистики.
       // TODO Собирать единую статистику для всего uni-запроса, а не для каждого экшена?
       logic match {
-        case logicCommon: LogicCommonT =>
+        case logicCommon: ScCtlUtil#LogicCommonT =>
           logicCommon.saveScStat()
         case _ =>
           // do nothing
@@ -227,7 +227,7 @@ trait ScUniApi
           !hasManyIndexes
         }
         qs2         <- qsAfterIndexFut
-        logic       = TileAdsLogic(qs2, radioBeaconsCtxFut)(_request)
+        logic       = scAdsTile.TileAdsLogic(qs2, radioBeaconsCtxFut)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
           // Обход перехватчика NSEE - пусть пойдёт по нормальному логгированию.
           .recover { case ex: NoSuchElementException =>
@@ -255,7 +255,7 @@ trait ScUniApi
         // Запрошен поиск узлов. Подготовить список искомых узлов.
         for {
           qs2         <- qsAfterIndexFut
-          logic       = ScSearchLogic(qs2.common.apiVsn)(qs2, radioBeaconsCtxFut, geoIpInfo)(_request)
+          logic       = scSearch.ScSearchLogic(qs2.common.apiVsn)(qs2, radioBeaconsCtxFut, geoIpInfo)(_request)
           respAction  <- _logic2stateRespActionFut( logic )
         } yield {
           LOGGER.trace(s"$logPrefix Search nodes => ${respAction.search.iterator.flatMap(_.nodes).size} results")

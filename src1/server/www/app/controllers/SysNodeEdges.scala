@@ -38,14 +38,13 @@ final class SysNodeEdges @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, current}
 
-  private lazy val mNodes = current.injector.instanceOf[MNodes]
-  private lazy val esModel = current.injector.instanceOf[EsModel]
-  private lazy val fileUtil = current.injector.instanceOf[FileUtil]
-  private lazy val uploadCtl = current.injector.instanceOf[Upload]
-  private lazy val canDownloadFile = current.injector.instanceOf[CanDownloadFile]
-  private lazy val isFileNotModified = current.injector.instanceOf[IsFileNotModified]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val fileUtil = injector.instanceOf[FileUtil]
+  private lazy val uploadCtl = injector.instanceOf[Upload]
+  private lazy val canDownloadFile = injector.instanceOf[CanDownloadFile]
+  private lazy val isFileNotModified = injector.instanceOf[IsFileNotModified]
   private lazy val csrf = injector.instanceOf[Csrf]
 
 

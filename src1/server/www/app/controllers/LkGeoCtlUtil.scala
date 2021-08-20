@@ -1,5 +1,7 @@
 package controllers
 
+import akka.stream.Materializer
+
 import javax.inject.Inject
 import akka.stream.scaladsl.{Keep, Sink}
 import au.id.jazzy.play.geojson.{GeoJson, LngLatCrs}
@@ -36,8 +38,7 @@ protected final class LkGeoCtlUtil @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, slick, mat}
-  import mCommonDi.current.injector
+  import slickHolder.slick
 
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
@@ -45,6 +46,7 @@ protected final class LkGeoCtlUtil @Inject() (
   private lazy val canAccessItem = injector.instanceOf[CanAccessItem]
   private lazy val advGeoFormUtil = injector.instanceOf[AdvGeoFormUtil]
   private lazy val advGeoBillUtil = injector.instanceOf[AdvGeoBillUtil]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
   /** Макс.кол-во item'ов ресиверов, возвращаемых в одном rcvr-попапе. */

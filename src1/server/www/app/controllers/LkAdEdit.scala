@@ -35,7 +35,7 @@ import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import views.html.lk.ad.edit._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -67,7 +67,6 @@ final class LkAdEdit @Inject() (
   private lazy val extRscUtil = injector.instanceOf[ExtRscUtil]
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   private lazy val _BFP_ARGS = (BfpArgs.tryCountDivisor set 2)( BfpArgs.default )

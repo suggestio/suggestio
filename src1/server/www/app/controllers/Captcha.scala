@@ -12,7 +12,7 @@ import util.captcha.CaptchaUtil
 import util.ident.IdTokenUtil
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -37,7 +37,6 @@ final class Captcha @Inject()(
   private lazy val captchaUtil = injector.instanceOf[CaptchaUtil]
   private lazy val idTokenUtil = injector.instanceOf[IdTokenUtil]
   private lazy val isIdTokenValid = injector.instanceOf[IsIdTokenValid]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /**

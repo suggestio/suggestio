@@ -5,6 +5,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.model.SlickHolder
 import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.sys.mdr.MMdrResolution
@@ -15,7 +16,6 @@ import models.req.MItemOptAdNodesChainReq
 import play.api.http.{HttpErrorHandler, Status}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import japgolly.univeq._
-import models.mproj.ICommonDi
 import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,10 +40,10 @@ final class CanMdrResolute @Inject()(
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.slick
+  import slickHolder.slick
   import esModel.api._
 
   /** Проверка прав доступа на дальнейшее исполнение резолюции модерации.

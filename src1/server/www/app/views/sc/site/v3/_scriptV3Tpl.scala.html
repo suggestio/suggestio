@@ -9,6 +9,7 @@
 @import lk.lkwdgts._formStateInputTpl
 @import stuff.geo.maps._
 @import io.suggest.sjs.SjsUtil
+@import io.suggest.playx._
 
 @_formStateInputTpl( args.state0 )
 
@@ -27,7 +28,7 @@
 @if( args.withServiceWorker ) {
   <input type="hidden"
          id="@ScConstants.Sw.URL_INPUT_ID"
-         value="@routes.Sc.swJs( SjsUtil.jsScripts("sc-sw-sjs", ctx.api.isProd).last )" />
+         value="@controllers.sc.routes.ScSite.serviceWorkerJs( SjsUtil.jsScripts("sc-sw-sjs", ctx.api.current.mode.isProd).last )" />
 }
 
 @_sjsScript("sc3-sjs")

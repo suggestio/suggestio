@@ -17,9 +17,10 @@
 
 @import ctx.api.cdn
 @import io.suggest.sjs.SjsUtil
+@import io.suggest.playx._
 
 
 @* Нужно определить, что на руках: бандл или library? *@
-@for( fileName <- SjsUtil.jsScripts( prefix, ctx.api.isProd ) ) {
+@for( fileName <- SjsUtil.jsScripts( prefix, ctx.api.current.mode.isProd ) ) {
   <script type="text/javascript" src="@cdn.asset( fileName )"></script>
 }

@@ -2,20 +2,18 @@ package controllers.sc
 
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
+import io.suggest.n2.node.MNode
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
+import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
-import io.suggest.util.logs.IMacroLogs
-import models.req.IReq
-import util.geo.IGeoIpUtilDi
-import util.showcase.{IScAdSearchUtilDi, MRadioBeaconsSearchCtx, ScSearchUtil}
-import util.stat.IStatUtil
+import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import util.adv.geo.IAdvGeoRcvrsUtilDi
+import models.req.IReq
+import util.showcase.MRadioBeaconsSearchCtx
 
+import javax.inject.Inject
 import scala.concurrent.Future
 
 /**
@@ -24,30 +22,24 @@ import scala.concurrent.Future
  * Created: 16.09.15 16:37
  * Description: Аддон для функция выдачи, связанных с поиском узлов, тегов и т.д. в выдаче.
  */
-trait ScSearch
-  extends ScController
-  with IMNodes
-  with IGeoIpUtilDi
-  with IStatUtil
-  with IMacroLogs
-  with IAdvGeoRcvrsUtilDi
-  with IScAdSearchUtilDi
+final class ScSearch @Inject()(
+                                val scCtlUtil: ScCtlUtil,
+                              )
+  extends MacroLogsImpl
 {
 
-  def scSearchUtil: ScSearchUtil
-
-  import mCommonDi._
+  import scCtlUtil._
+  import scCtlUtil.sioControllerApi.ec
   import esModel.api._
 
-
   /** Общая логика обработки tags-запросов выдачи. */
-  protected trait ScSearchLogic extends LazyContext with IRespActionFut { logic =>
+  protected trait ScSearchLogic extends scCtlUtil.LazyContext with IRespActionFut { logic =>
 
     lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
     def _qs: MScQs
     def _radioSearchCtxFut: Future[MRadioBeaconsSearchCtx]
-    def _geoIpInfo: GeoIpInfo
+    def _geoIpInfo: ScCtlUtil#GeoIpInfo
 
     def nodesSearch: Future[MNodeSearch] = {
       for {
@@ -175,7 +167,7 @@ trait ScSearch
   protected trait IScSearchLogicCompanion {
     def apply(qs: MScQs,
               radioSearchCtxFut: Future[MRadioBeaconsSearchCtx],
-              geoIpInfo: GeoIpInfo,
+              geoIpInfo: ScCtlUtil#GeoIpInfo,
              )(implicit request: IReq[_]): ScSearchLogic
   }
 
@@ -183,7 +175,7 @@ trait ScSearch
   /** Реализация поддержки Sc APIv3. */
   case class ScSearchLogicV3(override val _qs: MScQs,
                              override val _radioSearchCtxFut: Future[MRadioBeaconsSearchCtx],
-                             override val _geoIpInfo: GeoIpInfo,
+                             override val _geoIpInfo: ScCtlUtil#GeoIpInfo,
                             )(override implicit val _request: IReq[_])
     extends ScSearchLogic
   {

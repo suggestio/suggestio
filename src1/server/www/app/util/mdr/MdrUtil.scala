@@ -19,18 +19,21 @@ import japgolly.univeq._
 import javax.inject.Inject
 import models.mctx.Context
 import models.mdr.{MMdrNotifyCtx, MMdrNotifyMeta}
-import models.mproj.ICommonDi
 import models.req.ISioUser
 import models.usr.MSuperUsers
 import util.billing.Bill2Util
 import util.mail.IMailerWrapper
 import views.html.sys1.mdr._mdrNeededEmailTpl
 import OptionUtil.BoolOptOps
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.i18n.MsgCodes
+import io.suggest.model.SlickHolder
+import play.api.Configuration
 import play.api.i18n.{Lang, Langs, MessagesApi}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Failure
 
 /**
@@ -40,12 +43,10 @@ import scala.util.Failure
   * Description: Утиль для модерации.
   */
 final class MdrUtil @Inject() (
-                                protected val mCommonDi     : ICommonDi,
+                                injector: Injector,
                               )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mailerWrapper = injector.instanceOf[IMailerWrapper]
@@ -56,8 +57,12 @@ final class MdrUtil @Inject() (
   private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
   private lazy val langs = injector.instanceOf[Langs]
   private lazy val messagesApi = injector.instanceOf[MessagesApi]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
-  import mCommonDi.{configuration, current, ec, mat, slick}
+  import slickHolder.slick
   import slick.profile.api._
 
 
@@ -75,14 +80,14 @@ final class MdrUtil @Inject() (
 
 
   /** Кого надо уведомить о необходимости заняться модерацией? */
-  val MDR_NOTIFY_SU_EMAILS: Set[String] = {
+  lazy val MDR_NOTIFY_SU_EMAILS: Set[String] = {
     val confKey = "mdr.notify.emails"
     val res = configuration
       .getOptional[Seq[String]](confKey)
       .filter(_.nonEmpty)
       .fold [Set[String]] {
         LOGGER.trace(s"$confKey is undefined. Using all superusers as moderators.")
-        current.injector
+        injector
           .instanceOf[MSuperUsers]
           .SU_EMAILS
       } (_.toSet)
@@ -136,7 +141,7 @@ final class MdrUtil @Inject() (
   }
 
 
-  val USER_MDR_NOTIFY_ALSO_SU = configuration.getOptional[Boolean]("mdr.user.notify.su").getOrElseFalse
+  lazy val USER_MDR_NOTIFY_ALSO_SU = configuration.getOptional[Boolean]("mdr.user.notify.su").getOrElseFalse
 
   /** Модель аккамулятора данных внутри обхаживалки графа узлов.
     *

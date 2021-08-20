@@ -1,7 +1,6 @@
 package util.adn.mapf
 
 import java.time.{LocalDate, OffsetDateTime}
-
 import javax.inject.Inject
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
@@ -14,13 +13,14 @@ import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.util.effect.WT
+import io.suggest.model.SlickHolder
 import io.suggest.n2.node.MNode
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mctx.Context
 import models.mdt.MDateStartEnd
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 import scalaz.{EphemeralStream, Tree}
 import util.adv.AdvUtil
 import util.billing.{Bill2Conf, BillDebugUtil}
@@ -34,18 +34,17 @@ import scala.concurrent.Future
   * Description: Биллинг размещения узлов просто на карте.
   */
 final class LkAdnMapBillUtil @Inject() (
-                                         // addToOrder(): DBIOAction[] - тип требует val'а здесь.
-                                         protected val mCommonDi                  : ICommonDi
+                                         injector: Injector,
                                        )
   extends MacroLogsImpl
 {
-  import mCommonDi.current.injector
 
   private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
   private lazy val billDebugUtil = injector.instanceOf[BillDebugUtil]
   private lazy val advUtil = injector.instanceOf[AdvUtil]
+  protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
 
-  import mCommonDi.slick
+  import slickHolder.slick
   import slick.profile.api._
 
 

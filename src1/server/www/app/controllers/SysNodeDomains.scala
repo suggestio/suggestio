@@ -19,7 +19,7 @@ import util.acl.{IsSuNode, SioControllerApi}
 import util.sys.SysMarketUtil
 import views.html.sys1.domains._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -41,7 +41,6 @@ final class SysNodeDomains @Inject()(
   implicit private lazy val sysMarketUtil = injector.instanceOf[SysMarketUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Запрос страницы добавления домена к узлу. */

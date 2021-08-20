@@ -1,16 +1,17 @@
 package util.ext
 
-import java.net.URL
-
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtService
 import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.n2.node.MNode
 import io.suggest.text.util.UrlUtil
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
-import models.mproj.{IMCommonDi, IRenderable}
-import util.adv.IAdvUtilDi
+import models.mproj.IRenderable
+import play.api.Configuration
+import play.api.inject.Injector
+import util.adv.AdvUtil
 
+import java.net.URL
 import scala.concurrent.Future
 
 /**
@@ -21,14 +22,13 @@ import scala.concurrent.Future
   * Появился при распиливании растолстевшего [[models.mext.IExtService]] на данные модели и логику,
   * которая перешла сюда в ходе DI-рефакторинга.
   */
-trait IExtServiceHelper
-  extends IMCommonDi
-  with IAdvUtilDi
-{
+trait IExtServiceHelper {
 
-  import mCommonDi._
-
+  protected[this] def injector: Injector
   def mExtService: MExtService
+
+  protected[this] lazy val configuration = injector.instanceOf[Configuration]
+  protected[this] lazy val advUtil = injector.instanceOf[AdvUtil]
 
   /** id приложения на стороне сервиса. */
   lazy val APP_ID_OPT: Option[String] = {

@@ -24,9 +24,6 @@ final class ScOnlyOneAd @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.ec
-  import sioControllerApi.mCommonDi.current.injector
-
 
   private lazy val getAnyAd = injector.instanceOf[GetAnyAd]
   private lazy val adRenderUtil = injector.instanceOf[AdRenderUtil]

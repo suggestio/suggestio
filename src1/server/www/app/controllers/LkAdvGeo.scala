@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 
 import javax.inject.Inject
@@ -40,7 +41,7 @@ import util.adv.direct.AdvRcvrsUtil
 import japgolly.univeq._
 import play.api.http.HttpErrorHandler
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -55,7 +56,7 @@ final class LkAdvGeo @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{slick, mat}
+  import slickHolder.slick
 
   private lazy val advGeoFormUtil = injector.instanceOf[AdvGeoFormUtil]
   private lazy val advGeoBillUtil = injector.instanceOf[AdvGeoBillUtil]
@@ -74,7 +75,7 @@ final class LkAdvGeo @Inject() (
   private lazy val tagSearchUtil = injector.instanceOf[LkTagsSearchUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */

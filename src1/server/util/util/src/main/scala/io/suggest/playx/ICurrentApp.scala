@@ -1,6 +1,6 @@
 package io.suggest.playx
 
-import play.api.{Application, Configuration, Mode}
+import play.api.{Application, Mode}
 
 /**
  * Suggest.io
@@ -27,18 +27,4 @@ trait IsAppModes {
 
 trait ICurrentAppHelpers extends ICurrentApp with IsAppModes {
   override protected def appMode = current.mode
-}
-
-
-trait IConfiguration {
-  def configuration: Configuration
-}
-
-
-/** Трейт для быстрого доступа к play config через DI Application. */
-trait ICurrentConf extends ICurrentApp with IConfiguration {
-
-  /** Доступ к play config через экземпляр Application, вброшенный через DI. */
-  def configuration = current.configuration
-
 }

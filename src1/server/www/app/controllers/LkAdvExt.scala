@@ -1,5 +1,8 @@
 package controllers
 
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+
 import javax.inject.Inject
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.ctx.CtxData
@@ -31,7 +34,7 @@ import views.html.helper.CSRF
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -47,7 +50,6 @@ final class LkAdvExt @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{actorSystem, mat}
 
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -63,7 +65,8 @@ final class LkAdvExt @Inject() (
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
+  implicit private lazy val actorSystem = injector.instanceOf[ActorSystem]
 
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */

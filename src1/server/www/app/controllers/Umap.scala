@@ -25,7 +25,7 @@ import play.api.libs.json._
 import views.html.helper.CSRF
 import views.html.umap._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -49,7 +49,6 @@ final class Umap @Inject() (
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */

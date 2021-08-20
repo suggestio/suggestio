@@ -22,13 +22,13 @@ GET  /vassets/*file                     @controllers.Assets.versioned(path = ASS
 GET  /favicon.ico                       @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file = "images/favicon/512.ico")
 
 ## Showcase (sc3sjs) unified API entrypoint:
-GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
+GET  /sc/api/pub                        @controllers.sc.ScUniApi.pubApi(a: io.suggest.sc.sc3.MScQs)
 
 ## Remote logs receiver (from clients).
 POST /log/rcv                           @controllers.RemoteLogs.receive()
 
 ## ServiceWorker.js for showcase must be in site root scope.
-GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )
+GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.sc.ScSite.serviceWorkerJs( path = ASSETS_PUBLIC_ROOT, file: Asset )
 
 
 ## Static or semi-static routes.

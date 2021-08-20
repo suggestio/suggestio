@@ -9,13 +9,9 @@ import play.api.db.slick.DatabaseConfigProvider
  * Created: 06.12.15 21:17
  * Description: Интефейс DI-полю с инстансом провайдера db-конфигурации play-slick.
  */
-trait ISlickDbConfigProvider {
+trait ISlickDbConfig {
 
   def _slickConfigProvider: DatabaseConfigProvider
-
-}
-
-trait ISlickDbConfig extends ISlickDbConfigProvider {
 
   val slick = _slickConfigProvider.get[SioPgSlickProfileT]
 

@@ -1,13 +1,12 @@
 package util.xplay
 
 import com.google.inject.Inject
-import io.suggest.n2.node.{IMNodes, MNode, MNodes}
-import models.mproj.IMCommonDi
-import play.api.i18n.{Lang, MessagesApi}
+import io.suggest.n2.node.MNode
+import play.api.i18n.Lang
 import play.api.mvc.Result
 import util.acl.SioControllerApi
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -17,7 +16,6 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 final class LangUtil @Inject()(
                                 sioControllerApi: SioControllerApi,
-                                implicit private val ec: ExecutionContext,
                               ) {
 
   import sioControllerApi._

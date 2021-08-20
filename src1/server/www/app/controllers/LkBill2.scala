@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
@@ -61,7 +62,7 @@ final class LkBill2 @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, slick, mat}
+  import slickHolder.slick
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -82,6 +83,7 @@ final class LkBill2 @Inject() (
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val mOrders = injector.instanceOf[MOrders]
   private lazy val csrf = injector.instanceOf[Csrf]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
   private def _dailyTfArgsFut(mnode: MNode, madOpt: Option[MNode] = None): Future[Option[MTfDailyTplArgs]] = {

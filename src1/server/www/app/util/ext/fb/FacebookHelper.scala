@@ -1,14 +1,14 @@
 package util.ext.fb
 
 import io.suggest.adv.ext.model.im.FbImgSizes
+
 import javax.inject.Inject
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFormats
 import io.suggest.n2.node.MNode
 import models.blk.SzMult_t
-import models.mproj.ICommonDi
-import util.adv.AdvUtil
+import play.api.inject.Injector
 import util.ext.IExtServiceHelper
 
 /**
@@ -18,8 +18,7 @@ import util.ext.IExtServiceHelper
   * Description: Класс с утилью для взаимодействия с facebook.
   */
 class FacebookHelper @Inject() (
-                                 override val advUtil: AdvUtil,
-                                 override val mCommonDi: ICommonDi
+                                 override protected[this] val injector: Injector,
                                )
   extends IExtServiceHelper
 {

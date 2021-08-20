@@ -5,10 +5,10 @@ import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
+import io.suggest.model.SlickHolder
 import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MItemNodeReq, MReq}
 import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
@@ -34,11 +34,11 @@ final class IsSuItemNode @Inject()(
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val mItems = injector.instanceOf[MItems]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.slick
+  import slickHolder.slick
 
   /**
     * @param itemId Ключ item'а в таблице MItems.

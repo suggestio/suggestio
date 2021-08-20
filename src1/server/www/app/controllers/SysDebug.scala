@@ -25,11 +25,10 @@ final class SysDebug @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, current}
 
-  private lazy val advRcvrsUtil = current.injector.instanceOf[AdvRcvrsUtil]
-  private lazy val dynImgUtil = current.injector.instanceOf[DynImgUtil]
-  private lazy val env = current.injector.instanceOf[Environment]
+  private lazy val advRcvrsUtil = injector.instanceOf[AdvRcvrsUtil]
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val env = injector.instanceOf[Environment]
   private lazy val csrf = injector.instanceOf[Csrf]
 
   /** Экшен для отображения индексной страницы. */

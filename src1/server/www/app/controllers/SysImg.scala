@@ -37,7 +37,6 @@ final class SysImg @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, current}
 
   private lazy val mImgs3 = injector.instanceOf[MImgs3]
   private lazy val mImgs = injector.instanceOf[MAnyImgs]
@@ -197,7 +196,7 @@ final class SysImg @Inject() (
           _makeFormRender(img, formWithErrors, NotAcceptable)
         },
         {case (maker, makeArgs) =>
-          val imaker = current.injector.instanceOf(maker.makerClass)
+          val imaker = injector.instanceOf(maker.makerClass)
           for (makeRes <- imaker.icompile(makeArgs)) yield {
             val call = dynImgUtil.imgCall( makeRes.dynCallArgs )
             Redirect( call )

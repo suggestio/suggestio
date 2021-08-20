@@ -13,6 +13,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.util.effect.WT
+import io.suggest.model.SlickHolder
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
@@ -20,13 +21,13 @@ import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.AdvGeoBasicInfo_t
 import models.mctx.Context
 import models.mdt.MDateStartEnd
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 import scalaz.{EphemeralStream, Tree}
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.{Bill2Conf, BillDebugUtil}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -37,12 +38,10 @@ import scala.concurrent.Future
   * Через год сюда приехал биллинг ресиверов в попапах.
   */
 final class AdvGeoBillUtil @Inject() (
-                                       protected val mCommonDi             : ICommonDi
+                                       injector: Injector,
                                      )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
@@ -50,9 +49,11 @@ final class AdvGeoBillUtil @Inject() (
   private lazy val advUtil = injector.instanceOf[AdvUtil]
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
   private lazy val mNodes = injector.instanceOf[MNodes]
-  protected lazy val mItems = injector.instanceOf[MItems]
+  protected[this] lazy val mItems = injector.instanceOf[MItems]
+  protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
 
 

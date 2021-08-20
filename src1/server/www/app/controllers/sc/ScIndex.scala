@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.es.model.{EsDocMeta, EsDocVersion, IMust, MEsNestedSearch}
+import io.suggest.es.model._
 import io.suggest.es.search.MSubSearch
 import io.suggest.geo._
 import io.suggest.i18n.MsgCodes
@@ -15,25 +15,19 @@ import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.n2.node.{IMNodes, MNode, MNodeTypes, NodeNotFoundException}
+import io.suggest.n2.node.{MNode, MNodeTypes, NodeNotFoundException}
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MWelcomeInfo}
+import io.suggest.sc.sc3.{MSc3RespAction, MScCommonQs, MScQs, MScRespActionTypes}
 import io.suggest.sc.{MScApiVsns, ScConstants}
-import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
-import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.url.MHostInfo
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.util.logs.MacroLogsImpl
+import japgolly.univeq._
 import models.im.{MImgT, MImgWithWhInfo}
 import models.mwc.MWelcomeRenderArgs
 import models.req.IReq
-import util.acl._
-import util.adn.INodesUtil
-import util.ble.BleUtil
-import util.geo.IGeoIpUtilDi
-import util.img.{DynImgUtil, LogoUtil, WelcomeUtil}
-import util.stat.IStatUtil
-import util.showcase.IScUtil
-import japgolly.univeq._
 
+import javax.inject.Inject
 import scala.concurrent.Future
 
 /**
@@ -43,32 +37,23 @@ import scala.concurrent.Future
   * Description: Кусок Sc-контроллера для поддержки раздачи индекса выдачи, т.е. определения дизайна,
   * "обёртки", текущего узла, геолокации и т.д.
   */
-trait ScIndex
-  extends ScController
-  with IMacroLogs
-  with IMNodes
-  with INodesUtil
-  with IScUtil
-  with IGeoIpUtilDi
-  with IStatUtil
+final class ScIndex @Inject()(
+                               val scCtlUtil: ScCtlUtil,
+                             )
+  extends MacroLogsImpl
 {
 
-  def welcomeUtil: WelcomeUtil
-  def bleUtil: BleUtil
-  def isNodeAdmin: IsNodeAdmin
-  def dynImgUtil: DynImgUtil
-  def logoUtil: LogoUtil
-
-  import mCommonDi._
+  import scCtlUtil._
+  import scCtlUtil.sioControllerApi.ec
   import esModel.api._
 
 
   /** Унифицированная логика выдачи в фазе index. */
-  abstract class ScIndexLogic extends LogicCommonT with IRespActionFut { logic =>
+  abstract class ScIndexLogic extends scCtlUtil.LogicCommonT with IRespActionFut { logic =>
 
     /** qs-аргументы реквеста. */
     def _qs: MScQs
-    def _geoIpInfo: GeoIpInfo
+    def _geoIpInfo: ScCtlUtil#GeoIpInfo
 
     /** Быстрый доступ к MScIndexArgs. По идее, это безопасно, т.к. запрос должен быть вместе с index args. */
     final def _scIndexArgs = _qs.index.get
@@ -574,7 +559,7 @@ trait ScIndex
 
 
 
-    /** true, если вызов идёт из [[ScIndexAdOpen]]. */
+    /** true, если вызов идёт из [[ScIndex]]AdOpen. */
     def isFocusedAdOpen: Boolean = false
 
     /** Поддержка dist nodes: собрать картинки для index'а узла. */
@@ -644,7 +629,7 @@ trait ScIndex
   }
 
   object ScIndexLogic {
-    def apply(qs: MScQs, geoIpInfo: GeoIpInfo)(implicit request: IReq[_]): ScIndexLogic = {
+    def apply(qs: MScQs, geoIpInfo: ScCtlUtil#GeoIpInfo)(implicit request: IReq[_]): ScIndexLogic = {
       val scApiVsn = qs.common.apiVsn
       if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
         ScIndexLogicV3(qs, geoIpInfo)(request)
@@ -663,8 +648,61 @@ trait ScIndex
     * Сервер отвечает только параметрами для рендера, без html.
     */
   case class ScIndexLogicV3(override val _qs: MScQs,
-                            override val _geoIpInfo: GeoIpInfo)
+                            override val _geoIpInfo: ScCtlUtil#GeoIpInfo)
                            (override implicit val _request: IReq[_]) extends ScIndexLogic
+
+
+
+  /** ScIndex-логика перехода на с focused-карточки в индекс выдачи продьюсера фокусируемой карточки.
+    *
+    * @param producer Продьюсер, в который требуется перескочить.
+    * @param focQs Исходные qs-аргументы запроса фокусировки.
+    * @param _request Исходный HTTP-реквест.
+    */
+  case class ScFocToIndexLogicV3(producer: MNode, focQs: MScQs, override val _geoIpInfo: ScCtlUtil#GeoIpInfo)
+                                (override implicit val _request: IReq[_]) extends ScIndexLogic {
+
+    /** Подстановка qs-аргументы реквеста. */
+    // TODO Заменить lazy val на val.
+    override lazy val _qs: MScQs = {
+      // v3 выдача. Собрать аргументы для вызова index-логики:
+      var qsCommon2 = focQs.common
+
+      // Если выставлен отказ от bluetooth-маячков в ответе, то убрать маячки из locEnv.
+      if (
+        focQs.foc
+          .exists(_.indexAdOpen
+            .exists(!_.withBleBeaconAds)) &&
+          qsCommon2.locEnv.beacons.nonEmpty
+      ) {
+        LOGGER.trace(s"$logPrefix _qs: Forget ${qsCommon2.locEnv.beacons.length} BLE Beacons info from QS locEnv, because foc.indexAdOpen.withBleBeaconsAds = false")
+        qsCommon2 = MScCommonQs.locEnv
+          .composeLens( MLocEnv.beacons )
+          .set( Nil )( qsCommon2 )
+      }
+
+      MScQs(
+        common = qsCommon2,
+        index = Some(
+          MScIndexArgs(
+          )
+        ),
+      )
+    }
+
+    override def isFocusedAdOpen = {
+      true
+    }
+
+    override lazy val indexNodesFut: Future[Seq[MIndexNodeInfo]] = {
+      val nodeInfo = MIndexNodeInfo(
+        mnode   = producer,
+        isRcvr  = true
+      )
+      Future.successful( nodeInfo :: Nil )
+    }
+
+  }
 
 
 }

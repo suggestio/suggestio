@@ -1,9 +1,11 @@
 package util.billing
 
+import akka.stream.Materializer
+
 import java.time.{Duration, OffsetDateTime}
 import java.util.concurrent.atomic.AtomicInteger
-
 import akka.stream.scaladsl.{Keep, Sink}
+
 import javax.inject.Inject
 import io.suggest.bill._
 import io.suggest.common.empty.OptionUtil
@@ -23,17 +25,18 @@ import io.suggest.pay.MPaySystem
 import io.suggest.primo.id._
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.mbill.MCartIdeas
-import models.mproj.ICommonDi
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
-import io.suggest.es.model.{BulkProcessorListener, EsModel}
+import io.suggest.es.model.EsModel
+import io.suggest.model.SlickHolder
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
 import japgolly.univeq._
+import play.api.Configuration
 import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,13 +55,12 @@ import scala.concurrent.{ExecutionContext, Future}
   * и обычно скрыта от глаз. Использованные item'ы такого ордера стирать без проблем.
   */
 final class Bill2Util @Inject() (
-                                  protected val mCommonDi                   : ICommonDi
+                                  injector: Injector,
                                 )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.current.injector
-
+  private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val esModel = injector.instanceOf[EsModel]
   lazy val bill2Conf = injector.instanceOf[Bill2Conf]
   private lazy val mOrders = injector.instanceOf[MOrders]
@@ -70,9 +72,12 @@ final class Bill2Util @Inject() (
   private lazy val mDebugs = injector.instanceOf[MDebugs]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
+  protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
   import Bill2Util._
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
   import streamsUtil.Implicits._
   import esModel.api._

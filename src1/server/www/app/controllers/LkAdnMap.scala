@@ -25,7 +25,7 @@ import io.suggest.sec.util.Csrf
 import play.api.libs.json.Json
 import play.api.mvc.BodyParser
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import japgolly.univeq._
 import play.api.http.HttpErrorHandler
 
@@ -43,7 +43,7 @@ final class LkAdnMap @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.slick
+  import slickHolder.slick
 
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val advFormUtil = injector.instanceOf[AdvFormUtil]
@@ -56,7 +56,6 @@ final class LkAdnMap @Inject() (
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Body-parser, декодирующий бинарь из запроса в инстанс MLamForm. */

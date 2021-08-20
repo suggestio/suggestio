@@ -95,8 +95,3 @@ final class BlkImgMaker @Inject() (
   }
 
 }
-
-/** Интерфейс для поля с DI-инстансом maker'а [[BlkImgMaker]]. */
-trait IBlkImgMakerDI {
-  def blkImgMaker: IImgMaker
-}

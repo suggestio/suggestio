@@ -6,8 +6,6 @@ import io.suggest.mbill2.m.item.typ.MItemType
 import models.adv.build.{MCtxOuter, TryUpdateBuilder}
 import slick.dbio.Effect.Read
 import slick.sql.SqlAction
-import util.adv.build.IAdvBuilderUtilDi
-import util.adv.geo.tag.IGeoTagsUtilDi
 
 import scala.concurrent.Future
 
@@ -19,11 +17,9 @@ import scala.concurrent.Future
   */
 abstract class ActivateAdvs
   extends AdvsUpdate
-  with IAdvBuilderUtilDi
-  with IGeoTagsUtilDi
 {
 
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
 
   /** Фьючерс внешнего контекста для adv-билдера. */

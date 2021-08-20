@@ -9,6 +9,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.playx.AppModeExt
 import io.suggest.sec.csp.CspPolicy
 import io.suggest.sec.util.Csrf
 import io.suggest.stat.m.{MAction, MActionTypes}
@@ -19,6 +20,7 @@ import models.mdr.MMdrNotifyMeta
 import models.mpay.yaka._
 import models.req.{INodeOrderReq, IReq, IReqHdr}
 import models.usr.MSuperUsers
+import play.api.Application
 import play.api.http.HttpErrorHandler
 import play.api.i18n.Messages
 import play.api.mvc._
@@ -40,7 +42,7 @@ import views.html.lk.billing.pay.yaka._
 import views.html.stuff.PleaseWaitTpl
 import views.xml.lk.billing.pay.yaka._YakaRespTpl
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -63,7 +65,7 @@ final class PayYaka @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.slick
+  import slickHolder.slick
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -84,7 +86,7 @@ final class PayYaka @Inject() (
   private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val current = injector.instanceOf[Application]
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.
@@ -237,7 +239,7 @@ final class PayYaka @Inject() (
     *         None если всё ок.
     */
   private def _logIfHasCookies(implicit request: IReqHdr): Option[MAction] = {
-    OptionUtil.maybe( mCommonDi.isProd && request.cookies.nonEmpty ) {
+    OptionUtil.maybe( current.mode.isProd && request.cookies.nonEmpty ) {
       LOGGER.error(s"_logIfHasCookies[${System.currentTimeMillis()}]: Unexpected cookies ${request.cookies} from client ${request.remoteClientAddress}, personId = ${request.user.personIdOpt}")
       MAction(
         actions = MActionTypes.UnexpectedCookies :: Nil,

@@ -2,7 +2,8 @@ package controllers
 
 import javax.inject.Inject
 import akka.NotUsed
-import akka.stream.{FlowShape, Graph}
+import akka.actor.ActorSystem
+import akka.stream.{FlowShape, Graph, Materializer}
 import akka.stream.scaladsl.{Compression, Flow, Keep, Sink, Source}
 import akka.util.ByteString
 import io.suggest.brotli.BrotliUtil
@@ -31,14 +32,15 @@ import util.stat.StatUtil
 import util.ws.{MWsChannelActorArgs, WsChannelActors}
 import views.html.static._
 import japgolly.univeq._
-import play.api.Configuration
+import play.api.{Application, Configuration}
 import play.api.http.{HeaderNames, HttpEntity, HttpErrorHandler, HttpProtocol}
 import play.filters.csrf.CSRF
 import play.twirl.api.Xml
 import views.txt.static.robotsTxtTpl
+import io.suggest.playx._
 
 import java.net.URI
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
@@ -56,7 +58,6 @@ final class Static @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{isProd, isDev, mat, actorSystem}
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
@@ -79,7 +80,9 @@ final class Static @Inject() (
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val current = injector.instanceOf[Application]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
+  implicit private lazy val actorSystem = injector.instanceOf[ActorSystem]
 
 
   private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"
@@ -117,7 +120,7 @@ final class Static @Inject() (
     for {
       res <- assets.versioned(path, asset)(request)
     } yield {
-      val ttl = if (isProd) 300 else 10
+      val ttl = if (current.mode.isProd) 300 else 10
       res.withHeaders(CACHE_CONTROL -> s"private, max-age=$ttl")
     }
   }
@@ -576,7 +579,7 @@ final class Static @Inject() (
 
 
   /** Время кеширования /sitemap.xml ответа на клиенте. */
-  private def SITEMAP_XML_CACHE_TTL_SECONDS = if (isDev) 1 else 120
+  private def SITEMAP_XML_CACHE_TTL_SECONDS = if (current.mode.isDev) 1 else 120
 
 
   /**
@@ -618,7 +621,7 @@ final class Static @Inject() (
 
   /** Время кеширования /robots.txt ответа на клиенте. */
   private def ROBOTS_TXT_CACHE_TTL_SECONDS: Int =
-    if (isDev) 5 else 120
+    if (current.mode.isDev) 5 else 120
 
   /** Раздача содержимого robots.txt. */
   def robotsTxt() = ignoreAuth() { implicit request =>

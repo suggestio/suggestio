@@ -11,7 +11,6 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.n2.edge.MPredicate
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.adv.build.Acc
-import models.mproj.ICommonDi
 import util.adn.mapf.{GeoLocBuilder, GeoLocTagBuilder}
 import util.adv.direct.{AdvDirectBuilder, AdvDirectTagsBuilder}
 import util.adv.geo.place.AgpBuilder
@@ -19,9 +18,11 @@ import util.adv.geo.tag.AgtBuilder
 import util.billing.Bill2Util
 import util.n2u.N2NodesUtil
 import io.suggest.mbill2.m.item.MItemJvm.Implicits._
+import io.suggest.model.SlickHolder
 import japgolly.univeq._
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -40,11 +41,6 @@ trait AdvBuilderFactory {
   def builder(acc0Fut: Future[Acc], now: OffsetDateTime): IAdvBuilder
 }
 
-/** Интерфейс для DI-поля с инстансом [[AdvBuilderFactory]]. */
-trait AdvBuilderFactoryDi {
-  def advBuilderFactory: AdvBuilderFactory
-}
-
 
 /** Интерфейс adv-билдеров. Они все очень похожи. */
 @ImplementedBy( classOf[AdvBuilder] )
@@ -53,8 +49,10 @@ trait IAdvBuilder
 {
   val di: AdvBuilderDi
 
+  // TODO di.ec ExecutionContext is not imported into implicit scope. Why?
   import di._
-  import mCommonDi._
+
+  import slickHolder.slick
   import slick.profile.api._
 
   /** Аккамулятор результатов.
@@ -108,12 +106,12 @@ trait IAdvBuilder
   def withAcc(accFut2: Future[Acc]): IAdvBuilder
 
   def withAccUpdated(f: Acc => Acc): IAdvBuilder = {
-    val acc2Fut = accFut.map(f)
+    val acc2Fut = accFut.map(f)(ec)
     withAcc(acc2Fut)
   }
 
   def withAccUpdatedFut(f: Acc => Future[Acc]): IAdvBuilder = {
-    val acc2Fut = accFut.flatMap(f)
+    val acc2Fut = accFut.flatMap(f)(ec)
     withAcc(acc2Fut)
   }
 
@@ -161,7 +159,7 @@ trait IAdvBuilder
               .filter { rowsUpdated =>
                 LOGGER.trace(s"$logPrefix Updated item[$mitemId]: dateEnd => $dateEnd2")
                 rowsUpdated ==* 1
-              }
+              }(ec)
           }
           dbAction :: dbas0
         }
@@ -206,7 +204,7 @@ trait IAdvBuilder
           if (!r)
             LOGGER.warn(s"$logPrefix Unexpected rows deleted: $rowsUpdated, expected $itemIdsLen")
           r
-        }
+        }(ec)
 
       // Собрать новый акк.
       withAccUpdated {
@@ -223,15 +221,15 @@ trait IAdvBuilder
 
 /** Контейнер для DI-аргументов вынесен за пределы билдера для ускорения и упрощения ряда вещей. */
 final class AdvBuilderDi @Inject() (
-                                     val mCommonDi          : ICommonDi
+                                     val injector: Injector,
                                    ) {
 
-  import mCommonDi.current.injector
-
+  lazy val slickHolder = injector.instanceOf[SlickHolder]
   lazy val bill2Util = injector.instanceOf[Bill2Util]
   lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
   lazy val mItems = injector.instanceOf[MItems]
   lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
+  implicit lazy val ec = injector.instanceOf[ExecutionContext]
 
 }
 

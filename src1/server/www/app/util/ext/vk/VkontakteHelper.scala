@@ -1,17 +1,18 @@
 package util.ext.vk
 
 import java.net.URL
-
 import io.suggest.adv.ext.model.im.VkImgSizes
+
 import javax.inject.Inject
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFormats
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 import play.api.libs.ws.WSClient
-import util.adv.AdvUtil
 import util.ext.IExtServiceHelper
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Suggest.io
@@ -20,14 +21,15 @@ import util.ext.IExtServiceHelper
   * Description: Утиль для взаимодействия с вконтактом.
   */
 class VkontakteHelper @Inject()(
-                                 override val wsClient     : WSClient,
-                                 override val advUtil      : AdvUtil,
-                                 override val mCommonDi    : ICommonDi
+                                 override protected[this] val injector: Injector,
                                )
   extends IExtServiceHelper
   with VkMpUpload
   with MacroLogsImpl
 {
+
+  override lazy val wsClient = injector.instanceOf[WSClient]
+  override implicit lazy val ec = injector.instanceOf[ExecutionContext]
 
   override def mExtService = MExtServices.VKontakte
 

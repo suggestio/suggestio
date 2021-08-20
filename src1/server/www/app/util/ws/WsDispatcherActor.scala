@@ -3,14 +3,14 @@ package util.ws
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 import util.SiowebSup
 
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -21,15 +21,16 @@ import scala.util.{Failure, Success}
  * Description: Актор, поддерживающий карту wsId -> actorRef.
  */
 @Singleton
-class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) extends MacroLogsImpl {
+class WsDispatcherActors @Inject() (injector: Injector) extends MacroLogsImpl {
 
-  import mCommonDi._
+  private def actorSystem = injector.instanceOf[ActorSystem]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
   def ACTOR_NAME = "wsd"
 
   implicit def ASK_TIMEOUT = Timeout(5.seconds)
 
-  private lazy val siowebSup = current.injector.instanceOf[SiowebSup]
+  private lazy val siowebSup = injector.instanceOf[SiowebSup]
   def ACTOR_PATH = siowebSup.actorPath / ACTOR_NAME
 
   def actorSelection = actorSystem.actorSelection(ACTOR_PATH)

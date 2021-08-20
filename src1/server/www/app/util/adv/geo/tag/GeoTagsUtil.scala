@@ -1,5 +1,7 @@
 package util.adv.geo.tag
 
+import akka.stream.Materializer
+
 import javax.inject.Inject
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.geo.MNodeGeoLevels
@@ -18,8 +20,8 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.MCtxOuter
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
+import io.suggest.model.SlickHolder
 import models.mcron.MCronTask
-import models.mproj.ICommonDi
 import play.api.inject.Injector
 import util.cron.ICronTasksProvider
 
@@ -39,19 +41,20 @@ import scala.util.{Failure, Success}
   * Сброс хлама в теги необходим для поиска тегов.
   */
 class GeoTagsUtil @Inject() (
-                              mCommonDi     : ICommonDi,
+                              injector: Injector,
                             )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
-  import mCommonDi.{ec, slick, mat}
+  import slickHolder.slick
   import slick.profile.api._
   import mNodes.Implicits.elSourcingHelper
   import esModel.api._
@@ -568,11 +571,6 @@ class GeoTagsUtil @Inject() (
   }
 
 }
-
-trait IGeoTagsUtilDi {
-  def geoTagsUtil: GeoTagsUtil
-}
-
 
 
 trait GeoTagsUtilJmxMBean {

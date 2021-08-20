@@ -1,12 +1,11 @@
 package util.adv.ext.ut
 
 import io.suggest.ahc.upload.{MpUploadArgs, UploadRefusedException}
-import io.suggest.di.IWsClient
+import io.suggest.di.{IExecutionContext, IWsClient}
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
 import models.adv.ext.act.ExtActorEnv
 import models.event.{ErrorInfo, MEventTypes}
-import models.mproj.IMCommonDi
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.Future
@@ -22,9 +21,8 @@ trait S2sMpUpload
   extends FsmActor
     with ExtActorEnv
     with IWsClient
-    with IMCommonDi
+    with IExecutionContext
 {
-  import mCommonDi.ec
 
   trait S2sMpUploadStateT extends FsmState {
     /** Аплоад точно удался. */

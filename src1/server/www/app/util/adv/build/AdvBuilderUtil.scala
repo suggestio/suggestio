@@ -10,13 +10,14 @@ import io.suggest.n2.edge._
 import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, MCtxOuter}
-import models.mproj.ICommonDi
 import util.adv.geo.tag.GeoTagsUtil
 import util.billing.BillDebugUtil
 import io.suggest.mbill2.m.item.MItemJvm.Implicits._
+import io.suggest.model.SlickHolder
 import japgolly.univeq._
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -25,19 +26,19 @@ import scala.concurrent.Future
   * Description: Утиль для AdvBuilder'а.
   */
 final class AdvBuilderUtil @Inject() (
-                                       mCommonDi        : ICommonDi
+                                       injector: Injector,
                                      )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.current.injector
-
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val geoTagsUtil = injector.instanceOf[GeoTagsUtil]
   private lazy val billDebugUtil = injector.instanceOf[BillDebugUtil]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
 
 
@@ -429,9 +430,4 @@ final class AdvBuilderUtil @Inject() (
   }
 
 
-}
-
-/** Интерфейс для DI-поля, содержащего инстанс [[AdvBuilderUtil]]. */
-trait IAdvBuilderUtilDi {
-  def advBuilderUtil: AdvBuilderUtil
 }

@@ -3,9 +3,9 @@ package util.acl
 import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
+import io.suggest.model.SlickHolder
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MItemReq, MReq}
 import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
@@ -27,13 +27,13 @@ final class IsSuItem @Inject() (
 
   private lazy val aclUtil = injector.instanceOf[AclUtil]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val isSu = injector.instanceOf[IsSu]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.slick
+  import slickHolder.slick
 
 
   /**

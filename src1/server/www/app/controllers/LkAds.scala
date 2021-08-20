@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
@@ -42,7 +43,7 @@ final class LkAds @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, slick, mat}
+  import slickHolder.slick
 
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -51,6 +52,7 @@ final class LkAds @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val mItems = injector.instanceOf[MItems]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
   /** Рендер странице с react-формой управления карточками.

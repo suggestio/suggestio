@@ -2,13 +2,13 @@ package util.tpl
 
 import java.io.File
 import java.nio.file.Files
-
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
 import com.github.fkoehler.play.htmlcompressor.HTMLCompressorFilter
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
-import io.suggest.playx.IsAppModes
+import io.suggest.playx._
+
 import javax.inject.{Inject, Singleton}
 import play.api.http.HttpEntity
 import play.api.libs.json.JsString
@@ -26,16 +26,12 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class HtmlCompressUtil @Inject() (
-  configuration   : Configuration,
-  env             : Environment
-)
-  extends IsAppModes
-{ outer =>
+                                   configuration   : Configuration,
+                                   env             : Environment,
+                                 ) { outer =>
 
-  override protected def appMode = env.mode
-
-  private val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", isDev)
-  private val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", isProd)
+  private val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", env.mode.isDev)
+  private val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", env.mode.isProd)
   private val REMOVE_INTERTAG_SPACES_DFLT = getBool("html.compress.global.remove.spaces.intertag", true)
 
   def getForGlobalUsing = {
@@ -56,8 +52,8 @@ class HtmlCompressUtil @Inject() (
       _.toLowerCase match {
         case "true"  | "1" | "+" | "yes" | "on" => true
         case "false" | "0" | "-" | "no" | "off" => false
-        case "isprod" | "is_prod"               => isProd
-        case "isdev" | "is_dev"                 => isDev
+        case "isprod" | "is_prod"               => env.mode.isProd
+        case "isdev" | "is_dev"                 => env.mode.isDev
       }
     } getOrElse {
       dflt

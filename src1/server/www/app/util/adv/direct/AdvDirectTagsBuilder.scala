@@ -16,7 +16,6 @@ import util.adv.build.IAdvBuilder
 trait AdvDirectTagsBuilder extends IAdvBuilder {
 
   import di._
-  import mCommonDi._
 
   private final def _PRED   = MPredicates.TaggedBy.DirectTag
   private final def _ITYPE  = MItemTypes.TagDirect

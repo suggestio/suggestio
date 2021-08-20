@@ -1,14 +1,14 @@
 package util.adv.ext.ut
 
-import java.io.File
+import io.suggest.di.IExecutionContext
 
+import java.io.File
 import io.suggest.fsm.FsmActor
 import io.suggest.n2.node.MNode
 import io.suggest.primo.IToPublicString
 import io.suggest.util.logs.IMacroLogs
 import models.blk.OneAdQsArgs
 import models.event.{ErrorInfo, MEventTypes}
-import models.mproj.IMCommonDi
 import util.adr.IAdRenderUtilDi
 
 import scala.util.{Failure, Success}
@@ -23,11 +23,9 @@ trait RenderAd2Img
   extends FsmActor
   with IMacroLogs
   with IAdRenderUtilDi
-  with IMCommonDi
+  with IExecutionContext
 {
 
-  import mCommonDi.ec
-  
   /** Заготовка fsm-состояния рендера карточки в картинку. */
   trait RenderAd2ImgStateT extends FsmState {
 

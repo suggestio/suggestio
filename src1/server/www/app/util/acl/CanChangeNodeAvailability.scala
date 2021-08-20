@@ -2,8 +2,8 @@ package util.acl
 
 import javax.inject.Inject
 import io.suggest.n2.node.{MNode, MNodes}
-import models.mproj.ICommonDi
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
+import io.suggest.model.SlickHolder
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
@@ -39,11 +39,11 @@ final class CanChangeNodeAvailability @Inject() (
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.slick
+  import slickHolder.slick
 
 
   /** Может ли админ узла влиять на availability указанного узла? */

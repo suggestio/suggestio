@@ -5,16 +5,18 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeIdType, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.playx.AppModeExt
 import io.suggest.spa.SioPages
 import io.suggest.util.logs.MacroLogsImplLazy
 
 import javax.inject.Inject
 import models.mctx.ContextUtil
+import play.api.Application
 import play.api.http.HttpErrorHandler
 import play.api.mvc.{RequestHeader, Result}
 import util.acl.{MaybeAuth, SioControllerApi}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -37,11 +39,11 @@ final class ShortUrls @Inject() (
 
   private lazy val contextUtil = injector.instanceOf[ContextUtil]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val current = injector.instanceOf[Application]
 
 
   /** Редиректить на главную? */
-  private def IS_NOT_FOUND_RDR_TO_MAIN = mCommonDi.isProd
+  private def IS_NOT_FOUND_RDR_TO_MAIN = current.mode.isProd
 
 
   /** Рендер ответа с редиректом в выдачу. */

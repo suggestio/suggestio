@@ -1,20 +1,21 @@
 package util.acl
 
 import io.suggest.common.fut.FutureUtil
+
 import javax.inject.Inject
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrders
+import io.suggest.model.SlickHolder
 import io.suggest.n2.node.MNode
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MNodeOptOrderReq, MUserInit, MUserInits}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import japgolly.univeq._
 import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -34,7 +35,8 @@ final class CanViewOrder @Inject() (
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Собрать ACL ActionBuilder проверки прав.
     *
@@ -58,7 +60,7 @@ final class CanViewOrder @Inject() (
 
         // Незалогиненных юзеров можно сразу посылать.
         user.personIdOpt.fold( forbid ) { personId =>
-          import mCommonDi.{ec, slick}
+          import slickHolder.slick
 
           // Получить id контракта юзера.
           val usrContractIdOptFut = user.contractIdOptFut

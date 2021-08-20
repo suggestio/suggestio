@@ -22,7 +22,6 @@ final class ScJsRouter @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.current.injector
 
   private lazy val scJsRouterTpl = injector.instanceOf[ScJsRouterTpl]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]

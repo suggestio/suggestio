@@ -1,7 +1,6 @@
 package util.adv.ext
 
 import java.io.File
-
 import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.MpUploadArgs
@@ -16,7 +15,6 @@ import models.adv.js.ctx.JsErrorInfo
 import models.blk.OneAdQsArgs
 import models.mctx.ContextUtil
 import models.mext._
-import models.mproj.ICommonDi
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.adr.AdRenderUtil
 import util.adv.AdvUtil
@@ -24,6 +22,7 @@ import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
 
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 /**
@@ -51,8 +50,8 @@ class OAuth1TargetActor @Inject() (
                                     override val advUtil          : AdvUtil,
                                     override val ctxUtil          : ContextUtil,
                                     implicit val wsClient         : WSClient,
-                                    override val mCommonDi        : ICommonDi
-                                  )
+                                    override implicit val ec      : ExecutionContext,
+  )
   extends FsmActor
   with AdvExtTargetActorUtil
   with ReplyTo
@@ -65,7 +64,6 @@ class OAuth1TargetActor @Inject() (
 {
 
   import LOGGER._
-  import mCommonDi.ec
 
   override type State_t = FsmState
 

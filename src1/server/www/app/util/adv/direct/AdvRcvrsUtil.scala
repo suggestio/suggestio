@@ -7,6 +7,7 @@ import javax.inject.Inject
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.SlickHolder
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -14,11 +15,12 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, MCtxOuter, TryUpdateBuilder}
-import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
 import util.n2u.N2NodesUtil
 import japgolly.univeq._
+import play.api.Configuration
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,12 +34,10 @@ import scala.concurrent.{ExecutionContext, Future}
 // TODO Всё круто, но этот код потерял актуальность с момента его написания, т.к. всё изменилось. Надо заново отладить всё тут.
 
 class AdvRcvrsUtil @Inject()(
-                              mCommonDi               : ICommonDi
+                              injector: Injector,
                             )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mItems = injector.instanceOf[MItems]
@@ -45,12 +45,15 @@ class AdvRcvrsUtil @Inject()(
   private lazy val advBuilderFactory = injector.instanceOf[AdvBuilderFactory]
   private lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
   private lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi._
+  import slickHolder.slick
 
   /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
     * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
-  private def SIOM_REFUSE_REASON = configuration.getOptional[String]("sys.m.ad.hard.refuse.reason")
+  private lazy val SIOM_REFUSE_REASON = configuration.getOptional[String]("sys.m.ad.hard.refuse.reason")
     .getOrElse("Refused by Suggest.io.")
 
   /**

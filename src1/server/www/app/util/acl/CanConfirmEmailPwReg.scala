@@ -3,12 +3,12 @@ package util.acl
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.ott.MOneTimeTokens
+import io.suggest.model.SlickHolder
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.MNodeReq
 import models.usr.MEmailRecoverQs
 import play.api.mvc._
@@ -37,7 +37,7 @@ final class CanConfirmEmailPwReg @Inject()(
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val mOneTimeTokens = injector.instanceOf[MOneTimeTokens]
   private lazy val esModel = injector.instanceOf[EsModel]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
   private lazy val errorHandler = injector.instanceOf[controllers.ErrorHandler]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
@@ -81,7 +81,7 @@ final class CanConfirmEmailPwReg @Inject()(
           val personNodeId = qs.nodeId.get
 
           // Нужно поискать ott если уже использовано:
-          val mottOptFut = mCommonDi.slick.db.run {
+          val mottOptFut = slickHolder.slick.db.run {
             mOneTimeTokens.getById( qs.nonce )
           }
 

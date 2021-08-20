@@ -2,7 +2,6 @@ package util.billing
 
 import java.nio.charset.Charset
 import java.time.{LocalDate, OffsetDateTime}
-
 import javax.inject.Inject
 import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.di.ISlickDbConfig
@@ -15,10 +14,10 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect.{RWT, WT}
+import io.suggest.model.SlickHolder
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import io.suggest.util.{CompressUtilJvm, JmxBase}
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.inject.Injector
 import play.api.libs.json.Json
@@ -34,12 +33,10 @@ import scala.concurrent.ExecutionContext
   * Исходный Bill2Util сильно растолстел, поэтому debug-утиль будет размножаться тут.
   */
 final class BillDebugUtil @Inject() (
-                                      protected val mCommonDi    : ICommonDi,
+                                      injector: Injector,
                                     )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
 
   private lazy val mDebugs = injector.instanceOf[MDebugs]
   private lazy val mItems = injector.instanceOf[MItems]
@@ -48,9 +45,10 @@ final class BillDebugUtil @Inject() (
   private lazy val mBalances = injector.instanceOf[MBalances]
   private lazy val mTxns = injector.instanceOf[MTxns]
   private lazy val compressUtilJvm = injector.instanceOf[CompressUtilJvm]
+  protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.ec
-  import mCommonDi.slick.profile.api._
+  import slickHolder.slick.profile.api._
 
   def STR_ENC_CHARSET = Charset.defaultCharset()
 

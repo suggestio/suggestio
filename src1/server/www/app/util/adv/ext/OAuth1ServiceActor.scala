@@ -2,14 +2,15 @@ package util.adv.ext
 
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeoutException
-
 import akka.actor.Props
 import com.google.inject.assistedinject.Assisted
+
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adv.ext.model.ctx.MAskActions
 import io.suggest.async.AsyncUtil
 import io.suggest.fsm.FsmActor
+import io.suggest.model.SlickHolder
 import io.suggest.primo.IToPublicString
 import io.suggest.sec.util.PgpUtil
 import io.suggest.streams.JioStreamsUtil
@@ -22,7 +23,6 @@ import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
 import models.mctx.ContextUtil
-import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.WSClient
@@ -32,7 +32,7 @@ import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
 import japgolly.univeq._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -59,17 +59,16 @@ trait OAuth1ServiceActorFactory
   */
 class OAuth1ServiceActor @Inject() (
                                      @Assisted override val args : IExtAdvServiceActorArgs,
-                                     //esModel                   : EsModel,
                                      oa1TgActorFactory           : OAuth1TargetActorFactory,
-                                     mCommonDi                   : ICommonDi,
                                      oa1SvcActorUtil             : OAuth1SvcActorUtil,
                                      pgpUtil                     : PgpUtil,
                                      asyncUtil                   : AsyncUtil,
                                      override val extServicesUtil: ExtServicesUtil,
                                      override val ctxUtil        : ContextUtil,
                                      override val advExtFormUtil : AdvExtFormUtil,
-                                     implicit val wsClient       : WSClient
-                                   )
+                                     implicit val wsClient       : WSClient,
+                                     implicit val ec             : ExecutionContext,
+  )
   extends FsmActor
   with ReplyTo
   with ExtServiceActorEnv
@@ -79,7 +78,6 @@ class OAuth1ServiceActor @Inject() (
 {
 
   import LOGGER._
-  import mCommonDi.ec
   import oa1SvcActorUtil._
 
   override type State_t = FsmState

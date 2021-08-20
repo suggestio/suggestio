@@ -932,7 +932,3 @@ final class JdAdUtil @Inject()(
   }
 
 }
-
-trait IJdAdUtilDi {
-  def jdAdUtil: JdAdUtil
-}

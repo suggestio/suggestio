@@ -7,15 +7,15 @@ import io.suggest.di.IWsClient
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.IContextUtilDi
 import models.mext.{IExtPostInfo, IOAuth1MkPostArgs, MExtPostInfo}
-import models.mproj.IMCommonDi
 import models.msc.SiteQsArgs
+import play.api.Configuration
 import play.api.libs.json.JsValue
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
 import play.api.libs.oauth._
 import util.n2u.IN2NodesUtilDi
 import util.{FormUtil, TplDataFormatUtil}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -61,13 +61,13 @@ trait IOAuth1Support {
 trait OAuth1Support
   extends IOAuth1Support
   with IMacroLogs
-  with IMCommonDi
   with IContextUtilDi
   with IN2NodesUtilDi
   with IWsClient
 {
 
-  import mCommonDi._
+  protected[this] def configuration: Configuration
+  implicit protected[this] def ec: ExecutionContext
 
   /** Сколько текста можно напихать в начало твита? */
   def LEAD_TEXT_LEN: Int

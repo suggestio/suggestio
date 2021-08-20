@@ -1,7 +1,6 @@
 package util.ext
 
 import io.suggest.ahc.upload.MpUploadSupportDflt
-import models.mproj.IMCommonDi
 
 /**
   * Suggest.io
@@ -12,9 +11,3 @@ import models.mproj.IMCommonDi
 trait ExtServiceHelperMpUpload
   extends MpUploadSupportDflt
   with IExtMpUploadSupport
-  with IMCommonDi
-{
-
-  override implicit def ec = mCommonDi.ec
-
-}

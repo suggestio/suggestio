@@ -10,7 +10,7 @@ import play.api.mvc.Result
 import util.acl.{CanDynImg, IsFileNotModified, SioControllerApi}
 import util.img.DynImgUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -35,7 +35,6 @@ final class Img @Inject() (
   private lazy val mimeUtilJvm = injector.instanceOf[MimeUtilJvm]
   private lazy val uploadCtl = injector.instanceOf[Upload]
   private lazy val errorHandler = injector.instanceOf[ErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   def dynImg(mimg: MImgT) = _dynImg( mimg, returnBody = true )

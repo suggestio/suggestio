@@ -6,6 +6,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.i18n.I18nConst
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.playx.AppModeExt
 import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mctx.Context
@@ -18,10 +19,10 @@ import util.i18n.JsMessagesUtil
 import views.html.lk.lang._
 import japgolly.univeq._
 import models.req.IReq
+import play.api.Application
 import play.api.http.HttpErrorHandler
-import play.api.inject.Injector
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -32,11 +33,11 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 final class LkLang @Inject() (
                                sioControllerApi                : SioControllerApi,
-                               injector                        : Injector,
-                               implicit private val ec         : ExecutionContext,
                              )
   extends MacroLogsImplLazy
 {
+
+  import sioControllerApi._
 
   // Контроллер НЕ сингтон, то описываем DI для необязательных кусков:
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -47,8 +48,8 @@ final class LkLang @Inject() (
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val langs = injector.instanceOf[Langs]
+  private lazy val current = injector.instanceOf[Application]
 
-  import sioControllerApi._
 
   private def chooseLangFormM(currLang: Lang): Form[Lang] = {
     Form(
@@ -150,7 +151,7 @@ final class LkLang @Inject() (
 
 
   /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
-  private def LK_MESSAGES_CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5
+  private def LK_MESSAGES_CACHE_MAX_AGE_SECONDS = if (current.mode.isProd) 864000 else 5
 
 
   /** Сборка ответа messages.js */

@@ -2,11 +2,11 @@ package models.mctx
 
 import java.net.IDN
 import java.time.{Instant, OffsetDateTime, ZoneId}
-
 import com.google.inject.assistedinject.Assisted
+
 import javax.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
+import io.suggest.playx._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
 import io.suggest.dev.{MScreen, MScreenJvm}
@@ -43,11 +43,7 @@ import scala.util.matching.Regex
 final class ContextUtil @Inject() (
                                     env           : Environment,
                                     configuration : Configuration
-                                  )
-  extends IsAppModes
-{
-
-  override protected def appMode = env.mode
+                                  ) {
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
   val isIpadRe = "iPad".r.unanchored
@@ -102,7 +98,7 @@ final class ContextUtil @Inject() (
     * @return Подправленная исходная строка.
     */
   def devReplaceLocalHostW127001(source: String): String = {
-    if (isDev)
+    if (env.mode.isDev)
       source.replaceFirst("localhost", "127.0.0.1")
     else
       source
@@ -321,8 +317,7 @@ trait Context {
 final class ContextApi @Inject() (
                                    injector: Injector,
                                  )
-  extends ICurrentAppHelpers
-  with IContextUtilDi
+  extends IContextUtilDi
 {
   override lazy val ctxUtil = injector.instanceOf[ContextUtil]
   lazy val cdn = injector.instanceOf[CdnUtil]
@@ -333,7 +328,7 @@ final class ContextApi @Inject() (
   lazy val mCtxIds = injector.instanceOf[MCtxIds]
   lazy val advUtil = injector.instanceOf[AdvUtil]
   lazy val supportUtil = injector.instanceOf[SupportUtil]
-  override implicit lazy val current = injector.instanceOf[Application]
+  lazy val current = injector.instanceOf[Application]
 }
 
 

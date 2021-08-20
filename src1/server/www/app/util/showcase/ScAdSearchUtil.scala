@@ -311,10 +311,3 @@ sealed trait MRadioBeaconsSearchCtx {
 object MRadioBeaconsSearchCtx {
   def empty = new MRadioBeaconsSearchCtx {}
 }
-
-
-/** Интерфейс для поля c DI-инстансом [[ScAdSearchUtil]]. */
-trait IScAdSearchUtilDi {
-  def scAdSearchUtil: ScAdSearchUtil
-}
-

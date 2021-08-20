@@ -1,10 +1,11 @@
 package util.acl
 
+import io.suggest.playx._
 import io.suggest.sjs.SjsUtil
 
 import javax.inject.Inject
-import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
+import play.api.Application
 import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Result}
@@ -63,12 +64,12 @@ final class IsSuOrDevelOr404 @Inject() (
                                          isSuOr404Ctl     : IsSuOr404Ctl,
                                        ) {
 
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val current = injector.instanceOf[Application]
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
   private class ImplC extends isSuOr404Ctl.Base {
     override protected def isAllowed(user: ISioUser): Boolean = {
-      super.isAllowed(user) || mCommonDi.isDev || SjsUtil.isDevelDetected
+      super.isAllowed(user) || current.mode.isDev || SjsUtil.isDevelDetected
     }
   }
 

@@ -31,7 +31,6 @@ object AdvDirectBuilder {
 trait AdvDirectBuilder extends IAdvBuilder {
 
   import di._
-  import mCommonDi._
   import AdvDirectBuilder._
 
   override def supportedItemTypes: List[MItemType] = {

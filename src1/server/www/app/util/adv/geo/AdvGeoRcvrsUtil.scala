@@ -579,13 +579,6 @@ final class AdvGeoRcvrsUtil @Inject()(
 }
 
 
-/** Интерфейс для DI-поля с инстансом [[AdvGeoRcvrsUtil]]. */
-trait IAdvGeoRcvrsUtilDi {
-  def advGeoRcvrsUtil: AdvGeoRcvrsUtil
-}
-
-
-
 /** Интерфейс jmx mbean для [[AdvGeoRcvrsUtil]]. */
 trait AdvGeoRcvrsUtilJmxMBean {
 

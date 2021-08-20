@@ -11,6 +11,7 @@ import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.id.token.{MIdMsg, MIdToken}
 import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
 import io.suggest.mbill2.util.effect
+import io.suggest.model.SlickHolder
 import io.suggest.n2.edge.MPredicates
 import io.suggest.playx.CacheApiUtil
 
@@ -20,7 +21,6 @@ import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.MacroLogsImpl
 
 import javax.imageio.ImageIO
-import models.mproj.ICommonDi
 import play.api.data.Form
 import play.api.http.HeaderNames
 import play.api.mvc._
@@ -33,7 +33,7 @@ import models.req.IReqHdr
 import play.api.inject.Injector
 import util.ident.IdTokenUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Random, Success}
 
@@ -67,9 +67,11 @@ final class CaptchaUtil @Inject() (
   private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
   private lazy val idTokenUtil = injector.instanceOf[IdTokenUtil]
   private lazy val cipherUtil = injector.instanceOf[CipherUtil]
-  protected lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  protected lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.{ec, slick}
+  import slickHolder.slick
+  import slick.profile.api._
 
   def CAPTCHA_IMG_FMT_LC = "png"
   def CAPTCHA_IMG_MIME = "image/" + CAPTCHA_IMG_FMT_LC
@@ -78,7 +80,7 @@ final class CaptchaUtil @Inject() (
   def DIGITS_CAPTCHA_LEN = 5
 
   def COOKIE_MAXAGE_SECONDS = 1800
-  lazy val COOKIE_FLAG_SECURE = mCommonDi.current.injector.instanceOf[SessionCookieBaker].secure
+  lazy val COOKIE_FLAG_SECURE = injector.instanceOf[SessionCookieBaker].secure
 
   /** Маппер формы для hidden поля, содержащего id капчи. */
   def captchaIdM = nonEmptyText(maxLength = 16)
@@ -219,7 +221,6 @@ final class CaptchaUtil @Inject() (
   }
 
 
-  import mCommonDi.slick.profile.api._
 
   /** Выставить id капчи в базе, как уже использованную капчу.
     *

@@ -1,14 +1,10 @@
 package util.billing.cron
 
-import io.suggest.es.model.EsModel
-import javax.inject.Inject
-import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.n2.node.MNodes
-import io.suggest.streams.StreamsUtil
-import models.mproj.ICommonDi
-import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
-import util.adv.geo.tag.GeoTagsUtil
+import play.api.inject.Injector
+
+import javax.inject.Inject
 
 /**
   * Suggest.io
@@ -19,22 +15,12 @@ import util.adv.geo.tag.GeoTagsUtil
   * Используется reinstall-методика, т.е. карточка сбрасывается и эджи компилятся и сохраняются заново.
   */
 final class ActivateOfflineAdvs @Inject() (
-                                            override val mCommonDi          : ICommonDi
+                                            override val injector: Injector,
                                           )
   extends ActivateAdvs
 {
 
-  import mCommonDi.current.injector
-  override lazy val esModel = injector.instanceOf[EsModel]
-  override lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
-  override lazy val geoTagsUtil = injector.instanceOf[GeoTagsUtil]
-  override lazy val mNodes = injector.instanceOf[MNodes]
-  override lazy val mItems = injector.instanceOf[MItems]
-  override lazy val advBuilderFactory = injector.instanceOf[AdvBuilderFactory]
-  override lazy val streamsUtil = injector.instanceOf[StreamsUtil]
-
-
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
 
   override def sqlInstallOnlyForItems(mitems: Iterable[MItem]): Iterable[MItem] = {

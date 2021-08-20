@@ -30,7 +30,7 @@ import views.html.lk.shop.ad.emailAdDisabledByMartTpl
 import views.html.sys1.market._
 import views.html.sys1.market.adn._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import japgolly.univeq._
 import models.madn.{AdnShownTypes, NodeDfltColors}
 import play.api.http.HttpErrorHandler
@@ -65,7 +65,6 @@ final class SysMarket @Inject() (
   private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   import esModel.api._
 

@@ -25,7 +25,7 @@ import util.FormUtil._
 import util.acl._
 import views.html.sys1.calendar._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -51,7 +51,6 @@ final class SysCalendar @Inject() (
   private lazy val calendarAccessAny = injector.instanceOf[CalendarAccessAny]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   import esModel.api._
 

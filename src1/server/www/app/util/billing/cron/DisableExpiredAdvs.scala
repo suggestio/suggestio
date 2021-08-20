@@ -1,20 +1,16 @@
 package util.billing.cron
 
-import io.suggest.es.model.EsModel
-import javax.inject.Inject
+import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.item.MItemJvm.Implicits._
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.n2.node.MNodes
 import models.adv.build.{MCtxOuter, TryUpdateBuilder}
-import models.mproj.ICommonDi
 import org.threeten.extra.Interval
+import play.api.inject.Injector
 import slick.dbio.Effect.Read
 import slick.sql.SqlAction
-import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
-import io.suggest.mbill2.m.item.MItemJvm.Implicits._
-import io.suggest.streams.StreamsUtil
 
+import javax.inject.Inject
 import scala.concurrent.Future
 
 /**
@@ -26,22 +22,12 @@ import scala.concurrent.Future
   */
 
 final class DisableExpiredAdvs @Inject() (
-                                           override val mCommonDi          : ICommonDi,
+                                           override val injector: Injector,
                                          )
   extends AdvsUpdate
 {
 
-  import mCommonDi.current.injector
-
-  override lazy val esModel = injector.instanceOf[EsModel]
-  private lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
-  override lazy val mNodes = injector.instanceOf[MNodes]
-  override lazy val advBuilderFactory = injector.instanceOf[AdvBuilderFactory]
-  override lazy val streamsUtil = injector.instanceOf[StreamsUtil]
-  override lazy val mItems = injector.instanceOf[MItems]
-
-  import LOGGER._
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
 
 
@@ -57,7 +43,7 @@ final class DisableExpiredAdvs @Inject() (
       val res = mitems
         .flatMap(_.dtIntervalOpt)
         .exists(_isExpired)
-      trace(s"hasItemsForProcessing(${mitems.size}): $res")
+      LOGGER.trace(s"hasItemsForProcessing(${mitems.size}): $res")
       res
     }
   }

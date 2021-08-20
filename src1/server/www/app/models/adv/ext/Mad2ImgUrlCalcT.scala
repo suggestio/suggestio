@@ -4,7 +4,7 @@ import io.suggest.common.geom.d2.{INamedSize2di, MSize2di}
 import io.suggest.n2.node.MNode
 import models.blk.OneAdQsArgs
 import models.blk.szMulted
-import util.adv.IAdvUtilDi
+import util.adv.AdvUtil
 import util.ext.IExtServiceHelper
 
 /**
@@ -14,7 +14,9 @@ import util.ext.IExtServiceHelper
  * Description: Калькулятор для рендера ссылки на рендер карточки. Сама калькуляция происходит при обращении к ссылке,
  * тут лишь рассчет ссылки на картинку.
  */
-trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
+trait Mad2ImgUrlCalcOuter {
+
+  protected[this] def advUtil: AdvUtil
 
   /** Непосредственный код калькулятора. */
   trait Mad2ImgUrlCalcT {

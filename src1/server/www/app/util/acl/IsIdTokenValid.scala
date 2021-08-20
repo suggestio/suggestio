@@ -1,16 +1,18 @@
 package util.acl
 
 import io.suggest.mbill2.m.ott.MOneTimeTokens
+import io.suggest.model.SlickHolder
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.Inject
-import models.mproj.ICommonDi
 import models.req.{IReqHdr, MIdTokenReq}
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.ident.IdTokenUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -20,20 +22,20 @@ import scala.util.{Failure, Success}
   * Description: ACL с поддержкой поверхностной проверкой id-токена.
   */
 final class IsIdTokenValid @Inject()(
-                                      mCommonDi: ICommonDi,
+                                      injector: Injector,
                                     )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
-  import mCommonDi.{slick, ec}
 
   private lazy val idTokenUtil = injector.instanceOf[IdTokenUtil]
   private lazy val aclUtil = injector.instanceOf[AclUtil]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val mOneTimeTokens = injector.instanceOf[MOneTimeTokens]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
+  import slickHolder.slick
 
   private def _invalidToken(req: IReqHdr): Future[Result] = {
     httpErrorHandler.onClientError(req, Status.BAD_REQUEST, "error.invalid")

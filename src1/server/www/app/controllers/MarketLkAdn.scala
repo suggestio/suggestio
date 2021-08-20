@@ -48,7 +48,6 @@ final class MarketLkAdn @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
@@ -65,7 +64,7 @@ final class MarketLkAdn @Inject() (
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
 
-  import mCommonDi.{slick, ec}
+  import slickHolder.slick
 
 
   /** Список личных кабинетов юзера. */

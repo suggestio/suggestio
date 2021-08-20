@@ -1,36 +1,31 @@
 package controllers.sc
 
-import _root_.util.blocks.IBlkImgMakerDI
-import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil, MRadioBeaconsSearchCtx}
-import _root_.util.stat.IStatUtil
+import _root_.util.showcase.MRadioBeaconsSearchCtx
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{MEsInnerHitsInfo, MEsNestedSearch, MEsUuId}
 import io.suggest.es.search.MRandomSortData
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.tags.JdTag
-import io.suggest.n2.edge.{MEdgeFlags, MPredicate, MPredicates}
 import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.edge.{MEdgeFlags, MPredicate, MPredicates}
 import io.suggest.n2.extra.doc.MNodeDoc
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.n2.node.{IMNodes, MNode, MNodeFields, MNodeTypes}
+import io.suggest.n2.node.{MNode, MNodeFields, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.ads.{MAdsSearchReq, MSc3AdData, MSc3AdsResp, MScAdInfo, MScAdMatchInfo, MScNodeMatchInfo}
+import io.suggest.sc.ads._
 import io.suggest.sc.sc3.{MSc3RespAction, MScCommonQs, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.util.logs.MacroLogsImpl
+import japgolly.univeq._
+import models.blk
+import models.blk._
 import models.im.make.MakeResult
 import models.req.IReq
-import models.blk._
-import util.acl._
-import japgolly.univeq._
-
-import scala.concurrent.Future
-import models.blk
 import scalaz.Tree
-import util.ad.IJdAdUtilDi
-import util.adn.INodesUtil
 
+import javax.inject.Inject
+import scala.concurrent.Future
 import scala.jdk.CollectionConverters._
 
 /**
@@ -39,23 +34,15 @@ import scala.jdk.CollectionConverters._
  * Created: 11.11.14 16:47
  * Description: Поддержка плитки в контроллере: логика подготовки к сборке ответа.
  */
-trait ScAdsTile
-  extends ScController
-  with IMacroLogs
-  with IScUtil
-  with IMNodes
-  with IBlkImgMakerDI
-  with IScAdSearchUtilDi
-  with ICanEditAdDi
-  with IStatUtil
-  with IJdAdUtilDi
-  with INodesUtil
+final class ScAdsTile @Inject() (
+                                  val scCtlUtil: ScCtlUtil,
+                                )
+  extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  import scCtlUtil._
+  import scCtlUtil.sioControllerApi.ec
   import esModel.api._
-
-  // TODO Надо переписать рендер на reactive-streams: на больших нагрузка скачки расходования памяти и CPU могут стать нестепримыми.
 
   /** Контейнер инфы по карточке. */
   protected case class MAdInfo(
@@ -67,7 +54,7 @@ trait ScAdsTile
                               )
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
-  trait TileAdsLogic extends LogicCommonT with IRespActionFut with TypeT {
+  trait TileAdsLogic extends scCtlUtil.LogicCommonT with IRespActionFut with TypeT {
 
     def qsRaw: MScQs
 

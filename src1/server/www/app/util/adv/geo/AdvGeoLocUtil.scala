@@ -9,16 +9,17 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrders
+import io.suggest.model.SlickHolder
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.IReqHdr
+import play.api.inject.Injector
 import util.geo.GeoIpUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 
 /**
@@ -28,20 +29,20 @@ import scala.concurrent.Future
   * Description: Утиль для форм георазмещения для нужд геолокации.
   */
 final class AdvGeoLocUtil @Inject() (
-                                      mCommonDi         : ICommonDi
+                                      injector: Injector,
                                     )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val geoIpUtil = injector.instanceOf[GeoIpUtil]
   private lazy val mOrders = injector.instanceOf[MOrders]
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
 
 

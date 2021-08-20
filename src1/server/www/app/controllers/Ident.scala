@@ -72,7 +72,7 @@ final class Ident @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, slick}
+  import slickHolder.slick
 
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val esModel = injector.instanceOf[EsModel]

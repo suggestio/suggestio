@@ -31,7 +31,6 @@ final class SysPerson @Inject() (
                                 ) {
 
   import sioControllerApi._
-  import mCommonDi.ec
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]

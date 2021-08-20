@@ -35,7 +35,7 @@ import util.cdn.{CdnUtil, CorsUtil}
 import util.ext.ExtServicesUtil
 import util.up.UploadUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.util.Try
 
 /**
@@ -51,7 +51,6 @@ final class ScApp @Inject()(
 {
 
   import sioControllerApi._
-  import mCommonDi.current.injector
 
   private lazy val maybeAuthMaybeNode = injector.instanceOf[MaybeAuthMaybeNode]
   private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
@@ -59,7 +58,6 @@ final class ScApp @Inject()(
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
-  private implicit lazy val ec = injector.instanceOf[ExecutionContext]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val extServicesUtil = injector.instanceOf[ExtServicesUtil]
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]

@@ -145,9 +145,3 @@ class GeoIpUtil @Inject() (
   }
 
 }
-
-
-/** Интерфейс для DI-поля с инстансом [[GeoIpUtil]]. */
-trait IGeoIpUtilDi {
-  def geoIpUtil: GeoIpUtil
-}

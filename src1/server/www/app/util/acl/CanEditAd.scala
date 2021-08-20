@@ -130,9 +130,3 @@ final class CanEditAd @Inject() (
   }
 
 }
-
-
-trait ICanEditAdDi {
-  def canEditAd: CanEditAd
-}
-

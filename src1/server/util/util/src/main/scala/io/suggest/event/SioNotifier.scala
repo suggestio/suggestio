@@ -47,7 +47,7 @@ object SioNotifier {
 import SioNotifier._
 
 /** Интерфейс для static-клиентов. Чтобы не писать комменты кучу раз и немного устаканить интерфейс взаимодействия. */
-trait SioNotifierStaticClientI {
+trait ISioNotifierStaticClient {
 
   /**
    * Запуск актора из супервизора.
@@ -112,8 +112,8 @@ trait SioNotifierStaticClientI {
 }
 
 
-/** Mock-реализация [[SioNotifierStaticClientI]], которая возвращает ошибки. */
-class MockedSioNotifierStaticClient extends SioNotifierStaticClientI {
+/** Mock-реализация [[ISioNotifierStaticClient]], которая возвращает ошибки. */
+class MockedSioNotifierStaticClient extends ISioNotifierStaticClient {
   override def startLink(arf: ActorRefFactory): ActorRef = ???
   override def subscribe(subscriber: Subscriber, classifier: Classifier): Unit = ???
   override def subscribeSync(subscriber: Subscriber, classifier: Classifier): Future[Boolean] = ???
@@ -125,7 +125,7 @@ class MockedSioNotifierStaticClient extends SioNotifierStaticClientI {
 }
 
 
-trait SioNotifierStaticActorSelection extends SioNotifierStaticClientI {
+trait SioNotifierStaticActorSelection extends ISioNotifierStaticClient {
 
   val actorName: String = getClass.getSimpleName.replace("$", "")
   def supPath: ActorPath
@@ -183,7 +183,7 @@ trait SNStaticSubscriberDummy extends SNStaticSubscriber {
 
 /** Когда нужно выполнить подписание/отписание всех статических подписчиков, можно подмешать этот код и
   * оформить соотв. вызов в preStart() */
-trait SNStaticSubscriptionManager extends SioNotifierStaticClientI {
+trait SNStaticSubscriptionManager extends ISioNotifierStaticClient {
 
   /** Карта подписей: на какое событие каких подписчиков повесить. */
   protected def getStaticSubscribers: Seq[SNStaticSubscriber]

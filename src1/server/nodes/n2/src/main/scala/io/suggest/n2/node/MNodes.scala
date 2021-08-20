@@ -17,7 +17,7 @@ import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
-import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.event.ISioNotifierStaticClient
 import io.suggest.jd.MJdEdgeId
 import io.suggest.util.logs.MacroLogsImpl
 import monocle.Traversal
@@ -62,7 +62,7 @@ final class MNodes @Inject() (
 {
 
   private def esModel = injector.instanceOf[EsModel]
-  implicit private def sioNotifierClient = injector.instanceOf[SioNotifierStaticClientI]
+  implicit private def sioNotifierClient = injector.instanceOf[ISioNotifierStaticClient]
   implicit private def ec = injector.instanceOf[ExecutionContext]
 
   // cache
@@ -402,9 +402,4 @@ final class MNodesJmx @Inject() (
   override def companion = injector.instanceOf[MNodes]
   override type X = MNode
 
-}
-
-/** Интерфейс для DI-поля, содержащего инстанс MNodes. */
-trait IMNodes {
-  val mNodes: MNodes
 }

@@ -2,7 +2,7 @@ package util.event
 
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder
-import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.event.ISioNotifierStaticClient
 
 /**
   * Suggest.io
@@ -14,7 +14,7 @@ class GuiceDiModule extends AbstractModule {
 
   override def configure(): Unit = {
 
-    bind( classOf[SioNotifierStaticClientI] )
+    bind( classOf[ISioNotifierStaticClient] )
       .to( classOf[SiowebNotifier] )
 
     install(

@@ -1,12 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.MReq
+import play.api.inject.Injector
 import play.api.mvc._
+import io.suggest.playx._
+import play.api.Application
 
 import scala.concurrent.Future
 
@@ -17,36 +18,35 @@ import scala.concurrent.Future
   * Description: Поддержка фильтровки по режиму работы системы: !production.
   */
 final class IsSuOrNotProduction @Inject() (
+                                            injector  : Injector,
                                             aclUtil   : AclUtil,
                                             reqUtil   : ReqUtil,
-                                            mCommonDi : ICommonDi
                                           )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.current.injector
-
   private lazy val isSu = injector.instanceOf[IsSu]
-  private lazy val dab = injector.instanceOf[DefaultActionBuilder]
+  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
+  private lazy val current = injector.instanceOf[Application]
 
   private def _apply[A](request: Request[A])(f: MReq[A] => Future[Result]): Future[Result] = {
     val user = aclUtil.userFromRequest(request)
 
     val mreq = MReq(request, user)
-    if (user.isSuper || !mCommonDi.isProd) {
+    if (user.isSuper || !current.mode.isProd) {
       // Проблем нет, провернуть экшен.
       f(mreq)
 
     } else {
       // Нельзя исполнять текущий экшен.
-      LOGGER.warn(s"filter: User#${user.personIdOpt.orNull} not allowed to action, because is not a SU and app.mode=${mCommonDi.current.mode}. ip=${mreq.remoteClientAddress}")
+      LOGGER.warn(s"filter: User#${user.personIdOpt.orNull} not allowed to action, because is not a SU and app.mode=${current.mode}. ip=${mreq.remoteClientAddress}")
       isSu.supOnUnauthFut(mreq)
     }
   }
 
 
   def apply[A](action: Action[A]): Action[A] = {
-    dab.async(action.parser) { request: Request[A] =>
+    defaultActionBuilder.async(action.parser) { request: Request[A] =>
       _apply(request)(action.apply)
     }
   }

@@ -3,13 +3,16 @@ package util.billing.cron
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsDyn
 import models.mcron.MCronTask
-import models.mproj.ICommonDi
 import util.billing.Bill2Util
 import util.cron.ICronTasksProvider
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.mbill2.m.ott.MOneTimeTokens
+import io.suggest.model.SlickHolder
 import japgolly.univeq._
+import play.api.Configuration
+import play.api.inject.Injector
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 /**
@@ -20,13 +23,15 @@ import scala.concurrent.duration._
  * Т.к. все товары и услуги были унифицированы через MItem, то их обслуживание так-же потребовало унификации.
  */
 class BillingCronTasks @Inject()(
-                                  mCommonDi               : ICommonDi,
+                                  injector: Injector,
                                 )
   extends ICronTasksProvider
   with MacroLogsDyn
 {
 
-  import mCommonDi.{configuration, slick, ec, current}
+  private def slickHolder = injector.instanceOf[SlickHolder]
+  private def configuration = injector.instanceOf[Configuration]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
 
   /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
@@ -43,7 +48,7 @@ class BillingCronTasks @Inject()(
     every       = ADVS_EVERY,
     displayName = "depublishExpiredAdvs()",
   ) { () =>
-    current.injector
+    injector
       .instanceOf[DisableExpiredAdvsFactory]
       .create()
       .run()
@@ -54,7 +59,7 @@ class BillingCronTasks @Inject()(
     every       = ADVS_EVERY,
     displayName = "advertiseOfflineAds()",
   ) { () =>
-    current.injector
+    injector
       .instanceOf[ActivateOfflineAdvsFactory]
       .create()
       .run()
@@ -66,7 +71,7 @@ class BillingCronTasks @Inject()(
     displayName = "unStallHoldedOrders()",
   ) { () =>
     for {
-      ex <- current.injector
+      ex <- injector
         .instanceOf[Bill2Util]
         .findReleaseStalledHoldOrders()
         .failed
@@ -82,8 +87,8 @@ class BillingCronTasks @Inject()(
     displayName = "deleteOldOtt",
   ) { () =>
     for {
-      countDeleted <- slick.db.run {
-        current.injector
+      countDeleted <- slickHolder.slick.db.run {
+        injector
           .instanceOf[MOneTimeTokens]
           .deleteOld()
       }

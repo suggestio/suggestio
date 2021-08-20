@@ -1,8 +1,8 @@
 package util.adv.ext
 
 import java.io.File
-
 import com.google.inject.assistedinject.Assisted
+
 import javax.inject.{Inject, Singleton}
 import io.suggest.ahc.upload.{MpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
@@ -15,7 +15,6 @@ import models.adv.ext.act._
 import models.adv.js._
 import models.adv.js.ctx._
 import models.mctx.ContextUtil
-import models.mproj.ICommonDi
 import play.api.Configuration
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.adr.AdRenderUtil
@@ -23,6 +22,8 @@ import util.adv.AdvUtil
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Suggest.io
@@ -52,7 +53,7 @@ class AdvExtTargetActor @Inject()(
                                    override val advUtil          : AdvUtil,
                                    override val ctxUtil          : ContextUtil,
                                    implicit val wsClient         : WSClient,
-                                   override val mCommonDi        : ICommonDi
+                                   override implicit val ec      : ExecutionContext,
                                  )
   extends FsmActor
   with AdvExtTargetActorUtil

@@ -35,10 +35,11 @@ object ScUniApi {
   /** До сколько нормализовывать координату. Максимум - 5 знаков. */
   def CACHE_NORM_COORD_BY = 4
 
+  private def _uniApiRoute = routes.controllers.sc.ScUniApi.pubApi _
 
   /** Сборка ссылки для набора qs. */
   def scQs2Route(scQs: MScQs): PlayRoute = {
-    routes.controllers.Sc.pubApi(
+    _uniApiRoute(
       PlayJsonSjsUtil.toNativeJsonObj(
         Json.toJsObject( scQs )
       )
@@ -48,7 +49,7 @@ object ScUniApi {
   /** Вернуть домен для выдачи исходя из роутера. */
   def scDomain(): String = {
     val scSiteUrl = HttpClient.mkAbsUrl(
-      routes.controllers.Sc.pubApi( js.Dictionary.empty ).absoluteURL()
+      _uniApiRoute( js.Dictionary.empty ).absoluteURL()
     )
     new URI( scSiteUrl ).getHost
   }

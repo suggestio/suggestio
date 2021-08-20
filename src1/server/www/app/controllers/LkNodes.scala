@@ -40,7 +40,7 @@ import play.api.http.HttpErrorHandler
 import scalaz.{EphemeralStream, Tree}
 import util.TplDataFormatUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -84,9 +84,8 @@ final class LkNodes @Inject() (
   private lazy val nodesTpl = injector.instanceOf[NodesTpl]
   private lazy val adNodesTpl = injector.instanceOf[AdNodesTpl]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.slick
+  import slickHolder.slick
   import esModel.api._
 
 

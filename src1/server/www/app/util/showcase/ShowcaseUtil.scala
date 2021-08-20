@@ -318,11 +318,3 @@ final class ShowcaseUtil @Inject() (
   }
 
 }
-
-
-/** Description: Интерфейс для доступа к DI-инстансу [[util.showcase.ShowcaseUtil]]. */
-trait IScUtil {
-
-  def scUtil: ShowcaseUtil
-
-}

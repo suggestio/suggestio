@@ -44,7 +44,7 @@ final class SysBilling @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, slick}
+  import slickHolder.slick
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]

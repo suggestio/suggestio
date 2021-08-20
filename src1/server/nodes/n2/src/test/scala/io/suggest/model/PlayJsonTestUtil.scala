@@ -3,7 +3,7 @@ package io.suggest.model
 import io.suggest.primo.TypeT
 import org.scalatest.matchers.should.Matchers._
 import _root_.play.api.libs.json._
-import io.suggest.event.{MockedSioNotifierStaticClient, SioNotifierStaticClientI}
+import io.suggest.event.{MockedSioNotifierStaticClient, ISioNotifierStaticClient}
 import _root_.play.api.{Application, Mode}
 import _root_.play.api.inject.bind
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
@@ -36,7 +36,7 @@ trait MockedEsSn { this: GuiceOneAppPerSuite =>
       .bindings(
         bind[IEsClient]
           .to[IEsClientMock],
-        bind[SioNotifierStaticClientI]
+        bind[ISioNotifierStaticClient]
           .to[MockedSioNotifierStaticClient],
       )
       .build()

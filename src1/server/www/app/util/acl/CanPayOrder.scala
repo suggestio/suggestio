@@ -4,14 +4,14 @@ import javax.inject.Inject
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrders
+import io.suggest.model.SlickHolder
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MNodeOrderReq, MUserInit, MUserInits}
 import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -31,7 +31,8 @@ final class CanPayOrder @Inject() (
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   def apply(orderId         : Gid_t,
@@ -52,7 +53,7 @@ final class CanPayOrder @Inject() (
 
         // Незалогиненных юзеров можно сразу посылать.
         user.personIdOpt.fold( forbid ) { personId =>
-          import mCommonDi.{slick, ec}
+          import slickHolder.slick
 
           // Получить id контракта юзера.
           val usrContractIdOptFut = user.contractIdOptFut

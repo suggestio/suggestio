@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.empty.OptionUtil
@@ -45,7 +46,7 @@ final class SysMdr @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{ec, slick, mat}
+  import slickHolder.slick
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
@@ -59,6 +60,7 @@ final class SysMdr @Inject() (
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val csrf = injector.instanceOf[Csrf]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
   /** react-форма для осуществления модерации в /sys/.

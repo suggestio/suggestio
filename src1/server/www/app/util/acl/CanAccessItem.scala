@@ -5,9 +5,9 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
+import io.suggest.model.SlickHolder
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MItemReq, MOrderIdsReq, MUserInit, MUserInits}
 import play.api.mvc._
 import japgolly.univeq._
@@ -35,11 +35,11 @@ final class CanAccessItem @Inject() (
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val mOrders = injector.instanceOf[MOrders]
   private lazy val isAuth = injector.instanceOf[IsAuth]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.slick
+  import slickHolder.slick
 
   /** Если много ids за раз, то тут лимит по кол-ву. */
   private def MAX_ITEM_IDS_PER_REQUEST = 50

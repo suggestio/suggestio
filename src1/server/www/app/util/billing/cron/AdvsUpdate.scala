@@ -1,19 +1,22 @@
 package util.billing.cron
 
+import akka.stream.Materializer
+
 import java.time.OffsetDateTime
 import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.mbill2.m.item.{IMItems, MItem}
-import io.suggest.n2.node.{IMNodes, MNode}
+import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.SlickHolder
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, MCtxOuter, TryUpdateBuilder}
-import models.mproj.IMCommonDi
+import play.api.inject.Injector
 import slick.sql.SqlAction
-import util.adv.build.AdvBuilderFactoryDi
+import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -43,17 +46,22 @@ import scala.util.{Failure, Success}
   */
 abstract class AdvsUpdate
   extends MacroLogsImpl
-  with IMCommonDi
-  with AdvBuilderFactoryDi
-  with IMItems
-  with IMNodes
 {
 
-  val esModel: EsModel
-  val streamsUtil: StreamsUtil
+  def injector: Injector
+
+  lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
+  lazy val advBuilderFactory = injector.instanceOf[AdvBuilderFactory]
+  lazy val mNodes = injector.instanceOf[MNodes]
+  lazy val mItems = injector.instanceOf[MItems]
+  lazy val slickHolder = injector.instanceOf[SlickHolder]
+  lazy val esModel = injector.instanceOf[EsModel]
+  lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  implicit lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit lazy val mat = injector.instanceOf[Materializer]
 
   import streamsUtil.Implicits._
-  import mCommonDi._
+  import slickHolder.slick
   import slick.profile.api._
   import esModel.api._
 

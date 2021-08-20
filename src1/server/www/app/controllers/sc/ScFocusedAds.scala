@@ -1,24 +1,20 @@
 package controllers.sc
 
-import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.node.{IMNodes, MNode}
+import io.suggest.n2.node.MNode
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp, MScAdInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.util.logs.MacroLogsImpl
 import models.blk
 import models.msc._
 import models.req.IReq
-import util.acl._
-import util.ad.IJdAdUtilDi
-import util.showcase.{IScAdSearchUtilDi, IScUtil}
-import util.stat.IStatUtil
 
+import javax.inject.Inject
 import scala.concurrent.Future
 
 /**
@@ -28,21 +24,15 @@ import scala.concurrent.Future
  * Description: Поддержка открытых рекламных карточек.
  */
 
-trait ScFocusedAds
-  extends ScController
-  with IMacroLogs
-  with IScUtil
-  with IN2NodesUtilDi
-  with IMNodes
-  with IScAdSearchUtilDi
-  with ICanEditAdDi
-  with IStatUtil
-  with IJdAdUtilDi
+final class ScFocusedAds @Inject()(
+                                    val scCtlUtil: ScCtlUtil,
+                                  )
+  extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  import scCtlUtil._
+  import scCtlUtil.sioControllerApi.ec
   import esModel.api._
-
 
   /** Отсортировать элементы моделей согласно порядку их id.
     *
@@ -67,7 +57,7 @@ trait ScFocusedAds
 
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
-  abstract class FocusedAdsLogic extends LogicCommonT with IRespActionFut {
+  abstract class FocusedAdsLogic extends scCtlUtil.LogicCommonT with IRespActionFut {
 
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT

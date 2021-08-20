@@ -4,10 +4,10 @@ import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.contract.MContracts
+import io.suggest.model.SlickHolder
 import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MNodeContractReq, MReq}
 import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
@@ -34,10 +34,10 @@ final class IsSuNodeContract @Inject() (
   private lazy val mContracts = injector.instanceOf[MContracts]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+  private lazy val slickHolder = injector.instanceOf[SlickHolder]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  import mCommonDi.slick
+  import slickHolder.slick
 
   /** Доступ к узлу с контрактом.
     * @param nodeId id запрашиваемого узла.

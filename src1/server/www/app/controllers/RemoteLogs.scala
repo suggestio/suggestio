@@ -15,8 +15,6 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import play.api.inject.Injector
 import util.cdn.CorsUtil
 
-import scala.concurrent.ExecutionContext
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -34,7 +32,6 @@ final class RemoteLogs @Inject() (
   private lazy val statUtil = injector.instanceOf[StatUtil]
   private lazy val geoIpUtil = injector.instanceOf[GeoIpUtil]
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   import sioControllerApi._

@@ -13,15 +13,15 @@ import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import models.mctx.{Context, ContextUtil}
-import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser}
 import net.sf.uadetector.OperatingSystemFamily
 import net.sf.uadetector.service.UADetectorServiceFactory
 import play.api.http.HeaderNames.USER_AGENT
+import play.api.inject.Injector
 import play.mvc.Http.HeaderNames
 import util.geo.GeoIpUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 /**
@@ -34,15 +34,15 @@ import scala.util.Try
   * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
   */
 final class StatUtil @Inject()(
-                                playStatSaver           : PlayStatSaver,
-                                contextUtil             : ContextUtil,
-                                geoIpUtil               : GeoIpUtil,
-                                mCommonDi               : ICommonDi
+                                injector                : Injector,
                               )
   extends MacroLogsImplLazy
 {
 
-  import mCommonDi._
+  private lazy val playStatSaver = injector.instanceOf[PlayStatSaver]
+  private lazy val contextUtil = injector.instanceOf[ContextUtil]
+  private lazy val geoIpUtil = injector.instanceOf[GeoIpUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   @inline implicit def osFamilyUe: UnivEq[OperatingSystemFamily] = UnivEq.force
 
@@ -379,7 +379,6 @@ final class StatUtil @Inject()(
 
   /** Сохранять ли всякий шум в mstat? */
   def SAVE_GARBAGE_TO_MSTAT = false
-  lazy val mstats = current.injector.instanceOf[MStats]
 
   /** Всякий мусор (CSP-отчёты, Sc-отчёты об ошибках) можно сохранять или не сохранять.
     *
@@ -434,10 +433,4 @@ final class StatUtil @Inject()(
       .save( stat2.mstat )
   }
 
-}
-
-
-/** Интерфейс DI-поля для доступа к [[StatUtil]]. */
-trait IStatUtil {
-  val statUtil: StatUtil
 }

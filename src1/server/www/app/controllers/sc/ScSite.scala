@@ -29,6 +29,8 @@ import util.sec.CspUtil
 import util.stat.StatUtil
 import OptionUtil.BoolOptOps
 import com.google.inject.Inject
+import controllers.Assets
+import controllers.Assets.Asset
 import io.suggest.es.model.EsModel
 import io.suggest.playx.CacheApiUtil
 import io.suggest.sec.csp.{Csp, CspPolicy}
@@ -37,7 +39,7 @@ import japgolly.univeq._
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -58,7 +60,7 @@ final class ScSite @Inject() (
 
   import sioControllerApi._
 
-  protected val scCtlApi = injector.instanceOf[ScCtlApi]
+  protected val scCtlApi = injector.instanceOf[ScCtlUtil]
   private lazy val statUtil = injector.instanceOf[StatUtil]
   private lazy val extServicesUtil = injector.instanceOf[ExtServicesUtil]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -74,7 +76,7 @@ final class ScSite @Inject() (
   private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val configuration = injector.instanceOf[Configuration]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val assets = injector.instanceOf[Assets]
 
   import esModel.api._
   import cspUtil.Implicits._
@@ -440,5 +442,9 @@ final class ScSite @Inject() (
     // Вернуть асинхронный результатец.
     resFut
   }
+
+
+  /** Crunch for root-urlpath-only service-worker.js asset. */
+  def serviceWorkerJs(path: String, asset: Asset) = assets.versioned(path, asset)
 
 }

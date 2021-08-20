@@ -33,7 +33,7 @@ import monocle.Traversal
 import play.api.http.HttpErrorHandler
 import scalaz.std.option._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -61,7 +61,6 @@ final class LkAdnEdit @Inject() (
   private lazy val upload = injector.instanceOf[Upload]
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
-  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
