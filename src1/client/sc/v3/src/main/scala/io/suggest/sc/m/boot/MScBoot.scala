@@ -20,8 +20,7 @@ object MScBoot {
   implicit object MScBootFastEq extends FastEq[MScBoot] {
     override def eqv(a: MScBoot, b: MScBoot): Boolean = {
       (a.services ===* b.services) &&
-      (a.targets ===* b.targets) &&
-      (a.wzFirstDone ===* b.wzFirstDone)
+      (a.targets ===* b.targets)
     }
   }
 
@@ -29,7 +28,6 @@ object MScBoot {
 
   def services        = GenLens[MScBoot](_.services)
   def targets         = GenLens[MScBoot](_.targets)
-  def wzFirstDone     = GenLens[MScBoot](_.wzFirstDone)
 
 }
 
@@ -42,6 +40,5 @@ object MScBoot {
 case class MScBoot(
                     services          : Map[MBootServiceId, MBootServiceState]    = Map.empty,
                     targets           : Set[MBootServiceId]                       = Set.empty,
-                    wzFirstDone       : Option[Boolean]                           = None,
                   )
 

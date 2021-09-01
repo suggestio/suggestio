@@ -18,7 +18,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 class OfflineSnackR(
                      crCtxP       : React.Context[MCommonReactCtx],
                    )
-  extends SnackComp
+  extends ISnackComp
 {
 
   type Props_t = MOnLineS

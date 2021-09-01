@@ -11,7 +11,7 @@ import io.suggest.react.r.CatchR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.{CloseError, RetryError}
-import io.suggest.sc.v.snack.SnackComp
+import io.suggest.sc.v.snack.ISnackComp
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
@@ -30,7 +30,7 @@ import scala.scalajs.js
 class ScErrorDiaR(
                    crCtxProv     : React.Context[MCommonReactCtx],
                  )
-  extends SnackComp
+  extends ISnackComp
 { that =>
 
   type Props_t = MScErrorDia

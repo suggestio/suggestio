@@ -96,11 +96,9 @@ import scala.util.Try
   * Description: Main circuit новой выдачи. Отрабатывает весь интерфейс выдачи v3.
   */
 class Sc3Circuit(
-                  // Явные аргументы:
-                  routerState               : MSpaRouterState,
+                  spaRouterState            : MSpaRouterState,
                   getLoginFormCircuit       : () => LoginFormCircuit,
                   getNodesFormCircuit       : () => LkNodesFormCircuit,
-                  // Автоматические DI-аргументы:
                   sc3UniApi                 : => IScUniApi,
                   scAppApi                  : => IScAppApi,
                   scStuffApi                : => IScStuffApi,
@@ -339,10 +337,10 @@ class Sc3Circuit(
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
   private[sc] def beaconerEnabled = beaconerRW.zoom(_.isEnabled contains true)
   private[sc] def beaconsRO       = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
-  private[sc] val hasBleRO        = mkLensZoomRO( beaconerRW, MBeaconerS.hasBle ).zoom( _ contains[Boolean] true )
+  private[sc] def hasBleRO        = mkLensZoomRO( beaconerRW, MBeaconerS.hasBle ).zoom( _ contains[Boolean] true )
 
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
-  private[sc] def firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
+  private[sc] def wzFirstOuterRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
   private[sc] def scLoginRW       = mkLensZoomRW(dialogsRW, MScDialogs.login)
   private val scNodesRW           = mkLensZoomRW(dialogsRW, MScDialogs.nodes)
 
@@ -367,7 +365,7 @@ class Sc3Circuit(
 
   private def delayerRW           = mkLensZoomRW( internalsRW, MScInternals.delayer )
 
-  private def reactCtxRW          = mkLensZoomRW( internalsInfoRW, MInternalInfo.reactCtx )
+  private[sc] def reactCtxRW      = mkLensZoomRW( internalsInfoRW, MInternalInfo.reactCtx )
 
   /** Текущая открытая карточка, пригодная для операций над ней: размещение в маячке, например. */
   private[sc] def focusedAdRO     = gridRW.zoom [Option[MScAdData]] { mgrid =>
@@ -414,7 +412,7 @@ class Sc3Circuit(
 
     new TailAh(
       modelRW               = rootRW,
-      routerCtl             = routerState.routerCtl,
+      routerCtl             = spaRouterState.routerCtl,
       scRespHandlers        = respHandlers,
       scRespActionHandlers  = respActionHandlers,
       scStuffApi            = scStuffApi,
@@ -480,6 +478,7 @@ class Sc3Circuit(
     rootRO            = rootRW,
     dispatcher        = this,
     scNotifications   = scNotifications,
+    needGeoLocRO      = () => spaRouterState.canonicalRoute.needGeoLoc,
   )
 
   private def delayerAh = new ActionDelayerAh(
@@ -581,15 +580,18 @@ class Sc3Circuit(
 
   private def wzFirstDiaAh = new WzFirstDiaAh(
     platformRO    = platformRW,
-    screenInfoRO  = screenInfoRO,
     hasBleRO      = hasBleRO,
-    modelRW       = firstRunDiaRW,
+    modelRW       = wzFirstOuterRW,
     dispatcher    = this,
   )
 
   private def bootAh = new BootAh(
     modelRW = bootRW,
     circuit = this,
+    needBootGeoLocRO = { () =>
+      spaRouterState.canonicalRoute.fold(false)(_.needGeoLoc) ||
+      currRouteRW.value.exists(_.needGeoLoc)
+    },
   )
 
   private def jdAh = new JdAh(
@@ -774,7 +776,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
 
   {
@@ -785,15 +787,12 @@ class Sc3Circuit(
 
     // Немедленный запуск инициализации/загрузки
     Try {
-      val needGeoLoc = routerState.canonicalRoute
-        .fold(true)(_.needGeoLoc)
-      val svcsTail = if (needGeoLoc) {
-        MBootServiceIds.GeoLocDataAcc :: Nil
-      } else {
+      val bootMsg = Boot(
+        MBootServiceIds.PermissionsGui ::
+        MBootServiceIds.RcvrsMap ::
         Nil
-      }
-      val rcvrMapBi = MBootServiceIds.RcvrsMap
-      val bootMsg = Boot( rcvrMapBi :: svcsTail )
+      )
+
       this.runEffectAction( bootMsg )
     }
   }

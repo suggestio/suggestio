@@ -7,14 +7,15 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.m.RcvrMarkersInit
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.Sc3Circuit
-import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot._
 import io.suggest.sc.m.in.MJsRouterS
 import io.suggest.sc.m.search.MGeoTabData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
-import io.suggest.sc.m.dia.first.InitFirstRunWz
+import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.m.dia.first.{InitFirstRunWz, WzReadPermissions}
+import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -36,6 +37,7 @@ import scala.util.{Success, Try}
 class BootAh[M](
                  modelRW    : ModelRW[M, MScBoot],
                  circuit    : Sc3Circuit,
+                 needBootGeoLocRO: () => Boolean,
                )
   extends ActionHandler( modelRW )
   with Log
@@ -63,17 +65,23 @@ class BootAh[M](
       }
 
       // Мониторить готовность js-роутера:
+      val readySub = implicitly[IValueReadySubscriber[X]]
+      def maybeComplete(v: X) = {
+        readySub.maybeCompletePromise( doneP, v )
+        // Возможно, Promise был исполнен строкой выше. И если это так, то отменить таймаут закрытия фьючерса:
+        if (doneP.isCompleted)
+          for (tp <- tpOkOpt)
+            DomQuick.clearTimeout( tp.timerId )
+      }
+
       val unsubscribeF = circuit.subscribe( zoomR ) { jsRouterRO =>
         if (!doneP.isCompleted) {
           val v = jsRouterRO.value
-          implicitly[IValueReadySubscriber[X]]
-            .maybeCompletePromise( doneP, v )
-          // Возможно, Promise был исполнен строкой выше. И если это так, то отменить таймаут закрытия фьючерса:
-          if (doneP.isCompleted)
-            for (tp <- tpOkOpt)
-              DomQuick.clearTimeout( tp.timerId )
+          maybeComplete( v )
         }
       }
+
+      maybeComplete( zoomR.value )
 
       // Конверсия результата
       doneP
@@ -147,9 +155,10 @@ class BootAh[M](
     }
 
 
-    /** Сбор данных геолокации для первого запуска. */
-    class GeoLocDataAccSvc extends IBootService {
-      override def serviceId = MBootServiceIds.GeoLocDataAcc
+    /** Read current permissions st. */
+    class ReadPermissionsSvc extends IBootService {
+
+      override def serviceId = MBootServiceIds.ReadPermissions
 
       override def depends: List[MBootServiceId] = {
         val deps0 = super.depends
@@ -162,8 +171,110 @@ class BootAh[M](
         }
       }
 
-      override def startFx = BootLocDataWz.toEffectPure
+      override def startFx: Effect = {
+        Effect.action {
+          WzReadPermissions(
+            onComplete = Some { Effect.action {
+              this.finished()
+            }}
+          )
+        }
+      }
+
     }
+
+
+    /** Сбор данных геолокации для первого запуска. */
+    class GeoLocDataAccSvc extends IBootService {
+      override def serviceId = MBootServiceIds.GeoLocDataAcc
+      override def depends: List[MBootServiceId] =
+        MBootServiceIds.ReadPermissions :: super.depends
+      override def startFx: Effect = {
+        if (circuit.wzFirstOuterRW.value.perms.hasLocationAccess) {
+          val startHwFx = Effect.action {
+            PeripheralStartStop(
+              isStart = OptionUtil.SomeBool.someTrue,
+              onDemand = false,
+            )
+          }
+
+          // TODO Duplicates code inside PlatformAh()._geoLocControlFx(). Need to separate location timer starter from GPS controlling method in PlatformAh...
+          val locationTimerFx = Effect.action {
+            val sctx = MScSwitchCtx(
+              indexQsArgs = MScIndexArgs(
+                geoIntoRcvr = true,
+                retUserLoc  = false,
+              ),
+              //demandLocTest = true,
+            )
+            GeoLocTimerStart( sctx )
+          }
+
+          startHwFx >> locationTimerFx >> Effect {
+            _startWithPot(
+              serviceId,
+              zoomR = circuit.internalsInfoRW.zoom(_.geoLockTimer),
+              timeoutOkMs = Some( 5000 ),
+            )
+          }
+
+        } else {
+          // No location permissions has been granted, skip this step:
+          Effect.action( this.finished() )
+        }
+      }
+    }
+
+    class LanguageSvc extends IBootService {
+      override def serviceId = MBootServiceIds.Language
+      override def depends = MBootServiceIds.Platform :: MBootServiceIds.JsRouter :: Nil
+      override def startFx: Effect = {
+        LangInit.toEffectPure >> Effect {
+          _startWithPot( serviceId, circuit.reactCtxRW.zoom(_.langSwitch), timeoutOkMs = Some(1500) )
+        }
+      }
+    }
+
+
+    /** Activate showcase index after initial geodata became available. */
+    class InitShowcaseIndexSvc extends IBootService {
+      override def serviceId = MBootServiceIds.InitShowcaseIndex
+      override def depends = {
+        var deps = MBootServiceIds.JsRouter :: MBootServiceIds.Language :: super.depends
+
+        if ( needBootGeoLocRO() )
+          deps ::= MBootServiceIds.GeoLocDataAcc
+
+        deps
+      }
+
+      override def startFx: Effect = {
+        // Activate showcase interface, start/await first index request/response.
+        _reRouteFx( allowRouteTo = true ) >> Effect {
+          // TODO Process first index request errors here.
+          _startWithPot( serviceId, circuit.indexRW.zoom(_.resp) )
+        }
+      }
+    }
+
+
+    /** Show permissions wizard GUI. */
+    class PermissionsGuiSvc extends IBootService {
+      override def serviceId = MBootServiceIds.PermissionsGui
+      override def depends = MBootServiceIds.InitShowcaseIndex :: super.depends
+      override def startFx: Effect = {
+        // Initialize permissions wizard, then wait until it finishes:
+        val isNeedBootGeoLoc = needBootGeoLocRO()
+        val initFx = Effect.action {
+          InitFirstRunWz( isNeedBootGeoLoc )
+        }
+        val monitorPotFx = Effect {
+          _startWithPot( serviceId, circuit.wzFirstOuterRW.zoom(_.view) )
+        }
+        initFx >> monitorPotFx
+      }
+    }
+
 
     /** Унифицированная сборка сервисов. */
     def make(id: MBootServiceId): IBootService = {
@@ -171,7 +282,11 @@ class BootAh[M](
         case MBootServiceIds.JsRouter               => new JsRouterSvc
         case MBootServiceIds.RcvrsMap               => new RcvrsMapSvc
         case MBootServiceIds.Platform               => new PlatformSvc
+        case MBootServiceIds.ReadPermissions        => new ReadPermissionsSvc
         case MBootServiceIds.GeoLocDataAcc          => new GeoLocDataAccSvc
+        case MBootServiceIds.PermissionsGui         => new PermissionsGuiSvc
+        case MBootServiceIds.InitShowcaseIndex      => new InitShowcaseIndexSvc
+        case MBootServiceIds.Language               => new LanguageSvc
       }
     }
 
@@ -372,63 +487,6 @@ class BootAh[M](
         }
 
 
-    // Сигнал к запуску сбора данных геолокации, прав на геолокацию, и т.д.
-    case BootLocDataWz =>
-      if (WzFirstDiaAh.isNeedWizardFlowVal) {
-        // Нет уже заданных гео-данных, и требуется запуск мастера.
-        // Текущий эффект передаёт управление в WizardAh, мониторя завершение визарда.
-        val initFirstWzFx = InitFirstRunWz(true).toEffectPure
-        val afterInitFx = BootLocDataWzAfterInit.toEffectPure
-
-        // Выставить в состояние факт запуска wzFirst:
-        val v2 = (MScBoot.wzFirstDone set OptionUtil.SomeBool.someFalse)(value)
-        val fx = initFirstWzFx >> afterInitFx
-
-        updatedSilent(v2, fx)
-
-      } else {
-        // Мастер 1го запуска не требуется, а геолокация нужна. Переходим на следующих шаг:
-        _afterWzDone( runned = false, started = false )
-      }
-
-
-    // После init-wz-вызова произвести анализ результатов выполненной деятельности.
-    case m @ BootLocDataWzAfterInit =>
-      val startedAtMs = System.currentTimeMillis()
-      val firstRO = circuit.firstRunDiaRW
-      if (firstRO.value.view.isEmpty) {
-        // Почему-то не был запущен wizard, хотя должен был быть, т.к. isNeedWizardFlow() вернул true.
-        logger.warn( ErrorMsgs.INIT_FLOW_UNEXPECTED, msg = m )
-        _afterWzDone( Some(startedAtMs), started = true, runned = false )
-
-      } else {
-        // Есть какая-то деятельность в визарде. Подписаться
-        val fx = Effect {
-          val p = Promise[None.type]()
-          // TODO Заменить Promise-subscribe-зоопарк и вообще весь этот экшен на эффект, передаваемый внутри InitFirstRunWz() на предыдущем шаге (см.выше).
-          // Состояние wizard'а инициализировано, значит wizard запущен, дождаться завершения мастера.
-          val wizardWatcherUnSubscribeF = circuit.subscribe(firstRO) { diaFirstProxy =>
-            val r = diaFirstProxy.value.view
-            if (r.isEmpty)
-              p.trySuccess(None)
-          }
-          p.future
-            .andThen { case _ =>
-              wizardWatcherUnSubscribeF()
-            }
-            .transform { _ =>
-              Success( BootLocDataWzAfterWz(startedAtMs) )
-            }
-        }
-        effectOnly(fx)
-      }
-
-
-    // Сигнал о завершении визарда:
-    case m: BootLocDataWzAfterWz =>
-      _afterWzDone( Some(m.startedAtMs), runned = true, started = true )
-
-
     // Подписка на окончание загрузки чего-либо.
     case m: BootAfter =>
       val v0 = value
@@ -463,10 +521,11 @@ class BootAh[M](
   private def _reRouteFx(allowRouteTo: Boolean): Effect = {
     Effect.action {
       (for {
-        currRoute <- circuit.internalsRW
-          .value
-          .info.currRoute
-        if allowRouteTo
+        currRoute <- OptionUtil.maybeOpt( allowRouteTo ) {
+          circuit.internalsRW
+            .value
+            .info.currRoute
+        }
       } yield {
         RouteTo( currRoute )
       })
@@ -477,55 +536,6 @@ class BootAh[M](
         }
     }
   }
-
-  /** Мастер уже завершился или не запускался и не планирует. Быстро или медленно.
-    * Но суть исходная - заняться получением гео.данных, если их ещё нет.
-    */
-  private def _afterWzDone(wzStartedAtMs: Option[Long] = None,
-                           runned: Boolean = false,
-                           started: Boolean = false,
-                           v0: MScBoot = value): ActionResult[M] = {
-    //println( s"_afterWzDone(${wzStartedAtMs.orNull}): Need geo loc? route=" + circuit.internalsRW.value.info.currRoute )
-
-    // Тут несколько вариантов:
-    // - гео-данные уже накоплены
-    // - надо подождать геоданных сколько-то времени до накопления или таймаута.
-    // Но пока на это всё плевать, т.к. код для просто упорядоченного запуска уже получился слишком сложный.
-
-    // Экшен, сигнализирующий о завершении запуска сервиса:
-    var fx: Effect = _svcStartDoneAction( MBootServiceIds.GeoLocDataAcc ).toEffectPure
-    var modsF = (MScBoot.wzFirstDone set OptionUtil.SomeBool.someTrue)
-
-    val reRouteFx = _reRouteFx(
-      allowRouteTo = !(started || runned)
-    )
-    v0.services
-      .get( MBootServiceIds.JsRouter )
-      .fold [Unit] {
-        // Нет JsRouter-сервиса. Странно. Запустить reRouteFx на исполнение...
-        logger.warn( ErrorMsgs.INIT_FLOW_UNEXPECTED, msg = (MBootServiceIds.JsRouter, v0) )
-        // Сразу запустить _reRouteFx, т.к. роутер уже готов.
-        fx = fx >> reRouteFx
-      } { jsRouterSvc =>
-        if (jsRouterSvc.started.exists(_ getOrElse false)) {
-          // Сразу запустить _reRouteFx, т.к. роутер уже готов.
-          fx = fx >> reRouteFx
-        } else {
-          // JS-роутер ещё не готов. Надо закинуть в состояние after-эффект.
-          val jsRouterSvc2 = (MBootServiceState.after set Some(reRouteFx))(jsRouterSvc)
-          modsF = modsF andThen MScBoot.services.modify(_ + (MBootServiceIds.JsRouter -> jsRouterSvc2))
-        }
-      }
-
-    // TODO Если диалог не открывался, но вызывался, то надо запустить геолокацию вручную.
-    val v2 = modsF(v0)
-
-    updated(v2, fx)
-  }
-
-
-  private def _svcStartDoneAction(svc: MBootServiceId) =
-    BootStartCompleted( svc, Success(None) )
 
 }
 
@@ -548,9 +558,9 @@ object IValueReadySubscriber {
     new IValueReadySubscriber[Pot[T]] {
       override def maybeCompletePromise(readyPromise: Promise[ReadyInfo_t], pot: Pot[T]): Unit = {
         if (!pot.isPending) {
-          for (_ <- pot)
+          if (pot.isReady || pot.isUnavailable)
             readyPromise.trySuccess( None )
-          for (ex <- pot.exceptionOption)
+          else for (ex <- pot.exceptionOption)
             readyPromise.tryFailure( ex )
         }
       }

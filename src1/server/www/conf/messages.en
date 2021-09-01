@@ -1135,7 +1135,7 @@ Settings=Settings
 Install.app.for.access.to.0=Install application to gain {0} access.
 
 Notifications=Notifications
-Notify.about.offers.nearby=Notify me about offers nearby.
+Notify.about.offers.nearby=Notify me about offers nearby?
 
 0.offers.nearby={0} offsers nearby
 One.offer.nearby=Offer nearby you
@@ -1183,3 +1183,5 @@ _nfc._to.current.ad=currently selected ad-card in node showcase.
 _nfc._to.current.node=current node showcase.
 Also.you.can.make.nfc.tag.non.writable=Also, you can prohibit furner writing of NFC-tag.
 Adv.in.tag=Advertising in #tag
+
+Requesting.permission=Requesting permission...

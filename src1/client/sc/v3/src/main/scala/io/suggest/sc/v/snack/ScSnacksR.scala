@@ -8,6 +8,7 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{CloseError, MScRoot}
 import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
+import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.inx.IndexSwitchAskR
 import io.suggest.spa.{DAction, OptFastEq}
 import io.suggest.ueq.UnivEqUtil._
@@ -25,6 +26,7 @@ final class ScSnacksR(
                        indexSwitchAskR         : IndexSwitchAskR,
                        scErrorDiaR             : ScErrorDiaR,
                        offlineSnackR           : OfflineSnackR,
+                       wzFirstR                : WzFirstR,
                      ) {
 
   type Props_t = MScRoot
@@ -33,7 +35,7 @@ final class ScSnacksR(
 
   /** @param currSnackOrNullC Текущий маркер-класс для обозначения отображаемого snack'а, либо null. */
   case class State(
-                    currSnackOrNullC      : ReactConnectProxy[SnackComp],
+                    currSnackOrNullC      : ReactConnectProxy[ISnackComp],
                   )
 
 
@@ -64,29 +66,32 @@ final class ScSnacksR(
 
     def render(p: Props, s: State): VdomElement = {
       // MuiSnackBar отображает в отдельном слое ровно одну плашку.
-
-      // Всплывающая плашка для смены узла:
-      lazy val inxSwitch: VdomElement = p.wrap( _.index.state.switch )( indexSwitchAskR.component.apply )( implicitly, MInxSwitch.MInxSwitchFeq )
-
-      lazy val offline: VdomElement = p.wrap( _.dev.onLine )( offlineSnackR.component.apply )
-
-      // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
-      lazy val scErr: VdomElement = p.wrap(_.dialogs.error)( scErrorDiaR.component.apply )(implicitly, OptFastEq.Plain)
-
       val _anchorOrigin = new MuiAnchorOrigin {
         override val vertical   = MuiAnchorOrigin.bottom
         override val horizontal = MuiAnchorOrigin.center
       }
+
       CatchR.component( p.resetZoom( classOf[ScSnacksR].getSimpleName ) )(
         s.currSnackOrNullC { currSnackOrNullProxy =>
           val currSnackOrNull = currSnackOrNullProxy.value
-          val child = if (currSnackOrNull ===* offlineSnackR) {
-            offline
+          val child: VdomNode = if (currSnackOrNull eq null) {
+            EmptyVdom
+
+          } else if (currSnackOrNull ===* offlineSnackR) {
+            // Offline network message.
+            p.wrap( _.dev.onLine )( offlineSnackR.component.apply )
+
           } else if (currSnackOrNull ===* indexSwitchAskR) {
-            inxSwitch
+            // There are two or more nodes here: render index swith stuff.
+            p.wrap( _.index.state.switch )( indexSwitchAskR.component.apply )( implicitly, MInxSwitch.MInxSwitchFeq )
+
+          } else if (currSnackOrNull ===* wzFirstR) {
+            wzFirstR.component( p )
+
           } else {
+            // Showing error message
             // TODO Надо хоть что-то рендерить? Может как-то обойтись без ненужного?
-            scErr
+            p.wrap(_.dialogs.error)( scErrorDiaR.component.apply )(implicitly, OptFastEq.Plain)
           }
 
           MuiSnackBar {
@@ -116,9 +121,11 @@ final class ScSnacksR(
         currSnackOrNullC = propsProxy.connect { p =>
           if (!p.dev.onLine.isOnline)
             offlineSnackR
+          else if (p.dialogs.first.isVisible)
+            wzFirstR
           else if (p.index.state.switch.ask.nonEmpty)
             indexSwitchAskR
-          else  if (p.dialogs.error.nonEmpty)
+          else if (p.dialogs.error.nonEmpty)
             scErrorDiaR
           else
             null
@@ -134,7 +141,7 @@ final class ScSnacksR(
 
 /** Marker-trait для классов, содержащий компонент snackbar-content.
   * Это нужно, чтобы классы использовать в качестве идентификаторов, не плодя доп.сущностей. */
-trait SnackComp
-object SnackComp {
-  @inline implicit def univEq: UnivEq[SnackComp] = UnivEq.force
+trait ISnackComp
+object ISnackComp {
+  @inline implicit def univEq: UnivEq[ISnackComp] = UnivEq.force
 }

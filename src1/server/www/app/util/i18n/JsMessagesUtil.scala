@@ -291,11 +291,10 @@ final class JsMessagesUtil @Inject() (
       MC.`0.uses.geoloc.to.find.ads` ::
       MC.`0.uses.bt.to.find.ads.indoor` ::
       MC.`Allow.0` ::
-      MC.`Later` ::
+      MC.`No` ::
       MC.`You.can.enable.0.later.on.left.panel` ::
       MC.`Next` ::
       MC.`Settings.done.0.ready.for.using` ::
-      MC.`_to.Finish` ::
       MC.`Try.again` ::
       MC.`Close` ::
       ErrorMsgs.GET_NODE_INDEX_FAILED ::
@@ -337,6 +336,7 @@ final class JsMessagesUtil @Inject() (
       MC.`Bg.location` :: MC.`Bg.location.hint` ::
       ErrorMsgs.SC_FSM_EVENT_FAILED ::
       MC.`Language` :: MC.`System._adjective` ::
+      MC.`Requesting.permission` ::
       MLanguages.values.iterator.map(_.singularMsgCode).toList
 
     (

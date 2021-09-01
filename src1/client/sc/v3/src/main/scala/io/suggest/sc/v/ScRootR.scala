@@ -43,7 +43,6 @@ class ScRootR (
                 headerR                 : HeaderR,
                 menuR                   : MenuR,
                 welcomeR                : WelcomeR,
-                wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
                 scLoginR                : ScLoginR,
                 scNodesR                : ScNodesR,
@@ -152,9 +151,6 @@ class ScRootR (
 
         // Диалог управления узлами. Без темы, иначе дизайн сыплется.
         scNodesR.component( mrootProxy ),
-
-        // Диалог первого запуска.
-        wzFirstR.component( mrootProxy ),
 
         // Диалог настроек - требует scala-тему.
         scSettingsDiaR.component( mrootProxy ),

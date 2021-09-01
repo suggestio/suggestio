@@ -1,6 +1,7 @@
 package io.suggest.sc.index
 
 import io.suggest.sc.ScConstants.ReqArgs._
+import io.suggest.text.StringUtil
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -48,4 +49,12 @@ case class MScIndexArgs(
                          nodeId       : Option[String]  = None,
                          geoIntoRcvr  : Boolean         = true,
                          retUserLoc   : Boolean         = false,
-                       )
+                       ) {
+
+  override def toString = StringUtil.toStringHelper(this) { f =>
+    nodeId foreach f(NODE_ID_FN)
+    if (!geoIntoRcvr) f(GEO_INTO_RCVR_FN)(geoIntoRcvr)
+    if (retUserLoc) f(RET_GEO_LOC_FN)(retUserLoc)
+  }
+
+}

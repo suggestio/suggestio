@@ -1,5 +1,6 @@
 package io.suggest.sc.m.dia.first
 
+import diode.Effect
 import io.suggest.perm.IPermissionState
 import io.suggest.sc.m.ISc3Action
 
@@ -26,14 +27,17 @@ case class InitFirstRunWz( showHide: Boolean ) extends IWz1Action
 case class YesNoWz( yesNo: Boolean ) extends IWz1Action
 
 
-/** Выставлено значение для subscribe-функции. */
-case class Wz1SetUnSubscribeF(unSubscribeF: () => Unit ) extends IWz1Action
-
-case object Wz1RebuildCss extends IWz1Action
-
 /** Экшен результата реального запроса пермишшена у юзера.
   *
   * @param phase Фаза, в рамках которой был получен ответ.
   * @param res Ответ, если есть. None - таймаут.
   */
-case class WzPhasePermRes(phase: MWzPhase, res: Try[IPermissionState]) extends IWz1Action
+case class WzPhasePermRes(phase: MWzPhase,
+                          res: Try[IPermissionState],
+                          reason: Option[WzReadPermissions] = None,
+                         )
+  extends IWz1Action
+
+
+/** Async reading all current permissions states into wz's state perms.map. */
+case class WzReadPermissions(onComplete: Option[Effect] = None ) extends IWz1Action

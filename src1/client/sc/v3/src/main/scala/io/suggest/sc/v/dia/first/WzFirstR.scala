@@ -1,20 +1,19 @@
 package io.suggest.sc.v.dia.first
 
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentText, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSvgIconClasses, MuiSvgIconProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
-import diode.UseValueEq
+import com.materialui.{Mui, MuiAlertTitle, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps}
+import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzPhases, YesNoWz}
-import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq._
-import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.sc.v.snack.ISnackComp
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -23,26 +22,19 @@ import japgolly.scalajs.react._
   * Description: wrap-компонент для первого запуска система.
   */
 class WzFirstR(
-                platformComponents          : PlatformComponents,
                 crCtxP                : React.Context[MCommonReactCtx],
-                platformCssP          : React.Context[PlatformCssStatic],
-              ) {
+              )
+  extends ISnackComp
+{
 
   type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
 
 
   case class State(
-                    diaPropsC       : ReactConnectProxy[MWz1Props],
-                    wz1OptC         : ReactConnectProxy[Option[MWzFirstS]],
-                    cssOptC         : ReactConnectProxy[Option[WzFirstCss]],
+                    // isVisible = already checked inside ScSnacksR()
+                    wz1PotC         : ReactConnectProxy[Pot[MWzFirstS]],
                   )
-
-  case class MWz1Props(
-                        fullScreen  : Boolean,
-                        visible     : Boolean,
-                      )
-    extends UseValueEq
 
 
   class Backend($: BackendScope[Props, State]) {
@@ -61,217 +53,160 @@ class WzFirstR(
 
 
     def render(s: State): VdomElement = {
-      lazy val diaBody = crCtxP.consume { crCtx =>
-        React.Fragment(
-          s.cssOptC( _.value.whenDefinedEl( CssR.component.apply ) ),
+      crCtxP.consume { crCtx =>
+        s.wz1PotC { propsPotProxy =>
+          val pot = propsPotProxy.value
+          // TODO pot.renderFailed()
 
-          s.wz1OptC { propsOptProxy =>
-            propsOptProxy.value.whenDefinedEl { props =>
-              React.Fragment(
-                // Строка заголовка окна диалога. Чтобы диалог не прыгал, рендерим заголовок всегда.
-                {
-                  val (icon, title) = props.phase match {
-                    case MWzPhases.GeoLocPerm =>
-                      Mui.SvgIcons.MyLocation -> crCtx.messages(MsgCodes.`Geolocation`)
-                    case MWzPhases.BlueToothPerm =>
-                      Mui.SvgIcons.BluetoothSearching -> MsgCodes.`Bluetooth`
-                    case MWzPhases.NotificationPerm =>
-                      Mui.SvgIcons.Notifications -> crCtx.messages( MsgCodes.`Notifications` )
-                    //case MWzPhases.Nfc =>
-                    //  Mui.SvgIcons.NfcRounded -> MsgCodes.`NFC`
-                    case _ =>
-                      Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
-                  }
+          pot.toOption.whenDefinedEl { props =>
+            // Snackbar message:
+            // Строка заголовка окна диалога. Чтобы диалог не прыгал, рендерим заголовок всегда.
+            val (iconComp, title) = props.phase match {
+              case MWzPhases.GeoLocPerm =>
+                Mui.SvgIcons.MyLocation -> crCtx.messages( MsgCodes.`Geolocation` )
+              case MWzPhases.BlueToothPerm =>
+                Mui.SvgIcons.BluetoothSearching -> MsgCodes.`Bluetooth`
+              case MWzPhases.NotificationPerm =>
+                Mui.SvgIcons.Notifications -> crCtx.messages( MsgCodes.`Notifications` )
+              //case MWzPhases.Nfc =>
+              //  Mui.SvgIcons.NfcRounded -> MsgCodes.`NFC`
+              case _ =>
+                Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
+            }
 
-                  platformComponents.diaTitle(props.css.header.htmlClass :: Nil)(
-                    platformComponents.diaTitleText(
-                      title,
-                      platformCssP.consume { platformCss =>
-                        icon {
-                          val css = new MuiSvgIconClasses {
-                            override val root = platformCss.Dialogs.titleRightIcon.htmlClass
-                          }
-                          new MuiSvgIconProps {
-                            override val classes = css
-                          }
-                        }()
-                      },
-                    ),
-                  )
-                },
-
-                // Плашка с вопросом геолокации.
-                MuiDialogContent()(
-
-                  // Крутилка ожидания:
-                  ReactCommonUtil.maybeNode( props.frame ==* MWzFrames.InProgress ) {
-                    React.Fragment(
-                      MuiLinearProgress(
-                        new MuiLinearProgressProps {
-                          override val variant = MuiProgressVariants.indeterminate
-                          override val color = MuiColorTypes.secondary
-                        }
-                      ),
-                      <.br
-                    )
-                  },
-
-                  {
-                    val msg: VdomNode = props.frame match {
-                      case MWzFrames.AskPerm =>
-                        val msgCodeOpt: Option[String] = props.phase match {
-                          case MWzPhases.GeoLocPerm =>
-                            Some( MsgCodes.`0.uses.geoloc.to.find.ads` )
-                          case MWzPhases.BlueToothPerm =>
-                            Some( MsgCodes.`0.uses.bt.to.find.ads.indoor` )
-                          case MWzPhases.NotificationPerm =>
-                            Some( MsgCodes.`Notify.about.offers.nearby` )
-                          //case MWzPhases.Nfc =>
-                          //  Some( MsgCodes.`Read.radio.tags.on.tap` )
-                          case _ =>
-                            None
-                        }
-                        msgCodeOpt.whenDefinedNode { msgCode =>
-                          crCtx.messages( msgCode, MsgCodes.`Suggest.io` )
-                        }
-
-                      case MWzFrames.Info =>
-                        (
-                          props.phase match {
-                            case MWzPhases.Starting =>
-                              Left( "" )
-                            case MWzPhases.GeoLocPerm =>
-                              Right( MsgCodes.`GPS` )
-                            case MWzPhases.BlueToothPerm =>
-                              Right( MsgCodes.`Bluetooth` )
-                            case MWzPhases.NotificationPerm =>
-                              Right( crCtx.messages(MsgCodes.`Notifications`) )
-                            //case MWzPhases.Nfc =>
-                            //  Right( MsgCodes.`NFC` )
-                            case MWzPhases.Finish =>
-                              val msg = crCtx.messages( MsgCodes.`Settings.done.0.ready.for.using`, MsgCodes.`Suggest.io` )
-                              Left( msg )
-                          }
-                          ).fold(
-                            identity[String],
-                            compName =>
-                              crCtx.messages( MsgCodes.`You.can.enable.0.later.on.left.panel`, compName )
-                          )
-
-                      // Прогресс-ожидание. Собрать крутилку.
-                      case MWzFrames.InProgress =>
-                        crCtx.messages( MsgCodes.`Please.wait` )
-                    }
-                    // Сборка текста вопроса:
-                    MuiDialogContentText()(
-                      platformCssP.consume { platformCss =>
-                        MuiTypoGraphy {
-                          val mtgCss = new MuiTypoGraphyClasses {
-                            override val root = platformCss.Dialogs.text.htmlClass
-                          }
-                          new MuiTypoGraphyProps {
-                            override val variant = MuiTypoGraphyVariants.subtitle1
-                            override val classes = mtgCss
-                          }
-                        } ( msg )
-                      },
-                    )
-                  },
-                ),
-
-                // Кнопки управления диалогом:
-                {
-                  val btns: Seq[VdomNode] = props.frame match {
-
-                    // Для запроса пермишшена - две кнопки.
-                    case MWzFrames.AskPerm =>
-                      // Кнопка "Позже"
-                      val laterBtn: VdomNode = MuiButton {
-                        new MuiButtonProps {
-                          override val variant = MuiButtonVariants.text
-                          override val onClick = _laterClickCbF
-                          override val size    = MuiButtonSizes.large
-                        }
-                      } (
-                        crCtx.messages( MsgCodes.`Later` )
-                      )
-                      // Кнопка "Разрешить"
-                      val allowBtn: VdomNode = MuiButton {
-                        new MuiButtonProps {
-                          override val variant = MuiButtonVariants.text
-                          override val onClick = _allowClickCbF
-                          override val size    = MuiButtonSizes.large
-                        }
-                      } (
-                        crCtx.messages( MsgCodes.`Allow.0`, HtmlConstants.SPACE ),
-                      )
-
-                      laterBtn :: allowBtn :: Nil
-
-                    // Для информационного диалога - одна кнопка.
-                    case MWzFrames.Info =>
-                      val okBtn: VdomNode = MuiButton {
-                        new MuiButtonProps {
-                          override val color   = MuiColorTypes.primary
-                          override val variant = MuiButtonVariants.text
-                          override val onClick = _laterClickCbF
-                          override val size    = MuiButtonSizes.large
-                        }
-                      } (
-                        crCtx.messages(
-                          if (props.phase ==* MWzPhases.Finish) MsgCodes.`_to.Finish`
-                          else MsgCodes.`Next`
-                        )
-                      )
-                      okBtn :: Nil
-
-                    // Для режима ожидания - нужна кнопка отмены.
-                    case MWzFrames.InProgress =>
-                      val cancelBtn: VdomNode = MuiButton {
-                        new MuiButtonProps {
-                          override val color   = MuiColorTypes.primary
-                          override val variant = MuiButtonVariants.text
-                          override val onClick = _laterClickCbF
-                          override val size    = MuiButtonSizes.large
-                        }
-                      } (
-                        crCtx.messages( MsgCodes.`Cancel` )
-                      )
-                      cancelBtn :: Nil
-
-                  }
-
-                  platformCssP.consume { platformCss =>
-                    MuiDialogActions {
-                      platformComponents.diaActionsProps( props.css.footer.htmlClass :: Nil )(platformCss)
-                    } ( btns: _* )
+            val messageContent = React.Fragment(
+              MuiAlertTitle(
+                new MuiAlertTitle.Props {
+                  override val classes = new MuiAlertTitle.Classes {
+                    override val root = ScCssStatic.justifyBetween.htmlClass
                   }
                 }
-              )
+              )(
+                title,
+              ),
+
+              // Крутилка ожидания:
+              ReactCommonUtil.maybeNode( props.frame ==* MWzFrames.InProgress ) {
+                React.Fragment(
+                  MuiLinearProgress(
+                    new MuiLinearProgressProps {
+                      override val variant = MuiProgressVariants.indeterminate
+                      override val color = MuiColorTypes.secondary
+                    }
+                  ),
+                  <.br
+                )
+              },
+
+              props.frame match {
+                case MWzFrames.AskPerm =>
+                  val msgCodeOpt: Option[String] = props.phase match {
+                    case MWzPhases.GeoLocPerm =>
+                      Some( MsgCodes.`0.uses.geoloc.to.find.ads` )
+                    case MWzPhases.BlueToothPerm =>
+                      Some( MsgCodes.`0.uses.bt.to.find.ads.indoor` )
+                    case MWzPhases.NotificationPerm =>
+                      Some( MsgCodes.`Notify.about.offers.nearby` )
+                    //case MWzPhases.Nfc =>
+                    //  Some( MsgCodes.`Read.radio.tags.on.tap` )
+                    case _ =>
+                      None
+                  }
+                  msgCodeOpt.whenDefinedNode { msgCode =>
+                    crCtx.messages( msgCode, MsgCodes.`Suggest.io` )
+                  }
+
+                case MWzFrames.Info =>
+                  (props.phase match {
+                    case MWzPhases.Starting =>
+                      Left( "" )
+                    case MWzPhases.GeoLocPerm =>
+                      Right( MsgCodes.`GPS` )
+                    case MWzPhases.BlueToothPerm =>
+                      Right( MsgCodes.`Bluetooth` )
+                    case MWzPhases.NotificationPerm =>
+                      Right( crCtx.messages(MsgCodes.`Notifications`) )
+                    //case MWzPhases.Nfc =>
+                    //  Right( MsgCodes.`NFC` )
+                  }).fold(
+                    identity[String],
+                    compName =>
+                      crCtx.messages( MsgCodes.`You.can.enable.0.later.on.left.panel`, compName )
+                  )
+
+                // Прогресс-ожидание. Собрать крутилку.
+                case MWzFrames.InProgress =>
+                  crCtx.messages( MsgCodes.`Requesting.permission` )
+              }
+            )
+
+            // Action buttons on the snack bottom:
+            val actionButtons: Seq[VdomNode] = props.frame match {
+
+              // Для запроса пермишшена - две кнопки.
+              case MWzFrames.AskPerm =>
+                // Кнопка "Позже"
+                val laterBtn: VdomNode = MuiButton {
+                  new MuiButtonProps {
+                    override val variant = MuiButtonVariants.text
+                    override val onClick = _laterClickCbF
+                    override val size    = MuiButtonSizes.large
+                  }
+                } (
+                  crCtx.messages( MsgCodes.`No` )
+                )
+                // Кнопка "Разрешить"
+                val allowBtn: VdomNode = MuiButton {
+                  new MuiButtonProps {
+                    override val variant = MuiButtonVariants.contained
+                    override val onClick = _allowClickCbF
+                    override val size    = MuiButtonSizes.large
+                    override val startIcon = iconComp()().rawNode
+                  }
+                } (
+                  crCtx.messages( MsgCodes.`Allow.0`, HtmlConstants.SPACE ),
+                )
+
+                laterBtn :: (HtmlConstants.NBSP_STR: VdomNode) :: allowBtn :: Nil
+
+              // Для информационного диалога - одна кнопка.
+              case MWzFrames.Info =>
+                val okBtn: VdomNode = MuiButton {
+                  new MuiButtonProps {
+                    override val color   = MuiColorTypes.primary
+                    override val variant = MuiButtonVariants.text
+                    override val onClick = _laterClickCbF
+                    override val size    = MuiButtonSizes.large
+                  }
+                } (
+                  crCtx.messages( MsgCodes.`Next` ),
+                )
+                okBtn :: Nil
+
+              // Для режима ожидания - нужна кнопка отмены.
+              case MWzFrames.InProgress =>
+                val cancelBtn: VdomNode = MuiButton {
+                  new MuiButtonProps {
+                    override val color   = MuiColorTypes.primary
+                    override val variant = MuiButtonVariants.text
+                    override val onClick = _laterClickCbF
+                    override val size    = MuiButtonSizes.large
+                    override val startIcon = iconComp()().rawNode
+                  }
+                } (
+                  crCtx.messages( MsgCodes.`Cancel` )
+                )
+                cancelBtn :: Nil
+            }
+            val actionContent = React.Fragment( actionButtons: _* )
+
+            MuiSnackBarContent {
+              new MuiSnackBarContentProps {
+                override val message = messageContent.rawNode
+                override val action = actionContent.rawNode
+              }
             }
           }
-        )
-      }
-
-      platformCssP.consume { platformCss =>
-        val diaCss = new MuiDialogClasses {
-          override val paper = platformCss.Dialogs.paper.htmlClass
-        }
-        s.diaPropsC { diaPropsProxy =>
-          val diaProps = diaPropsProxy.value
-          // Общие пропертисы для любых собранных диалогов:
-          MuiDialog {
-            new MuiDialogProps {
-              override val open = diaProps.visible
-              override val fullScreen = diaProps.fullScreen
-              override val onClose = _laterClickCbF
-              override val fullWidth = true
-              override val maxWidth = MuiDialogMaxWidths.xs
-              override val classes = diaCss
-            }
-          } (
-            diaBody
-          )
         }
       }
     }
@@ -283,14 +218,7 @@ class WzFirstR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        diaPropsC = propsProxy.connect { props =>
-          MWz1Props(
-            fullScreen  = props.dev.screen.info.isDialogWndFullScreen(),
-            visible     = props.dialogs.first.isVisible,
-          )
-        },
-        wz1OptC = propsProxy.connect( _.dialogs.first.view ),
-        cssOptC = propsProxy.connect( _.dialogs.first.cssOpt ),
+        wz1PotC = propsProxy.connect( _.dialogs.first.view ),
       )
     }
     .renderBackend[Backend]

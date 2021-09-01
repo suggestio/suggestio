@@ -32,21 +32,26 @@ object MWzFirstOuterS {
   def view    = GenLens[MWzFirstOuterS](_.view)
   def perms   = GenLens[MWzFirstOuterS](_.perms)
 
+
+  implicit final class WzOuterExt( private val outerS: MWzFirstOuterS ) extends AnyVal {
+    def isVisible = outerS.view.nonEmpty
+    def isViewFinished = outerS.view.isUnavailable
+    def isViewWasStarted = isVisible || isViewFinished
+    def isViewNotStarted = outerS.view ===* Pot.empty
+  }
+
 }
 
 
 /** Контейнер данных верхнего уровня для мастера первого запуска.
   *
-  * @param view Контейнер данных для view'а.
-  * @param perms Список текущих вопросов по пермишшенам.
+  * @param view Data for permissions GUI.
+  *             Pot.empty - gui not yet started.
+  *             Pot.ready().pending() - it is running now.
+  *             Pot.unavailable - already finished.
+  * @param perms Currently known permissions states, if any.
   */
 case class MWzFirstOuterS(
-                           view       : Option[MWzFirstS]                       = None,
+                           view       : Pot[MWzFirstS]                          = Pot.empty,
                            perms      : Map[MWzPhase, Pot[IPermissionState]]    = Map.empty,
-                         ) {
-
-  def isVisible = view.isDefined
-
-  lazy val cssOpt = view.map(_.css)
-
-}
+                         )

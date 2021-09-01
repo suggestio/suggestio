@@ -125,7 +125,7 @@ class ScLangAh[M](
 
 
     // Initialize language data.
-    case m @ LangInit =>
+    case LangInit =>
       val fx = Effect.action {
         SettingEffect(
           key = ConfConst.ScSettings.LANGUAGE,

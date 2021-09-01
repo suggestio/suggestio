@@ -1,6 +1,8 @@
 package io.suggest.sc.m.dia.first
 
+import diode.data.Pot
 import enumeratum.{Enum, EnumEntry}
+import io.suggest.perm.IPermissionState
 import japgolly.univeq.UnivEq
 
 /**
@@ -23,12 +25,6 @@ object MWzPhases extends Enum[MWzPhase] {
   /** Пермишшен нотификации. */
   case object NotificationPerm extends MWzPhase
 
-  /** Near-field communication phase. */
-  //case object Nfc extends MWzPhase
-
-  /** Писулька с окончанием писанины и кнопкой завершения настройки. */
-  case object Finish extends MWzPhase
-
 
   override def values = findValues
 
@@ -40,5 +36,16 @@ sealed abstract class MWzPhase extends EnumEntry
 object MWzPhase {
 
   @inline implicit def univEq: UnivEq[MWzPhase] = UnivEq.derive
+
+  implicit final class WzPhasePermsMapExt( private val perms: collection.Map[MWzPhase, Pot[IPermissionState]] ) extends AnyVal {
+
+    /** @return true, when location permission is granted. */
+    def hasLocationAccess: Boolean = {
+      perms
+        .get( MWzPhases.GeoLocPerm )
+        .fold( false )( _.exists(_.isGranted) )
+    }
+
+  }
 
 }

@@ -126,7 +126,7 @@ object Common {
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]
       */
-    val REACT_QUILL = "2.0.0-beta.2"
+    val REACT_QUILL = "2.0.0-beta.4"
 
     /** @see [[https://www.npmjs.com/package/jodit-react]] */
     val JODIT_REACT = "1.0.83"
@@ -257,12 +257,12 @@ object Common {
     val FLOW_JS = "2.14.1"
 
 
-    val MATERIAL_UI = "5.0.0-beta.2"
-    val MATERIAL_UI_ICONS = "5.0.0-beta.1"
-    val MATERIAL_UI_LAB = "5.0.0-alpha.41"
+    val MATERIAL_UI = "5.0.0-beta.5"
+    val MATERIAL_UI_ICONS = "5.0.0-beta.5"
+    val MATERIAL_UI_LAB = "5.0.0-alpha.44"
 
     /** @see [[https://www.npmjs.com/package/@emotion/react]] */
-    val EMOTION_REACT = "11.4.0"
+    val EMOTION_REACT = "11.4.1"
     /** @see [[https://www.npmjs.com/package/@emotion/styled]] */
     val EMOTION_STYLED = "11.3.0"
 

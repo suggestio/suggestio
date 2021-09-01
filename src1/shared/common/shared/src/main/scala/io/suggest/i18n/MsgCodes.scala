@@ -531,4 +531,6 @@ object MsgCodes {
   val `Select.your.lang` = "Select.your.lang"
   val `System._adjective` = "System._adjective"
 
+  val `Requesting.permission` = "Requesting.permission"
+
 }

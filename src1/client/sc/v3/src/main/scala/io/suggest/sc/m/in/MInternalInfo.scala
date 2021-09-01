@@ -41,14 +41,17 @@ object MInternalInfo {
 
 /** Контейнер различных внутренних данных.
   *
-  * @param geoLockTimer Таймер ожидания геолокации.
+  * @param geoLockTimer Timer for waiting geolocation data.
+  *                     Pot.empty - never started.
+  *                     Ready+Pending - timer is active.
+  *                     Unavailable - already started and finished.
   * @param currRoute Текущая роута.
   * @param reactCtx State of common react context and language switching.
   * @param indexesRecents Предпоследнее состояние списка недавних посещённых узлов.
   * @param csrfToken Токен CSRF от сервера.
   */
 final case class MInternalInfo(
-                                geoLockTimer      : Option[Int]             = None,
+                                geoLockTimer      : Pot[Int]                = Pot.empty,
                                 currRoute         : Option[Sc3]             = None,
                                 reactCtx          : MScReactCtx             = MScReactCtx.default,
                                 indexesRecents    : MIndexesRecentOuter,

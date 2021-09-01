@@ -75,6 +75,16 @@ case class GeoLocOnOff(
                         scSwitch    : Option[MScSwitchCtx]    = None,
                       )
   extends IGeoLocAction
+{
+  override def toString = StringUtil.toStringHelper(this) { f =>
+    val fEmpty = f("")
+    fEmpty(enabled)
+    if (isHard) f("hard")(isHard)
+    if (onlyTypes.nonEmpty) f("onlyTypes")(onlyTypes)
+    scSwitch foreach fEmpty
+  }
+}
+
 
 /** trait только для [[GlLocation]] и [[GlError]]. */
 sealed trait IGeoLocSignal extends IGeoLocAction {
@@ -85,7 +95,6 @@ sealed trait IGeoLocSignal extends IGeoLocAction {
   def errorOpt: Option[PositionException] = None
   def either: Either[PositionException, MGeoLoc]
 }
-
 /** Есть координаты. */
 case class GlLocation(override val glType: GeoLocType, location: MGeoLoc) extends IGeoLocSignal {
   override def isSuccess = true
@@ -98,6 +107,7 @@ case class GlError(override val glType: GeoLocType, error: PositionException) ex
   override def errorOpt = Some(error)
   override def either = Left(error)
 }
+// TODO Unify GlLocation, GlError using Try[MGeoLoc] as $2.
 
 /** Обновление gl watcher'ов в состоянии новыми идентификаторами. */
 case class GlModWatchers( watchers: Map[GeoLocType, Pot[GeoLocWatchId_t]] ) extends IGeoLocAction
@@ -124,7 +134,6 @@ sealed trait IScTailAction extends IScRootAction
   * @param mods Функция обновления роуты.
   *             Исходное значение роуты передаётся как функция, потому что оно лениво и не всегда нужно.
   * @param force Не проверять роуту на предмет дубликата, пробрасывать в sjsreact-router даже повторную роуту.
-  * @param replace
   */
 case class ResetUrlRoute(
                           mods    : Option[(() => SioPages.Sc3) => SioPages.Sc3] = None,
@@ -217,6 +226,11 @@ case class PauseOrResume(isScVisible: Boolean) extends IPlatformAction
 /** Сигнал готовности платформы к полноценной работе. */
 case class PlatformReady(state: Pot[Boolean] = Pot.empty ) extends IPlatformAction
 
+/** Start/stop platform-related hardware (gps, bluetooth, etc) according to saved user settings.
+  * @param isStart None means - according to current MPlatformS().isUsingNow. (This is done automatically by PlatformAh on PauseOrResume action)
+  *                Some() - overriding isUsingNow flag.
+  */
+case class PeripheralStartStop( isStart: Option[Boolean] = None, onDemand: Boolean = false ) extends IPlatformAction
 
 
 /** Маркер-интерфейс для экшенов для ErrorAh: */

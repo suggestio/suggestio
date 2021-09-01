@@ -2,10 +2,9 @@ package io.suggest.sc.c
 
 import cordova.plugins.appminimize.CdvAppMinimize
 import diode._
-import diode.data.Pot
+import diode.data.{Pot, Ready}
 import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m._
@@ -74,7 +73,7 @@ object TailAh {
       bootingRoute
         .flatMap(_.locEnv)
         .orElse {
-          Option.when( v0.internals.boot.wzFirstDone contains[Boolean] true )(
+          Option.when( v0.dialogs.first.isViewFinished )(
             v0.index.search.geo.mapInit.state.center
           )
         }
@@ -120,7 +119,7 @@ object TailAh {
       val alterF = MScRoot.internals
         .composeLens( MScInternals.info )
         .composeLens( MInternalInfo.geoLockTimer )
-        .set(None)
+        .set( Pot.empty.unavailable() )
       val fx = _clearTimerFx( gltId )
       (alterF, fx)
     }
@@ -138,11 +137,11 @@ object TailAh {
     * @return Обновлённое состояние + эффект ожидания срабатывания таймера.
     *         Но таймер - уже запущен к этому моменту.
     */
-  def mkGeoLocTimer(switchCtx: MScSwitchCtx, currTimerIdOpt: Option[Int]): (MScInternals => MScInternals, Effect) = {
+  def mkGeoLocTimer(switchCtx: MScSwitchCtx, currTimerIdOpt: Pot[Int]): (MScInternals => MScInternals, Effect) = {
     val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut(switchCtx) )
     val modifier = MScInternals.info
-      .composeLens(MInternalInfo.geoLockTimer)
-      .set( Some( tp.timerId ) )
+      .composeLens( MInternalInfo.geoLockTimer )
+      .set( Ready( tp.timerId ).pending() )
 
     var timeoutFx: Effect = Effect( tp.fut )
     for (currTimerId <- currTimerIdOpt) {
@@ -553,7 +552,7 @@ class TailAh(
       // Ожидание cordova-fetch требуется, т.к. cordova либо AFNetworking на iOS 12 как-то долговато инициализируются.
       val isFullyReady = v0.dev.platform.isReady &&
         v0.internals.jsRouter.jsRouter.isReady &&
-        v0.internals.boot.wzFirstDone.getOrElseTrue
+        !v0.dialogs.first.isVisible
 
       // Надо ли повторно отрабатывать m после того, как js-роутер станет готов?
       var jsRouterAwaitRoute = false
@@ -605,7 +604,7 @@ class TailAh(
           open = OptionUtil.SomeBool(m.mainScreen.searchOpened),
         ).toEffectPure
 
-        if (v0.internals.boot.wzFirstDone.isEmpty) {
+        if (v0.dialogs.first.isViewNotStarted) {
           val jsRouterSvcId = MBootServiceIds.JsRouter
           sideBarFx = Boot( jsRouterSvcId :: Nil ).toEffectPure >>
             BootAfter( jsRouterSvcId, sideBarFx ).toEffectPure
@@ -701,7 +700,7 @@ class TailAh(
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
       if (
         m.mainScreen.needGeoLoc &&
-        v0.internals.boot.wzFirstDone.nonEmpty &&
+        v0.dialogs.first.isViewWasStarted &&
         v0.dialogs.first.view.isEmpty &&
         !WzFirstDiaAh.isNeedWizardFlowVal
       ) {
@@ -888,7 +887,7 @@ class TailAh(
           !m.scSwitch.exists(_.demandLocTest) &&
           // Если очень ожидается текущая геолокация, то задвинуть карту.
           (
-            !(v0.internals.boot.wzFirstDone contains[Boolean] true) ||
+            !v0.dialogs.first.isViewFinished ||
             (v0.index.resp ==* Pot.empty)
           ) &&
           (v0.internals.info.currRoute.exists { currRoute =>
@@ -909,7 +908,7 @@ class TailAh(
 
       // Если wz1 ждёт пермишшена на геолокацию, то надо обрадовать его:
       if (
-        (v0.internals.boot.wzFirstDone contains[Boolean] false) &&
+        v0.dialogs.first.isVisible &&
         (v0.dialogs.first.view.exists { wz1 =>
           (wz1.phase ==* MWzPhases.GeoLocPerm) &&
           (wz1.frame ==* MWzFrames.InProgress)

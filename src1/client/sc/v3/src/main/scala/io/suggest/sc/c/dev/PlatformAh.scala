@@ -17,7 +17,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LangInit, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LangInit, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PeripheralStartStop, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.c.android.ScIntentsAh
@@ -114,6 +114,7 @@ final class PlatformAh[M](
                            rootRO               : ModelRO[MScRoot],
                            dispatcher           : Dispatcher,
                            scNotifications      : => ScNotifications,
+                           needGeoLocRO         : () => Boolean,
                          )
   extends ActionHandler( modelRW )
   with Log
@@ -137,18 +138,12 @@ final class PlatformAh[M](
         var fxAcc = List.empty[Effect]
 
         val mroot = rootRO.value
-        val boot = mroot.internals.boot
         if (
-          boot.targets.isEmpty &&
-          (boot.wzFirstDone contains[Boolean] true)
+          needGeoLocRO() &&
+          mroot.internals.boot.targets.isEmpty &&
+          mroot.dialogs.first.isViewFinished
         ) {
-          val bleFxOpt = _bleBeaconerControlFx( m.isScVisible, v2 )
-          for (fx <- bleFxOpt)
-            fxAcc ::= fx
-
-          // Глушить фоновый GPS-мониторинг:
-          for (fx <- _geoLocControlFx( m.isScVisible ))
-            fxAcc ::= fx
+          fxAcc ::= PeripheralStartStop(onDemand = true).toEffectPure
 
           // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
           if (
@@ -337,9 +332,6 @@ final class PlatformAh[M](
         var fxAcc = List.empty[Effect]
 
         if (isReadyNow) {
-          // Let's initialize current language info from ready settings or ready-to-use system enviroment:
-          fxAcc ::= LangInit.toEffectPure
-
           // Возможно, что HwScreenUtil не смогло определить точные размеры экрана, и нужно повторить определение экрана после наступления cordova ready.
           fxAcc ::= ScreenResetPrepare.toEffectPure
 
@@ -448,11 +440,26 @@ final class PlatformAh[M](
         noChange
       }
 
+
+    // On first run, provide limited initialization, instead of big conditions-rich PauseOrResume(true).
+    case m: PeripheralStartStop =>
+      val isUsingNow = m.isStart getOrElse value.isUsingNow
+      var fxAcc = List.empty[Effect]
+
+      for (fx <- _bleBeaconerControlFx( isUsingNow ))
+        fxAcc ::= fx
+
+      // Запускать/глушить фоновый GPS-мониторинг:
+      for (fx <- _geoLocControlFx( isUsingNow, onDemand = m.onDemand ))
+        fxAcc ::= fx
+
+      ah.maybeEffectOnly( fxAcc.mergeEffects )
+
   }
 
 
   /** Переключение активированности фоновой геолокации. */
-  private def _geoLocControlFx( isScVisible: Boolean ): Option[Effect] = {
+  private def _geoLocControlFx( isScVisible: Boolean, onDemand: Boolean ): Option[Effect] = {
     val mroot = rootRO()
     val mgl = mroot.dev.geoLoc
     val isActiveNow = mgl.switch.onOff contains[Boolean] true
@@ -477,7 +484,7 @@ final class PlatformAh[M](
                   geoIntoRcvr = true,
                   retUserLoc  = false,
                 ),
-                demandLocTest = true,
+                demandLocTest = onDemand,
               )
 
               // Надо запускать обновление выдачи, если включение геолокации и панель карты закрыта.
@@ -508,7 +515,7 @@ final class PlatformAh[M](
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
     */
-  private def _bleBeaconerControlFx( isScVisible: Boolean, plat: MPlatformS ): Option[Effect] = {
+  private def _bleBeaconerControlFx( isScVisible: Boolean, plat: MPlatformS = value ): Option[Effect] = {
     val mroot = rootRO()
 
     // Не выполнять эффектов, если результата от них не будет (без фактической смены состояния или hardOff).

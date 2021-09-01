@@ -11,7 +11,7 @@ import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
 import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.search.found.{NfListR, NfRowsR}
-import io.suggest.sc.v.snack.SnackComp
+import io.suggest.sc.v.snack.ISnackComp
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
@@ -28,7 +28,7 @@ class IndexSwitchAskR(
                        nfRowsR          : NfRowsR,
                        crCtxProv        : React.Context[MCommonReactCtx],
                      )
-  extends SnackComp
+  extends ISnackComp
 {
 
   type Props_t = MInxSwitch

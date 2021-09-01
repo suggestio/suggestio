@@ -1143,7 +1143,7 @@ Settings=Настройки
 Install.app.for.access.to.0=Установите приложение для получения доступа к {0}.
 
 Notifications=Уведомления
-Notify.about.offers.nearby=Уведомлять о предложениях поблизости.
+Notify.about.offers.nearby=Уведомлять о предложениях поблизости?
 
 0.offers.nearby={0} предложений рядом с вами
 One.offer.nearby=Есть предложение рядом!
@@ -1191,3 +1191,5 @@ _nfc._to.current.ad=текущую выбранную карточку в выд
 _nfc._to.current.node=выдачу текущего узла.
 Also.you.can.make.nfc.tag.non.writable=Также, вы можете запретить дальнейшую запись NFC-тега.
 Adv.in.tag=Размещение в #теге
+
+Requesting.permission=Запрашивается разрешение...

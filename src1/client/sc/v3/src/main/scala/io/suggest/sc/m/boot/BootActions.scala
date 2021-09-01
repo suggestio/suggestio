@@ -28,13 +28,3 @@ case class BootAfter( svcId: MBootServiceId, fx: Effect, ifMissing: Option[Effec
 
 /** Внутренний сигнал завершения boot-эффекта запуска. */
 case class BootStartCompleted( svcId: MBootServiceId, tryRes: Try[_] ) extends IBootAction
-
-
-/** Экшен запуска этапа подготовки данных геолокации. */
-case object BootLocDataWz extends IBootAction
-
-/** Экшен после запуска инициализации визарда. */
-case object BootLocDataWzAfterInit extends IBootAction
-
-/** Экшен реакции на завершение действий визарда первого запуска. */
-case class BootLocDataWzAfterWz(startedAtMs: Long) extends IBootAction

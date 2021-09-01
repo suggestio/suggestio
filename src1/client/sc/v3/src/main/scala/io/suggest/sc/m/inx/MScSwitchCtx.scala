@@ -4,7 +4,8 @@ import diode.Effect
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoLoc
 import io.suggest.sc.index.MScIndexArgs
-import japgolly.univeq.UnivEq
+import io.suggest.text.StringUtil
+import japgolly.univeq._
 import monocle.macros.GenLens
 
 /**
@@ -67,5 +68,20 @@ case class MScSwitchCtx(
                          afterBackGrid    : Option[Effect]    = None,
                          viewsAction      : MScSwitchCtx.ViewsAction   = MScSwitchCtx.ViewsAction.RESET,
                          indexMapReset    : Boolean           = MScSwitchCtx.INDEX_MAP_RESET_DFLT,
-                       )
+                       ) {
+
+  override def toString: String = StringUtil.toStringHelper(this) { f =>
+    if (indexQsArgs !=* MScIndexArgs.default) f("indexQS")(indexQsArgs)
+    focusedAdId foreach f("foc")
+    if (demandLocTest) f("demand")(demandLocTest)
+    forceGeoLoc foreach f("forceGeoLoc")
+    if (!showWelcome) f("showWc")(showWelcome)
+    afterIndex foreach f("afterInx")
+    afterBack foreach f("afterBack")
+    afterBackGrid foreach f("afterBackGrid")
+    if (viewsAction !=* MScSwitchCtx.ViewsAction.RESET) f("viewsAction")(viewsAction)
+    if (indexMapReset !=* MScSwitchCtx.INDEX_MAP_RESET_DFLT) f("inxMapRst")(indexMapReset)
+  }
+
+}
 

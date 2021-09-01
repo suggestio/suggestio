@@ -25,8 +25,20 @@ object MBootServiceIds extends Enum[MBootServiceId] {
   /** Инициализации карты ресиверов. */
   case object RcvrsMap extends MBootServiceId
 
+  /** Dump current permissions states. */
+  case object ReadPermissions extends MBootServiceId
+
   /** Сбор данных детектирования геолокации. */
   case object GeoLocDataAcc extends MBootServiceId
+
+  /** Load first index, fill showcase with content. */
+  case object InitShowcaseIndex extends MBootServiceId
+
+  /** Open notifications dialog with permissions requests. */
+  case object PermissionsGui extends MBootServiceId
+
+  /** Need to initialize interface language, when router & platform will be ready. */
+  case object Language extends MBootServiceId
 
 
   override def values = findValues

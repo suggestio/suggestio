@@ -117,6 +117,12 @@ object SioPages {
 
     }
 
+    implicit final class Sc3OptPageExt( private val mainScreenO: Option[Sc3] ) extends AnyVal {
+
+      def needGeoLoc: Boolean = mainScreenO.fold(true)(_.needGeoLoc)
+
+    }
+
 
 
     /** Cross-platform URL query-string bindable for showcase state uri. */

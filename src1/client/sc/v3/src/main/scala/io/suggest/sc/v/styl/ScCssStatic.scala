@@ -529,6 +529,11 @@ object ScCssStatic extends StyleSheet.Inline {
     justifyContent.center,
   )
 
+  val justifyBetween = style(
+    display.flex,
+    justifyContent.spaceBetween,
+  )
+
   val cursorPointer = style(
     cursor.pointer,
   )

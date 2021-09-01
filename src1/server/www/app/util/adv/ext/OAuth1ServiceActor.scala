@@ -10,7 +10,6 @@ import controllers.routes
 import io.suggest.adv.ext.model.ctx.MAskActions
 import io.suggest.async.AsyncUtil
 import io.suggest.fsm.FsmActor
-import io.suggest.model.SlickHolder
 import io.suggest.primo.IToPublicString
 import io.suggest.sec.util.PgpUtil
 import io.suggest.streams.JioStreamsUtil
