@@ -1,7 +1,6 @@
 package io.suggest.sc.c.in
 
 import diode._
-import diode.data.Pot
 import io.suggest.async.IValueCompleter
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -17,13 +16,12 @@ import io.suggest.log.Log
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.dia.first.{InitFirstRunWz, WzReadPermissions}
 import io.suggest.sc.m.inx.MScSwitchCtx
-import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
 
-import scala.concurrent.{Future, Promise}
-import scala.util.{Success, Try}
+import scala.concurrent.Future
+import scala.util.Success
 
 /**
   * Suggest.io
@@ -298,13 +296,12 @@ class BootAh[M](
       // Есть хотя бы одна цель для инициализации.
       case svcId :: restTargetsTl =>
         val svcDataOpt0 = acc0.v0.services.get( svcId )
+        val svcWasStarted = svcDataOpt0.exists( _.wasStarted )
+        // TODO wasStarted: Need to add restart interval effect for failed services?
 
-        val svcStartCompleted = svcDataOpt0.exists( _.isStarted )
-
-        val prevTargetsHasSvc = (acc0.prevTargets contains svcId)
         if (
           // Эта служба уже [была] запущена, возможно уже работает?
-          svcStartCompleted || prevTargetsHasSvc
+          svcWasStarted || /*prevTargetsHasSvc=*/(acc0.prevTargets contains svcId)
         ) {
           // Эта цель инициализации уже была пройдена. Перейти к следующей цели.
           val acc2 = acc0.copy(

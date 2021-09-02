@@ -1,7 +1,7 @@
 package io.suggest.lk.u
 
 import com.materialui.{Mui, MuiStyledEngineProvider, MuiStylesProvider, MuiThemeProvider}
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -13,6 +13,15 @@ object MaterialUiUtil {
 
   lazy val defaultTheme = Mui.Styles.createTheme()
 
+  def defaultThemeProvider(children: VdomNode*) = {
+    MuiThemeProvider.component(
+      new MuiThemeProvider.Props {
+        override val theme = defaultTheme
+      }
+    )(children: _*)
+  }
+
+
   /** Какие-то дополнительные плюшки поверх ВСЕХ форм и выдачи.
     *
     * @param appComp Компонент верхнего уровня всей выдачи или целиковой react-формы.
@@ -20,17 +29,15 @@ object MaterialUiUtil {
     */
   def postprocessTopLevel(appComp: VdomElement): VdomElement = {
     // Add default theme:
-    MuiThemeProvider.component(
-      new MuiThemeProvider.Props {
-        override val theme = defaultTheme
-      }
-    )(
+    defaultThemeProvider(
       postprocessTopLevelOnlyStyles( appComp ),
     )
   }
+
+
   def postprocessTopLevelOnlyStyles(appComp: VdomElement): VdomElement = {
     // (emoution mui-v5) - это Mui.StyledEngineProvider. Требуется рендерить по-выше в head, чтобы старые стили оказались ниже и имели приоритет над emotion.
-    MuiStyledEngineProvider.component(
+    /*MuiStyledEngineProvider.component(
       new MuiStyledEngineProvider.Props {
         override val injectFirst = true
       }
@@ -44,11 +51,11 @@ object MaterialUiUtil {
         new MuiStylesProvider.Props {
           override val injectFirst = false
         }
-      )(
+      )(*/
         appComp
-      ),
+      //),
 
-    )
+    //)
   }
 
 }

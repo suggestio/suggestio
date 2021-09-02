@@ -11,11 +11,9 @@ trait MuiColor extends js.Object {
   val contrastText: js.UndefOr[String] = js.undefined
 }
 
+/** material-ui/styles */
 @js.native
-trait MuiStyles extends js.Object {
-
-  /** @see [[https://material-ui.com/customization/themes/#createmuitheme-options-theme]] */
-  def createTheme(options: MuiRawTheme = js.native): MuiTheme = js.native
+trait MuiStyles5 extends js.Object {
 
   /**
     * Link a style sheet with a component.
@@ -28,6 +26,15 @@ trait MuiStyles extends js.Object {
 
   @JSName("withStyles")
   def withStylesF(stylesCreator: js.Function1[MuiTheme, js.Object]): js.Function1[js.Any, js.Any] = js.native
+
+}
+
+/** material-ui/core/styles */
+@js.native
+trait MuiStyles extends js.Object {
+
+  /** @see [[https://material-ui.com/customization/themes/#createmuitheme-options-theme]] */
+  def createTheme(options: MuiRawTheme = js.native): MuiTheme = js.native
 
   // Next, API for colorManipulator.js:
   // https://github.com/mui-org/material-ui/blob/master/packages/material-ui/src/styles/colorManipulator.js

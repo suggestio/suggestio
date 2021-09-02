@@ -36,20 +36,20 @@ object MBootServiceState {
   */
 case class MBootServiceState(
                               tg                : IBootService,
-                              started           : Option[Try[Boolean]]      = None,
+                              started           : Option[Try[Boolean]]      = None, // TODO Replace with Pot[Boolean] ?
                               after             : Option[Effect]            = None,
                             ) {
 
   /** Свёрстка для значения started. */
-  private def _foldStarted(isStartCompleted: Boolean => Boolean): Boolean =
-    started.exists( _.fold(_ => false, isStartCompleted) )
+  private def _foldStarted(isStartCompleted: Boolean => Boolean, onError: Boolean): Boolean =
+    started.exists( _.fold(_ => onError, isStartCompleted) )
 
   /** Был ли запущен ли сервис (вызван start)? */
-  def isStarted: Boolean =
-    _foldStarted( _ => true )
+  def wasStarted: Boolean =
+    _foldStarted( _ => true, onError = true )
 
   /** Завершился ли start() успешно? */
   def isStartDoneSuccess: Boolean =
-    _foldStarted( identity[Boolean] )
+    _foldStarted( identity[Boolean], onError = false )
 
 }

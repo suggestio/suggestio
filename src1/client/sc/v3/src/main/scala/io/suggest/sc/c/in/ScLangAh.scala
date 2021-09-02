@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.conf.ConfConst
 import io.suggest.cordova.CordovaConstants
+import io.suggest.dev.MPlatformS
 import io.suggest.i18n.{MLanguage, MLanguages}
 import io.suggest.lk.api.ILkLangApi
 import io.suggest.lk.m.CsrfTokenEnsure
@@ -27,6 +28,7 @@ class ScLangAh[M](
                    scStuffApi   : => IScStuffApi,
                    lkLangApi    : => ILkLangApi,
                    isLoggedIn   : ModelRO[Boolean],
+                   platformRO   : ModelRO[MPlatformS],
                  )
   extends ActionHandler( modelRW )
   with Log
@@ -106,9 +108,12 @@ class ScLangAh[M](
                 .map( MLanguages.byCode )
             }
 
+          val plat = platformRO.value
+          val cdvOsFamily = plat.osFamily.filter(_ => plat.isCordova)
+
           scStuffApi
             // TODO Ask server for update cookies and save language settings into current Person node.
-            .scMessagesJson( langOpt2 )
+            .scMessagesJson( langOpt2, cdvOsFamily )
             .transform { tryRes =>
               Success( m.copy(
                 state = m.state withTry tryRes,

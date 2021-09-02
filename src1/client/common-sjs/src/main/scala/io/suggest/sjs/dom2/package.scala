@@ -44,4 +44,7 @@ package object dom2 {
   @inline implicit def posError2domPosError( posError: PositionError ): dom.PositionError =
     posError.asInstanceOf[dom.PositionError]
 
+  @inline implicit def xhr2(xhr: dom.XMLHttpRequest): XmlHttpRequest2 =
+    xhr.asInstanceOf[XmlHttpRequest2]
+
 }

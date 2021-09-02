@@ -68,6 +68,9 @@
     "phonegap-nfc": {
       "NFC_USAGE_DESCRIPTION": "Read NFC Tags",
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-wkwebview-file-xhr": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

@@ -176,5 +176,13 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "cordova-plugin-wkwebview-file-xhr": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-wkwebview-file-xhr@^3.0.0"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

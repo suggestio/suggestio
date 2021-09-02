@@ -1,6 +1,6 @@
 package io.suggest.sc.u.api
 
-import io.suggest.cordova.CordovaConstants
+import io.suggest.dev.MOsFamily
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.i18n.MLanguage
 import io.suggest.msg.JsonPlayMessages
@@ -35,7 +35,7 @@ trait IScStuffApi {
     *                 None asks server to return session-current language.
     * @return Ready to use JSON Play messages.
     */
-  def scMessagesJson( language: Option[MLanguage] ): Future[JsonPlayMessages]
+  def scMessagesJson( language: Option[MLanguage], cordova: Option[MOsFamily] ): Future[JsonPlayMessages]
 
 }
 
@@ -67,10 +67,10 @@ final class ScStuffApiHttp(
   }
 
 
-  override def scMessagesJson(language: Option[MLanguage]): Future[JsonPlayMessages] = {
+  override def scMessagesJson(language: Option[MLanguage], cordova: Option[MOsFamily]): Future[JsonPlayMessages] = {
     val (method, url, httpReqData) = (for {
       lang <- language
-      if CordovaConstants.isCordovaPlatform()
+      if cordova.nonEmpty
     } yield {
       // For cordova with known language, use locally-stored JSON files:
       val fsUrl = "lang/" + lang.value + ".json"

@@ -23,7 +23,7 @@ class PlatformComponents(
   lazy val muiSwitch = {
     if (getPlatformCss().isRenderIos) {
       MuiSwitch.mkComponent {
-        Mui.Styles.withStylesF( switch.Ios.iosSwitchStyles )( Mui.Switch )
+        Mui.Styles5.withStylesF( switch.Ios.iosSwitchStyles )( Mui.Switch )
       }
     } else {
       MuiSwitch.component

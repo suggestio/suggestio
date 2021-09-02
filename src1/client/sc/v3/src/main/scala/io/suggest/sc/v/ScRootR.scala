@@ -14,7 +14,6 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
-import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.dia.login.ScLoginR
 import io.suggest.sc.v.dia.nodes.ScNodesR
 import io.suggest.sc.v.dia.settings.ScSettingsDiaR
@@ -104,6 +103,17 @@ class ScRootR (
         },
       )
 
+      // Диалог логина.
+      val loginDia = mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply )
+      val snackBar = scSnacksR.component( mrootProxy )
+      val settings = scSettingsDiaR.component( mrootProxy )
+      val nodes = scNodesR.component( mrootProxy )
+      // Диалог скачивания приложения - отображается только в браузере.
+      val dlApp = ReactCommonUtil.maybeNode( mrootProxy.value.dev.platform.isDlAppAvail ) {
+        dlAppDiaR.component( mrootProxy )
+      }
+      val logout = mrootProxy.wrap( _.dialogs.login.logout )( logOutDiaR.component.apply )
+
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       val sc = React.Fragment(
 
@@ -124,10 +134,6 @@ class ScRootR (
 
         // Рендер провайдера тем MateriaUI, который заполняет react context.
         {
-          // Диалог логина.
-          val loginDia = mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply )
-
-          val snackBar = scSnacksR.component( mrootProxy )
 
           s.colorsC { mcolorsProxy =>
             val _theme = scThemes.muiDefault( mcolorsProxy.value )
@@ -141,27 +147,19 @@ class ScRootR (
                 scWithSideBars,
               ),
 
-              loginDia,
-
-              // snackbar
-              snackBar,
             )
           }
         },
 
-        // Диалог управления узлами. Без темы, иначе дизайн сыплется.
-        scNodesR.component( mrootProxy ),
-
-        // Диалог настроек - требует scala-тему.
-        scSettingsDiaR.component( mrootProxy ),
-
-        // Диалог скачивания приложения - отображается только в браузере.
-        ReactCommonUtil.maybeNode( mrootProxy.value.dev.platform.isDlAppAvail ) {
-          dlAppDiaR.component( mrootProxy )
-        },
-
-        // Диалог logout:
-        mrootProxy.wrap( _.dialogs.login.logout )( logOutDiaR.component.apply ),
+        MaterialUiUtil.defaultThemeProvider(
+          // Диалог управления узлами. Без темы, иначе дизайн сыплется.
+          loginDia,
+          nodes,
+          settings,
+          dlApp,
+          logout,
+          snackBar,
+        )
 
       )
 

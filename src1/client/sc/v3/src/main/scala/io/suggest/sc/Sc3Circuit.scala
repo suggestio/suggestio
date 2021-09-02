@@ -720,6 +720,7 @@ class Sc3Circuit(
     scStuffApi = scStuffApi,
     isLoggedIn = loggedInRO,
     lkLangApi  = lkLangApi,
+    platformRO = platformRW,
   )
 
 

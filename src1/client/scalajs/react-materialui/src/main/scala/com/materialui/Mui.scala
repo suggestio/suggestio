@@ -127,9 +127,11 @@ object Mui {
   @js.native @JSImport("@material-ui/lab/TreeItem", JSImport.Default) object TreeItem extends js.Any
 
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
-  @js.native @JSImport("@material-ui/styles/ThemeProvider", JSImport.Default) object ThemeProvider extends js.Any
-  @js.native @JSImport("@material-ui/styles/StylesProvider", JSImport.Default) object StylesProvider extends js.Any
-  @js.native @JSImport("@material-ui/core/styles", "StyledEngineProvider") object StyledEngineProvider extends js.Any
+  @js.native @JSImport("@material-ui/styles", JSImport.Default) object Styles5 extends MuiStyles5
+  @js.native @JSImport("@material-ui/core/styles/ThemeProvider", JSImport.Default) object ThemeProvider extends js.Any
+  @js.native @JSImport("@material-ui/core/StylesProvider", JSImport.Default) object StylesProvider extends js.Any
+  // TODO StyledEngineProvider: Invalid path for mui v5.beta
+  @js.native @JSImport("@material-ui/core/styles/StyledEngineProvider", JSImport.Default) object StyledEngineProvider extends js.Any
 
   val SvgIcons = MuiSvgIcons
 

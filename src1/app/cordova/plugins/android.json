@@ -66,6 +66,9 @@
     },
     "phonegap-nfc": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-wkwebview-file-xhr": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

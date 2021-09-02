@@ -14,6 +14,7 @@ import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.typedarray.ArrayBuffer
 import japgolly.univeq._
 import org.scalajs.dom.experimental.{BodyInit, Headers, RequestInit, Response, ResponseInit}
+import io.suggest.sjs.dom2._
 
 import scala.util.Try
 
@@ -50,9 +51,10 @@ case class XhrAdpInstance( override val httpReq: HttpReqAdp ) extends HttpAdpIns
     val httpRes = XhrHttpResp(xhr)
 
     xhr.onreadystatechange = { (_: dom.Event) =>
-      if (xhr.readyState ==* XMLHttpRequest.DONE) {
+      if (xhr.readyState ==* XmlHttpRequest2.DONE) {
         // Если запрос невозможен (связи нет, например), то будет DONE и status=0
-        if (xhr.status > 0)
+        // fold(true) - for cordova-plugin-wkwebview-file-xhr, where no HTTP-status property at all.
+        if ( xhr.statusU.fold(true)(_ > 0) )
           promise.success(httpRes)
         else promise.failure(
           HttpFailedException(
