@@ -231,7 +231,8 @@ final class GeoLocAh[M](
           }
         }(v0)
 
-        updatedSilent(v2)
+        // silent: WzFirstDiaAh listens(subscribes) for value changes here: Pending => Ready.
+        ah.updateMaybeSilent( m.watchers.valuesIterator.exists(_.isEmpty) )(v2)
       }
 
 
@@ -303,7 +304,7 @@ final class GeoLocAh[M](
             val (fxOpt, v2) = _doDisableFx(v0, m.isHard)
 
             // TODO Нужна поддержка частичной остановки watcher'ов. Пока assert для защиты от ошибочного использования нереализованной частичной остановки.
-            assert( m.onlyTypes.isEmpty )
+            require( m.onlyTypes.isEmpty )
 
             ah.optionalResult( Some(v2), fxOpt, silent = (v0.switch.onOff ==* v2.switch.onOff) )
         }

@@ -1,5 +1,6 @@
 package io.suggest.perm
 
+import diode.data.Pot
 import org.scalajs.dom.experimental.permissions.Permissions
 
 import scala.concurrent.Future
@@ -45,16 +46,16 @@ trait IPermissionState {
     val sb = new StringBuilder( 32, getClass.getSimpleName )
       .append( '(' )
 
-    if (isPoweredOn)
-      sb.append('O')
     if (isGranted)
-      sb.append('G')
+      sb.append('+')
     if (isDenied)
-      sb.append('D')
+      sb.append('-')
+    if (isPrompt)
+      sb.append('?')
     if (isPoweredOn)
-      sb.append('P')
+      sb.append('^')
     if (hasOnChangeApi)
-      sb.append('c')
+      sb.append('~')
 
     sb.append( ')' )
       .toString()

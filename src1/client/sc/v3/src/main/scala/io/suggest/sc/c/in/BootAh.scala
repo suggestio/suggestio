@@ -2,6 +2,7 @@ package io.suggest.sc.c.in
 
 import diode._
 import diode.data.Pot
+import io.suggest.async.IValueCompleter
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.m.RcvrMarkersInit
@@ -52,42 +53,15 @@ class BootAh[M](
       * @tparam X Неважный тип для zoomR.
       * @return Собранный эффект.
       */
-    private def _startWithPot[X: IValueReadySubscriber](serviceId   : MBootServiceId,
-                                                        zoomR       : ModelR[MScRoot, X],
-                                                        timeoutOkMs : Option[Int] = None): Future[BootStartCompleted] = {
-      val doneP = Promise[ReadyInfo_t]()
+    private def _startWithPot[X: IValueCompleter](serviceId   : MBootServiceId,
+                                                  zoomR       : ModelR[MScRoot, X],
+                                                  timeoutOkMs : Option[Int] = None): Future[BootStartCompleted] = {
+      val ps = CircuitUtil.promiseSubscribe()
+      for (timeoutOkMs1 <- timeoutOkMs)
+        ps.withTimeout( timeoutOkMs1 )
 
-      // Если задан ok-таймаут, то повесить макс.время на ожидание, завершающийся успехом:
-      val tpOkOpt = for (timeoutMs <- timeoutOkMs) yield {
-        val tpOk = DomQuick.timeoutPromise( timeoutMs )
-        doneP.completeWith( tpOk.fut )
-        tpOk
-      }
-
-      // Мониторить готовность js-роутера:
-      val readySub = implicitly[IValueReadySubscriber[X]]
-      def maybeComplete(v: X) = {
-        readySub.maybeCompletePromise( doneP, v )
-        // Возможно, Promise был исполнен строкой выше. И если это так, то отменить таймаут закрытия фьючерса:
-        if (doneP.isCompleted)
-          for (tp <- tpOkOpt)
-            DomQuick.clearTimeout( tp.timerId )
-      }
-
-      val unsubscribeF = circuit.subscribe( zoomR ) { jsRouterRO =>
-        if (!doneP.isCompleted) {
-          val v = jsRouterRO.value
-          maybeComplete( v )
-        }
-      }
-
-      maybeComplete( zoomR.value )
-
-      // Конверсия результата
-      doneP
-        .future
+      ps.zooming( circuit, zoomR )
         .transform { tryRes =>
-          Try( unsubscribeF() )
           val action = BootStartCompleted( serviceId, tryRes )
           Success( action )
         }
@@ -534,36 +508,6 @@ class BootAh[M](
             force = true,
           )
         }
-    }
-  }
-
-}
-
-
-sealed trait IValueReadySubscriber[T] {
-  def maybeCompletePromise( readyPromise: Promise[ReadyInfo_t], value: T ): Unit
-}
-
-object IValueReadySubscriber {
-
-  implicit def identitySubscriber: IValueReadySubscriber[Boolean] = {
-    new IValueReadySubscriber[Boolean] {
-      override def maybeCompletePromise(readyPromise: Promise[ReadyInfo_t], value: Boolean): Unit =
-        if (value)
-          readyPromise.trySuccess( None )
-    }
-  }
-
-  implicit def PotSubscriber[T]: IValueReadySubscriber[Pot[T]] = {
-    new IValueReadySubscriber[Pot[T]] {
-      override def maybeCompletePromise(readyPromise: Promise[ReadyInfo_t], pot: Pot[T]): Unit = {
-        if (!pot.isPending) {
-          if (pot.isReady || pot.isUnavailable)
-            readyPromise.trySuccess( None )
-          else for (ex <- pot.exceptionOption)
-            readyPromise.tryFailure( ex )
-        }
-      }
     }
   }
 

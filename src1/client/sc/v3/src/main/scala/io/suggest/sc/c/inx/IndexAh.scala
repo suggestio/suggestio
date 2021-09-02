@@ -740,7 +740,7 @@ class IndexAh[M](
       inx_state_switch_ask_LENS
         .get(v0)
         .fold(noChange) { switchS0 =>
-          val cleanStateF = inx_state_switch_ask_LENS set None
+          def cleanedState = (inx_state_switch_ask_LENS set None)(v0)
 
           m .nodeId
             .fold [Option[Either[ActionResult[M], MSc3IndexResp]]] {
@@ -754,11 +754,11 @@ class IndexAh[M](
                     retUserLoc  = true,
                   ),
                 )).toEffectPure
-                val v2 = cleanStateF(v0)
-
+                val v2 = cleanedState
                 Left( updated(v2, fx) )
               }
             } { nodeId =>
+              println(3, nodeId)
               // Выбран конкретный узел в списке.
               switchS0.nodesResp
                 .nodesMap
@@ -766,18 +766,25 @@ class IndexAh[M](
                 .map(m => Right(m.props))
             }
             .fold [ActionResult[M]] {
+              println(4)
               // Не надо переключаться ни в какой узел. Просто сокрыть диалог.
               // Возможно, юзер не хочет уходить из текущего узла в новую определённую локацию.
-              val v2 = cleanStateF( v0 )
+              val v2 = cleanedState
               updated(v2)
             } { resOrNodeFound =>
               resOrNodeFound.fold(
                 identity,
                 {nodeFound =>
+                  val nodeFound2 = nodeFound.nodeId.fold {
+                    // Ephemeral 404-node is selected. Need to reset geoPoint to qs loc env, so user will be properly placed.
+                    switchS0.okAction.qs.common.locEnv.geoLocOpt.fold( nodeFound ) { qsGeoLoc =>
+                      (MSc3IndexResp.geoPoint set Some(qsGeoLoc.point))(nodeFound)
+                    }
+                  }( _ => nodeFound )
                   // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
                   val actRes = IndexAh.indexUpdated(
-                    i0      = cleanStateF( v0 ),
-                    inx     = nodeFound,
+                    i0      = cleanedState,
+                    inx     = nodeFound2,
                     m       = switchS0.okAction,
                     mroot   = rootRO.value,
                   )

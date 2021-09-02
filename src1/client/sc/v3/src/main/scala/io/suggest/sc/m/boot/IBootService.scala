@@ -17,7 +17,7 @@ object IBootService {
 
   implicit class BootServiceExtOps( val bs: IBootService ) extends AnyVal {
 
-    def finished(tryRes: Try[ReadyInfo_t]): BootStartCompleted =
+    def finished(tryRes: Try[None.type]): BootStartCompleted =
       BootStartCompleted(bs.serviceId, tryRes)
 
     def finished(ex: Throwable): BootStartCompleted =

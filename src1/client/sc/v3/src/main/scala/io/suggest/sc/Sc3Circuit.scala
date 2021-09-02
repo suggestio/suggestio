@@ -325,7 +325,7 @@ class Sc3Circuit(
 
   private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
   private val scScreenRW          = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
-  private val scGeoLocRW          = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
+  private[sc] val scGeoLocRW      = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
   private def onLineRW            = mkLensZoomRW(devRW, MScDev.onLine)
 
   private def confRW              = mkLensZoomRW(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
@@ -582,7 +582,7 @@ class Sc3Circuit(
     platformRO    = platformRW,
     hasBleRO      = hasBleRO,
     modelRW       = wzFirstOuterRW,
-    dispatcher    = this,
+    sc3Circuit    = this,
   )
 
   private def bootAh = new BootAh(
@@ -776,7 +776,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
 
   {

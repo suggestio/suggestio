@@ -242,6 +242,7 @@ final class ScIndex @Inject()(
       for (mnodeOpt <- _mnodeOptFut) yield {
         val mnode = mnodeOpt.get
         LOGGER.trace(s"$logPrefix Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
+        // TODO Change eph.node title to localized "My current location", if demand index/location testing. When eph.node listed as-is, it looks too unexpected.
         MIndexNodeInfo(
           mnode = mNodes.withDocMeta(mnode, EsDocMeta(None, EsDocVersion.notSaveable)),
           isRcvr = false

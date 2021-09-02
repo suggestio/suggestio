@@ -1,6 +1,13 @@
 package io.suggest.spa
 
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.{Circuit, FastEq, ModelR, ModelRO, ModelRW}
+import io.suggest.async.IValueCompleter
+import io.suggest.sjs.common.model.TimeoutPromise
+import io.suggest.sjs.dom2.DomQuick
+
+import scala.concurrent.{Future, Promise}
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -80,6 +87,48 @@ object CircuitUtil {
   def mkLensRootZoomRO[Root_t <: AnyRef, Child_t]( circuit: Circuit[Root_t], lens: monocle.Lens[Root_t, Child_t] )
                                                  ( implicit feq: FastEq[_ >: Child_t] ): ModelR[Root_t, Child_t] = {
     circuit.zoom( lens.get )(feq)
+  }
+
+
+  /** To subscribe promise completion to some changing in time value, accessible via circuit zooming. */
+  case class promiseSubscribe( doneP: Promise[None.type] = Promise() ) {
+
+    var _timeoutPromiseOpt = Option.empty[TimeoutPromise[None.type]]
+
+    def withTimeout(timeoutMs: Int): this.type = {
+      val tpOk = DomQuick.timeoutPromise( timeoutMs )
+      doneP.completeWith( tpOk.fut )
+      _timeoutPromiseOpt = Some( tpOk )
+      this
+    }
+
+    def zooming[M <: AnyRef, T: IValueCompleter](circuit: Circuit[M], zoomR: ModelR[M, T]): Future[None.type] = {
+      // To monitor readyness of value...
+      val readySub = implicitly[IValueCompleter[T]]
+      def maybeComplete(v: T) = {
+        readySub.maybeCompletePromise( doneP, v )
+        // If promise already completed, cancel timeout timer (if defined).
+        if (doneP.isCompleted)
+          for (tp <- _timeoutPromiseOpt) {
+            DomQuick.clearTimeout( tp.timerId )
+            _timeoutPromiseOpt = None
+          }
+      }
+
+      val unsubscribeF = circuit.subscribe( zoomR ) { valueRO =>
+        if (!doneP.isCompleted) {
+          val v = valueRO.value
+          maybeComplete( v )
+        }
+      }
+
+      maybeComplete( zoomR.value )
+
+      doneP
+        .future
+        .andThen { case _ => unsubscribeF() }
+    }
+
   }
 
 }

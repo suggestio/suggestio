@@ -2,6 +2,12 @@
 set -x
 ## Собрать и установить на android-мобильник.
 
+[[ $(adb devices | wc -l) -le 2 ]] && {
+    echo "!no devices!" >&2
+    exit 0
+}
+
+
 cordova build android $@ && \
     adb $@ install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk
 

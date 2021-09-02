@@ -13,16 +13,17 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
 import io.suggest.os.notify.api.html5.Html5NotificationUtil
-import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
+import io.suggest.perm.{BoolOptPermissionState, CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
 import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.dia.first._
 import io.suggest.log.Log
+import io.suggest.sc.Sc3Circuit
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.DoNothing
+import io.suggest.spa.{CircuitUtil, DoNothing}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -45,12 +46,12 @@ import org.scalajs.dom.experimental.permissions.PermissionName
   * - Если нет доступа к чему-либо, то запросить доступ.
   * - Сохранить в localStorage, что инициализация уже была проведена.
   */
-class WzFirstDiaAh[M](
-                       platformRO       : ModelRO[MPlatformS],
-                       hasBleRO         : ModelRO[Boolean],
-                       modelRW          : ModelRW[M, MWzFirstOuterS],
-                       dispatcher       : Circuit[MScRoot],
-                     )
+class WzFirstDiaAh[M <: AnyRef](
+                                 platformRO       : ModelRO[MPlatformS],
+                                 hasBleRO         : ModelRO[Boolean],
+                                 modelRW          : ModelRW[M, MWzFirstOuterS],
+                                 sc3Circuit       : Sc3Circuit,
+                               )
   extends ActionHandler( modelRW )
   with Log
 { ah =>
@@ -68,14 +69,10 @@ class WzFirstDiaAh[M](
     /** Если пермишшен уже выдан без запроса, то можно запустить дополнительно эффект: */
     def onGrantedByDefault: Option[Effect] =
       Some( requestPermissionFx )
+    /** If defined, the Pot can be used for detection of permission state changes. */
+    def listenChangesOfPot: Option[ModelR[MScRoot, Pot[_]]] = None
   }
-  implicit private class PermSpecOpsExt( private val pss: IterableOnce[IPermissionSpec] ) {
-    /** Найти утиль для пермишшена указанной wz-фазы. */
-    def findPhase(phase: MWzPhase): Option[IPermissionSpec] =
-      pss
-        .iterator
-        .find(_.phase ==* phase)
-  }
+
 
   // Быстрое выставление фрейма.
   private def _setFrame(frame: MWzFrame, v0: MWzFirstOuterS, view0: MWzFirstS) = {
@@ -95,52 +92,65 @@ class WzFirstDiaAh[M](
           view0.frame match {
             case MWzFrames.AskPerm =>
               // Положительный ответ - запросить доступ в реальности.
-              _permPhasesSpecs()
-                .findPhase( view0.phase )
-                .map( _.requestPermissionFx )
-                .fold {
+              (for {
+                phaseSpec <- _permPhasesSpecs().iterator
+                if phaseSpec.phase ==* view0.phase
+              } yield {
+                val permStatePot = v0.perms.getOrElse( view0.phase, Pot.empty )
+                val permStateOpt = permStatePot.toOption
+
+                val hasOnChangeApi = permStateOpt.exists(_.hasOnChangeApi)
+                val timeoutMs = (if (hasOnChangeApi) 10 else 4) * 1000
+
+                // Close InProgress-dialog via timeout:
+                var fxAcc: Effect = Effect {
+                  _permissionTimeout( view0.phase, timeoutMs )
+                    .fut
+                }
+
+                // Subscribe for permission state changes, if possible:
+                if (hasOnChangeApi) for (permState <- permStateOpt) {
+                  fxAcc += Effect.action {
+                    // Subscribe for changes:
+                    permState.onChange { pss: IPermissionState =>
+                      val action = WzPhasePermRes( view0.phase, Success(pss) )
+                      sc3Circuit.dispatch( action )
+                    }
+                    DoNothing
+                  }
+                }
+
+                // Subscribe for changes via some Pot inside Sc state:
+                for (onChangePotZoom <- phaseSpec.listenChangesOfPot) {
+                  fxAcc += Effect {
+                    CircuitUtil
+                      .promiseSubscribe()
+                      .withTimeout( timeoutMs )   // TODO Two timeout here created at once with same millis interval. Replace with timer future completeness.
+                      .zooming( sc3Circuit, onChangePotZoom )
+                      .transform { case tryRes =>
+                        val permResMapped = for (_ <- tryRes) yield {
+                          BoolOptPermissionState( OptionUtil.SomeBool.someTrue )
+                        }
+                        val action = WzPhasePermRes( phaseSpec.phase, permResMapped )
+                        Success(action)
+                      }
+                  }
+                }
+
+                fxAcc += phaseSpec.requestPermissionFx
+
+                // Переключить view в состояние ожидания.
+                val v2 = MWzFirstOuterS.perms.modify {
+                  // set pending state:
+                  _.updated( phaseSpec.phase, permStatePot.pending() )
+                }( _setFrame( MWzFrames.InProgress, v0, view0 ) )
+
+                updated( v2, fxAcc )
+              })
+                .nextOption()
+                .getOrElse {
                   // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
                   _wzGoToNextPhase( v0 )
-
-                } { requestPermissionFx =>
-                  // Эффект разблокировки диалога, чтобы крутилка ожидания не вертелась бесконечно.
-                  val inProgressTimeoutFx = Effect {
-                    // Если доступ поддерживает подписку на изменение статуса, то подписаться + frame=InProgress с долгим таймаутом.
-                    // Если нет подписки, то InProgress + крутилку ожидания с коротким таймаутом в несколько секунд.
-                    // Отказ юзера можно будет перехватить позже.
-                    val inProgressTimeoutSec = (for {
-                      permStatePot  <- v0.perms.get( view0.phase )
-                      permState     <- permStatePot.toOption
-
-                      if permState.hasOnChangeApi && {
-                        // API доступно, но это не значит, что оно работает. Подписаться:
-                        // TODO Надо бы перенести подписку прямо в WzPhasePermRes. Возможна ситуация, что диалог-мастер и фактический запрос геолокации отображаются одновременно.
-                        val tryRes = Try(
-                          permState.onChange { pss: IPermissionState =>
-                            val action = WzPhasePermRes( view0.phase, Success(pss) )
-                            dispatcher.dispatch( action )
-                          }
-                        )
-                        for (ex <- tryRes.failed)
-                          logger.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, (permState, m) )
-                        tryRes.isSuccess
-                      }
-                    } yield {
-                      // Подписка удалась: надо InProgress с длинным таймаутом.
-                      10
-                    })
-                      // Нет возможности подписаться на события. Надо InProgress закрывать по таймауту.
-                      .getOrElse( 3 )
-
-                    _permissionTimeout( view0.phase, inProgressTimeoutSec.seconds.toMillis.toInt )
-                      .fut
-                  }
-
-                  // Переключить view в состояние ожидания.
-                  val v2 = _setFrame( MWzFrames.InProgress, v0, view0 )
-
-                  val fxs = requestPermissionFx + inProgressTimeoutFx
-                  updated( v2, fxs )
                 }
 
             // yes в info-окне означает retry, по идее.
@@ -185,101 +195,113 @@ class WzFirstDiaAh[M](
       val v0 = value
 
       // Save received permission info to current state:
-      val v1: MWzFirstOuterS = MWzFirstOuterS.perms.modify { perms0 =>
-        val permState2 = perms0
-          .getOrElse( m.phase, Pot.empty )
-          .withTry( m.res )
-        perms0.updated( m.phase, permState2 )
-      }(v0)
+      lazy val permOpt0 = v0.perms.get( m.phase )
+      if (
+        m.res.isSuccess || permOpt0.fold(true) { permPot0 =>
+          permPot0.isPending
+        }
+      ) {
+        val v1 = MWzFirstOuterS.perms.set {
+          val permState2 = permOpt0
+            .getOrElse( Pot.empty )
+            .withTry( m.res )
+          v0.perms.updated( m.phase, permState2 )
+        }(v0)
 
-      // Additional effects for all branches, if any:
-      val fxOpt = for {
-        reason <- m.reason
-        onCompleteFx <- reason.onComplete
-        if !v1.perms
-          .valuesIterator
-          .exists(_.isPending)
-      } yield {
-        // No more pending permissions. Do onComplete effect, if any.
-        onCompleteFx
-      }
-
-      // Is wizard visible or background activities?
-      (for {
-        view0 <- v1.view
-      } yield {
-        // Надо понять, сейчас текущая фаза или какая-то другая уже. Всякое бывает.
-        if (m.phase ==* view0.phase) {
-          // Это текущая фаза.
-          val isGrantedOpt =
-            for (permState <- m.res.toOption)
-            yield permState.isGranted
-
-          view0.frame match {
-
-            // Сейчас происходит ожидание ответа юзера в текущей фазе. Всё по плану. Но по плану ли ответ?
-            case MWzFrames.InProgress =>
-              if (isGrantedOpt contains[Boolean] false) {
-                // Юзер не разрешил. Вывести Info с сожалением.
-                val v2 = MWzFirstOuterS.view.set( Ready(
-                  MWzFirstS.frame.set( MWzFrames.Info )(view0)
-                ).pending())(v1)
-                ah.updatedMaybeEffect( v2, fxOpt )
-              } else {
-                // Положительный результат или отсутствие ответа. Просто перейти на следующую фазу:
-                _wzGoToNextPhase( v1, fxOpt )
-              }
-
-            // Ответ по timeout
-            case _ if m.res.isFailure =>
-              ah.updatedSilentMaybeEffect( v1, fxOpt )
-
-            // Ответ от юзера - является ценным.
-            case MWzFrames.Info =>
-              if (isGrantedOpt contains[Boolean] true) {
-                // Положительный ответ + Info => следующая фаза.
-                _wzGoToNextPhase( v1, fxOpt )
-              } else {
-                ah.updatedSilentMaybeEffect( v1, fxOpt )
-              }
-
-            // Ответ юзера наступил во время вопроса текущей фазы.
-            // Возможно, если разрешение было реально запрошено ещё какой-то подсистемой выдачи (за пределами этого диалога), косяк.
-            case ph @ MWzFrames.AskPerm =>
-              logger.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (ph, m) )
-              if (isGrantedOpt contains[Boolean] true) {
-                _wzGoToNextPhase( v1, fxOpt )
-              } else {
-                val v2 = _setFrame( MWzFrames.Info, v1, view0 )
-                ah.updatedMaybeEffect( v2, fxOpt )
-              }
-
-          }
-
-        } else if (view0.phase ==* MWzPhases.Starting) {
-          // Надо показать на экране текущий диалог в разном состоянии.
-          val hasPending = v1.perms
+        // Additional effects for all branches, if any:
+        val fxOpt = for {
+          reason <- m.reason
+          onCompleteFx <- reason.onComplete
+          if !v1.perms
             .valuesIterator
             .exists(_.isPending)
+        } yield {
+          // No more pending permissions. Do onComplete effect, if any.
+          onCompleteFx
+        }
 
-          if (hasPending) {
-            ah.updatedSilentMaybeEffect( v1, fxOpt )
+        // Is wizard visible or background activities?
+        (for {
+          view0 <- v1.view
+        } yield {
+          // Надо понять, сейчас текущая фаза или какая-то другая уже. Всякое бывает.
+          if (m.phase ==* view0.phase) {
+            // Это текущая фаза.
+            val isGrantedOpt =
+              for (permState <- m.res.toOption)
+              yield permState.isGranted
+
+            view0.frame match {
+
+              // Сейчас происходит ожидание ответа юзера в текущей фазе. Всё по плану. Но по плану ли ответ?
+              case MWzFrames.InProgress =>
+                if (isGrantedOpt contains[Boolean] false) {
+                  // Юзер не разрешил. Вывести Info с сожалением.
+                  val v2 = MWzFirstOuterS.view.set( Ready(
+                    MWzFirstS.frame.set( MWzFrames.Info )(view0)
+                  ).pending())(v1)
+                  ah.updatedMaybeEffect( v2, fxOpt )
+                } else {
+                  // Положительный результат или отсутствие ответа. Просто перейти на следующую фазу:
+                  _wzGoToNextPhase( v1, fxOpt )
+                }
+
+              // Ответ по timeout
+              case _ if m.res.isFailure =>
+                ah.updatedSilentMaybeEffect( v1, fxOpt )
+
+              // Ответ от юзера - является ценным.
+              case MWzFrames.Info =>
+                if (isGrantedOpt contains[Boolean] true) {
+                  // Положительный ответ + Info => следующая фаза.
+                  _wzGoToNextPhase( v1, fxOpt )
+                } else {
+                  ah.updatedSilentMaybeEffect( v1, fxOpt )
+                }
+
+              // Ответ юзера наступил во время вопроса текущей фазы.
+              // Возможно, если разрешение было реально запрошено ещё какой-то подсистемой выдачи (за пределами этого диалога), косяк.
+              case ph @ MWzFrames.AskPerm =>
+                logger.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (ph, m) )
+                if (isGrantedOpt contains[Boolean] true) {
+                  _wzGoToNextPhase( v1, fxOpt )
+                } else {
+                  val v2 = _setFrame( MWzFrames.Info, v1, view0 )
+                  ah.updatedMaybeEffect( v2, fxOpt )
+                }
+
+            }
+
+          } else if (view0.phase ==* MWzPhases.Starting) {
+            // Надо показать на экране текущий диалог в разном состоянии.
+            val hasPending = v1.perms
+              .valuesIterator
+              .exists(_.isPending)
+
+            if (hasPending) {
+              ah.updatedSilentMaybeEffect( v1, fxOpt )
+            } else {
+              // Больше нет pending-задач. Переключиться на следующую фазу диалога.
+              _wzGoToNextPhase( v1, fxOpt )
+            }
+
           } else {
-            // Больше нет pending-задач. Переключиться на следующую фазу диалога.
-            _wzGoToNextPhase( v1, fxOpt )
+            // Пока разрешения разруливались, фаза уже изменилась неизвестно куда. Не ясно, возможно ли такое на яву.
+            // Пока просто молча пережёвываем.
+            logger.log( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (m, view0.phase) )
+            ah.updatedSilentMaybeEffect( v1, fxOpt )
+          }
+        })
+          .getOrElse {
+            // Dialog not opened. This is a background testing. Just process state with possible effects.
+            ah.updatedSilentMaybeEffect( v1, fxOpt )
           }
 
-        } else {
-          // Пока разрешения разруливались, фаза уже изменилась неизвестно куда. Не ясно, возможно ли такое на яву.
-          // Пока просто молча пережёвываем.
-          logger.log( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (m, view0.phase) )
-          ah.updatedSilentMaybeEffect( v1, fxOpt )
-        }
-      })
-        .getOrElse {
-          // Dialog not opened. This is a background testing. Just process state with possible effects.
-          ah.updatedSilentMaybeEffect( v1, fxOpt )
-        }
+      } else {
+        // Refusing to update permission state.
+        logger.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, permOpt0.orNull) )
+        noChange
+      }
 
 
     // Start for dumping current permissions states into wizard state.
@@ -355,6 +377,7 @@ class WzFirstDiaAh[M](
         val v2 = MWzFirstOuterS.view.modify(_.unavailable())(v0)
 
         // Ensure geolocation timer on first run after permissions are processed, etc:
+        // TODO XXX GeoLoc Permission request on android always fails with TimeoutException! Also, hasLocationAccess here - fails.
         val fxOpt = Option.when( v2.perms.hasLocationAccess ) {
           Effect.action {
             GeoLocTimerStart(
@@ -493,7 +516,8 @@ class WzFirstDiaAh[M](
         val allFx = (saveFx :: unsubscribeChangesFx :: unRenderFx :: fxAcc)
           .mergeEffects
           .get
-        effectOnly( allFx )
+        // Usually, here is updated value received. So, store new state value silently.
+        updatedSilent( v0, allFx )
       }
   }
 
@@ -564,12 +588,20 @@ class WzFirstDiaAh[M](
       override def requestPermissionFx = Effect.action {
         GeoLocOnOff( enabled = true, isHard = true )
       }
-      //override def onGrantedByDefault = Some {
-      //  requestPermissionFx + Effect.action {
-      //    GeoLocTimerStart(MScSwitchCtx(MScIndexArgs(geoIntoRcvr = true)))
-      //  }
-      //}
-
+      override def listenChangesOfPot = Some {
+        sc3Circuit.scGeoLocRW.zoom[Pot[_]] { scGeoLoc =>
+          (for {
+            glWatcher <- scGeoLoc.watchers.valuesIterator
+            pot = glWatcher.watchId
+            // TODO Commented code, because watchers map have lenght 0 or 1. For many items, need to uncomment.
+            //if pot !=* Pot.empty
+          } yield {
+            pot
+          })
+            .nextOption()
+            .getOrElse( Pot.empty )
+        }
+      }
     } #:: new IPermissionSpec {
       // Bluetooth
       override def phase = MWzPhases.BlueToothPerm
