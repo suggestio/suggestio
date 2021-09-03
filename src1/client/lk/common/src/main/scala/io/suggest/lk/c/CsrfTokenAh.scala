@@ -68,12 +68,15 @@ class CsrfTokenAh[M](
           {ex =>
             // При ошибке - залоггировать, попробовать снова:
             logger.error( ErrorMsgs.SRV_REQUEST_FAILED, ex, m )
-            val retryFx = m.reason
+            var fxAcc: Effect = m.reason
               .toEffectPure
               .after( 2.seconds )
+
             // Проверить соединение с инетом.
-            val fx = onError.fold(retryFx)(m => m() + retryFx)
-            Some(fx)
+            for (fxF <- onError)
+              fxAcc += fxF()
+
+            Some(fxAcc)
           },
           {_ =>
             // Всё ок - запустить эффект, идущий следом:

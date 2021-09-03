@@ -257,7 +257,7 @@ case class SettingsDiaOpen(opened: Boolean) extends IScSettingsAction
 case class SettingsRestore( data: Pot[Option[MScSettingsData]] = Pot.empty ) extends IScSettingsAction
 
 /** Выставление настройки выдачи в новое значение. */
-case class SettingSet( key: String, value: JsValue, save: Boolean ) extends IScSettingsAction
+case class SettingSet( key: String, value: JsValue, save: Boolean, runSideEffect: Boolean = true ) extends IScSettingsAction
 
 /** Использовать значение сеттинга для генерации возможного эффекта.
   * @param fx Если JsValue == JsNull, то значит значение настройки отсутствует вообще в хранилище, либо хранится как null.

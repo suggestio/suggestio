@@ -1,6 +1,6 @@
 package io.suggest.ad.edit
 
-import com.materialui.{Mui, MuiThemeProvider}
+import com.materialui.Mui
 import com.softwaremill.macwire._
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.init.routed.InitRouter

@@ -111,8 +111,12 @@ class ScSettingsDiaAh[M](
 
       // Организуем эффект независимо от того, изменилась ли настройка - на случай каких-то ошибок,
       // чтобы они могли быть отработаны на нижнем уровне.
-      val K = ConfConst.ScSettings
-      val okFxOpt: Option[Effect] = if (m.key ==* K.BLUETOOTH_BEACONS_ENABLED) {
+      import ConfConst.{ScSettings => K}
+      val okFxOpt: Option[Effect] = if (!m.runSideEffect) {
+        // Force ignore setting change at current runtime, only save setting value into storage.
+        None
+
+      } else if (m.key ==* K.BLUETOOTH_BEACONS_ENABLED) {
         val fx = Effect.action {
           BtOnOff(
             isEnabled = OptionUtil.SomeBool( isEnabled2 ),
@@ -157,37 +161,43 @@ class ScSettingsDiaAh[M](
         None
       }
 
-      var fxAcc: Effect = okFxOpt getOrElse {
+      var fxAcc = List.empty[Effect]
+      for (okFx <- okFxOpt)
+        fxAcc ::= okFx
+
+      // If expected side-effect is missing, set error into state:
+      val isSideEffectOk = !m.runSideEffect || okFxOpt.nonEmpty
+      if (!isSideEffectOk) {
         val msgCode = ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT
         logger.error( msgCode, msg = m )
-        // Закинуть ошибку в состояние:
-        Effect.action {
+        fxAcc ::= Effect.action {
           SettingsRestore( Pot.empty.fail( new IllegalArgumentException(msgCode) ) )
         }
       }
 
-      val v2Opt = for {
-        _ <- okFxOpt
-        scSettings0 = v0.data getOrElse MScSettingsData.empty
-        if !scSettings0.data
-          .value
-          .get( m.key )
-          .contains( m.value )
-      } yield {
-        val scSettings2 = MScSettingsData.data
-          .modify(_ + (m.key -> m.value))( scSettings0 )
+      val v2Opt = OptionUtil.maybeOpt( isSideEffectOk ) {
+        val scSettings0 = v0.data getOrElse MScSettingsData.empty
+        Option.when(
+          !scSettings0.data
+            .value
+            .get( m.key )
+            .contains( m.value )
+        ) {
+          val scSettings2 = MScSettingsData.data
+            .modify(_ + (m.key -> m.value))( scSettings0 )
 
-        val v2 = MScSettingsDia.data
-          .modify( _.ready(scSettings2) )(v0)
+          val v2 = MScSettingsDia.data
+            .modify( _.ready(scSettings2) )(v0)
 
-        // Если save=true, okFx не пустой, и настройки вроде бы изменились, то обновить настройки.
-        if (m.save)
-          fxAcc += _saveSettingFx(scSettings2)
+          // If save=true and sideEffect is ok, and setting is changed, then save settings into storage.
+          if (m.save)
+            fxAcc ::= _saveSettingFx(scSettings2)
 
-        v2
+          v2
+        }
       }
 
-      ah.optionalResult( v2Opt, Some(fxAcc), silent = true )
+      ah.optionalResult( v2Opt, fxAcc.mergeEffects, silent = true )
 
 
     // Процесс восстановление ранее сохраненённых настроек.

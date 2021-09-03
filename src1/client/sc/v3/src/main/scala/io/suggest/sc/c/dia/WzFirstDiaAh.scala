@@ -6,6 +6,7 @@ import diode.Implicits._
 import diode.data.{Pot, Ready}
 import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.conf.ConfConst
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
@@ -14,7 +15,7 @@ import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
 import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{BoolOptPermissionState, CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, MScRoot, ResetUrlRoute}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, MScRoot, ResetUrlRoute, SettingSet}
 import io.suggest.sc.m.dia.first._
 import io.suggest.log.Log
 import io.suggest.sc.Sc3Circuit
@@ -33,6 +34,7 @@ import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
 import io.suggest.sc.u.Sc3ConfUtil
 import org.scalajs.dom.experimental.permissions.PermissionName
+import play.api.libs.json.JsBoolean
 
 /**
   * Suggest.io
@@ -71,6 +73,8 @@ class WzFirstDiaAh[M <: AnyRef](
       Some( requestPermissionFx )
     /** If defined, the Pot can be used for detection of permission state changes. */
     def listenChangesOfPot: Option[ModelR[MScRoot, Pot[_]]] = None
+    /** Update saved settings, when permission grants or denies. */
+    def settingKeys: List[String]
   }
 
 
@@ -79,6 +83,28 @@ class WzFirstDiaAh[M <: AnyRef](
     val view2 = (MWzFirstS.frame set frame)(view0)
     (MWzFirstOuterS.view set Ready( view2 ).pending())(v0)
   }
+
+  /** Make Effect of updating phase-related settings. */
+  private def _emitSettingFx(phaseSpec: IPermissionSpec, isGranted: Boolean): Option[Effect] = {
+    val settingsKeys = phaseSpec.settingKeys
+    OptionUtil.maybeOpt( settingsKeys.nonEmpty ) {
+      val settingValue = JsBoolean( isGranted )
+      (for {
+        settingsKey <- settingsKeys.iterator
+      } yield {
+        Effect.action {
+          SettingSet(
+            key   = settingsKey,
+            value = settingValue,
+            save  = true,
+            runSideEffect = false,
+          )
+        }
+      })
+        .mergeEffects
+    }
+  }
+
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -201,24 +227,39 @@ class WzFirstDiaAh[M <: AnyRef](
           permPot0.isPending
         }
       ) {
-        val v1 = MWzFirstOuterS.perms.set {
-          val permState2 = permOpt0
-            .getOrElse( Pot.empty )
-            .withTry( m.res )
-          v0.perms.updated( m.phase, permState2 )
-        }(v0)
+        val permStatePot2 = permOpt0
+          .getOrElse( Pot.empty )
+          .withTry( m.res )
+        val v1 = MWzFirstOuterS.perms.modify( _.updated( m.phase, permStatePot2 ) )(v0)
+
+        var fxAcc = List.empty[Effect]
 
         // Additional effects for all branches, if any:
-        val fxOpt = for {
+        for {
           reason <- m.reason
           onCompleteFx <- reason.onComplete
-          if !v1.perms
+          stillHavePendingPerm = v1.perms
             .valuesIterator
             .exists(_.isPending)
-        } yield {
+          if !stillHavePendingPerm
+        } {
           // No more pending permissions. Do onComplete effect, if any.
-          onCompleteFx
+          fxAcc ::= onCompleteFx
         }
+
+        // Update settings, if permission explicitly granted or denied.
+        for {
+          permState2  <- permStatePot2
+          isGranted   = permState2.isGranted
+          if isGranted
+          phaseSpec   <- _permPhasesSpecs()
+          if phaseSpec.phase ==* m.phase
+          fx <- _emitSettingFx( phaseSpec, isGranted )
+        } {
+          fxAcc ::= fx
+        }
+
+        val fxOpt = fxAcc.mergeEffects
 
         // Is wizard visible or background activities?
         (for {
@@ -462,7 +503,14 @@ class WzFirstDiaAh[M <: AnyRef](
               for {
                 permSpec <- _permPhasesSpecs().iterator
                 if permSpec.phase ==* nextPhase
-                fx <- permSpec.onGrantedByDefault
+                fx <- (
+                  permSpec.onGrantedByDefault ::
+                  _emitSettingFx(permSpec, isGranted = true)::
+                  Nil
+                )
+                  .iterator
+                  .flatten
+                  .reduceOption(_ + _ )
               } {
                 fxAcc ::= fx
               }
@@ -602,6 +650,7 @@ class WzFirstDiaAh[M <: AnyRef](
             .getOrElse( Pot.empty )
         }
       }
+      override def settingKeys = ConfConst.ScSettings.LOCATION_ENABLED :: Nil
     } #:: new IPermissionSpec {
       // Bluetooth
       override def phase = MWzPhases.BlueToothPerm
@@ -618,7 +667,11 @@ class WzFirstDiaAh[M <: AnyRef](
           ),
         )
       }
-
+      override def settingKeys = {
+        ConfConst.ScSettings.BLUETOOTH_BEACONS_ENABLED ::
+        ConfConst.ScSettings.BLUETOOTH_BEACONS_BACKGROUND_SCAN ::
+        Nil
+      }
     } #:: new IPermissionSpec {
       // Notifications
       override def phase = MWzPhases.NotificationPerm
@@ -647,7 +700,7 @@ class WzFirstDiaAh[M <: AnyRef](
       override def requestPermissionFx: Effect =
         NotificationPermAsk( isVisible = true ).toEffectPure
       override def onGrantedByDefault = None
-
+      override def settingKeys = ConfConst.ScSettings.NOTIFICATIONS_ENABLED :: Nil
     } #:: /*new IPermissionSpec {
       // NFC
       override def phase = MWzPhases.Nfc

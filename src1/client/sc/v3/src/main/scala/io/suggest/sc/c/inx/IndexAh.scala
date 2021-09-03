@@ -89,8 +89,9 @@ object IndexAh {
     for {
       scSwitch      <- m.switchCtxOpt
       afterSwitchFx <- scSwitch.afterIndex
-    }
+    } {
       fxsAcc ::= afterSwitchFx
+    }
 
     val nextIndexView = MIndexView(
       rcvrId    = inx.nodeId,
@@ -178,11 +179,6 @@ object IndexAh {
         if (s0.geo.mapInit.loader.nonEmpty)
           s0 = s0.resetMapLoader
 
-        // Сбросить текст поиска, чтобы теги отобразились на экране.
-        // TODO Выключено, т.к. неудобно перебирать найденные узлы: надо постоянно их список заново искать-скроллить.
-        //if (s0.text.query.nonEmpty)
-        //  fxsAcc ::= SearchTextChanged("").toEffectPure
-
         // Сбросить selTagIds, если изменились.
         val qsTagIds = m.qs.search.tagNodeId
           .map(_.id)
@@ -204,21 +200,19 @@ object IndexAh {
     if (i1.search.panel.opened && !(respActionTypes contains MScRespActionTypes.SearchNodes))
       fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
 
-    // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
-    fxsAcc ::= ResetUrlRoute().toEffectPure >>
-      // Затем, надо добавить новое состояние индекса в "недавние":
-      SaveRecentIndex().toEffectPure
-
     // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
-    for (fx <- _gridReLoadFx(
-      respActionTypes,
-      m.switchCtxOpt
-        // Клик по блоку с последующим index ad open не должен приводить к эффектам сброса плитки и т.д.
-        .filter { _ =>
-          !m.switchCtxOpt.exists(_.viewsAction ==* MScSwitchCtx.ViewsAction.PUSH)
-        }
-    ))
-      fxsAcc ::= fx
+    for {
+      gridReloadFx <- _gridReLoadFx(
+        respActionTypes,
+        m.switchCtxOpt
+          // Клик по блоку с последующим index ad open не должен приводить к эффектам сброса плитки и т.д.
+          .filter { _ =>
+            !m.switchCtxOpt.exists(_.viewsAction ==* MScSwitchCtx.ViewsAction.PUSH)
+          }
+      )
+    } {
+      fxsAcc ::= gridReloadFx
+    }
 
     // Если открыта форма логина, но индекс сообщает, что isLoggedIn, то сразу закрыть форму логина:
     if (i1.isLoggedIn && mroot.dialogs.login.isDiaOpened)
@@ -274,8 +268,17 @@ object IndexAh {
     if (plat.isCordova && plat.isReady)
       fxsAcc ::= osStatusBarColorFx( i1.scCss, usePanelColor = i1.isAnyPanelOpened )
 
-    val fxOpt = fxsAcc.mergeEffects
-    ActionResult( Some(i1), fxOpt )
+    // Possibly, need to update URL due to changes in index state.
+    val afterFx =
+      ResetUrlRoute().toEffectPure >>
+      // Also, after URL update, need to add newest index into "recents":
+      SaveRecentIndex().toEffectPure
+
+    val fxTotal = fxsAcc
+      .mergeEffects
+      .fold( afterFx )(_ >> afterFx)
+
+    ActionResult( Some(i1), Some(fxTotal) )
   }
 
   def _inx_state_switch_ask_LENS = MScIndex.state
@@ -758,7 +761,6 @@ class IndexAh[M](
                 Left( updated(v2, fx) )
               }
             } { nodeId =>
-              println(3, nodeId)
               // Выбран конкретный узел в списке.
               switchS0.nodesResp
                 .nodesMap
@@ -766,7 +768,6 @@ class IndexAh[M](
                 .map(m => Right(m.props))
             }
             .fold [ActionResult[M]] {
-              println(4)
               // Не надо переключаться ни в какой узел. Просто сокрыть диалог.
               // Возможно, юзер не хочет уходить из текущего узла в новую определённую локацию.
               val v2 = cleanedState
