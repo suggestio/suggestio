@@ -1,6 +1,6 @@
 package io.suggest.lk.u
 
-import com.materialui.{Mui, MuiStyledEngineProvider, MuiStylesProvider, MuiThemeProvider}
+import com.materialui.{Mui, MuiTheme, MuiThemeProvider}
 import japgolly.scalajs.react.vdom.html_<^._
 
 /**
@@ -11,12 +11,15 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object MaterialUiUtil {
 
+  /** Default material-ui theme instance. */
   lazy val defaultTheme = Mui.Styles.createTheme()
 
-  def defaultThemeProvider(children: VdomNode*) = {
+
+  /** Wrap children-VDOM into theme provider. */
+  def provideTheme(muiTheme: MuiTheme = defaultTheme)(children: VdomNode*) = {
     MuiThemeProvider.component(
       new MuiThemeProvider.Props {
-        override val theme = defaultTheme
+        override val theme = muiTheme
       }
     )(children: _*)
   }
@@ -29,33 +32,18 @@ object MaterialUiUtil {
     */
   def postprocessTopLevel(appComp: VdomElement): VdomElement = {
     // Add default theme:
-    defaultThemeProvider(
+    provideTheme()(
       postprocessTopLevelOnlyStyles( appComp ),
     )
   }
 
 
+  /** Additional top-level wrap components may be defined here.
+    * During v4 => v5 migration, there was some stuff for JSS/StyledComponents contexts.
+    */
   def postprocessTopLevelOnlyStyles(appComp: VdomElement): VdomElement = {
-    // (emoution mui-v5) - это Mui.StyledEngineProvider. Требуется рендерить по-выше в head, чтобы старые стили оказались ниже и имели приоритет над emotion.
-    /*MuiStyledEngineProvider.component(
-      new MuiStyledEngineProvider.Props {
-        override val injectFirst = true
-      }
-    )(
-
-      // (JSS mui-v4) - StylesProvider: На время миграции v4-v5 требуется ручное управление StylesProvider,
-      // чтобы старые стили имели приоритет над emoution.
-      // https://github.com/mui-org/material-ui/pull/24693 - [Switch] migrate to emoution
-      MuiStylesProvider.component(
-        // Нет смысла делать эти пропертисы явно-статическими: этот код вызывается максимум один раз в любой форме (т.к. монтирование корня формы идёт через circuit.wrap() )
-        new MuiStylesProvider.Props {
-          override val injectFirst = false
-        }
-      )(*/
-        appComp
-      //),
-
-    //)
+    // 2021-09-03 Nothing to do here, by now.
+    appComp
   }
 
 }

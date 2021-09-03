@@ -22,6 +22,8 @@ trait INfcApi {
   def scan(props: NfcScanProps): NfcPendingState
 
   def write(message: Seq[WRecord_t], options: NfcWriteOptions = NfcWriteOptions.empty): NfcPendingState
+  def clearSessionOpen(): Future[_] =
+    Future.successful(())
 
   def canMakeReadOnly: Boolean
   def makeReadOnly(): NfcPendingState

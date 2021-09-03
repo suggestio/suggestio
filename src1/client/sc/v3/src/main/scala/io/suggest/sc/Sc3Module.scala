@@ -524,6 +524,7 @@ class Sc3Module extends Log { outer =>
           .value
           .flatMap(_.id)
       }
+      override def appOsFamily = sc3Circuit.platformRW.value.osFamily
     }
   }
   def getNodesFormCircuit = () => ScNodesFormModule.lkNodesFormCircuit

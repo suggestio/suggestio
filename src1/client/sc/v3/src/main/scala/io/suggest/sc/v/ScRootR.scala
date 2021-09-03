@@ -103,17 +103,6 @@ class ScRootR (
         },
       )
 
-      // Диалог логина.
-      val loginDia = mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply )
-      val snackBar = scSnacksR.component( mrootProxy )
-      val settings = scSettingsDiaR.component( mrootProxy )
-      val nodes = scNodesR.component( mrootProxy )
-      // Диалог скачивания приложения - отображается только в браузере.
-      val dlApp = ReactCommonUtil.maybeNode( mrootProxy.value.dev.platform.isDlAppAvail ) {
-        dlAppDiaR.component( mrootProxy )
-      }
-      val logout = mrootProxy.wrap( _.dialogs.login.logout )( logOutDiaR.component.apply )
-
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       val sc = React.Fragment(
 
@@ -131,35 +120,35 @@ class ScRootR (
           )
         },
 
-
         // Рендер провайдера тем MateriaUI, который заполняет react context.
-        {
-
-          s.colorsC { mcolorsProxy =>
-            val _theme = scThemes.muiDefault( mcolorsProxy.value )
-            // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
-            muiThemeCtxP.provide( _theme )(
-              MuiThemeProvider.component(
-                new MuiThemeProvider.Props {
-                  override val theme = _theme
-                }
-              )(
-                scWithSideBars,
-              ),
-
+        s.colorsC { mcolorsProxy =>
+          val _theme = scThemes.muiDefault( mcolorsProxy.value )
+          // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
+          muiThemeCtxP.provide( _theme )(
+            MaterialUiUtil.provideTheme( _theme )(
+              scWithSideBars,
             )
-          }
+          )
         },
 
-        MaterialUiUtil.defaultThemeProvider(
-          // Диалог управления узлами. Без темы, иначе дизайн сыплется.
-          loginDia,
-          nodes,
-          settings,
-          dlApp,
-          logout,
-          snackBar,
-        )
+        // Default-themed forms/dialogs. Theme-provider is mandatory, because PlatformComponents with iOS-style
+        // needs withStyles(), that implicitly utilizing ThemeProvider context.
+        MaterialUiUtil.provideTheme()(
+          // Login form
+          mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply ),
+          // Snackbar
+          scSnacksR.component( mrootProxy ),
+          // Settings dialog
+          scSettingsDiaR.component( mrootProxy ),
+          // Nodes management form.
+          scNodesR.component( mrootProxy ),
+          // Application download dialog: visible only in browser.
+          ReactCommonUtil.maybeNode( mrootProxy.value.dev.platform.isDlAppAvail ) {
+            dlAppDiaR.component( mrootProxy )
+          },
+          // Logout dialog
+          mrootProxy.wrap( _.dialogs.login.logout )( logOutDiaR.component.apply ),
+        ),
 
       )
 

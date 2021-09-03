@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.{ActionResult, Effect}
+import io.suggest.dev.MOsFamily
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.nfc.INfcApi
 import io.suggest.nfc.web.WebNfcApi
@@ -54,6 +55,11 @@ trait NodesDiConf extends IMHttpClientConfig {
     * may be used in non-ad Nodes-form mode. */
   def contextAdId(): Option[String]
 
+  /** If browser - must be None.
+    * If cordova - return current device operating system family.
+    */
+  def appOsFamily: Option[MOsFamily]
+
 }
 
 
@@ -76,6 +82,7 @@ object NodesDiConf {
       Option.when( webNfc.isApiAvailable() )( webNfc )
     }
     override def contextAdId() = None
+    override def appOsFamily = None
   }
 
 }

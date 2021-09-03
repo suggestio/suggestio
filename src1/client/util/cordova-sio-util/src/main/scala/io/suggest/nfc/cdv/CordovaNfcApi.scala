@@ -233,6 +233,9 @@ class IosNfcApi extends CordovaNfcApi {
     )
   }
 
+  override def clearSessionOpen(): Future[_] =
+    cdv.Nfc.cancelScan().toFuture
+
 }
 
 

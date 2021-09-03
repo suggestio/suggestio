@@ -1,6 +1,7 @@
 {
   "config_ios": {
     "NSBluetoothAlwaysUsageDescription": "Bluetooth access allows auto-detection offers placed inside Bluetooth-beacons nearby.",
-    "NSLocationWhenInUseUsageDescription": "Location access needed for finding offers nearby and for map activity."
+    "NSLocationWhenInUseUsageDescription": "Location access needed for finding offers nearby and for map activity.",
+    "NFCReaderUsageDescription": "NFC access is needed to write Suggest.io links into NFC-tags."
   }
 }

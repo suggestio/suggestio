@@ -1,6 +1,7 @@
 {
   "config_ios": {
     "NSBluetoothAlwaysUsageDescription": "Включение Bluetooth позволит обнаруживать предложения, размещённые в Bluetooth-маячках рядом с вами.",
-    "NSLocationWhenInUseUsageDescription": "Доступ к геолокации необходим для обнаружения предложений рядом с вами и для корректной работы карты."
+    "NSLocationWhenInUseUsageDescription": "Доступ к геолокации необходим для обнаружения предложений рядом с вами и для корректной работы карты.",
+    "NFCReaderUsageDescription": "Доступ к NFC позволяет записывать ссылки на Suggest.io в NFC-теги."
   }
 }

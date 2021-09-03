@@ -153,6 +153,7 @@
             </array>
         </config-file>
 	<custom-config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription" mode="delete" />
+	<preference name="NFC_USAGE_DESCRIPTION" default="Write NFC tags with Suggest.io links." />
     </platform>
     <preference name="BackgroundColor" value="0xff2d3d4e" />
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
