@@ -339,8 +339,10 @@ class WzFirstDiaAh[M <: AnyRef](
           }
 
       } else {
-        // Refusing to update permission state.
-        logger.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, permOpt0.orNull) )
+        // Refusing to update permission state. Logging only something useful:
+        if (!m.res.failed.toOption.exists(_.isInstanceOf[TimeoutException]))
+          logger.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, permOpt0.orNull) )
+
         noChange
       }
 

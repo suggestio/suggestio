@@ -155,7 +155,7 @@ final case class MLogMsg(
 
 
   override def toString: ErrorMsg_t = {
-    val sb = new StringBuilder( 512 )
+    val sb = new StringBuilder( 1024 )
 
     val s = HtmlConstants.SPACE
 

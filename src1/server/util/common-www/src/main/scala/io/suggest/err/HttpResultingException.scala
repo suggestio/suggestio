@@ -3,6 +3,7 @@ package io.suggest.err
 import play.api.mvc.Result
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NoStackTrace
 
 /**
   * Suggest.io
@@ -33,6 +34,7 @@ case class HttpResultingException(
                                    httpResFut: Future[Result]
                                  )
   extends RuntimeException
+  with NoStackTrace
 {
 
   override final def toString: String =

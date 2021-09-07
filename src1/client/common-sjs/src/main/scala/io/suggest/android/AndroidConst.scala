@@ -23,6 +23,7 @@ object AndroidConst {
     object Action {
       final def MAIN = Words( ANDROID, INTENT, ACTION, "MAIN" )
       final def NDEF_DISCOVERED = Words( ANDROID, NFC, ACTION, "NDEF_DISCOVERED" )
+      final def TECH_DISCOVERED = Words( ANDROID, NFC, ACTION, "TECH_DISCOVERED" )
     }
   }
 

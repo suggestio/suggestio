@@ -31,9 +31,7 @@ final class RemoteLogAppender( httpConfig: () => HttpClientConfig )
       // где-то на уровне тестов или где-то ещё.
       route = routes.controllers.RemoteLogs.receive(),
       data = HttpReqData(
-        headers = Map(
-          HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON,
-        ),
+        headers = HttpReqData.headersJsonSend,
         body = Json
           .toJson( logReport )
           .toString(),
@@ -41,7 +39,8 @@ final class RemoteLogAppender( httpConfig: () => HttpClientConfig )
       ),
     )
 
-    val fut = HttpClient.execute( req )
+    val fut = HttpClient
+      .execute( req )
       .respAuthFut
       .successIfStatus( HttpConst.Status.NO_CONTENT )
 

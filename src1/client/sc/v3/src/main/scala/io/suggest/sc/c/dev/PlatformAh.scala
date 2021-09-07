@@ -17,7 +17,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PeripheralStartStop, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PeripheralStartStop, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, SettingsRestore, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.c.android.ScIntentsAh
@@ -412,6 +412,9 @@ final class PlatformAh[M](
 
           // Проверить соединение с интернетом, выведя плашку с ошибкой при необходимости:
           fxAcc ::= OnlineInit(true).toEffectPure
+
+          // Read/restore settings in memory. Early, but still in parallel.
+          fxAcc ::= SettingsRestore().toEffectPure
 
           // Инициализировать список последних узлов, когда платформа будет готова к RW-хранилищу и HTTP-запросам актуализации сохранённого списка.
           // Например, cordova-fetch может быть не готова на iOS до platform-ready.

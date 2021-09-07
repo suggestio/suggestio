@@ -51,6 +51,7 @@ class ScSettingsDiaAh[M](
     // Запрос на использование настройки для сборки опционального эффекта.
     case m: SettingEffect =>
       val v0 = value
+      // TODO Что-то тут не работает чтением/сохранением значений. Надо отладить.
 
       val settingValue = v0.data
         .toOption

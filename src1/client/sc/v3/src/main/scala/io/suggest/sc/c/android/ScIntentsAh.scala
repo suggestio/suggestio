@@ -12,6 +12,7 @@ import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.spa.{DAction, SioPagesUtilJs}
 
 import java.net.URI
+import scala.scalajs.js
 import scala.scalajs.js.JSON
 
 /** Controller for Android Intents processing.
@@ -87,4 +88,7 @@ object ScIntentsAh extends Log {
 sealed trait IIntentAction extends DAction
 
 /** Intent received. Action to process one intent. */
-case class HandleIntent( intent: Intent ) extends IIntentAction
+case class HandleIntent( intent: Intent ) extends IIntentAction {
+  override def toString =
+    productPrefix + "(" + JSON.stringify(intent, null: js.Array[js.Any], space = 2) + ")"
+}
