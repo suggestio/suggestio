@@ -16,4 +16,8 @@ object I18nConst {
 
   def LANG_SUBMIT_FN = "lang"
 
+  /** Name of language-code cookie.
+    * Must be sync. with application.conf `play.i18n.langCookieName`. */
+  def LANG_COOKIE_NAME = "l"
+
 }

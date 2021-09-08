@@ -60,4 +60,11 @@ object MLanguage {
   implicit def languageFormat: Format[MLanguage] =
     EnumeratumUtil.valueEnumEntryFormat( MLanguages )
 
+
+  implicit final class LanguageExt( private val lang: MLanguage ) extends AnyVal {
+
+    def iso2alpha: String = lang.value
+
+  }
+
 }

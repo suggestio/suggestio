@@ -4,6 +4,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import java.net.URI
 import io.suggest.common.html.HtmlConstants
+import io.suggest.i18n.I18nConst
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.HttpConst
@@ -11,7 +12,7 @@ import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
 import io.suggest.proto.http.client.cache.HttpCaching
-import io.suggest.proto.http.cookie.{HttpCookieUtil, MCookieMeta, MCookieState}
+import io.suggest.proto.http.cookie.{HttpCookieUtil, MCookieMeta, MCookieState, MHttpCookieParsed}
 import io.suggest.proto.http.model.{HttpReq, HttpReqAdp, HttpResp, IHttpResultHolder}
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sec.SessionConst
@@ -155,11 +156,17 @@ object HttpClient extends Log {
 
     // Собрать все заголовки запроса воедино:
     val allHeaders = {
-      var hdrs0 = httpReq.data.headers
+      var cookiesAcc = List.empty[MHttpCookieParsed]
 
-      // Залить baseHeaders в заголовки запроса, но с приоритетом исходных заголовков:
-      if (httpReq.data.config.baseHeaders.nonEmpty)
-        hdrs0 = httpReq.data.config.baseHeaders ++ hdrs0
+      // Add lang.cookie, if any:
+      for {
+        lang <- httpReq.data.config.language
+      } {
+        cookiesAcc ::= MHttpCookieParsed(
+          name  = I18nConst.LANG_COOKIE_NAME,
+          value = lang.value,
+        )
+      }
 
       // Если sessionToken доступен, то закинуть его в заголовки:
       for {
@@ -186,8 +193,23 @@ object HttpClient extends Log {
           r
         }
       } {
-        val cookieValue = sessionCookie.parsed.toCookie
-        hdrs0 += (HttpConst.Headers.COOKIE -> cookieValue)
+        cookiesAcc ::= sessionCookie.parsed
+      }
+
+      var hdrs0 = httpReq.data.headers
+
+      // Залить baseHeaders в заголовки запроса, но с приоритетом исходных заголовков:
+      if (httpReq.data.config.baseHeaders.nonEmpty)
+        hdrs0 = httpReq.data.config.baseHeaders ++ hdrs0
+
+      // Append cookie header, if there are any cookies:
+      if (cookiesAcc.nonEmpty) {
+        val cookieHeaderValue = cookiesAcc
+          .iterator
+          .map(_.toCookie)
+          .mkString(", ")
+
+        hdrs0 += (HttpConst.Headers.COOKIE -> cookieHeaderValue)
       }
 
       hdrs0
@@ -212,6 +234,7 @@ object HttpClient extends Log {
         respHolder.mapResult { httpRespFut =>
           for (httpResp <- httpRespFut) yield {
             val setCookies = httpResp.getHeader( HttpConst.Headers.SET_COOKIE )
+
             (for {
               oneCookieV <- setCookies.iterator
               cookiesParsed <- {

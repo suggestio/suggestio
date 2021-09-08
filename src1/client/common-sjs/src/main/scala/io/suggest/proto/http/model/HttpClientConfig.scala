@@ -1,5 +1,6 @@
 package io.suggest.proto.http.model
 
+import io.suggest.i18n.MLanguage
 import io.suggest.proto.http.cookie.MCookieState
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -34,6 +35,7 @@ object HttpClientConfig {
   * @param forcePostBodyNonEmpty Для POST-запросов fetch через okhttp без тела может вылетать ошибка вида:
   *                              "method POST must have request body".
   *                              Выставление этого флага заставляет передавать пустое тело запроса.
+  * @param language Cordova-only: Set suggest.io and/or other headers/cookies to requests to be in customized language.
   */
 case class HttpClientConfig(
                              csrfToken          : Option[MCsrfToken]            = None,
@@ -43,6 +45,7 @@ case class HttpClientConfig(
                              cookieDomainDflt   : Option[() => String]          = None,
                              fetchApi           : Option[(RequestInfo, RequestInit) => Future[HttpResp]] = None,
                              forcePostBodyNonEmpty: Boolean                     = false,
+                             language           : Option[MLanguage]             = None,
                            )
 
 trait IMHttpClientConfig {

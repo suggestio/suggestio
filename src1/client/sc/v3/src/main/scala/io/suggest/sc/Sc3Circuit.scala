@@ -41,7 +41,7 @@ import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS, MScAdData}
-import io.suggest.sc.m.in.{MInternalInfo, MScDaemon, MScInternals}
+import io.suggest.sc.m.in.{MInternalInfo, MScDaemon, MScInternals, MScReactCtx}
 import io.suggest.sc.m.inx.{IIndexAction, IWelcomeAction, MScIndex, MScIndexState}
 import io.suggest.sc.m.menu.{IScAppAction, MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
@@ -258,7 +258,7 @@ class Sc3Circuit(
   private[sc] def currRouteRW     = mkLensZoomRW( internalsInfoRW, MInternalInfo.currRoute )
 
   private[sc] val indexRW         = mkLensRootZoomRW(this, MScRoot.index)(MScIndexFastEq)
-  private[sc] def titlePartsRO    = rootRW.zoom [List[String]] { mroot =>
+  private[sc] def titlePartsRO    = zoom [List[String]] { mroot =>
     var acc = List.empty[String]
 
     // Заголовок узла.
@@ -366,6 +366,7 @@ class Sc3Circuit(
   private def delayerRW           = mkLensZoomRW( internalsRW, MScInternals.delayer )
 
   private[sc] def reactCtxRW      = mkLensZoomRW( internalsInfoRW, MInternalInfo.reactCtx )
+  private[sc] def languageRW      = mkLensZoomRW( reactCtxRW, MScReactCtx.language )
 
   /** Текущая открытая карточка, пригодная для операций над ней: размещение в маячке, например. */
   private[sc] def focusedAdRO     = gridRW.zoom [Option[MScAdData]] { mgrid =>

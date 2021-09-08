@@ -14,6 +14,10 @@ object AndroidConst {
     final def INTENT = "intent"
     final def ACTION = "action"
 
+    final def NDEF = "NDEF"
+    final def TECH = "TECH"
+    final def _DISCOVERED = "_DISCOVERED"
+
   }
 
   import Words._
@@ -22,8 +26,8 @@ object AndroidConst {
   object Intent {
     object Action {
       final def MAIN = Words( ANDROID, INTENT, ACTION, "MAIN" )
-      final def NDEF_DISCOVERED = Words( ANDROID, NFC, ACTION, "NDEF_DISCOVERED" )
-      final def TECH_DISCOVERED = Words( ANDROID, NFC, ACTION, "TECH_DISCOVERED" )
+      final def NDEF_DISCOVERED = Words( ANDROID, NFC, ACTION, NDEF + _DISCOVERED )
+      final def TECH_DISCOVERED = Words( ANDROID, NFC, ACTION, TECH + _DISCOVERED )
     }
   }
 

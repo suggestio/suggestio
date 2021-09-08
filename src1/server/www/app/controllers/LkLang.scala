@@ -3,7 +3,7 @@ package controllers
 import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
-import io.suggest.i18n.I18nConst
+import io.suggest.i18n.{I18nConst, MLanguages}
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.playx.AppModeExt
@@ -80,8 +80,9 @@ final class LkLang @Inject() (
       }
       .toMap
 
+    val englishIso2 = MLanguages.English.iso2alpha
     val englishLang = langAvailCodes
-      .filter(_.language ==* "en")
+      .filter(_.language ==* englishIso2)
       .sortBy(_.country ==* "US")
       .headOption
       .getOrElse { Lang.defaultLang }
@@ -92,7 +93,7 @@ final class LkLang @Inject() (
     val html = langChooserTpl(
       english = english,
       lf      = langForm,
-      isNowEnglish = ctx.messages.lang.language ==* "en",
+      isNowEnglish = (ctx.messages.lang.language ==* englishIso2),
       langs   = langAvailCodes.sortBy(_.code),
       nodeOpt = nodeOpt,
       rr      = r,
@@ -135,7 +136,7 @@ final class LkLang @Inject() (
 
           // Залоггировать ошибки.
           for (ex <- saveUserLangFut.failed)
-            LOGGER.error("Failed to save lang for mperson", ex)
+            LOGGER.error(s"Failed to save lang#${newLang} for person#${request.user.personIdOpt.orNull}", ex)
 
           // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
           if (async) {

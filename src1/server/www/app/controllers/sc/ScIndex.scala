@@ -14,6 +14,7 @@ import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, GsCriteria}
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MWelcomeInfo}
@@ -239,12 +240,21 @@ final class ScIndex @Inject()(
       val _mnodeOptFut = mNodes.getByIdCache( ephNodeId )
       LOGGER.trace(s"$logPrefix Index node NOT geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
 
-      for (mnodeOpt <- _mnodeOptFut) yield {
+      for {
+        mnodeOpt <- _mnodeOptFut
+      } yield {
         val mnode = mnodeOpt.get
-        LOGGER.trace(s"$logPrefix Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
-        // TODO Change eph.node title to localized "My current location", if demand index/location testing. When eph.node listed as-is, it looks too unexpected.
+        val ephNodeName = ctx.messages( MsgCodes.`Current.location` )
+        LOGGER.trace(s"$logPrefix Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}: ")
         MIndexNodeInfo(
-          mnode = mNodes.withDocMeta(mnode, EsDocMeta(None, EsDocVersion.notSaveable)),
+          // Change eph.node title to localized "My current location", if demand index/location testing. When eph.node listed as-is, it looks too unexpected.
+          // TODO Change geo.coords of eph.node here? Currenly, it is done client-side inside IndexAh().handle( IndexSwitchNodeClick() )
+          mnode = MNode.meta
+            .composeLens( MMeta.basic )
+            .composeLens( MBasicMeta.nameOpt )
+            .set( Some(ephNodeName) ) {
+              mNodes.withDocMeta( mnode, EsDocMeta(None, EsDocVersion.notSaveable) )
+            },
           isRcvr = false
         ) :: Nil
       }

@@ -299,6 +299,8 @@ class Sc3Module extends Log { outer =>
         // okhttp выдаёт ошибку перед запросами: method POST must have request body. Для подавление косяка, выставляем флаг принудительного body:
         // Можно сделать только для osFamily = android, но пока оставляем для всей кордовы.
         forcePostBodyNonEmpty = fetchApi.nonEmpty && isCordova,
+        // For cordova: add some language-related information. In browser, cookie is set by server during lang-switch POST, not here.
+        language = OptionUtil.maybeOpt( isCordova )( sc3Circuit.languageRW.value ),
       )
     }
   }
