@@ -28,11 +28,16 @@ class JsConsoleAppender extends ILogAppender {
 
       var acc = List.empty[String]
 
-      acc ::= logMsg.onlyMainText
+      acc ::= logMsg.onlyMainText(
+        longLines = scalajs.LinkingInfo.developmentMode,
+      )
 
       for (logMsg <- logMsg.logMsg)
         // TODO strLimitLen: наверное нужно многоточие в середине, чтобы концовка всё-таки была отрендерена.
-        acc ::= StringUtil.strLimitLen( logMsg.toString, maxLen = 1024 )
+        acc ::= StringUtil.strLimitLen(
+          logMsg.toString,
+          maxLen = if (scalajs.LinkingInfo.developmentMode) 65536 else 1024
+        )
 
       f( acc.mkString(HtmlConstants.NEWLINE_UNIX.toString), Nil )
     }

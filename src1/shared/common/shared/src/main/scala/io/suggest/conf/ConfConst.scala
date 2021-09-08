@@ -25,6 +25,10 @@ object ConfConst {
     final def LOCATION_ENABLED            = "location" + _ENABLED
     final def NOTIFICATIONS_ENABLED       = "notifications" + _ENABLED
     final def LANGUAGE                    = "language"
+
+    /** It is ok, if no side-effect occurs when changing this setting keys. */
+    final def NO_SIDE_FX_ON_CHANGE: Set[String] =
+      Set.empty[String] + BLUETOOTH_BEACONS_BACKGROUND_SCAN
   }
 
 

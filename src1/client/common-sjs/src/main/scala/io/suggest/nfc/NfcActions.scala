@@ -3,6 +3,8 @@ package io.suggest.nfc
 import diode.data.Pot
 import io.suggest.spa.DAction
 
+// TODO Looks like, this actions are used by UNUSED controller.
+
 trait INfcAction extends DAction
 
 /** Start/stop nfc scanning. */

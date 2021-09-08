@@ -7,6 +7,7 @@ import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import monocle.macros.GenLens
 
+// TODO Looks like, this controller is totally useless and may be deleted.
 
 /** Diode-controller for NFC-related stuff. */
 class NfcAh[M](

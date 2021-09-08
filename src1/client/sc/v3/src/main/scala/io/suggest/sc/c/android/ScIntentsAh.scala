@@ -42,7 +42,10 @@ final class ScIntentsAh[M](
           fxAcc ::= RouteTo( parsed ).toEffectPure
         }
 
-      } else if (m.intent.action contains[String] AndroidConst.Intent.Action.MAIN) {
+      } else if (
+        (m.intent.action contains[String] AndroidConst.Intent.Action.MAIN) ||
+        (m.intent.action contains[String] AndroidConst.Intent.Action.TECH_DISCOVERED)
+      ) {
         // Do nothing
 
       } else {

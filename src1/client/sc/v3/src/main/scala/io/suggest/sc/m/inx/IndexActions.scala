@@ -18,7 +18,7 @@ case class GetIndex( switchCtx: MScSwitchCtx )
   extends IIndexAction with IScIndexRespReason
 
 /** Перезагрузить текущий индекс. */
-case class ReGetIndex() extends IIndexAction
+case class ReGetIndex() extends IIndexAction with IScIndexRespReason
 
 /** Сброс индекса. */
 case object UnIndex extends IIndexAction

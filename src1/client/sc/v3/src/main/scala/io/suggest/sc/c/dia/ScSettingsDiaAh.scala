@@ -112,6 +112,7 @@ class ScSettingsDiaAh[M](
 
       // Организуем эффект независимо от того, изменилась ли настройка - на случай каких-то ошибок,
       // чтобы они могли быть отработаны на нижнем уровне.
+      // TODO These if-else spagetti below must be split and moved somewhere outside ScSettings controller, because is too specific for concrete cases/implementations.
       import ConfConst.{ScSettings => K}
       val okFxOpt: Option[Effect] = if (!m.runSideEffect) {
         // Force ignore setting change at current runtime, only save setting value into storage.
@@ -167,7 +168,11 @@ class ScSettingsDiaAh[M](
         fxAcc ::= okFx
 
       // If expected side-effect is missing, set error into state:
-      val isSideEffectOk = !m.runSideEffect || okFxOpt.nonEmpty
+      val isSideEffectOk =
+        !m.runSideEffect ||
+        okFxOpt.nonEmpty ||
+        (ConfConst.ScSettings.NO_SIDE_FX_ON_CHANGE contains m.key)
+
       if (!isSideEffectOk) {
         val msgCode = ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT
         logger.error( msgCode, msg = m )
@@ -266,6 +271,5 @@ class ScSettingsDiaAh[M](
       DoNothing
     }
   }
-
 
 }

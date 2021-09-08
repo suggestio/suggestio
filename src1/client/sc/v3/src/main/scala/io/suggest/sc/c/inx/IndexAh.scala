@@ -593,8 +593,13 @@ class IndexAh[M](
       ),
     )
 
-    // Продолжать, только если reqSearchArgs изменились:
-    if (v0.search.geo.found.reqSearchArgs contains[MScQs] args) {
+    // Deduplicating requests:
+    if (
+      // Forced index reload? Never deduplicate.
+      !reason.isInstanceOf[ReGetIndex] &&
+      // or if index-request args are really changed:
+      (v0.search.geo.found.reqSearchArgs contains[MScQs] args)
+    ) {
       // Дубликат запроса. Бывает при запуске, когда jsRouter и wzFirst сыплят одинаковые RouteTo().
       noChange
 
@@ -925,7 +930,7 @@ class IndexAh[M](
 
 
     // Перезагрузка текущего индекса.
-    case _: ReGetIndex =>
+    case m: ReGetIndex =>
       val v0 = value
 
       val switchCtx = MScSwitchCtx(
@@ -941,7 +946,7 @@ class IndexAh[M](
       _getIndex(
         silentUpdate  = true,
         v0            = v0,
-        reason        = GetIndex( switchCtx ),
+        reason        = m,
         switchCtx     = switchCtx,
       )
 

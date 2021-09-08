@@ -125,8 +125,10 @@ final case class MLogMsg(
                           dateTime      : Option[Instant]           = Some( Instant.now() )
                         ) {
 
-  /** Рендер в строку, но без severity, fsmState, code. */
-  def onlyMainText: String = {
+  /** Рендер в строку, но без severity, fsmState, code.
+    * @param longLines Allow to render without string lengths limits.
+    */
+  def onlyMainText( longLines: Boolean ): String = {
     // Нааккумулировать данных для логгирования из модели logMsg в строку.
     var tokensAcc = List.empty[String]
 
@@ -142,7 +144,9 @@ final case class MLogMsg(
     }
 
     for (msg <- message)
-      tokensAcc = n :: StringUtil.strLimitLen(msg, 512) :: tokensAcc
+      tokensAcc = n ::
+        (if (longLines) msg else StringUtil.strLimitLen( msg, maxLen = 512 )) ::
+        tokensAcc
 
     tokensAcc = d :: tokensAcc
 

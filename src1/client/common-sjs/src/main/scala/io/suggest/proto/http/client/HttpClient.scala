@@ -207,7 +207,7 @@ object HttpClient extends Log {
         val cookieHeaderValue = cookiesAcc
           .iterator
           .map(_.toCookie)
-          .mkString(", ")
+          .mkString("; ")
 
         hdrs0 += (HttpConst.Headers.COOKIE -> cookieHeaderValue)
       }

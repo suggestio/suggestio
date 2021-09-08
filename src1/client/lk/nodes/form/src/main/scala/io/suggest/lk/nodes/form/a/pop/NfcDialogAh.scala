@@ -181,7 +181,7 @@ final class NfcDialogAh[M](
             }
 
             val appOsFamily = diConfig.appOsFamily
-            val fut: Future[NfcPendingState] = appOsFamily match {
+            (appOsFamily match {
               // iOS: writing simplified to minify native API usage.
               // https://github.com/chariotsolutions/phonegap-nfc#ios---simple
               case Some( MOsFamilies.Apple_iOS ) =>
@@ -218,17 +218,26 @@ final class NfcDialogAh[M](
                 // Respond to controller with initial cancelF() function instance:
                 __dispatchPendingState( scanPendingState )
 
-                for {
+                (for {
                   _ <- scanPendingState.result
                   _ <- writingFinishedP.future
                 } yield {
                   writePendingState
-                }
-            }
-
-            // Compose overall effect over all futures/promises:
-            fut
-              .transform { tryRes =>
+                })
+                  .andThen { _ =>
+                    // Must call cancel-scan function on android to unregister ndefListener state and cleaup everything.
+                    // (If w don't unregister listener, then next write operation will hang forever).
+                    // Possibly, also call cancel after write, but this currenly only for testing purposes.
+                    for {
+                      pendState <- (scanPendingState :: writePendingState :: Nil)
+                      cancelF <- pendState.cancel
+                    } {
+                      cancelF()
+                    }
+                  }
+            })
+              // Compose overall effect over all futures/promises:
+              .transform { tryRes: Try[NfcPendingState] =>
                 // keepSessionOpen was defined above, so call clearSessionOpen() here to finalize all stuff
                 // for iOS needs. https://github.com/chariotsolutions/phonegap-nfc#nfcinvalidatesession
                 // > [NFCNDEFReaderSession beginSessionWithConfig:]:365  error:Error Domain=NFCError Code=202 "Session invalidated unexpectedly"
