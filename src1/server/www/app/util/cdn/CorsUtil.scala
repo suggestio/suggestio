@@ -143,14 +143,7 @@ final class CorsFilter @Inject() (
       // Надо ли добавлять CORS-заголовки?
       if ( corsUtil.IS_ENABLED && corsUtil.isAppendAllowHdrsForRequest(rh) ) {
         for (resp <- respFut0) yield {
-          val st = resp.header.status
-          if (st >= 400 && st <= 599) {
-            // Ошибки можно возвращать так, без дополнительных CORS-хидеров.
-            resp
-          } else {
-            // Успешный подходящий запрос, навешиваем хидеры.
-            corsUtil.withCorsHeaders( resp )
-          }
+          corsUtil.withCorsHeaders( resp )
         }
       } else {
         // CORS-хидеры в ответе не требуются.

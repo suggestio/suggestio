@@ -16,6 +16,7 @@ import play.api.libs.json.Json
 import scala.collection.immutable.HashMap
 import scala.concurrent.Promise
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.util.{Success, Try}
 
 /**
@@ -94,7 +95,7 @@ object FlowjsUtil {
           override val simultaneousUploads = 1
           override val method = FlowjsOptions.Methods.OCTET
           override val testChunks = true
-
+          override val maxChunkRetries = 50
           override val uploadMethod = routes.controllers.Upload
             .chunk( emptyStr, emptyDict )
             .method

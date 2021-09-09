@@ -153,7 +153,7 @@ trait FlowjsOptions extends js.Object {
   val fileTypeErrorCallback: js.UndefOr[js.Function2[FlowjsFile, /*errorCount:*/ Int, Unit]] = js.undefined
 
   /** The maximum number of retries for a chunk before the upload is failed.
-    * Valid values are any positive integer and undefined for no limit. (Default: undefined)
+    * Valid values are any positive integer and undefined for no limit. (Default: 0)
     */
   val maxChunkRetries: js.UndefOr[Int] = js.undefined
 
