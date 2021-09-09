@@ -17,6 +17,8 @@ NFC-tags does NOT need any power-supply, have NO battery inside.
 4. User see node showcase or/and custom content (encoded into URI inside NFC-tag) inside app/browser.
 
 ## How to write proper URL (records) into NFC tag?
+![Write and use NFC tag demo](../images/showcase-nodes-nfc-write-cbca.gif)
+
 1. Install app to your smartphone.
 2. Login, open "Nodes management" on menu bar. 
 3. Choose one of your node in nodes tree (displayed if logged in and have any node in account).

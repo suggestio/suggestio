@@ -345,10 +345,12 @@ sealed trait IScLangAction extends IScRootAction
   * @param langOpt Language to switch to.
   *                None means "system default" (cordova).
   * @param state Current step state of lang-switch.
+  * @param systemLangOpt System-detected language, used internally by ScLangAh controller.
   */
 case class LangSwitch(
                        langOpt    : Option[MLanguage],
                        state      : Pot[JsonPlayMessages] = Pot.empty,
+                       systemLangOpt: Option[MLanguage] = None,
                      )
   extends IScLangAction
 

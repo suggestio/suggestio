@@ -17,6 +17,14 @@ object MScReactCtx {
   def langSwitch = GenLens[MScReactCtx]( _.langSwitch )
   def language = GenLens[MScReactCtx]( _.language )
 
+
+  implicit final class ScReactCtxExt( private val scReactCtx: MScReactCtx ) extends AnyVal {
+
+    def languageOrSystem: Option[MLanguage] =
+      scReactCtx.language orElse scReactCtx.systemLang
+
+  }
+
 }
 
 
@@ -32,4 +40,5 @@ final case class MScReactCtx(
                               context         : MCommonReactCtx         = MCommonReactCtx.default,
                               langSwitch      : Pot[JsonPlayMessages]   = Pot.empty,
                               language        : Option[MLanguage]       = None,
+                              systemLang      : Option[MLanguage]       = None,
                             )

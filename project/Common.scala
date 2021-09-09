@@ -257,6 +257,8 @@ object Common {
     val FLOW_JS = "2.14.1"
 
 
+    // TODO After 5.0.0-rc.0 packages has been renamed to @mui/*. https://github.com/mui-org/material-ui/blob/next/CHANGELOG.md#500-rc0
+    //      Mui dependencies (color, treasury) need attention before mui update.
     val MATERIAL_UI = "5.0.0-beta.5"
     val MATERIAL_UI_ICONS = "5.0.0-beta.5"
     val MATERIAL_UI_LAB = "5.0.0-alpha.44"

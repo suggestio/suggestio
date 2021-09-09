@@ -300,7 +300,7 @@ class Sc3Module extends Log { outer =>
         // Можно сделать только для osFamily = android, но пока оставляем для всей кордовы.
         forcePostBodyNonEmpty = fetchApi.nonEmpty && isCordova,
         // For cordova: add some language-related information. In browser, cookie is set by server during lang-switch POST, not here.
-        language = OptionUtil.maybeOpt( isCordova )( sc3Circuit.languageRW.value ),
+        language = OptionUtil.maybeOpt( isCordova )( sc3Circuit.languageOrSystemRO.value ),
       )
     }
   }

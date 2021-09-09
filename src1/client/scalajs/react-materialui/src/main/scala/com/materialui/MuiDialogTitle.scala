@@ -26,9 +26,6 @@ object MuiDialogTitle {
 trait MuiDialogTitleProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiDialogTitleClasses]
-{
-  val disableTypography: js.UndefOr[Boolean] = js.undefined
-}
 
 
 /** Props for [[MuiDialogTitleProps.classes]]. */

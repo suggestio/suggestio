@@ -119,7 +119,18 @@ final class GeoLocAh[M](
         val mglw0 = v0.watchers.get( loc.glType )
         if ( mglw0.exists(_.lastPos contains loc.location) ) {
           // Данная точка уже была получена в прошлый раз, повторно уведомлять не требуется.
-          noChange
+          if (v0.switch.onOff.isPending) {
+            // Make on/off switcher to be non-pending.
+            // If not reset this and user coords not changes, ScSettings may display "blanked" geoloc switcher after screen on-off cycle.
+            val v2 = MScGeoLoc.switch
+              .composeLens( MGeoLocSwitchS.onOff )
+              .modify { onOffPot =>
+                onOffPot.ready( onOffPot.getOrElseTrue )
+              }(v0)
+            updated( v2 )
+          } else {
+            noChange
+          }
 
         } else {
 

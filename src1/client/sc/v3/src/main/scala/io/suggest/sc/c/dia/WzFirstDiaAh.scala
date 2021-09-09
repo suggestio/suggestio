@@ -340,7 +340,10 @@ class WzFirstDiaAh[M <: AnyRef](
 
       } else {
         // Refusing to update permission state. Logging only something useful:
-        if (!m.res.failed.toOption.exists(_.isInstanceOf[TimeoutException]))
+        if (
+          scalajs.LinkingInfo.developmentMode ||
+          !m.res.failed.toOption.exists(_.isInstanceOf[TimeoutException])
+        )
           logger.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, permOpt0.orNull) )
 
         noChange
@@ -642,7 +645,8 @@ class WzFirstDiaAh[M <: AnyRef](
         sc3Circuit.scGeoLocRW.zoom[Pot[_]] { scGeoLoc =>
           (for {
             glWatcher <- scGeoLoc.watchers.valuesIterator
-            pot = glWatcher.watchId
+            // glWatcher.watchId - not ok here, because it can be Ready() even with missing permissions.
+            pot = glWatcher.lastPos
             // TODO Commented code, because watchers map have lenght 0 or 1. For many items, need to uncomment.
             //if pot !=* Pot.empty
           } yield {

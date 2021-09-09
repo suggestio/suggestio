@@ -48,7 +48,6 @@ class PlatformComponents(
         }
         new MuiDialogTitleProps {
           override val classes = diaTitleCss
-          override val disableTypography = true
         }
       } ( children )
     }

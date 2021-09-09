@@ -3,6 +3,7 @@ package io.suggest.sc.c.in
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.conf.ConfConst
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MPlatformS
@@ -55,9 +56,12 @@ class ScLangAh[M](
           ),
           langSwitch  = Pot.empty.unavailable(),
           language    = m.langOpt,
+          systemLang  = m.systemLangOpt,
         )
 
         var fxAcc = List.empty[Effect]
+
+        // TODO Reload current grid/index using new language? So, 404-nodes (and ads) will be re-localiezed to current language.
 
         if (CordovaConstants.isCordovaPlatform()) {
           // Cordova: Save settings locally:
@@ -73,7 +77,7 @@ class ScLangAh[M](
         }
 
         // If logged in, also save on server:
-        for (lang <- m.langOpt if isLoggedIn.value) {
+        for (lang <- v2.languageOrSystem if isLoggedIn.value) {
           fxAcc ::= Effect.action {
             CsrfTokenEnsure(
               onComplete = Some( Effect {
@@ -99,24 +103,27 @@ class ScLangAh[M](
         // Use cordova file or use HTTP request? This will be resoluted by API.
         val pendingPot = v0.langSwitch.pending()
         val fx = Effect {
+          val systemLangOpt = OptionUtil.maybeOpt( m.langOpt.isEmpty ) {
+            WindowVm()
+              .navigator
+              .flatMap( _.language )
+              .map( MLanguages.byCode )
+          }
           // Try to detect language from env, if None lang sent.
-          val langOpt2 = m.langOpt
-            .orElse {
-              WindowVm()
-                .navigator
-                .flatMap( _.language )
-                .map( MLanguages.byCode )
-            }
+          val langOpt2 = m.langOpt orElse systemLangOpt
 
           val plat = platformRO.value
-          val cdvOsFamily = plat.osFamily.filter(_ => plat.isCordova)
+          val cdvOsFamily = plat
+            .osFamily
+            .filter(_ => plat.isCordova)
 
+          // Get messages from remote server (or from local filesystem - in cordova).
           scStuffApi
-            // TODO Ask server for update cookies and save language settings into current Person node.
             .scMessagesJson( langOpt2, cdvOsFamily )
             .transform { tryRes =>
               Success( m.copy(
                 state = m.state withTry tryRes,
+                systemLangOpt = systemLangOpt,
               ))
             }
         }

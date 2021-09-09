@@ -151,6 +151,7 @@ object ScCssStatic extends StyleSheet.Inline {
         //left( 40.px ),
         //top( (args.screenInfo.unsafeOffsets.top + 1).px ),
         position.relative,
+        paddingTop( 12.px ),
       )
 
       //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
