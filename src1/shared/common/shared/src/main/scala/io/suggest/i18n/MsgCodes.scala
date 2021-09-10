@@ -533,5 +533,6 @@ object MsgCodes {
 
   val `Requesting.permission` = "Requesting.permission"
   val `Current.location` = "Current.location"
+  val `Continue` = "Continue"
 
 }

@@ -153,7 +153,7 @@ class WzFirstR(
                     override val size    = MuiButtonSizes.large
                   }
                 } (
-                  crCtx.messages( MsgCodes.`No` )
+                  crCtx.messages( MsgCodes.`Later` )
                 )
                 // Кнопка "Разрешить"
                 val allowBtn: VdomNode = MuiButton {
@@ -164,7 +164,7 @@ class WzFirstR(
                     override val startIcon = iconComp()().rawNode
                   }
                 } (
-                  crCtx.messages( MsgCodes.`Allow.0`, HtmlConstants.SPACE ),
+                  crCtx.messages( MsgCodes.`Continue` ),
                 )
 
                 laterBtn :: (HtmlConstants.NBSP_STR: VdomNode) :: allowBtn :: Nil
