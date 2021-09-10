@@ -14,11 +14,11 @@ import play.api.libs.json.Format
 object MUploadChunkSizes extends IntEnum[MUploadChunkSize] {
 
   // TODO Для сверх-медленных каналов следует потом организовать совсем малый chunk size.
-  //case object S256k extends MUploadChunkSize( 256 * 1024 )
+  case object S256k extends MUploadChunkSize( 262144 )
 
   case object S_1mib extends MUploadChunkSize( 1048576 )
 
-  def default: MUploadChunkSize = S_1mib
+  def default: MUploadChunkSize = S256k
   def max = values.last
 
   override def values = findValues

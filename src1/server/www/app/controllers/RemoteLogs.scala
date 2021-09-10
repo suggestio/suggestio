@@ -33,6 +33,8 @@ final class RemoteLogs @Inject() (
   private lazy val geoIpUtil = injector.instanceOf[GeoIpUtil]
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
 
+  /** To be tolerant to validation errors. */
+  private def ALLOW_INVALID = true
 
   import sioControllerApi._
 
@@ -42,7 +44,12 @@ final class RemoteLogs @Inject() (
       .validate { logRep =>
         MLogReport.validate( logRep ).fold(
           {fails =>
-            Left( NotAcceptable( s"Validation failed:\n ${fails.iterator.mkString("\n ")}" ) )
+            if (ALLOW_INVALID) {
+              LOGGER.warn(s"_logReceiverBP: Failures during validation:\n ${fails.iterator.mkString("\n ")}")
+              Right( logRep )
+            } else {
+              Left( NotAcceptable( s"Validation failed:\n ${fails.iterator.mkString("\n ")}" ) )
+            }
           },
           Right.apply
         )

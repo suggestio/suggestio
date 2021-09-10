@@ -31,10 +31,13 @@ case class YesNoWz( yesNo: Boolean ) extends IWz1Action
   *
   * @param phase Фаза, в рамках которой был получен ответ.
   * @param res Ответ, если есть. None - таймаут.
+  * @param startTimeMs Mandatory for timers and other WzFirstAh-internal usages.
+  *                    None may be used outside usage, like TailAh.
   */
 case class WzPhasePermRes(phase: MWzPhase,
                           res: Try[IPermissionState],
                           reason: Option[WzReadPermissions] = None,
+                          startTimeMs: Option[Long],
                          )
   extends IWz1Action
 

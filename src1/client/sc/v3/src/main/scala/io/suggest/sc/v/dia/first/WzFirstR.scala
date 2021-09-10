@@ -4,6 +4,7 @@ import com.materialui.{Mui, MuiAlertTitle, MuiButton, MuiButtonProps, MuiButtonS
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -32,7 +33,6 @@ class WzFirstR(
 
 
   case class State(
-                    // isVisible = already checked inside ScSnacksR()
                     wz1PotC         : ReactConnectProxy[Pot[MWzFirstS]],
                   )
 
@@ -52,7 +52,7 @@ class WzFirstR(
     private val _laterClickCbF = _yesNoCbF(false)
 
 
-    def render(s: State): VdomElement = {
+    def render(p: Props, s: State): VdomElement = {
       crCtxP.consume { crCtx =>
         s.wz1PotC { propsPotProxy =>
           val pot = propsPotProxy.value
@@ -63,13 +63,16 @@ class WzFirstR(
             // Строка заголовка окна диалога. Чтобы диалог не прыгал, рендерим заголовок всегда.
             val (iconComp, title) = props.phase match {
               case MWzPhases.GeoLocPerm =>
-                Mui.SvgIcons.MyLocation -> crCtx.messages( MsgCodes.`Geolocation` )
+                // For iOS, use iOS-like icon.
+                val locIcon = if (p.value.dev.platform.osFamily contains[MOsFamily] MOsFamilies.Apple_iOS)
+                  Mui.SvgIcons.NearMe
+                else
+                  Mui.SvgIcons.MyLocation
+                locIcon -> crCtx.messages( MsgCodes.`Geolocation` )
               case MWzPhases.BlueToothPerm =>
                 Mui.SvgIcons.BluetoothSearching -> MsgCodes.`Bluetooth`
               case MWzPhases.NotificationPerm =>
                 Mui.SvgIcons.Notifications -> crCtx.messages( MsgCodes.`Notifications` )
-              //case MWzPhases.Nfc =>
-              //  Mui.SvgIcons.NfcRounded -> MsgCodes.`NFC`
               case _ =>
                 Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
             }
@@ -107,8 +110,6 @@ class WzFirstR(
                       Some( MsgCodes.`0.uses.bt.to.find.ads.indoor` )
                     case MWzPhases.NotificationPerm =>
                       Some( MsgCodes.`Notify.about.offers.nearby` )
-                    //case MWzPhases.Nfc =>
-                    //  Some( MsgCodes.`Read.radio.tags.on.tap` )
                     case _ =>
                       None
                   }
@@ -126,8 +127,6 @@ class WzFirstR(
                       Right( MsgCodes.`Bluetooth` )
                     case MWzPhases.NotificationPerm =>
                       Right( crCtx.messages(MsgCodes.`Notifications`) )
-                    //case MWzPhases.Nfc =>
-                    //  Right( MsgCodes.`NFC` )
                   }).fold(
                     identity[String],
                     compName =>

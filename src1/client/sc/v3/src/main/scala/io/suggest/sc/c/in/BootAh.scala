@@ -166,7 +166,7 @@ class BootAh[M](
           val startHwFx = Effect.action {
             PeripheralStartStop(
               isStart = OptionUtil.SomeBool.someTrue,
-              onDemand = false,
+              pauseResume = false,
             )
           }
 

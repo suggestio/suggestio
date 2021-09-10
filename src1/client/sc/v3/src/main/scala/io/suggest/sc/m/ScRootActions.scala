@@ -159,8 +159,11 @@ case class SaveRecentIndex(inxRecent2: Option[MScIndexes] = None) extends IScTai
 case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScTailAction
 
 
-/** Запуск таймера ожидания получения гео-координат. */
-case class GeoLocTimerStart( switchCtx: MScSwitchCtx ) extends IScTailAction
+/** Запуск таймера ожидания получения гео-координат.
+  * @param switchCtx Index switch context.
+  * @param allowImmediate Allow immediate timerless reindex, if accurate geo.data already presents.
+  */
+case class GeoLocTimerStart( switchCtx: MScSwitchCtx, allowImmediate: Boolean = true ) extends IScTailAction
 
 /** Наступление таймаута получения гео-координат. */
 case class GeoLocTimeOut( switchCtx: MScSwitchCtx ) extends IScTailAction
@@ -230,7 +233,7 @@ case class PlatformReady(state: Pot[Boolean] = Pot.empty ) extends IPlatformActi
   * @param isStart None means - according to current MPlatformS().isUsingNow. (This is done automatically by PlatformAh on PauseOrResume action)
   *                Some() - overriding isUsingNow flag.
   */
-case class PeripheralStartStop( isStart: Option[Boolean] = None, onDemand: Boolean = false ) extends IPlatformAction
+case class PeripheralStartStop(isStart: Option[Boolean] = None, pauseResume: Boolean = false ) extends IPlatformAction
 
 
 /** Маркер-интерфейс для экшенов для ErrorAh: */

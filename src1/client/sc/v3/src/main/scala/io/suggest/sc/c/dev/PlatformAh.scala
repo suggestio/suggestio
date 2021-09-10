@@ -143,7 +143,7 @@ final class PlatformAh[M](
           mroot.internals.boot.targets.isEmpty &&
           mroot.dialogs.first.isViewFinished
         ) {
-          fxAcc ::= PeripheralStartStop(onDemand = true).toEffectPure
+          fxAcc ::= PeripheralStartStop(pauseResume = true).toEffectPure
 
           // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
           if (
@@ -453,7 +453,7 @@ final class PlatformAh[M](
         fxAcc ::= fx
 
       // Запускать/глушить фоновый GPS-мониторинг:
-      for (fx <- _geoLocControlFx( isUsingNow, onDemand = m.onDemand ))
+      for (fx <- _geoLocControlFx( isUsingNow, pauseResume = m.pauseResume ))
         fxAcc ::= fx
 
       ah.maybeEffectOnly( fxAcc.mergeEffects )
@@ -462,7 +462,7 @@ final class PlatformAh[M](
 
 
   /** Переключение активированности фоновой геолокации. */
-  private def _geoLocControlFx( isScVisible: Boolean, onDemand: Boolean ): Option[Effect] = {
+  private def _geoLocControlFx(isScVisible: Boolean, pauseResume: Boolean ): Option[Effect] = {
     val mroot = rootRO()
     val mgl = mroot.dev.geoLoc
     val isActiveNow = mgl.switch.onOff contains[Boolean] true
@@ -487,7 +487,7 @@ final class PlatformAh[M](
                   geoIntoRcvr = true,
                   retUserLoc  = false,
                 ),
-                demandLocTest = onDemand,
+                demandLocTest = pauseResume,
               )
 
               // Надо запускать обновление выдачи, если включение геолокации и панель карты закрыта.
@@ -504,7 +504,7 @@ final class PlatformAh[M](
               // При включении - запустить таймер геолокации, чтобы обновился index на новую геолокацию.
               if (isRunGeoLocInx)
               // Передавать контекст, в котором явно указано, что это фоновая проверка смены локации, и всё должно быть тихо.
-                fxAcc += GeoLocTimerStart(sctx).toEffectPure
+                fxAcc += GeoLocTimerStart(sctx, allowImmediate = !pauseResume).toEffectPure
 
               fxAcc
             }

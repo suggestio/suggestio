@@ -783,9 +783,15 @@ class IndexAh[M](
                 {nodeFound =>
                   val nodeFound2 = nodeFound.nodeId.fold {
                     // Ephemeral 404-node is selected. Need to reset geoPoint to qs loc env, so user will be properly placed.
-                    switchS0.okAction.qs.common.locEnv.geoLocOpt.fold( nodeFound ) { qsGeoLoc =>
-                      (MSc3IndexResp.geoPoint set Some(qsGeoLoc.point))(nodeFound)
-                    }
+                    switchS0.okAction.qs.common.locEnv.geoLocOpt
+                      .orElse {
+                        // To use retUserLoc or current map result, if no geolocation was available during request (very first run index request).
+                        v0.search.geo.mapInit.userLoc
+                          .filter( _ =>  switchS0.okAction.qs.index.exists(_.retUserLoc) )
+                      }
+                      .fold( nodeFound ) { qsGeoLoc =>
+                        (MSc3IndexResp.geoPoint set Some(qsGeoLoc.point))(nodeFound)
+                      }
                   }( _ => nodeFound )
                   // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
                   val actRes = IndexAh.indexUpdated(

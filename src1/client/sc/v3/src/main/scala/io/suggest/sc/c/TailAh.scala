@@ -22,7 +22,7 @@ import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexArgs, MScIndexInfo, MScIndexes}
 import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
-import io.suggest.sc.m.dia.first.{InitFirstRunWz, MWzFrames, MWzPhases, WzPhasePermRes}
+import io.suggest.sc.m.dia.first.{InitFirstRunWz, MWzPhases, WzPhasePermRes}
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.menu.DlAppOpen
@@ -56,31 +56,20 @@ object TailAh {
     val searchOpened = v0.index.search.panel.opened
 
     // Если ничего в view пока не загружено, то стараемся поддерживать исходные значения
-    val route0 = v0.internals.info.currRoute
-    val bootingRoute = route0
+    val bootingRoute = v0.internals.info.currRoute
       .filter( _ => inxState.viewCurrent.isEmpty && v0.index.resp.isEmpty )
     val currRcvrId = bootingRoute.fold(inxState.rcvrId)(_.nodeId)
 
     // TODO Поддержка нескольких тегов в URL.
     val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption
 
-    val locEnv2 = OptionUtil.maybeOpt {
+    val locEnv2 = OptionUtil.maybe {
       currRcvrId.isEmpty
-      //(currRcvrId.isEmpty || searchOpened || selTagIdOpt.nonEmpty) &&
-      //  (v0.internals.boot.wzFirstDone contains[Boolean] true) &&
-      //  v0.internals.info.geoLockTimer.isEmpty
     } {
       bootingRoute
         .flatMap(_.locEnv)
-        .orElse {
-          Option.when( v0.dialogs.first.isViewFinished )(
-            v0.index.search.geo.mapInit.state.center
-          )
-        }
-        .orElse {
-          v0.dev.geoLoc
-            .currentLocation
-            .map(_._2.point)
+        .getOrElse {
+          v0.index.search.geo.mapInit.state.center
         }
     }
 
@@ -481,8 +470,8 @@ class TailAh(
           // Клик по узлу - восстановить состояние выдачи.
           val routeFx = Effect.action {
             // Патчим текущую роуту данными из новой роуты.
-            var nextRoute = TailAh._currRoute
-              .get(v0)
+            val currentRoute = TailAh._currRoute.get(v0)
+            var nextRoute = currentRoute
               .fold( inxRecent.state )( _ silentSwitchingInto inxRecent.state )
 
             // Если мобильный экран, то надо сразу скрыть раскрытую панель меню:
@@ -835,20 +824,14 @@ class TailAh(
       var modsAcc = List.empty[MScRoot => MScRoot]
       var fxAcc = List.empty[Effect]
       var nonSilentUpdate = false
+      val mapNeedReset = v0.index.resp.isEmpty || v0.dialogs.first.isVisible
 
       for {
         geoLockTimerId <- v0.internals.info.geoLockTimer
         glSignal <- m.origOpt
         if glSignal.glType.isHighAccuracy
       } {
-        val mapAlreadySet = glSignal.isSuccess && v0.index.resp.isEmpty
-
-        if (mapAlreadySet)
-          for (geoLoc <- glSignal.locationOpt)
-            modsAcc ::= TailAh.root_index_search_geo_init_state_LENS
-              .modify( _.withCenterInitReal( geoLoc.point ) )
-
-        val indexMapReset2 = !mapAlreadySet
+        val indexMapReset2 = !mapNeedReset
         val switchCtx = m.scSwitch.fold {
           MScSwitchCtx(
             indexQsArgs = MScIndexArgs(
@@ -879,6 +862,11 @@ class TailAh(
         glSignal <- m.origOpt
         geoLoc <- glSignal.locationOpt
       } {
+        // Reset map state to detected coord during early stage. ReIndex will be called in from WzFirstAh#InitFirstRunWz(false).
+        if (v0.index.resp.isEmpty || v0.dialogs.first.isVisible)
+          modsAcc ::= TailAh.root_index_search_geo_init_state_LENS
+            .modify( _.withCenterInitReal( geoLoc.point ) )
+
         // Всегда сохранять координаты в .userLoc
         var modF = MMapInitState.userLoc set Some(geoLoc)
 
@@ -907,16 +895,17 @@ class TailAh(
       }
 
       // Если wz1 ждёт пермишшена на геолокацию, то надо обрадовать его:
+      // TODO This is still needed? Need to review about WzFirstAh/IPermissionSpec.listenChangesOfPot state monitoring should be enought.
       if (
         v0.dialogs.first.isVisible &&
-        (v0.dialogs.first.view.exists { wz1 =>
-          (wz1.phase ==* MWzPhases.GeoLocPerm) &&
-          (wz1.frame ==* MWzFrames.InProgress)
-        })
+        v0.dialogs.first.perms
+          .get( MWzPhases.GeoLocPerm )
+          .exists(_.isPending)
       ) {
         fxAcc ::= WzPhasePermRes(
           phase = MWzPhases.GeoLocPerm,
           res = Success( BoolOptPermissionState(OptionUtil.SomeBool.someTrue) ),
+          startTimeMs = None,
         )
           .toEffectPure
       }
@@ -954,9 +943,18 @@ class TailAh(
     // Рукопашный запуск таймера геолокации.
     case m: GeoLocTimerStart =>
       val v0 = value
-      val (viMod, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals.info.geoLockTimer )
-      val v2 = MScRoot.internals.modify(viMod)(v0)
-      updated(v2, fx)
+      val currLocOpt = v0.dev.geoLoc.currentLocation
+
+      if (m.allowImmediate && currLocOpt.exists(_._1.isHighAccuracy)) {
+        // Timer not needed, already have enought geo.data.
+        val fx = TailAh.getIndexFx( m.switchCtx )
+        effectOnly( fx )
+
+      } else {
+        val (viMod, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals.info.geoLockTimer )
+        val v2 = MScRoot.internals.modify(viMod)(v0)
+        updatedSilent( v2, fx )
+      }
 
 
     // Объединённая обработка результатов API-запросов к серверу.

@@ -58,26 +58,6 @@ class WzFirstDiaAh[M <: AnyRef](
   with Log
 { ah =>
 
-  /** Внутренняя модель для спецификации одного пермишшена. */
-  private trait IPermissionSpec {
-    /** id фазы. */
-    def phase: MWzPhase
-    /** Есть ли поддержка на уровне платформы? Синхронная проверка доступности соответствующего API. */
-    def isSupported(): Boolean
-    /** Чтение текущего состояния пермишена. Запуск асихнронного получения данных по пермишшену. */
-    def readPermissionState(): Future[IPermissionState]
-    /** Запрос у юзера права доступа. */
-    def requestPermissionFx: Effect
-    /** Если пермишшен уже выдан без запроса, то можно запустить дополнительно эффект: */
-    def onGrantedByDefault: Option[Effect] =
-      Some( requestPermissionFx )
-    /** If defined, the Pot can be used for detection of permission state changes. */
-    def listenChangesOfPot: Option[ModelR[MScRoot, Pot[_]]] = None
-    /** Update saved settings, when permission grants or denies. */
-    def settingKeys: List[String]
-  }
-
-
   // Быстрое выставление фрейма.
   private def _setFrame(frame: MWzFrame, v0: MWzFirstOuterS, view0: MWzFirstS) = {
     val view2 = (MWzFirstS.frame set frame)(view0)
@@ -124,13 +104,14 @@ class WzFirstDiaAh[M <: AnyRef](
               } yield {
                 val permStatePot = v0.perms.getOrElse( view0.phase, Pot.empty )
                 val permStateOpt = permStatePot.toOption
+                val someStartTimeMs = Some( System.currentTimeMillis() )
 
                 val hasOnChangeApi = permStateOpt.exists(_.hasOnChangeApi)
                 val timeoutMs = (if (hasOnChangeApi) 10 else 4) * 1000
 
                 // Close InProgress-dialog via timeout:
                 var fxAcc: Effect = Effect {
-                  _permissionTimeout( view0.phase, timeoutMs )
+                  _permissionTimeout( view0.phase, timeoutMs, someStartTimeMs )
                     .fut
                 }
 
@@ -139,7 +120,7 @@ class WzFirstDiaAh[M <: AnyRef](
                   fxAcc += Effect.action {
                     // Subscribe for changes:
                     permState.onChange { pss: IPermissionState =>
-                      val action = WzPhasePermRes( view0.phase, Success(pss) )
+                      val action = WzPhasePermRes( view0.phase, Success(pss), startTimeMs = someStartTimeMs )
                       sc3Circuit.dispatch( action )
                     }
                     DoNothing
@@ -157,7 +138,7 @@ class WzFirstDiaAh[M <: AnyRef](
                         val permResMapped = for (_ <- tryRes) yield {
                           BoolOptPermissionState( OptionUtil.SomeBool.someTrue )
                         }
-                        val action = WzPhasePermRes( phaseSpec.phase, permResMapped )
+                        val action = WzPhasePermRes( phaseSpec.phase, permResMapped, startTimeMs = someStartTimeMs )
                         Success(action)
                       }
                   }
@@ -168,7 +149,7 @@ class WzFirstDiaAh[M <: AnyRef](
                 // Переключить view в состояние ожидания.
                 val v2 = MWzFirstOuterS.perms.modify {
                   // set pending state:
-                  _.updated( phaseSpec.phase, permStatePot.pending() )
+                  _.updated( phaseSpec.phase, permStatePot.pending( someStartTimeMs.value ) )
                 }( _setFrame( MWzFrames.InProgress, v0, view0 ) )
 
                 updated( v2, fxAcc )
@@ -224,7 +205,7 @@ class WzFirstDiaAh[M <: AnyRef](
       lazy val permOpt0 = v0.perms.get( m.phase )
       if (
         m.res.isSuccess || permOpt0.fold(true) { permPot0 =>
-          permPot0.isPending
+          m.startTimeMs.fold( permPot0.isPending )( permPot0.isPendingWithStartTime )
         }
       ) {
         val permStatePot2 = permOpt0
@@ -247,16 +228,19 @@ class WzFirstDiaAh[M <: AnyRef](
           fxAcc ::= onCompleteFx
         }
 
-        // Update settings, if permission explicitly granted or denied.
         for {
-          permState2  <- permStatePot2
-          isGranted   = permState2.isGranted
-          if isGranted
-          phaseSpec   <- _permPhasesSpecs()
+          phaseSpec <- _permPhasesSpecs()
           if phaseSpec.phase ==* m.phase
-          fx <- _emitSettingFx( phaseSpec, isGranted )
         } {
-          fxAcc ::= fx
+          // Update settings, if permission explicitly granted or denied.
+          for {
+            permState2  <- permStatePot2
+            isGranted   = permState2.isGranted
+            if isGranted
+            fx <- _emitSettingFx( phaseSpec, isGranted )
+          } {
+            fxAcc ::= fx
+          }
         }
 
         val fxOpt = fxAcc.mergeEffects
@@ -356,9 +340,10 @@ class WzFirstDiaAh[M <: AnyRef](
 
       // Запускаемся.
       var fxsAcc: List[Effect] = Nil
-      var permPotsAcc = List.empty[(MWzPhase, Pot[IPermissionState])]
+      var permPotsAcc = List.empty[((MWzPhase, Pot[IPermissionState]), Long)]
 
       val someReason = Some(m)
+      val someStartTimeMs = Some( System.currentTimeMillis() )
       // Пройтись по списку фаз, активировав проверки прав:
       for {
         phaseSpec <- _permPhasesSpecs()
@@ -367,30 +352,30 @@ class WzFirstDiaAh[M <: AnyRef](
         // Prevent double-check until timeout: underlying native API may suffer from too simulateos calls.
         if !permPot0.isPending
       } {
-        val timeoutP = _permissionTimeout( phaseSpec.phase, 3000 )
+        val timeoutP = _permissionTimeout( phaseSpec.phase, timeoutMs = 3000, startTimeMs = someStartTimeMs )
         val phasePermFx: Effect =
-          _readPermissionFx( phaseSpec, reason = someReason ) +
+          _readPermissionFx( phaseSpec, reason = someReason, someStartTimeMs ) +
           Effect( timeoutP.fut )
         fxsAcc ::= phasePermFx
 
         // Update current permission Pot[] state to pending:
         val permPot2 = permPot0
-          .pending( timeoutP.timerId )
-        permPotsAcc ::= (phaseSpec.phase -> permPot2)
+          .pending( someStartTimeMs.value )
+        permPotsAcc ::= ((phaseSpec.phase -> permPot2) -> someStartTimeMs.value)
       }
 
       // Start single timer with many actions for all pending tasks:
       (for {
-        (phase, _) <- permPotsAcc.iterator
+        ((phase, _), startTimeMs) <- permPotsAcc.iterator
       } yield {
-        Effect.action( WzPhasePermRes( phase, Failure(new TimeoutException), someReason ) )
+        Effect.action( WzPhasePermRes( phase, Failure(new TimeoutException), someReason, Some(startTimeMs) ) )
       })
         .mergeEffects
         .foreach { fx =>
           fxsAcc ::= fx.after( 3.seconds )
         }
 
-      val v2 = MWzFirstOuterS.perms.modify(_ ++ permPotsAcc)(v0)
+      val v2 = MWzFirstOuterS.perms.modify( _ ++ permPotsAcc.map(_._1) )(v0)
       ah.updatedSilentMaybeEffect( v2, fxsAcc.mergeEffects )
 
 
@@ -428,11 +413,16 @@ class WzFirstDiaAh[M <: AnyRef](
           Effect.action {
             GeoLocTimerStart(
               MScSwitchCtx(
-                demandLocTest = false,
+                demandLocTest = true,
                 indexQsArgs = MScIndexArgs(
                   geoIntoRcvr = true,
-                )
-              )
+                ),
+                /*forceGeoLoc = sc3Circuit.scGeoLocRW
+                  .value
+                  .currentLocation
+                  .map(_._2),*/
+              ),
+              allowImmediate = false,
             )
           }
         }
@@ -588,22 +578,22 @@ class WzFirstDiaAh[M <: AnyRef](
     }
   }
 
-  private def _readPermissionFx( phaseSpec: IPermissionSpec, reason: Option[WzReadPermissions] ): Effect = {
+  private def _readPermissionFx( phaseSpec: IPermissionSpec, reason: Option[WzReadPermissions], startTimeMs: Some[Long] ): Effect = {
     Effect {
       phaseSpec
         .readPermissionState()
         .transform { tryPermState =>
-          val action = WzPhasePermRes( phaseSpec.phase, tryPermState, reason )
+          val action = WzPhasePermRes( phaseSpec.phase, tryPermState, reason, startTimeMs = startTimeMs )
           Success( action )
         }
     }
   }
 
   /** Start timer with permission phase error. */
-  private def _permissionTimeout( phase: MWzPhase, timeoutMs: Double ) = {
+  private def _permissionTimeout(phase: MWzPhase, timeoutMs: Double, startTimeMs: Some[Long] ) = {
     DomQuick
       .timeoutPromiseT( timeoutMs )(
-        WzPhasePermRes( phase, Failure(new TimeoutException( ErrorMsgs.PERMISSION_REQUEST_TIMEOUT )) )
+        WzPhasePermRes( phase, Failure(new TimeoutException( ErrorMsgs.PERMISSION_REQUEST_TIMEOUT )), startTimeMs = startTimeMs )
       )
   }
 
@@ -721,6 +711,26 @@ class WzFirstDiaAh[M <: AnyRef](
     } #:: */ LazyList.empty[IPermissionSpec]
   }
 
+}
+
+
+/** Внутренняя модель для спецификации одного пермишшена. */
+sealed trait IPermissionSpec {
+  /** id фазы. */
+  def phase: MWzPhase
+  /** Есть ли поддержка на уровне платформы? Синхронная проверка доступности соответствующего API. */
+  def isSupported(): Boolean
+  /** Чтение текущего состояния пермишена. Запуск асихнронного получения данных по пермишшену. */
+  def readPermissionState(): Future[IPermissionState]
+  /** Запрос у юзера права доступа. */
+  def requestPermissionFx: Effect
+  /** Если пермишшен уже выдан без запроса, то можно запустить дополнительно эффект: */
+  def onGrantedByDefault: Option[Effect] =
+    Some( requestPermissionFx )
+  /** If defined, the Pot can be used for detection of permission state changes. */
+  def listenChangesOfPot: Option[ModelR[MScRoot, Pot[_]]] = None
+  /** Update saved settings, when permission grants or denies. */
+  def settingKeys: List[String]
 }
 
 
