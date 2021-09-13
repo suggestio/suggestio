@@ -79,7 +79,7 @@ object MUploadChunkQs {
 
   def validate(qs: MUploadChunkQs): StringValidationNel[MUploadChunkQs] = {
     val maxTotalSizeB = UploadConstants.TOTAL_SIZE_LIMIT_BYTES
-    val maxTotalChunks = maxTotalSizeB / MUploadChunkSizes.max.value
+    val maxTotalChunks = maxTotalSizeB / qs.chunkSizeGeneral.value + 1
 
     (
       ScalazUtil.liftNelSome( qs.chunkNumberO, Fields.CHUNK_NUMBER ) { chunkNumber =>

@@ -1051,10 +1051,7 @@ final class Upload @Inject()(
             LOGGER.trace(s"$logPrefix Color detector already finished work. Colors histogram attached to HTTP resp.")
           }
 
-          val result = Ok( respJson )
-
-          // Добавить CORS-заголовки ответа?
-          corsUtil.withCorsIfNeeded( result )
+          Ok( respJson )
         }
       }
 
@@ -1092,11 +1089,13 @@ final class Upload @Inject()(
         }
 
         // Отрендерить ответ клиенту:
-        resFut.recover { case ex: Throwable =>
-          val errMsg = errSb.toString()
-          LOGGER.error(s"$logPrefix Async exception occured, possible reasons:\n$errMsg", ex)
-          NotAcceptable( s"Errors:\n\n$errMsg" )
-        }
+        resFut
+          .recover { case ex: Throwable =>
+            val errMsg = errSb.toString()
+            LOGGER.error(s"$logPrefix Async exception occured, possible reasons:\n$errMsg", ex)
+            NotAcceptable( s"Errors:\n\n$errMsg" )
+          }
+          .map( corsUtil.withCorsHeaders )
       }
     }
   }
@@ -1258,7 +1257,7 @@ final class Upload @Inject()(
           Ok
         })
           .recoverHttpResEx
-          .map( corsUtil.withCorsIfNeeded )
+          .map( corsUtil.withCorsHeaders )
       }
   }
 
