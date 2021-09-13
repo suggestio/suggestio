@@ -334,10 +334,12 @@ class Sc3Module extends Log { outer =>
     var acc = LazyList.empty[IBeaconsListenerApi]
 
     if (plat.isCordova) {
-      // Append wifi scanner on Android. On iOS it is impossible to list wifi-networks.
-      if (plat.osFamily contains[MOsFamily] MOsFamilies.Android) {
+      for {
+        osFamily <- plat.osFamily
+        wifiAdp <- CdvWifiWizard2BeaconsApi.forOs( osFamily )
+      } {
         val accNoWifi = acc
-        acc = new CdvWifiWizard2BeaconsApi #:: accNoWifi
+        acc = wifiAdp #:: accNoWifi
       }
 
       // Prepend Bluetooth scanning API:

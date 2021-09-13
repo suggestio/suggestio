@@ -40,7 +40,6 @@
             "cordova-plugin-inappbrowser": {},
             "cordova-plugin-fetch": {},
             "cordova-plugin-background-fetch": {},
-            "cordova-plugin-ble-central": {},
             "cordova-plugin-geolocation": {
                 "GPS_REQUIRED": "true"
             },
@@ -51,7 +50,11 @@
             "phonegap-nfc": {
                 "NFC_USAGE_DESCRIPTION": "Read NFC Tags"
             },
-            "cordova-plugin-wkwebview-file-xhr": {}
+            "cordova-plugin-wkwebview-file-xhr": {},
+            "cordova-plugin-ble-central": {
+                "BLUETOOTH_USAGE_DESCRIPTION": "Bluetooth access allows auto-detection offers placed inside Bluetooth-beacons nearby.",
+                "IOS_INIT_ON_LOAD": "false"
+            }
         },
         "platforms": [
             "ios",

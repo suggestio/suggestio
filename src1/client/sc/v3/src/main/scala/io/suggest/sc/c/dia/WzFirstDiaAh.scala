@@ -409,7 +409,8 @@ class WzFirstDiaAh[M <: AnyRef](
 
         // Ensure geolocation timer on first run after permissions are processed, etc:
         // TODO XXX GeoLoc Permission request on android always fails with TimeoutException! Also, hasLocationAccess here - fails.
-        val fxOpt = Option.when( v2.perms.hasLocationAccess ) {
+        val hasLocAccess = v2.perms.hasLocationAccess
+        val fxOpt = Option.when( hasLocAccess ) {
           Effect.action {
             GeoLocTimerStart(
               MScSwitchCtx(

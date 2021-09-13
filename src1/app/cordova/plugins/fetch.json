@@ -113,14 +113,6 @@
     "is_top_level": true,
     "variables": {}
   },
-  "cordova-plugin-ble-central": {
-    "source": {
-      "type": "registry",
-      "id": "cordova-plugin-ble-central"
-    },
-    "is_top_level": true,
-    "variables": {}
-  },
   "cordova-plugin-geolocation": {
     "source": {
       "type": "registry",
@@ -184,5 +176,16 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "cordova-plugin-ble-central": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-ble-central"
+    },
+    "is_top_level": true,
+    "variables": {
+      "BLUETOOTH_USAGE_DESCRIPTION": "Bluetooth access allows auto-detection offers placed inside Bluetooth-beacons nearby.",
+      "IOS_INIT_ON_LOAD": "false"
+    }
   }
 }

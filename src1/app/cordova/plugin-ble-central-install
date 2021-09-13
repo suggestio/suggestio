@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cordova plugin add cordova-plugin-ble-central \
+    --variable BLUETOOTH_USAGE_DESCRIPTION="Bluetooth access allows auto-detection offers placed inside Bluetooth-beacons nearby." \
+    --variable IOS_INIT_ON_LOAD=false

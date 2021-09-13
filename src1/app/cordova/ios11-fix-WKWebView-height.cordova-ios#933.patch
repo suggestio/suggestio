@@ -1,0 +1,14 @@
+--- platforms/ios/CordovaLib/Classes/Private/Plugins/CDVWebViewEngine/CDVWebViewEngine.m.bak	2020-07-24 12:11:26.000000000 +0300
++++ platforms/ios/CordovaLib/Classes/Private/Plugins/CDVWebViewEngine/CDVWebViewEngine.m	2020-07-24 14:24:59.000000000 +0300
+@@ -203,6 +203,11 @@
+ 
+     // re-create WKWebView, since we need to update configuration
+     WKWebView* wkWebView = [[WKWebView alloc] initWithFrame:self.engineWebView.frame configuration:configuration];
++    #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
++    if (@available(iOS 11.0, *)) {
++        [wkWebView.scrollView setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
++    }
++    #endif
+     wkWebView.UIDelegate = self.uiDelegate;
+ 
+     /*

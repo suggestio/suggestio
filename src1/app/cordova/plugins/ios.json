@@ -7,6 +7,9 @@
     "files": {}
   },
   "installed_plugins": {
+    "com-darryncampbell-cordova-plugin-intent": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-custom-config": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -20,8 +23,11 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-ble-central": {
-      "IOS_INIT_ON_LOAD": "true",
-      "BLUETOOTH_USAGE_DESCRIPTION": " ",
+      "IOS_INIT_ON_LOAD": "false",
+      "BLUETOOTH_USAGE_DESCRIPTION": "Bluetooth access allows auto-detection offers placed inside Bluetooth-beacons nearby.",
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-deeplinks": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-fetch": {
@@ -41,6 +47,9 @@
       "TRANSLATION_PATH": "translations/app/",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
+    "cordova-plugin-network-information": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-plugin-splashscreen": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -50,26 +59,17 @@
     "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
+    "cordova-plugin-wkwebview-file-xhr": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-deeplinks": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "com-darryncampbell-cordova-plugin-intent": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-network-information": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "wifiwizard2": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "phonegap-nfc": {
       "NFC_USAGE_DESCRIPTION": "Read NFC Tags",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-wkwebview-file-xhr": {
+    "wifiwizard2": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

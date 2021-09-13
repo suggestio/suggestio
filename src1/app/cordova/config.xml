@@ -160,6 +160,18 @@
 		<string>TAG</string>
 	    </array>
         </config-file>
+	<config-file target="Entitlements-*.plist" parent="com.apple.developer.networking.networkextension">
+	    <array/>
+	</config-file>
+        <config-file target="Entitlements-*.plist" parent="com.apple.developer.networking.HotspotConfiguration">
+	    <true/>
+	</config-file>
+	<config-file target="*.entitlements" parent="com.apple.developer.networking.wifi-info">
+	    <true/>
+        </config-file>
+	<config-file target="Entitlements-*.plist" parent="com.apple.developer.networking.wifi-info">
+	    <true/>
+        </config-file>
     </platform>
     <preference name="BackgroundColor" value="0xff2d3d4e" />
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />

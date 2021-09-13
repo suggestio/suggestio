@@ -827,6 +827,7 @@ class TailAh(
       val mapNeedReset = v0.index.resp.isEmpty || v0.dialogs.first.isVisible
 
       for {
+        // TODO Вероятно, надо как-то реагировать на первый GlPubSignal, даже если запущенного таймера (уже) нет.
         geoLockTimerId <- v0.internals.info.geoLockTimer
         glSignal <- m.origOpt
         if glSignal.glType.isHighAccuracy
@@ -932,9 +933,9 @@ class TailAh(
           }
 
         // Если demandLocTest, то и остановиться на этой ошибке:
-        if (!m.switchCtx.demandLocTest) {
-          fxsAcc ::= TailAh.getIndexFx( m.switchCtx )
-        }
+        //if (!m.switchCtx.demandLocTest) {
+        fxsAcc ::= TailAh.getIndexFx( m.switchCtx )
+        //}
 
         ah.updatedSilentMaybeEffect(v2, fxsAcc.mergeEffects)
       }

@@ -58,16 +58,16 @@
     "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova.plugins.diagnostic": {
+    "cordova-plugin-wkwebview-file-xhr": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "wifiwizard2": {
+    "cordova.plugins.diagnostic": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "phonegap-nfc": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-wkwebview-file-xhr": {
+    "wifiwizard2": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
