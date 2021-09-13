@@ -2,7 +2,7 @@ package io.suggest.sc.ads
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MSzMult
-import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.text.StringUtil
 import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
@@ -46,4 +46,12 @@ object MSc3AdsResp {
 case class MSc3AdsResp(
                         ads     : Seq[MSc3AdData],
                         szMult  : MSzMult
-                      )
+                      ) {
+
+  override def toString: String = StringUtil.toStringHelper(this) { renderF =>
+    val noFieldName = renderF("")
+    noFieldName( "[" + ads.length + "]=[" + ads.iterator.map(_.jd.doc.tagId.toString).mkString(", ") + "]" )
+    noFieldName( szMult )
+  }
+
+}

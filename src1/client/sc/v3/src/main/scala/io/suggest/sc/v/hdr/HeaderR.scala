@@ -123,7 +123,8 @@ class HeaderR(
         hdrProgressC = propsProxy.connect { mroot =>
           val r =
             mroot.index.resp.isPending ||
-            mroot.grid.core.ads.adsHasPending
+            mroot.grid.core.ads.adsHasPending ||
+            mroot.internals.info.geoLockTimer.nonEmpty
           OptionUtil.SomeBool( r )
         }( FastEq.AnyRefEq ),
 

@@ -225,11 +225,19 @@ class TailAh(
           nextRoute2 = (SioPages.Sc3.virtBeacons set currRoute.virtBeacons)(nextRoute2)
 
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
-        val fx = Effect.action {
+        var fx: Effect = Effect.action {
           routerCtl
             .set( nextRoute2, m.via )
             .runNow()
           DoNothing
+        }
+
+        // Force flag must be forwarded explicitly via RouteTo, because it is used to bypass some boot-only checks.
+        // Normal RouteTo during boot will not bypass these filters (see RouteTo clause below).
+        if (m.force) {
+          fx = fx + Effect.action {
+            RouteTo( nextRoute2, force = m.force )
+          }
         }
 
         val v2 = (currRouteLens set Some(nextRoute2))( v0 )
@@ -796,7 +804,9 @@ class TailAh(
         .map(_(v0))
 
       // Принять решение о перезагрузке выдачи, если необходимо.
-      if (isToReloadIndex && !isGeoLocRunning) {
+      lazy val isBootCompleted = m.force || v0.internals.boot.isBootCompleted
+
+      if (isToReloadIndex && !isGeoLocRunning && isBootCompleted) {
         // Целиковая перезагрузка выдачи.
         val switchCtx = MScSwitchCtx(
           showWelcome = m.mainScreen.showWelcome,
@@ -809,7 +819,7 @@ class TailAh(
         )
         fxsAcc ::= TailAh.getIndexFx( switchCtx ) >> LoadIndexRecents(clean = false).toEffectPure
 
-      } else if (isGridNeedsReload) {
+      } else if (isGridNeedsReload && isBootCompleted) {
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure
       }

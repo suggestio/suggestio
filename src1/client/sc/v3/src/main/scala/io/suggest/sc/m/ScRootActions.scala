@@ -124,8 +124,12 @@ case object GlLeafletApiLocateTimeout extends IGeoLocAction
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
 case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IScTailAction
 
-/** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL. */
-case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScTailAction
+/** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL.
+  *
+  * @param mainScreen
+  * @param force Ignore some checks. Used by BootAh, to bypass pre-boot-completed filters/checks.
+  */
+case class RouteTo( mainScreen: SioPages.Sc3, force: Boolean = false) extends IScTailAction
 
 
 sealed trait IScTailAction extends IScRootAction

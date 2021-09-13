@@ -498,7 +498,7 @@ class BootAh[M](
             .info.currRoute
         }
       } yield {
-        RouteTo( currRoute )
+        RouteTo( currRoute, force = true )
       })
         .getOrElse {
           ResetUrlRoute(

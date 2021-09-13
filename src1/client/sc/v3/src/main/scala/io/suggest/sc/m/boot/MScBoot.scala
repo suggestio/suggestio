@@ -29,6 +29,15 @@ object MScBoot {
   def services        = GenLens[MScBoot](_.services)
   def targets         = GenLens[MScBoot](_.targets)
 
+
+  implicit final class ScBootExt( private val scBoot: MScBoot ) extends AnyVal {
+
+    /** At least one services completed boot procedure (no matter - failed or not). */
+    def isBootCompleted: Boolean =
+      scBoot.targets.isEmpty && scBoot.services.nonEmpty
+
+  }
+
 }
 
 

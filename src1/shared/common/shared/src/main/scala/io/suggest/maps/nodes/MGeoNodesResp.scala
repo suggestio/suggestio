@@ -57,7 +57,9 @@ case class MGeoNodesResp(
   override def toString: String = {
     StringUtil.toStringHelper( this, 32 ) { renderF =>
       if (nodes.nonEmpty)
-        renderF("")( "[" + nodes.length + "]" )
+        renderF("")( "[" + nodes.length + "]=[\n" + nodes.iterator.map { nodeResp =>
+          (nodeResp.id ++ nodeResp.props.name).mkString(" ")
+        }.mkString("\n ") + "\n]" )
     }
   }
 
