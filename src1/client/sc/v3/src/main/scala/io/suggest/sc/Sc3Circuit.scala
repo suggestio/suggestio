@@ -490,7 +490,6 @@ class Sc3Circuit(
     modelRW     = beaconerRW,
     dispatcher  = this,
     bcnsIsSilentRO = scNodesRW.zoom(!_.opened),
-    osFamilyOpt = CircuitUtil.mkLensZoomRO( platformRW, MPlatformS.osFamily ).value,
     beaconApis  = beaconApis,
     onNearbyChange = Some { (nearby0, nearby2) =>
       var fxAcc = List.empty[Effect]

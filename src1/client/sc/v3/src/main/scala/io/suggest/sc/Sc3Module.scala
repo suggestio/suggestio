@@ -10,7 +10,6 @@ import io.suggest.ble.cdv.CdvBleBeaconsApi
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.fetch.CdvFetchHttpResp
-import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.geo.{GeoLocApi, Html5GeoLocApi}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
@@ -121,6 +120,7 @@ class Sc3Module extends Log { outer =>
       if (!mplat.isReady) {
         // Для cordova событие READY ещё не наступило, поэтому CdvBgGeo.isAvailable дёрнуть тут нельзя.
         // Считаем, что CdvBgGeo доступен, когда доступно cordova API.
+        logger.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED, msg = ("geoLocApis", mplat) )
         LazyList.empty
 
       } else {
@@ -344,7 +344,7 @@ class Sc3Module extends Log { outer =>
 
       // Prepend Bluetooth scanning API:
       val accNoBle = acc
-      acc = new CdvBleBeaconsApi #:: accNoBle
+      acc = CdvBleBeaconsApi.forOs( plat.osFamily ) #:: accNoBle
     }
 
     // TODO else: WebBluetoothBeaconsApi

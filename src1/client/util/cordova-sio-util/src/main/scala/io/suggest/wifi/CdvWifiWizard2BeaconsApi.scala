@@ -107,6 +107,8 @@ final class CdvWifiWizard2BeaconsApi_Android
   extends CdvWifiWizard2BeaconsApi
 {
 
+  override def canEnable = true
+
   /** Try to enable Wi-Fi. */
   override def enablePeripheral(): Future[Boolean] = {
     CdvWifiWizard2
@@ -169,7 +171,7 @@ final class CdvWifiWizard2BeaconsApi_Android
 
   override def isScannerRestartNeededSettingsOnly(v0: IBeaconsListenerApi.ListenOptions,
                                                   v2: IBeaconsListenerApi.ListenOptions,
-                                                  osFamily: Option[MOsFamily]): Boolean = {
+                                                 ): Boolean = {
     val fullPower = IBeaconsListenerApi.ScanMode.FULL_POWER
     (v0.scanMode ==* fullPower) !=* (v2.scanMode ==* fullPower)
   }
@@ -185,19 +187,18 @@ final class CdvWifiWizard2BeaconsApi_iOS
     for {
       bssidOrNull <- CdvWifiWizard2.getConnectedBSSID().toFuture
       bssidOpt = Option( bssidOrNull )
-        .filter { bssid =>
-          val macValid = NetworkingUtil.validateMacAddress( bssid )
-          val isOk = macValid.isSuccess
-          if (!isOk)
-            logger.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = (bssid, macValid) )
-          isOk
-        }
-      if bssidOpt.nonEmpty
+      if bssidOpt.exists { bssid =>
+        val macValid = NetworkingUtil.validateMacAddress( bssid )
+        val isOk = macValid.isSuccess
+        if (!isOk)
+          logger.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = (bssid, macValid) )
+        isOk
+      }
 
       ssidOrNull <- CdvWifiWizard2.getConnectedSSID().toFuture
       ssidOpt = Option( ssidOrNull )
-    } yield {
-      MRadioSignalJs(
+    } {
+      val radioSignal = MRadioSignalJs(
         signal = MRadioSignal(
           factoryUid  = bssidOpt
             // Remove delimiters from MAC-address to make it short for URL query-string:
@@ -208,15 +209,20 @@ final class CdvWifiWizard2BeaconsApi_iOS
         ),
         seenAt = Instant.now(),
       )
+
+      doDispatch( radioSignal :: Nil, opts )
     }
   }
 
+
+  override def canEnable = false
+
   override def enablePeripheral(): Future[Boolean] = {
-    // TODO If it cannot enabled?
+    // TODO If it cannot enabled, return false...
     Future.successful( true )
   }
 
-  override def isScannerRestartNeededSettingsOnly(v0: IBeaconsListenerApi.ListenOptions, v2: IBeaconsListenerApi.ListenOptions, osFamily: Option[MOsFamily]): Boolean = {
+  override def isScannerRestartNeededSettingsOnly(v0: IBeaconsListenerApi.ListenOptions, v2: IBeaconsListenerApi.ListenOptions): Boolean = {
     false
   }
 

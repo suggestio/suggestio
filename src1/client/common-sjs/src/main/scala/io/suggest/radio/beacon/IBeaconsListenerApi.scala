@@ -1,6 +1,5 @@
 package io.suggest.radio.beacon
 
-import io.suggest.dev.MOsFamily
 import io.suggest.log.Log
 import io.suggest.radio.{MRadioSignalJs, MRadioSignalType}
 import japgolly.univeq._
@@ -27,6 +26,8 @@ trait IBeaconsListenerApi {
   /** Is hardware/software/etc underlying stuff enabled at the moment? */
   def isPeripheralEnabled(): Future[Boolean]
 
+  def canEnable: Boolean
+
   /** Try to enable/power-on related hardware/driver. */
   def enablePeripheral(): Future[Boolean]
 
@@ -44,15 +45,14 @@ trait IBeaconsListenerApi {
   def isScannerRestartNeededSettingsOnly(
                                           v0: IBeaconsListenerApi.ListenOptions,
                                           v2: IBeaconsListenerApi.ListenOptions,
-                                          osFamily: Option[MOsFamily],
                                         ): Boolean
 
   /** Is scanner restart needed, if some/any of ListenOptions changed. */
   def isScannerRestartNeeded(v0: IBeaconsListenerApi.ListenOptions,
                              v2: IBeaconsListenerApi.ListenOptions,
-                             osFamily: Option[MOsFamily]): Boolean = {
+                            ): Boolean = {
     (v0.dispatchEvent eq v2.dispatchEvent) &&
-    isScannerRestartNeededSettingsOnly(v0, v2, osFamily)
+    isScannerRestartNeededSettingsOnly(v0, v2)
   }
 
   override def toString = getClass.getSimpleName

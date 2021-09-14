@@ -1,0 +1,12 @@
+diff --git a/plugins/cordova-plugin-ble-central/plugin.xml b/plugins/cordova-plugin-ble-central/plugin.xml
+--- a/plugin.xml
++++ b/plugin.xml
+@@ -22,7 +22,8 @@
+         <preference name="IOS_INIT_ON_LOAD" default="true" />
+         <config-file target="config.xml" parent="/widget">
+             <feature name="BLE">
+                <param name="ios-package" value="BLECentralPlugin" onload="$IOS_INIT_ON_LOAD"/>
++               <param name="onload" value="$IOS_INIT_ON_LOAD"/>
+             </feature>
+         </config-file>
+ 

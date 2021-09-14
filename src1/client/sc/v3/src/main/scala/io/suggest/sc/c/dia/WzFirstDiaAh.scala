@@ -10,6 +10,7 @@ import io.suggest.conf.ConfConst
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
+import io.suggest.i18n.MsgCodes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
@@ -698,18 +699,9 @@ class WzFirstDiaAh[M <: AnyRef](
         NotificationPermAsk( isVisible = true ).toEffectPure
       override def onGrantedByDefault = None
       override def settingKeys = ConfConst.ScSettings.NOTIFICATIONS_ENABLED :: Nil
-    } #:: /*new IPermissionSpec {
-      // NFC
-      override def phase = MWzPhases.Nfc
-      override def isSupported(): Boolean = {
-        // TODO NFC Fully disabled (only dev mode) until it will be fully implemented.
-        scalajs.LinkingInfo.developmentMode && nfcApi.exists(_.isApiAvailable())
-      }
-      override def readPermissionState(): Future[IPermissionState] =
-        nfcApi.get.readPermissionState()
-      override def requestPermissionFx =
-        NfcScan( enabled = true ).toEffectPure
-    } #:: */ LazyList.empty[IPermissionSpec]
+    } #::
+    // End of permissions specs.
+    LazyList.empty[IPermissionSpec]
   }
 
 }

@@ -5,7 +5,6 @@ import diode.data.Pot
 import io.suggest.ble.{BeaconUtil, BeaconsNearby_t, MUidBeacon}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
@@ -190,7 +189,6 @@ class BeaconerAh[M](
                      dispatcher        : Dispatcher,
                      modelRW           : ModelRW[M, MBeaconerS],
                      bcnsIsSilentRO    : ModelRO[Boolean],
-                     osFamilyOpt       : => Option[MOsFamily],
                      beaconApis        : () => LazyList[IBeaconsListenerApi],
                      onNearbyChange    : Option[(BeaconsNearby_t, BeaconsNearby_t) => Option[Effect]] = None,
                    )
@@ -256,8 +254,8 @@ class BeaconerAh[M](
 
                 // Next, try enable bluetooth, if disabled and allowed to enable (by options).
                 isEnabled2 <- {
-                  if (isEnabled0)
-                    Future.successful(isEnabled0)
+                  if (isEnabled0 || !bbApi.canEnable)
+                    Future.successful(true)
                   else
                     bbApi
                       .enablePeripheral()
@@ -290,7 +288,7 @@ class BeaconerAh[M](
               // Try to safely shut off currently failing API.
               val nextP = Promise[None.type]()
               val runNextFut = nextP.future.flatMap { _ =>
-                // Go to next BLE API:
+                // Go to next Beacons API:
                 __foldApisAsync( restApis.tail )
               }
 
@@ -582,7 +580,7 @@ class BeaconerAh[M](
           listenOpts2 = _getListenOpts( m.opts )
           apisNeedRestart = apis
             .values
-            .filter( _.isScannerRestartNeededSettingsOnly( _getListenOpts(v0.opts), listenOpts2, osFamilyOpt ) )
+            .filter( _.isScannerRestartNeededSettingsOnly( _getListenOpts(v0.opts), listenOpts2 ) )
           if apisNeedRestart.nonEmpty
         } yield {
           modF = modF andThen MBeaconerS.isEnabled.modify(_.pending())

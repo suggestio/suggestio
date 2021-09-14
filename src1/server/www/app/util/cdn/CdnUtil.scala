@@ -327,7 +327,8 @@ final class CdnUtil @Inject() (
           // Отработать запасной вариант, когда внезапно нет хостов:
           .nextOption()
           .getOrElse {
-            LOGGER.warn(s"$logPrefix Not found any dist-CDN mediaHost[${mediaHostsMap.size}];\n mediaIds =\n  [${mediaIds.mkString("\n  ")}]\n orig call = $call")
+            // debug, because lost files may occur. It not so unusual.
+            LOGGER.debug(s"$logPrefix Not found any dist-CDN mediaHost[${mediaHostsMap.size}];\n mediaIds =\n  [${mediaIds.mkString("\n  ")}]\n orig call = $call")
             call
           }
     }

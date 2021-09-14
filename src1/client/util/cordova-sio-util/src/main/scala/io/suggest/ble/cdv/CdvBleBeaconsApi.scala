@@ -20,7 +20,11 @@ import scala.scalajs.js
   * Created: 12.10.16 17:28
   * Description: Stateless [[IBeaconsListenerApi]] implementation for beacon scanning via cordova-ble-central plugin.
   */
-final class CdvBleBeaconsApi
+object CdvBleBeaconsApi {
+  def forOs(osFamilyOpt: Option[MOsFamily]) = new CdvBleBeaconsApi( osFamilyOpt )
+}
+
+final class CdvBleBeaconsApi( osFamilyOpt: Option[MOsFamily] )
   extends IBeaconsListenerApi
   with Log
 {
@@ -64,10 +68,15 @@ final class CdvBleBeaconsApi
     }
   }
 
+
+  override def canEnable: Boolean =
+    osFamilyOpt contains[MOsFamily] MOsFamilies.Android
+
   /** Try to enable bluetooth. */
   override def enablePeripheral(): Future[Boolean] = {
     _syncBoolApiMethodHelper {
       (trueF, falseF) =>
+        // enable(): Android-only method!
         Ble.enable(
           success = trueF,
           refused = falseF
@@ -146,11 +155,10 @@ final class CdvBleBeaconsApi
   }
 
   override def isScannerRestartNeededSettingsOnly(v0: IBeaconsListenerApi.ListenOptions,
-                                                  v2: IBeaconsListenerApi.ListenOptions,
-                                                  osFamily: Option[MOsFamily]): Boolean = {
+                                                  v2: IBeaconsListenerApi.ListenOptions): Boolean = {
     // Android: Restart scan, scanMode changed.
     // iOS ignores these thin scanning settings.
-    osFamily.fold(true)(_ ==* MOsFamilies.Android) &&
+    osFamilyOpt.fold(true)(_ ==* MOsFamilies.Android) &&
     (v0.scanMode !=* v2.scanMode)
   }
 
