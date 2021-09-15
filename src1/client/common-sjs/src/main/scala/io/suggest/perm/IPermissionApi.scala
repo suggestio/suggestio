@@ -1,6 +1,5 @@
 package io.suggest.perm
 
-import diode.data.Pot
 import org.scalajs.dom.experimental.permissions.Permissions
 
 import scala.concurrent.Future

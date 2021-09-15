@@ -195,8 +195,16 @@ final class CdvWifiWizard2BeaconsApi_iOS
         isOk
       }
 
-      ssidOrNull <- CdvWifiWizard2.getConnectedSSID().toFuture
+      ssidOrNull <- CdvWifiWizard2
+        .getConnectedSSID()
+        .toFuture
+        .recover { case ex: Throwable =>
+          logger.warn( ErrorMsgs.WIFI_SSID_INVALID, ex, (bssidOpt, opts) )
+          null
+        }
       ssidOpt = Option( ssidOrNull )
+        .map(_.trim)
+        .filter(_.nonEmpty)
     } {
       val radioSignal = MRadioSignalJs(
         signal = MRadioSignal(

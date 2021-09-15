@@ -470,7 +470,11 @@ class WzFirstDiaAh[M <: AnyRef](
         // По идее, тут или ready, или failed.
         .toOption
         .flatMap[MWzFirstOuterS] { perm =>
-          if (perm.isPrompt) {
+          // avoiding perm.isPrompt, because unsure about cases like https://github.com/dpa99c/cordova-diagnostic-plugin/issues/439
+          val isDenied = perm.isDenied
+          val isGranted = perm.isGranted
+
+          if (!isDenied && !isGranted) {
             // Надо задать вопрос юзеру, т.к. доступ ещё не запрашивался.
             val v2 = MWzFirstOuterS.view.set {
               Ready(
@@ -482,7 +486,7 @@ class WzFirstDiaAh[M <: AnyRef](
             }(v0)
             Some(v2)
 
-          } else if (perm.isDenied) {
+          } else if (isDenied) {
             // Запрещён доступ. Значит юзеру можно выразить сожаление в инфо-окне.
             val v2 = MWzFirstOuterS.view.set {
               Ready(
@@ -496,18 +500,18 @@ class WzFirstDiaAh[M <: AnyRef](
 
           } else {
             // granted или что-то неведомое - пропуск фазы или завершение, если не осталось больше фаз для обработки.
-            if (perm.isGranted && nextPhase !=* view0.phase) {
+            if (isGranted && nextPhase !=* view0.phase) {
               for {
                 permSpec <- _permPhasesSpecs().iterator
                 if permSpec.phase ==* nextPhase
                 fx <- (
                   permSpec.onGrantedByDefault ::
-                  _emitSettingFx(permSpec, isGranted = true)::
+                  _emitSettingFx(permSpec, isGranted = true) ::
                   Nil
                 )
                   .iterator
                   .flatten
-                  .reduceOption(_ + _ )
+                  .reduceOption(_ + _)
               } {
                 fxAcc ::= fx
               }
