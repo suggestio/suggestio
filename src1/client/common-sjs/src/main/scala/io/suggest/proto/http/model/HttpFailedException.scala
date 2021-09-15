@@ -3,6 +3,8 @@ package io.suggest.proto.http.model
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.text.StringUtil
 
+import scala.util.control.NoStackTrace
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -18,6 +20,7 @@ case class HttpFailedException(
                                errMessage: String = null,
                              )
   extends RuntimeException
+  with NoStackTrace
 {
 
   override def getMessage: String = {

@@ -1,7 +1,5 @@
 package io.suggest.proto.http.client.adp
 
-import io.suggest.i18n.MsgCodes
-import io.suggest.log.Log
 import io.suggest.proto.http.model.{HttpFailedException, HttpReq, HttpReqAdp, HttpResp, IHttpRespHolder}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom.experimental.RequestInit
@@ -52,14 +50,13 @@ trait HttpAdpInstance {
 }
 
 
-object HttpClientAdp extends Log {
+object HttpClientAdp {
 
   implicit final class FutureOpsExt[T]( val fut: Future[T] ) extends AnyVal {
 
     /** Любой экзепшен нативного http-клиента надо отобразить в текущий формат. */
     def exception2httpEx(httpReq: HttpReq): Future[T] = {
       fut.recoverWith { case ex: Throwable =>
-        logger.warn( MsgCodes.`Send.request`, ex, httpReq )
         val ex9 = ex match {
           case _: HttpFailedException =>
             ex

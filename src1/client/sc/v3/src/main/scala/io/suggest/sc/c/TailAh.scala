@@ -554,6 +554,9 @@ class TailAh(
       // Надо ли повторно отрабатывать m после того, как js-роутер станет готов?
       var jsRouterAwaitRoute = false
 
+      val isBootCompleted = v0.internals.boot.isBootCompleted
+      val isBootCompletedOrForce = m.force || isBootCompleted
+
       // Текущее значение MainScreen:
       val currMainScreen = TailAh.getMainScreenSnapShot( v0 )
 
@@ -696,6 +699,7 @@ class TailAh(
       // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
       if (
+        isBootCompleted &&
         m.mainScreen.needGeoLoc &&
         v0.dialogs.first.isViewWasStarted &&
         v0.dialogs.first.view.isEmpty &&
@@ -803,10 +807,7 @@ class TailAh(
         .reduceOption(_ andThen _)
         .map(_(v0))
 
-      // Принять решение о перезагрузке выдачи, если необходимо.
-      lazy val isBootCompleted = m.force || v0.internals.boot.isBootCompleted
-
-      if (isToReloadIndex && !isGeoLocRunning && isBootCompleted) {
+      if (isToReloadIndex && !isGeoLocRunning && isBootCompletedOrForce) {
         // Целиковая перезагрузка выдачи.
         val switchCtx = MScSwitchCtx(
           showWelcome = m.mainScreen.showWelcome,
@@ -819,7 +820,7 @@ class TailAh(
         )
         fxsAcc ::= TailAh.getIndexFx( switchCtx ) >> LoadIndexRecents(clean = false).toEffectPure
 
-      } else if (isGridNeedsReload && isBootCompleted) {
+      } else if (isGridNeedsReload && isBootCompletedOrForce) {
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure
       }

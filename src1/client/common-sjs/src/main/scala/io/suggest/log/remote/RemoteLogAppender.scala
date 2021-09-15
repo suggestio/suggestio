@@ -46,7 +46,6 @@ final class RemoteLogAppender( httpConfig: () => HttpClientConfig )
 
     // Залоггировать проблемы реквеста в консоль.
     for (ex <- fut.failed) {
-      //val n = "\n"
       var msg = ErrorMsgs.RME_LOGGER_REQ_FAIL
 
       if (scalajs.LinkingInfo.developmentMode)
