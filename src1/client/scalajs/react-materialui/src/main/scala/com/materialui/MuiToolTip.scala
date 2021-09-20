@@ -20,6 +20,8 @@ object MuiToolTip {
 
   val component = JsForwardRefComponent[MuiToolTipProps, Children.Varargs, dom.html.Element](Mui.Tooltip)
 
+  // TODO Need to allow only can-hold-refs types of children. https://mui.com/guides/composition/#caveat-with-refs
+  //      For example, diode connection component will fail here on runtime, because node.ownerDocument is undefined.
   def apply(p: MuiToolTipProps)(children: VdomElement*) =
     component(p)(children: _*)
 
@@ -35,7 +37,7 @@ trait MuiToolTipProps extends MuiPropsBase {
       disableInteractive
       : js.UndefOr[Boolean] = js.undefined
 
-  val enterDelaym,
+  val enterDelay,
       enterTouchDelay,
       leaveDelay,
       leaveTouchDelay

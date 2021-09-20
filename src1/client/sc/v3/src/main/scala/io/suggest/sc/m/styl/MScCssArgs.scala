@@ -36,8 +36,7 @@ object MScCssArgs {
     }
   }
 
-  def from(indexResp: Pot[MSc3IndexResp], screenInfo: MScreenInfo): MScCssArgs = {
-    val indexRespOpt = indexResp.toOption
+  def from(indexRespOpt: Option[MSc3IndexResp], screenInfo: MScreenInfo): MScCssArgs = {
     val wcOpt = indexRespOpt.flatMap(_.welcome)
 
     val fgOpt = wcOpt.flatMap(_.fgImage)

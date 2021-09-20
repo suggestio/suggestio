@@ -337,6 +337,7 @@ final class JsMessagesUtil @Inject() (
       ErrorMsgs.SC_FSM_EVENT_FAILED ::
       MC.`Language` :: MC.`System._adjective` ::
       MC.`Requesting.permission` ::
+      MC.`Current.location` ::
       MLanguages.values.iterator.map(_.singularMsgCode).toList
 
     (

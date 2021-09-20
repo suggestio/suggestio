@@ -8,9 +8,8 @@ import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.conf.ConfConst
 import io.suggest.cordova.CordovaConstants
-import io.suggest.dev.MPlatformS
+import io.suggest.dev.{MOsFamilies, MPlatformS}
 import io.suggest.geo.GeoLocUtilJs
-import io.suggest.i18n.MsgCodes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
@@ -609,51 +608,7 @@ class WzFirstDiaAh[M <: AnyRef](
     // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
     lazy val h5PermApiAvail = Html5PermissionApi.isApiAvail()
 
-    // Геолокация
-    new IPermissionSpec {
-      override def phase = MWzPhases.GeoLocPerm
-      override def isSupported(): Boolean = {
-        // Для cordova нет смысла проверять наличие плагина, который всегда должен быть.
-        CordovaConstants.isCordovaPlatform() || GeoLocUtilJs.envHasGeoLoc()
-      }
-      override def readPermissionState(): Future[IPermissionState] = {
-        def htmlAskPermF = {
-          IPermissionState.maybeKnownF(h5PermApiAvail)(
-            Html5PermissionApi.getPermissionState( PermissionName.geolocation )
-          )
-        }
-        if (platform.isCordova) {
-          CordovaDiagonsticPermissionUtil
-            .getGeoLocPerm()
-            .recoverWith { case ex: Throwable =>
-              // diag-плагин на разных платформах работает по-разному. Отрабатываем ситуацию, когда он может не работать:
-              logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
-              htmlAskPermF
-            }
-        } else {
-          htmlAskPermF
-        }
-      }
-      override def requestPermissionFx = Effect.action {
-        GeoLocOnOff( enabled = true, isHard = true )
-      }
-      override def listenChangesOfPot = Some {
-        sc3Circuit.scGeoLocRW.zoom[Pot[_]] { scGeoLoc =>
-          (for {
-            glWatcher <- scGeoLoc.watchers.valuesIterator
-            // glWatcher.watchId - not ok here, because it can be Ready() even with missing permissions.
-            pot = glWatcher.lastPos
-            // TODO Commented code, because watchers map have lenght 0 or 1. For many items, need to uncomment.
-            //if pot !=* Pot.empty
-          } yield {
-            pot
-          })
-            .nextOption()
-            .getOrElse( Pot.empty )
-        }
-      }
-      override def settingKeys = ConfConst.ScSettings.LOCATION_ENABLED :: Nil
-    } #:: new IPermissionSpec {
+    val specs0 = new IPermissionSpec {
       // Bluetooth
       override def phase = MWzPhases.BlueToothPerm
       override def isSupported() = hasBleRO()
@@ -706,6 +661,57 @@ class WzFirstDiaAh[M <: AnyRef](
     } #::
     // End of permissions specs.
     LazyList.empty[IPermissionSpec]
+
+    if (platform.osFamily contains MOsFamilies.Apple_iOS) {
+      specs0
+
+    } else {
+      // Запрос доступа к геолокации.
+      new IPermissionSpec {
+        override def phase = MWzPhases.GeoLocPerm
+        override def isSupported(): Boolean = {
+          // Для cordova нет смысла проверять наличие плагина, который всегда должен быть.
+          CordovaConstants.isCordovaPlatform() || GeoLocUtilJs.envHasGeoLoc()
+        }
+        override def readPermissionState(): Future[IPermissionState] = {
+          def htmlAskPermF = {
+            IPermissionState.maybeKnownF(h5PermApiAvail)(
+              Html5PermissionApi.getPermissionState( PermissionName.geolocation )
+            )
+          }
+          if (platform.isCordova) {
+            CordovaDiagonsticPermissionUtil
+              .getGeoLocPerm()
+              .recoverWith { case ex: Throwable =>
+                // diag-плагин на разных платформах работает по-разному. Отрабатываем ситуацию, когда он может не работать:
+                logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
+                htmlAskPermF
+              }
+          } else {
+            htmlAskPermF
+          }
+        }
+        override def requestPermissionFx = Effect.action {
+          GeoLocOnOff( enabled = true, isHard = true )
+        }
+        override def listenChangesOfPot = Some {
+          sc3Circuit.scGeoLocRW.zoom[Pot[_]] { scGeoLoc =>
+            (for {
+              glWatcher <- scGeoLoc.watchers.valuesIterator
+              // glWatcher.watchId - not ok here, because it can be Ready() even with missing permissions.
+              pot = glWatcher.lastPos
+              // TODO Commented code, because watchers map have lenght 0 or 1. For many items, need to uncomment.
+              //if pot !=* Pot.empty
+            } yield {
+              pot
+            })
+              .nextOption()
+              .getOrElse( Pot.empty )
+          }
+        }
+        override def settingKeys = ConfConst.ScSettings.LOCATION_ENABLED :: Nil
+      } #:: specs0
+    }
   }
 
 }

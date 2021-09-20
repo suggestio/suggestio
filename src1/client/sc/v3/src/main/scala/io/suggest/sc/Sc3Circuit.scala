@@ -33,7 +33,7 @@ import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, ScConfAh, WelcomeA
 import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.menu.DlAppAh
 import io.suggest.sc.c.search._
-import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
+import io.suggest.sc.index.MScIndexes
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
 import io.suggest.sc.m.boot.{Boot, IBootAction, MBootServiceIds, MSpaRouterState}
@@ -53,7 +53,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2._
-import io.suggest.spa.{CircuitUtil, DAction, DoNothing, DoNothingActionProcessor, FastEqUtil, IHwBtnAction, OptFastEq}
+import io.suggest.spa.{DAction, DoNothing, DoNothingActionProcessor, FastEqUtil, IHwBtnAction, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
@@ -148,8 +148,6 @@ class Sc3Circuit(
       //unsafeOffsets = HwScreenUtil.etScreenUnsafeAreas( mscreen ),
     )
 
-    val scIndexResp = Pot.empty[MSc3IndexResp]
-
     // random seed изначально отсутствует в конфиге.
     val (conf2, gen2) = scInit.conf.gen.fold {
       val generation2 = System.currentTimeMillis()
@@ -182,7 +180,7 @@ class Sc3Circuit(
         ),
       ),
       index = MScIndex(
-        resp = scIndexResp,
+        resp = Pot.empty,
         search = MScSearch(
           geo = MGeoTabS(
             mapInit = MMapInitState(
@@ -192,7 +190,7 @@ class Sc3Circuit(
           ),
         ),
         scCss = ScCss(
-          MScCssArgs.from(scIndexResp, screenInfo)
+          MScCssArgs.from( None, screenInfo )
         ),
         state = MScIndexState(
           generation = gen2,
@@ -264,7 +262,7 @@ class Sc3Circuit(
     // Заголовок узла.
     for {
       inxResp <- mroot.index.resp
-      nodeName <- inxResp.name
+      nodeName <- inxResp.resp.name
     } {
       acc ::= nodeName
     }

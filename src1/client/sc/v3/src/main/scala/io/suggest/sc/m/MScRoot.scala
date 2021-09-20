@@ -36,9 +36,8 @@ object MScRoot {
   @inline implicit def univEq: UnivEq[MScRoot] = UnivEq.derive
 
 
-  def scCssArgsFrom(scRoot: MScRoot): MScCssArgs = {
-    MScCssArgs.from(scRoot.index.resp, scRoot.dev.screen.info)
-  }
+  def scCssArgsFrom(scRoot: MScRoot): MScCssArgs =
+    MScCssArgs.from( scRoot.index.respOpt, scRoot.dev.screen.info )
 
   /** "Линзы" для упрощённого доступа к полям нижнего уровня. */
   val dev       = GenLens[MScRoot](_.dev)

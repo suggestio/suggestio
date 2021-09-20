@@ -23,7 +23,7 @@ import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexArgs, MScIndexInfo, MScIndexes}
 import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
 import io.suggest.sc.m.dia.first.{InitFirstRunWz, MWzPhases, WzPhasePermRes}
-import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
+import io.suggest.sc.m.in.{MGeoLocTimerData, MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.u.api.IScStuffApi
@@ -104,12 +104,12 @@ object TailAh {
 
 
   private def _removeTimer(v0: MScRoot) = {
-    for (gltId <- v0.internals.info.geoLockTimer) yield {
+    for (glt <- v0.internals.info.geoLockTimer) yield {
       val alterF = MScRoot.internals
         .composeLens( MScInternals.info )
         .composeLens( MInternalInfo.geoLockTimer )
         .set( Pot.empty.unavailable() )
-      val fx = _clearTimerFx( gltId )
+      val fx = _clearTimerFx( glt.timerId )
       (alterF, fx)
     }
   }
@@ -126,15 +126,23 @@ object TailAh {
     * @return Обновлённое состояние + эффект ожидания срабатывания таймера.
     *         Но таймер - уже запущен к этому моменту.
     */
-  def mkGeoLocTimer(switchCtx: MScSwitchCtx, currTimerIdOpt: Pot[Int]): (MScInternals => MScInternals, Effect) = {
-    val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut(switchCtx) )
+  def mkGeoLocTimer(glTimerStart: GeoLocTimerStart, currTimerPot: Pot[MGeoLocTimerData]): (MScInternals => MScInternals, Effect) = {
+    val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
     val modifier = MScInternals.info
       .composeLens( MInternalInfo.geoLockTimer )
-      .set( Ready( tp.timerId ).pending() )
+      .set(
+        Ready(
+          MGeoLocTimerData(
+            timerId = tp.timerId,
+            reason = glTimerStart,
+          )
+        )
+          .pending()
+      )
 
     var timeoutFx: Effect = Effect( tp.fut )
-    for (currTimerId <- currTimerIdOpt) {
-      timeoutFx += _clearTimerFx(currTimerId)
+    for (currTimer <- currTimerPot) {
+      timeoutFx += _clearTimerFx( currTimer.timerId )
     }
 
     (modifier, timeoutFx)
@@ -372,7 +380,7 @@ class TailAh(
         // Эффект, если есть роута и что-то изменилось.
         val fxOpt = for {
           currRoute       <- v0.internals.info.currRoute
-          currIndexResp   <- v0.index.respOpt
+          currIndexRespData <- v0.index.respOpt
         } yield {
           Effect.action {
             // Получить на руки текущее сохранённое состояние:
@@ -391,13 +399,13 @@ class TailAh(
             val inxInfo2 = MScIndexInfo(
               state         = currRoute,
               indexResp     = {
-                if (currIndexResp.geoPoint.nonEmpty) {
-                  currIndexResp
+                if (currIndexRespData.geoPoint.nonEmpty) {
+                  currIndexRespData
                 } else {
                   // Если нет гео-точки узла, то передрать его с гео-карты.
                   (
                     MSc3IndexResp.geoPoint set Some(v0.index.search.geo.mapInit.state.center)
-                  )(currIndexResp)
+                  )(currIndexRespData)
                 }
               },
             )
@@ -739,7 +747,7 @@ class TailAh(
               retUserLoc  = false,
             )
           )
-          val (viMod, fx) = TailAh.mkGeoLocTimer( switchCtx, v0.internals.info.geoLockTimer )
+          val (viMod, fx) = TailAh.mkGeoLocTimer( GeoLocTimerStart(switchCtx), v0.internals.info.geoLockTimer )
           modsAcc ::= MScRoot.internals.modify(viMod)
           fxsAcc ::= fx
         }
@@ -839,11 +847,10 @@ class TailAh(
 
       for {
         // TODO Вероятно, надо как-то реагировать на первый GlPubSignal, даже если запущенного таймера (уже) нет.
-        geoLockTimerId <- v0.internals.info.geoLockTimer
+        geoLockTimer <- v0.internals.info.geoLockTimer
         glSignal <- m.origOpt
         if glSignal.glType.isHighAccuracy
-      } {
-        val indexMapReset2 = !mapNeedReset
+      } {val indexMapReset2 = !mapNeedReset
         val switchCtx = m.scSwitch.fold {
           MScSwitchCtx(
             indexQsArgs = MScIndexArgs(
@@ -857,7 +864,7 @@ class TailAh(
 
         fxAcc ::= TailAh.getIndexFx( switchCtx )
         fxAcc ::= Effect.action {
-          DomQuick.clearTimeout(geoLockTimerId)
+          DomQuick.clearTimeout( geoLockTimer.timerId )
           DoNothing
         }
 
@@ -932,23 +939,20 @@ class TailAh(
 
 
     // Наступил таймаут ожидания геолокации. Нужно активировать инициализацию в имеющемся состоянии
-    case m: GeoLocTimeOut =>
+    case GeoLocTimeOut =>
       val v0 = value
-      v0.internals.info.geoLockTimer.fold(noChange) { _ =>
+      v0.internals.info.geoLockTimer.fold(noChange) { glTimerData =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
-        var fxsAcc = List.empty[Effect]
-        val v2 = TailAh._removeTimer(v0)
-          .fold(v0) { case (alterF, ctFx) =>
-            fxsAcc ::= ctFx
+        var fx: Effect = TailAh.getIndexFx( glTimerData.reason.switchCtx )
+
+        val v2 = TailAh
+          ._removeTimer(v0)
+          .fold(v0) { case (alterF, cancelTimerFx) =>
+            fx += cancelTimerFx
             alterF( v0 )
           }
 
-        // Если demandLocTest, то и остановиться на этой ошибке:
-        //if (!m.switchCtx.demandLocTest) {
-        fxsAcc ::= TailAh.getIndexFx( m.switchCtx )
-        //}
-
-        ah.updatedSilentMaybeEffect(v2, fxsAcc.mergeEffects)
+        updated( v2, fx )
       }
 
 
@@ -963,9 +967,9 @@ class TailAh(
         effectOnly( fx )
 
       } else {
-        val (viMod, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals.info.geoLockTimer )
+        val (viMod, fx) = TailAh.mkGeoLocTimer( m, v0.internals.info.geoLockTimer )
         val v2 = MScRoot.internals.modify(viMod)(v0)
-        updatedSilent( v2, fx )
+        updated( v2, fx )
       }
 
 

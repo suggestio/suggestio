@@ -214,6 +214,18 @@ object ScCssStatic extends StyleSheet.Inline {
       overflow.initial
     )
 
+
+    /** Floating location button. */
+    val locationButton = {
+      val offset = 20.px
+      style(
+        position.absolute,
+        right( offset ),
+        bottom( offset ),
+        zIndex( 4 ),
+      )
+    }
+
   }
 
 

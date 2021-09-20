@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{MGeoLoc, MGeoPoint, MLocEnv}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.msg.ErrorMsgs
-import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
+import io.suggest.spa.DiodeUtil.Implicits.{ActionHandlerExt, EffectsOps, PotOpsExt}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MWelcomeInfo}
@@ -20,7 +20,6 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.maps.m.MMapS
-import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.c.search.{GeoTabAh, SearchAh}
 import io.suggest.sc.m.dia.err.MScErrorDia
@@ -108,7 +107,12 @@ object IndexAh {
     val indexViewAction = m.switchCtxOpt.flatMap(_.viewsAction)
 
     var i1 = i0.copy(
-      resp = i0.resp.ready(inx),
+      resp = i0.resp.ready(
+        MIndexRespData(
+          resp = inx,
+          scQs = m.qs,
+        )
+      ),
       state = i0.state.copy(
         switch = MInxSwitch.empty,
         // Обновить стопку индексов в связи с новым индексом:
@@ -220,7 +224,7 @@ object IndexAh {
 
     // Инициализация приветствия. Подготовить состояние welcome.
     val mWcSFutOpt = for {
-      resp <- i1.resp.toOption
+      respData <- i1.resp.toOption
       if {
         // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять:
         !i1.resp.isFailed &&
@@ -228,9 +232,9 @@ object IndexAh {
         m.switchCtxOpt.showWelcome
       }
 
-      wcInfo2 <- resp.welcome
+      wcInfo2 <- respData.resp.welcome
       // Не надо отображать текущее приветствие повторно:
-      if !i0.resp.exists(_.welcome contains[MWelcomeInfo] wcInfo2)
+      if !(respData.resp.welcome contains[MWelcomeInfo] wcInfo2)
     } yield {
       val tstamp = System.currentTimeMillis()
 
@@ -253,7 +257,7 @@ object IndexAh {
       .set( mWcSFutOpt.map(_._2) )(i1)
 
     // Нужно отребилдить ScCss, но только если что-то реально изменилось.
-    val scCssArgs2 = MScCssArgs.from( i1.resp, mroot.dev.screen.info )
+    val scCssArgs2 = MScCssArgs.from( i1.respOpt, mroot.dev.screen.info )
     if (scCssArgs2 !=* i1.scCss.args) {
       // Изменились аргументы. Пора отребилдить ScCss.
       i1 = MScIndex.scCss
@@ -342,9 +346,6 @@ class IndexRah
       .get( ctx )
     var nodesFoundMods = List.empty[MNodesFoundS => MNodesFoundS]
 
-    if (nodesFound0.reqSearchArgs.nonEmpty)
-      nodesFoundMods ::= MNodesFoundS.reqSearchArgs set None
-
     // Если на панели поиска pending, то его тоже сбросить. Такое бывает, когда происходило перемещение карты.
     if (nodesFound0.req.isPending)
       nodesFoundMods ::= MNodesFoundS.req.modify( _.fail(ex) )
@@ -423,8 +424,8 @@ class IndexRah
       !ctx.m.reason.isInstanceOf[ReGetIndex] &&
       resp.nodes.exists { node =>
         i0.resp.exists { rn =>
-          (rn isSamePlace node.props) &&
-          (rn isLooksFullySame node.props)
+          (rn.resp isSamePlace node.props) &&
+          (rn.resp isLooksFullySame node.props)
         }
       }
     ) {
@@ -483,8 +484,10 @@ class IndexRah
       )
 
       val v2 = MScRoot.index
-        .composeLens( IndexAh._inx_state_switch_ask_LENS )
-        .set( Some(switchAskState) )(v0)
+        .modify(
+          IndexAh._inx_state_switch_ask_LENS set Some(switchAskState) andThen
+          MScIndex.resp.modify( _.unPending )
+        )(v0)
 
       ActionResult.ModelUpdate(v2)
 
@@ -598,7 +601,7 @@ class IndexAh[M](
       // Forced index reload? Never deduplicate.
       !reason.isInstanceOf[ReGetIndex] &&
       // or if index-request args are really changed:
-      (v0.search.geo.found.reqSearchArgs contains[MScQs] args)
+      (v0.resp.exists(_.scQs ==* args))
     ) {
       // Дубликат запроса. Бывает при запуске, когда jsRouter и wzFirst сыплят одинаковые RouteTo().
       noChange
@@ -623,15 +626,14 @@ class IndexAh[M](
 
       var valueModF = MScIndex.resp.modify(_.pending(ts))
 
-      var nodesFoundModF = MNodesFoundS.reqSearchArgs set Some(args)
       // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
-      if (isSearchNodes)
-        nodesFoundModF = nodesFoundModF andThen MNodesFoundS.req.modify( _.pending(ts) )
-
-      valueModF = valueModF andThen MScIndex.search
-        .composeLens( MScSearch.geo )
-        .composeLens( MGeoTabS.found )
-        .modify( nodesFoundModF )
+      if (isSearchNodes) {
+        valueModF = valueModF andThen MScIndex.search
+          .composeLens( MScSearch.geo )
+          .composeLens( MGeoTabS.found )
+          .composeLens( MNodesFoundS.req )
+          .modify( _.pending(ts) )
+      }
 
       val v2 = valueModF(v0)
       ah.updateMaybeSilentFx(silentUpdate)(v2, fxAcc.mergeEffects.get)
@@ -960,12 +962,11 @@ class IndexAh[M](
     // Отладка: обнуление текущего индекса.
     case UnIndex =>
       val v0 = value
-      val resp2 = Pot.empty[MSc3IndexResp]
       val v2 = (
-        (MScIndex.resp set resp2) andThen
+        (MScIndex.resp set Pot.empty) andThen
         (MScIndex.scCss
           .composeLens(ScCss.args)
-          .set( MScCssArgs.from(resp2, rootRO.value.dev.screen.info) )
+          .set( MScCssArgs.from( None, rootRO.value.dev.screen.info ) )
         )
       )(v0)
       updated(v2)

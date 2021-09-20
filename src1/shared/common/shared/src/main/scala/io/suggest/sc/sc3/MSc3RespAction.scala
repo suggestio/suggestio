@@ -35,7 +35,8 @@ object MSc3RespAction {
   *
   * @param acType Тип экшена.
   * @param ads Тело ответа для плитки jd-карточек.
-  * @param search Тело ответа с результатами поиска тегов/узлов/etc.
+  * @param search List of nodes found for index or search.
+  *               These is shared between action types: Index (scQs.index), NodesSearch (scQs.search).
   * @param confUpdate Данные для обновления конфига.
   */
 case class MSc3RespAction(

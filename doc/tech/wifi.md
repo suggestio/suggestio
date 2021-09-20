@@ -23,5 +23,7 @@ Use [showcase nodes manager](showcase/nodes.md#registering-radio-beacon) to catc
 Nothing different here from [bluetooth beacons](bluetooth-beacons.md) scanning and registration.
 
 ## Limitations
-- Only Android mobile app support Wi-Fi scanning since version 4.5.
-  iOS and standard web-browsers have no API access to Wi-Fi radio scanning.
+- Apple iOS devices Wi-Fi support is limited by **at most one** currently associated Wi-Fi network's router MAC-address (BSSID).
+  If user NOT connected to any Wi-Fi network, application always see zero Wi-Fi BSSIDs.
+  If you need full iOS support over your area, take a look onto [bluetooth radio-beacons](bluetooth-beacons.md).
+- Web-browsers are unsupported. They have zero API access to Wi-Fi scanning.

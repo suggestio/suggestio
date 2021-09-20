@@ -1,6 +1,6 @@
 package io.suggest.lk.r.plat
 
-import com.materialui.{Mui, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiSwitch, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiSvgIcon, MuiSwitch, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import com.mui.treasury.styles.switch
 import io.suggest.css.Css
 import japgolly.scalajs.react._
@@ -27,6 +27,16 @@ class PlatformComponents(
       }
     } else {
       MuiSwitch.component
+    }
+  }
+
+
+  /** On iOS, use location icon from apple docs. */
+  def muiLocationIconComp: MuiSvgIcon = {
+    if (getPlatformCss().isRenderIos) {
+      Mui.SvgIcons.NearMe
+    } else {
+      Mui.SvgIcons.MyLocation
     }
   }
 

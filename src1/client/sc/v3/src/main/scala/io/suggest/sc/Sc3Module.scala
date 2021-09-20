@@ -177,6 +177,7 @@ class Sc3Module extends Log { outer =>
 
   // grid
   lazy val gridR   = wire[GridR]
+  lazy val locationButtonR = wire[LocationButtonR]
 
 
   // search

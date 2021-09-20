@@ -126,6 +126,8 @@ object Mui {
   @js.native @JSImport("@material-ui/lab/TreeView", JSImport.Default) object TreeView extends js.Any
   @js.native @JSImport("@material-ui/lab/TreeItem", JSImport.Default) object TreeItem extends js.Any
 
+  @js.native @JSImport("@material-ui/core/Fade", JSImport.Default) object Fade extends js.Any
+
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   @js.native @JSImport("@material-ui/styles", JSImport.Default) object Styles5 extends MuiStyles5
   @js.native @JSImport("@material-ui/core/styles/ThemeProvider", JSImport.Default) object ThemeProvider extends js.Any

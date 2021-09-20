@@ -127,7 +127,7 @@ class EnterLkRowR(
         mode = propsProxy.connect { props =>
           val rcvrId = props.index.state.rcvrId
             .filter { _ =>
-              props.index.resp.exists(_.isMyNode contains[Boolean] true)
+              props.index.resp.exists(_.resp.isMyNode contains[Boolean] true)
             }
           rcvrId.fold {
             val isLoggedIn = props.index.isLoggedIn

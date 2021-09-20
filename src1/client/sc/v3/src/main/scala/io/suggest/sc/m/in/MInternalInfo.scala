@@ -51,7 +51,7 @@ object MInternalInfo {
   * @param csrfToken Токен CSRF от сервера.
   */
 final case class MInternalInfo(
-                                geoLockTimer      : Pot[Int]                = Pot.empty,
+                                geoLockTimer      : Pot[MGeoLocTimerData]   = Pot.empty,
                                 currRoute         : Option[Sc3]             = None,
                                 reactCtx          : MScReactCtx             = MScReactCtx.default,
                                 indexesRecents    : MIndexesRecentOuter,

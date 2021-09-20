@@ -6,6 +6,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.r.plat.PlatformComponents
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScRoot
@@ -23,6 +24,7 @@ import japgolly.univeq._
   * Description: wrap-компонент для первого запуска система.
   */
 class WzFirstR(
+                platformComponents    : PlatformComponents,
                 crCtxP                : React.Context[MCommonReactCtx],
               )
   extends ISnackComp
@@ -63,12 +65,7 @@ class WzFirstR(
             // Строка заголовка окна диалога. Чтобы диалог не прыгал, рендерим заголовок всегда.
             val (iconComp, title) = props.phase match {
               case MWzPhases.GeoLocPerm =>
-                // For iOS, use iOS-like icon.
-                val locIcon = if (p.value.dev.platform.osFamily contains[MOsFamily] MOsFamilies.Apple_iOS)
-                  Mui.SvgIcons.NearMe
-                else
-                  Mui.SvgIcons.MyLocation
-                locIcon -> crCtx.messages( MsgCodes.`Geolocation` )
+                platformComponents.muiLocationIconComp -> crCtx.messages( MsgCodes.`Geolocation` )
               case MWzPhases.BlueToothPerm =>
                 Mui.SvgIcons.BluetoothSearching -> MsgCodes.`Bluetooth`
               case MWzPhases.NotificationPerm =>

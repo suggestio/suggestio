@@ -17,7 +17,7 @@ import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.login.ScLoginR
 import io.suggest.sc.v.dia.nodes.ScNodesR
 import io.suggest.sc.v.dia.settings.ScSettingsDiaR
-import io.suggest.sc.v.grid.GridR
+import io.suggest.sc.v.grid.{GridR, LocationButtonR}
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.WelcomeR
 import io.suggest.sc.v.menu._
@@ -49,6 +49,7 @@ class ScRootR (
                 scSnacksR               : ScSnacksR,
                 scThemes                : ScThemes,
                 logOutDiaR              : LogOutDiaR,
+                locationButtonR         : LocationButtonR,
                 crCtxP                  : React.Context[MCommonReactCtx],
                 muiThemeCtxP            : React.Context[MuiTheme],
                 scCssP                  : React.Context[ScCss],
@@ -91,6 +92,9 @@ class ScRootR (
 
             // Рендер плитки карточек узла:
             mrootProxy.wrap( _.grid )( gridR.component.apply ),
+
+            // Location floating button over grid.
+            locationButtonR.component( mrootProxy ),
           )
 
           s.isRenderScC { isRenderSomeProxy =>
@@ -182,7 +186,7 @@ class ScRootR (
 
         colorsC = propsProxy.connect { mroot =>
           mroot.index.resp
-            .fold(ScCss.COLORS_DFLT)(_.colors)
+            .fold(ScCss.COLORS_DFLT)(_.resp.colors)
         }( FastEqUtil.AnyRefFastEq ),
 
         commonReactCtxC = propsProxy.connect( _.internals.info.reactCtx.context )( FastEq.AnyRefEq ),

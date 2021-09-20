@@ -166,11 +166,17 @@ case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScTailActio
 /** Запуск таймера ожидания получения гео-координат.
   * @param switchCtx Index switch context.
   * @param allowImmediate Allow immediate timerless reindex, if accurate geo.data already presents.
+  * @param animateLocBtn Animate location button on the grid?
   */
-case class GeoLocTimerStart( switchCtx: MScSwitchCtx, allowImmediate: Boolean = true ) extends IScTailAction
+case class GeoLocTimerStart(
+                             switchCtx        : MScSwitchCtx,
+                             allowImmediate   : Boolean = true,
+                             animateLocBtn    : Boolean = false,
+                           )
+  extends IScTailAction
 
 /** Наступление таймаута получения гео-координат. */
-case class GeoLocTimeOut( switchCtx: MScSwitchCtx ) extends IScTailAction
+case object GeoLocTimeOut extends IScTailAction
 
 
 /** Экшен для запуска обработки унифицированного ответа выдачи, который бывает сложным и много-гранным.

@@ -101,7 +101,7 @@ class HeaderR(
 
         hdrLogoOptC = propsProxy.connect { mroot =>
           for {
-            mnode <- mroot.index.resp.toOption
+            mnode <- mroot.index.respOpt
           } yield {
             logoR.PropsVal(
               logoOpt     = mnode.logoOpt,
@@ -113,8 +113,7 @@ class HeaderR(
 
         hdrOnGridBtnColorOptC = propsProxy.connect { mroot =>
           OptionUtil.maybe( !mroot.index.isAnyPanelOpened ) {
-            mroot.index.resp
-              .toOption
+            mroot.index.respOpt
               .flatMap( _.colors.fg )
               .getOrElse( MColorData(ScConstants.Defaults.FG_COLOR) )
           }

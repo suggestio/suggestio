@@ -2,7 +2,6 @@ package io.suggest.sc.m.inx
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.{MNodesFoundRowProps, MScSearch}
 import io.suggest.sc.v.styl.ScCss
@@ -59,7 +58,7 @@ object MScIndex {
       scIndex.resp.isEmpty
 
     def isLoggedIn: Boolean =
-      scIndex.resp.exists(_.isLoggedIn contains true)
+      scIndex.resp.exists(_.resp.isLoggedIn contains true)
 
   }
 
@@ -68,7 +67,7 @@ object MScIndex {
 
 case class MScIndex(
                      state      : MScIndexState,
-                     resp       : Pot[MSc3IndexResp]      = Pot.empty,
+                     resp       : Pot[MIndexRespData]     = Pot.empty,
                      welcome    : Option[MWelcomeState]   = None,
                      search     : MScSearch,
                      scCss      : ScCss,
@@ -81,7 +80,7 @@ case class MScIndex(
     state.rcvrId.fold(ids0)(ids0 + _)
   }
 
-  lazy val respOpt = resp.toOption
+  lazy val respOpt = resp.toOption.map(_.resp)
 
   /** Кэширование данных для рендера рядов NodeFoundR. Обычно тут Nil. */
   lazy val searchGeoNodesFoundProps: Seq[MNodesFoundRowProps] = {
