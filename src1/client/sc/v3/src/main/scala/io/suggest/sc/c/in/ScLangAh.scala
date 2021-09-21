@@ -12,7 +12,7 @@ import io.suggest.lk.api.ILkLangApi
 import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{LangInit, LangSwitch, SettingEffect, SettingSet}
+import io.suggest.sc.m.{LangInit, LangSwitch, SettingAction, SettingSet}
 import io.suggest.sc.m.in.MScReactCtx
 import io.suggest.sc.u.api.IScStuffApi
 import io.suggest.sjs.common.vm.wnd.WindowVm
@@ -139,7 +139,7 @@ class ScLangAh[M](
     // Initialize language data.
     case LangInit =>
       val fx = Effect.action {
-        SettingEffect(
+        SettingAction(
           key = ConfConst.ScSettings.LANGUAGE,
           {jsValue =>
             val langOpt = jsValue

@@ -17,6 +17,9 @@ sealed trait IIndexAction extends ISc3Action
 case class GetIndex( switchCtx: MScSwitchCtx )
   extends IIndexAction with IScIndexRespReason
 
+/** Don't get index. */
+case object GetIndexCancel extends IIndexAction
+
 /** Перезагрузить текущий индекс. */
 case class ReGetIndex() extends IIndexAction with IScIndexRespReason
 

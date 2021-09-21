@@ -6,9 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.r.plat.PlatformComponents
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.m.{GeoLocTimerStart, MScRoot}
-import io.suggest.sc.m.inx.MScSwitchCtx
+import io.suggest.sc.m.{MScRoot, RefreshCurrentLocation}
 import io.suggest.sc.v.styl.ScCssStatic
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
@@ -30,16 +28,7 @@ final class LocationButtonR(
   class Backend($: BackendScope[Props, State]) {
 
     private val _onLocationButtonClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, GeoLocTimerStart(
-        switchCtx = MScSwitchCtx(
-          indexQsArgs = MScIndexArgs(
-            retUserLoc = false,
-          ),
-          demandLocTest = true,
-        ),
-        allowImmediate = false,
-        animateLocBtn = true,
-      ))
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, RefreshCurrentLocation )
     }
 
     def render(s: State): VdomElement = {

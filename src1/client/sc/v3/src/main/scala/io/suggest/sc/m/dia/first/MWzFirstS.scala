@@ -16,7 +16,8 @@ object MWzFirstS {
   implicit object MWzFirstSEq extends FastEq[MWzFirstS] {
     override def eqv(a: MWzFirstS, b: MWzFirstS): Boolean = {
       (a.phase ===* b.phase) &&
-      (a.frame ===* b.frame)
+      (a.frame ===* b.frame) &&
+      (a.reason ===* b.reason)
     }
   }
 
@@ -24,6 +25,7 @@ object MWzFirstS {
 
   def phase     = GenLens[MWzFirstS](_.phase)
   def frame     = GenLens[MWzFirstS](_.frame)
+  def reason    = GenLens[MWzFirstS](_.reason)
 
 }
 
@@ -33,8 +35,10 @@ object MWzFirstS {
   *
   * @param phase Текущая тема вопроса.
   * @param frame тип фрейма: вопрос или сообщение об отказе.
+  * @param reason First-run dialog init action.
   */
 case class MWzFirstS(
                       phase       : MWzPhase,
                       frame       : MWzFrame,
+                      reason      : InitFirstRunWz,
                    )

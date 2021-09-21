@@ -10,7 +10,7 @@ import io.suggest.kv.MKvStorage
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.{NotificationPermAsk, NotifyStartStop}
-import io.suggest.sc.m.{GeoLocOnOff, LangSwitch, ResetUrlRoute, SettingEffect, SettingSet, SettingsDiaOpen, SettingsRestore, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, LangSwitch, ResetUrlRoute, SettingAction, SettingSet, SettingsDiaOpen, SettingsRestore, WithSettings}
 import io.suggest.sc.m.dia.settings.MScSettingsDia
 import io.suggest.sc.sc3.MScSettingsData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -49,7 +49,7 @@ class ScSettingsDiaAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Запрос на использование настройки для сборки опционального эффекта.
-    case m: SettingEffect =>
+    case m: SettingAction =>
       val v0 = value
       // TODO Что-то тут не работает чтением/сохранением значений. Надо отладить.
 

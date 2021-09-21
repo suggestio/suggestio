@@ -167,13 +167,17 @@ case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScTailActio
   * @param switchCtx Index switch context.
   * @param allowImmediate Allow immediate timerless reindex, if accurate geo.data already presents.
   * @param animateLocBtn Animate location button on the grid?
+  * @param onComplete After completion effect function.
   */
 case class GeoLocTimerStart(
                              switchCtx        : MScSwitchCtx,
-                             allowImmediate   : Boolean = true,
-                             animateLocBtn    : Boolean = false,
+                             allowImmediate   : Boolean         = true,
+                             animateLocBtn    : Boolean         = false,
+                             onComplete       : Option[Boolean => Effect]     = None,
                            )
   extends IScTailAction
+
+case object GeoLocTimerCancel extends IScTailAction
 
 /** Наступление таймаута получения гео-координат. */
 case object GeoLocTimeOut extends IScTailAction
@@ -275,7 +279,7 @@ case class SettingSet( key: String, value: JsValue, save: Boolean, runSideEffect
 /** Использовать значение сеттинга для генерации возможного эффекта.
   * @param fx Если JsValue == JsNull, то значит значение настройки отсутствует вообще в хранилище, либо хранится как null.
   */
-case class SettingEffect( key: String, fx: JsValue => Option[Effect] ) extends IScSettingsAction
+case class SettingAction(key: String, fx: JsValue => Option[Effect] ) extends IScSettingsAction
 
 /** Произвольные действия с текущими настройками.
   * ActionResult.newValueOpt - опциональные обновлённые настройки.
@@ -369,3 +373,11 @@ case class LangSwitch(
 
 /** Initialize language. */
 case object LangInit extends IScLangAction
+
+
+/** For actions, routed into LocationButtonAh. */
+sealed trait IGridLocationButtonAction extends ISc3Action
+
+/** Requested to update/switch current location node.
+  * Also, used to request location permission on first run. */
+case object RefreshCurrentLocation extends IGridLocationButtonAction

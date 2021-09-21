@@ -28,7 +28,7 @@ import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.c.dev.{GeoLocAh, OnLineAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.dia.{ScErrorDiaAh, ScLoginDiaAh, ScNodesDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
-import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
+import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler, LocationButtonAh}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, ScConfAh, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.menu.DlAppAh
@@ -721,6 +721,10 @@ class Sc3Circuit(
     platformRO = platformRW,
   )
 
+  private def locationButtonAh = new LocationButtonAh(
+    modelRW = rootRW,
+  )
+
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 
@@ -744,6 +748,7 @@ class Sc3Circuit(
       case _: ISessionAction            => sessionAh
       case _: IGeoTabAction             => geoTabAh
       case _: ICsrfTokenAction          => csrfTokenAh
+      case _: IGridLocationButtonAction => locationButtonAh
       case _: IOsNotifyAction           => notifyAh.orNull
       case _: IScErrorAction            => scErrorDiaAh
       case _: IScAppAction              => dlAppAh

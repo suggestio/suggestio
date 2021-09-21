@@ -778,7 +778,11 @@ class IndexAh[M](
               // Не надо переключаться ни в какой узел. Просто сокрыть диалог.
               // Возможно, юзер не хочет уходить из текущего узла в новую определённую локацию.
               val v2 = cleanedState
-              updated(v2)
+              val fxOpt = switchS0.okAction
+                .switchCtxOpt
+                .flatMap(_.afterCancelSwitch)
+              ah.updatedMaybeEffect( v2, fxOpt )
+
             } { resOrNodeFound =>
               resOrNodeFound.fold(
                 identity,
@@ -957,6 +961,17 @@ class IndexAh[M](
         reason        = m,
         switchCtx     = switchCtx,
       )
+
+
+    // Undo state-changes, related to GetIndex.
+    case GetIndexCancel =>
+      val v0 = value
+      if (v0.resp.isPending) {
+        val v2 = MScIndex.resp.modify(_.unPending)(v0)
+        updated( v2 )
+      } else {
+        noChange
+      }
 
 
     // Отладка: обнуление текущего индекса.

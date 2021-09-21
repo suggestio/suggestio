@@ -20,8 +20,16 @@ sealed trait IWz1Action extends ISc3Action
   * @param showHide true - Инициализация с возможным отображением диалога первого запуска,
   *                 если это действительно первый запуск.
   *                 false - Деинициализация (сокрытие).
+  * @param onlyPhases Only selected phases.
+  * @param noAsk Skip asking user before permission request, and run native permission request as soon as possible.
+  * @param onComplete Effect to call after showHide=false.
   */
-case class InitFirstRunWz( showHide: Boolean ) extends IWz1Action
+case class InitFirstRunWz( showHide     : Boolean,
+                           onlyPhases   : Seq[MWzPhase]   = Nil,
+                           noAsk        : Boolean         = false,
+                           onComplete   : Option[Effect]  = None,
+                         )
+  extends IWz1Action
 
 /** Клик по кнопкам "да" или "нет". */
 case class YesNoWz( yesNo: Boolean ) extends IWz1Action
@@ -43,4 +51,8 @@ case class WzPhasePermRes(phase: MWzPhase,
 
 
 /** Async reading all current permissions states into wz's state perms.map. */
-case class WzReadPermissions(onComplete: Option[Effect] = None ) extends IWz1Action
+case class WzReadPermissions(
+                              onComplete    : Option[Effect]          = None,
+                              onlyPhases    : Seq[MWzPhase]           = Nil,
+                            )
+  extends IWz1Action

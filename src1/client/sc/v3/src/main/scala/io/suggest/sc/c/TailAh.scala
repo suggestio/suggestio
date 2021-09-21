@@ -104,7 +104,7 @@ object TailAh {
 
 
   private def _removeTimer(v0: MScRoot) = {
-    for (glt <- v0.internals.info.geoLockTimer) yield {
+    for (glt <- v0.internals.info.geoLockTimer.toOption) yield {
       val alterF = MScRoot.internals
         .composeLens( MScInternals.info )
         .composeLens( MInternalInfo.geoLockTimer )
@@ -952,6 +952,9 @@ class TailAh(
             alterF( v0 )
           }
 
+        for (onCompleteFxF <- glTimerData.reason.onComplete)
+          fx += onCompleteFxF( false )
+
         updated( v2, fx )
       }
 
@@ -963,7 +966,9 @@ class TailAh(
 
       if (m.allowImmediate && currLocOpt.exists(_._1.isHighAccuracy)) {
         // Timer not needed, already have enought geo.data.
-        val fx = TailAh.getIndexFx( m.switchCtx )
+        var fx: Effect = TailAh.getIndexFx( m.switchCtx )
+        for (onCompleteFxF <- m.onComplete)
+          fx += onCompleteFxF(true)
         effectOnly( fx )
 
       } else {
@@ -1054,6 +1059,16 @@ class TailAh(
       })
         // Вернуть содержимое Left или Right.
         .fold(identity, identity)
+
+
+    // Cancel geolocation timer
+    case GeoLocTimerCancel =>
+      val v0 = value
+      TailAh
+        ._removeTimer( v0 )
+        .fold(noChange) { case (modF, fx) =>
+          updated( modF(v0), fx )
+        }
 
 
     // Ошибка от компонента.

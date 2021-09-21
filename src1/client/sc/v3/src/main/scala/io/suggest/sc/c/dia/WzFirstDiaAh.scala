@@ -8,7 +8,7 @@ import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.conf.ConfConst
 import io.suggest.cordova.CordovaConstants
-import io.suggest.dev.{MOsFamilies, MPlatformS}
+import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.NotificationPermAsk
@@ -86,75 +86,78 @@ class WzFirstDiaAh[M <: AnyRef](
   }
 
 
+  private def _doPermissionRequest(v0: MWzFirstOuterS, view0: MWzFirstS, phaseSpec: IPermissionSpec): (MWzFirstOuterS, Effect) = {
+    val permStatePot = v0.perms.getOrElse( view0.phase, Pot.empty )
+    val permStateOpt = permStatePot.toOption
+    val someStartTimeMs = Some( System.currentTimeMillis() )
+
+    val hasOnChangeApi = permStateOpt.exists(_.hasOnChangeApi)
+    val timeoutMs = (if (hasOnChangeApi) 10 else 4) * 1000
+
+    // Close InProgress-dialog via timeout:
+    var fxAcc: Effect = Effect {
+      _permissionTimeout( view0.phase, timeoutMs, someStartTimeMs )
+        .fut
+    }
+
+    // Subscribe for permission state changes, if possible:
+    if (hasOnChangeApi) for (permState <- permStateOpt) {
+      fxAcc += Effect.action {
+        // Subscribe for permission state changes:
+        permState.onChange { pss: IPermissionState =>
+          val action = WzPhasePermRes( view0.phase, Success(pss), startTimeMs = someStartTimeMs )
+          sc3Circuit.dispatch( action )
+        }
+        DoNothing
+      }
+    }
+
+    // Subscribe for changes via some Pot inside Sc state:
+    for (onChangePotZoom <- phaseSpec.listenChangesOfPot) {
+      fxAcc += Effect {
+        CircuitUtil
+          .promiseSubscribe()
+          .withTimeout( timeoutMs )   // TODO Two timeout here created at once with same millis interval. Replace with timer future completeness.
+          .zooming( sc3Circuit, onChangePotZoom )
+          .transform { case tryRes =>
+            val permResMapped = for (_ <- tryRes) yield {
+              BoolOptPermissionState( OptionUtil.SomeBool.someTrue )
+            }
+            val action = WzPhasePermRes( phaseSpec.phase, permResMapped, startTimeMs = someStartTimeMs )
+            Success(action)
+          }
+      }
+    }
+
+    fxAcc += phaseSpec.requestPermissionFx
+
+    // Переключить view в состояние ожидания.
+    val v2 = MWzFirstOuterS.perms.modify {
+      // set pending state:
+      _.updated( phaseSpec.phase, permStatePot.pending( someStartTimeMs.value ) )
+    }( _setFrame( MWzFrames.InProgress, v0, view0 ) )
+
+    (v2, fxAcc)
+  }
+
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопкам в диалоге.
     case m: YesNoWz =>
       val v0 = value
       v0.view.fold(noChange) { view0 =>
-
         if (m.yesNo) {
           // Положительный ответ - запустить запрос разрешения.
           view0.frame match {
             case MWzFrames.AskPerm =>
               // Положительный ответ - запросить доступ в реальности.
               (for {
-                phaseSpec <- _permPhasesSpecs().iterator
-                if phaseSpec.phase ==* view0.phase
+                phaseSpec <- _findPhaseSpec( view0.phase )
               } yield {
-                val permStatePot = v0.perms.getOrElse( view0.phase, Pot.empty )
-                val permStateOpt = permStatePot.toOption
-                val someStartTimeMs = Some( System.currentTimeMillis() )
-
-                val hasOnChangeApi = permStateOpt.exists(_.hasOnChangeApi)
-                val timeoutMs = (if (hasOnChangeApi) 10 else 4) * 1000
-
-                // Close InProgress-dialog via timeout:
-                var fxAcc: Effect = Effect {
-                  _permissionTimeout( view0.phase, timeoutMs, someStartTimeMs )
-                    .fut
-                }
-
-                // Subscribe for permission state changes, if possible:
-                if (hasOnChangeApi) for (permState <- permStateOpt) {
-                  fxAcc += Effect.action {
-                    // Subscribe for changes:
-                    permState.onChange { pss: IPermissionState =>
-                      val action = WzPhasePermRes( view0.phase, Success(pss), startTimeMs = someStartTimeMs )
-                      sc3Circuit.dispatch( action )
-                    }
-                    DoNothing
-                  }
-                }
-
-                // Subscribe for changes via some Pot inside Sc state:
-                for (onChangePotZoom <- phaseSpec.listenChangesOfPot) {
-                  fxAcc += Effect {
-                    CircuitUtil
-                      .promiseSubscribe()
-                      .withTimeout( timeoutMs )   // TODO Two timeout here created at once with same millis interval. Replace with timer future completeness.
-                      .zooming( sc3Circuit, onChangePotZoom )
-                      .transform { case tryRes =>
-                        val permResMapped = for (_ <- tryRes) yield {
-                          BoolOptPermissionState( OptionUtil.SomeBool.someTrue )
-                        }
-                        val action = WzPhasePermRes( phaseSpec.phase, permResMapped, startTimeMs = someStartTimeMs )
-                        Success(action)
-                      }
-                  }
-                }
-
-                fxAcc += phaseSpec.requestPermissionFx
-
-                // Переключить view в состояние ожидания.
-                val v2 = MWzFirstOuterS.perms.modify {
-                  // set pending state:
-                  _.updated( phaseSpec.phase, permStatePot.pending( someStartTimeMs.value ) )
-                }( _setFrame( MWzFrames.InProgress, v0, view0 ) )
-
-                updated( v2, fxAcc )
+                val (v2, fx) = _doPermissionRequest( v0, view0, phaseSpec )
+                updated( v2, fx )
               })
-                .nextOption()
                 .getOrElse {
                   // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
                   _wzGoToNextPhase( v0 )
@@ -229,8 +232,7 @@ class WzFirstDiaAh[M <: AnyRef](
         }
 
         for {
-          phaseSpec <- _permPhasesSpecs()
-          if phaseSpec.phase ==* m.phase
+          phaseSpec <- _findPhaseSpec( m.phase )
         } {
           // Update settings, if permission explicitly granted or denied.
           for {
@@ -299,6 +301,7 @@ class WzFirstDiaAh[M <: AnyRef](
 
           } else if (view0.phase ==* MWzPhases.Starting) {
             // Надо показать на экране текущий диалог в разном состоянии.
+            // TODO Opt hasPending should be false, if NEXT phase is ready to display to user.
             val hasPending = v1.perms
               .valuesIterator
               .exists(_.isPending)
@@ -325,7 +328,7 @@ class WzFirstDiaAh[M <: AnyRef](
       } else {
         // Refusing to update permission state. Logging only something useful:
         if (
-          scalajs.LinkingInfo.developmentMode ||
+          //scalajs.LinkingInfo.developmentMode ||
           !m.res.failed.toOption.exists(_.isInstanceOf[TimeoutException])
         )
           logger.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, permOpt0.orNull) )
@@ -346,8 +349,15 @@ class WzFirstDiaAh[M <: AnyRef](
       val someStartTimeMs = Some( System.currentTimeMillis() )
       // Пройтись по списку фаз, активировав проверки прав:
       for {
-        phaseSpec <- _permPhasesSpecs()
-        if phaseSpec.isSupported()
+        phaseSpec <- _allPhaseSpecs
+        if {
+          ( // Filter by only allowed phases, if filtering enabled.
+            m.onlyPhases.isEmpty ||
+            (m.onlyPhases contains[MWzPhase] phaseSpec.phase)
+          ) &&
+            phaseSpec.isSupported()
+        }
+
         permPot0 = v0.perms.getOrElse( phaseSpec.phase, Pot.empty[IPermissionState] )
         // Prevent double-check until timeout: underlying native API may suffer from too simulateos calls.
         if !permPot0.isPending
@@ -387,31 +397,51 @@ class WzFirstDiaAh[M <: AnyRef](
         v0.view.isEmpty &&
         WzFirstDiaAh.isNeedWizardFlowVal
       ) {
-        // Запускаемся.
-        val fx: Effect =
-          WzReadPermissions().toEffectPure >>
-          // И надо бы выставить в URL отметку, что теперь открыт диалог:
-          ResetUrlRoute(force = true).toEffectPure
+        val readPermsFx = Effect.action {
+          WzReadPermissions(
+            onlyPhases =
+              if (m.onlyPhases.isEmpty) _platformStartPhases()
+              else m.onlyPhases,
+          )
+        }
+        // TODO Insert into URL info about running wz? This is non-actual anymore?
+        val resetUrlRoute = ResetUrlRoute(force = true).toEffectPure
 
         // Инициализировать состояние first-диалога.
-        val first2 = (
+        val v2 = (
           MWzFirstOuterS.view set Ready(MWzFirstS(
             phase = MWzPhases.Starting,
             frame = MWzFrames.InProgress,
+            reason = m,
           )).pending()
         )(v0)
 
-        updated( first2, fx )
+        val fx = readPermsFx >> resetUrlRoute
+        updated( v2, fx )
 
-      } else if (!m.showHide && v0.view.nonEmpty) {
-        // Closing opened first-run snack-dialog:
-        val v2 = MWzFirstOuterS.view.modify(_.unavailable())(v0)
+      } else if (!m.showHide) {
+        var fxAcc = List.empty[Effect]
 
+        // All completion effects - to acc:
+        for {
+          onCompleteFxOpt <- (
+            m.onComplete ::
+            v0.view
+              .toOption
+              .flatMap(_.reason.onComplete) ::
+            Nil
+          )
+          onCompleteFx <- onCompleteFxOpt
+        } {
+          fxAcc ::= onCompleteFx
+        }
+
+        // TODO Maybe delete this effect after LocateButton integration.
         // Ensure geolocation timer on first run after permissions are processed, etc:
         // TODO XXX GeoLoc Permission request on android always fails with TimeoutException! Also, hasLocationAccess here - fails.
-        val hasLocAccess = v2.perms.hasLocationAccess
-        val fxOpt = Option.when( hasLocAccess ) {
-          Effect.action {
+        val hasLocAccess = v0.perms.hasLocationAccess
+        if (hasLocAccess) {
+          fxAcc ::= Effect.action {
             GeoLocTimerStart(
               MScSwitchCtx(
                 demandLocTest = true,
@@ -428,7 +458,12 @@ class WzFirstDiaAh[M <: AnyRef](
           }
         }
 
-        ah.updatedMaybeEffect( v2, fxOpt )
+        // Closing opened first-run snack-dialog:
+        val v2Opt = OptionUtil.maybe( !v0.view.isUnavailable ) {
+          MWzFirstOuterS.view.modify(_.unavailable())(v0)
+        }
+
+        ah.optionalResult( v2Opt, fxAcc.mergeEffects, silent = false )
 
       } else if (v0.view ==* Pot.empty) {
         // Forbid to start and write this decision into state:
@@ -474,16 +509,22 @@ class WzFirstDiaAh[M <: AnyRef](
           val isGranted = perm.isGranted
 
           if (!isDenied && !isGranted) {
-            // Надо задать вопрос юзеру, т.к. доступ ещё не запрашивался.
-            val v2 = MWzFirstOuterS.view.set {
-              Ready(
-                view0.copy(
-                  phase = nextPhase,
-                  frame = MWzFrames.AskPerm
-                )
-              ).pending()
-            }(v0)
-            Some(v2)
+            // Permission not yet requested. Ask user about enabling feature (or don't ask, if noAsk=true)
+            val v22 = if (view0.reason.noAsk) {
+              val (v2, requestPermFx) = _doPermissionRequest( v0, view0, _findPhaseSpec(nextPhase).get )
+              fxAcc ::= requestPermFx
+              v2
+            } else {
+              MWzFirstOuterS.view.set {
+                Ready(
+                  view0.copy(
+                    phase = nextPhase,
+                    frame = MWzFrames.AskPerm
+                  )
+                ).pending()
+              }(v0)
+            }
+            Some( v22 )
 
           } else if (isDenied) {
             // Запрещён доступ. Значит юзеру можно выразить сожаление в инфо-окне.
@@ -501,8 +542,7 @@ class WzFirstDiaAh[M <: AnyRef](
             // granted или что-то неведомое - пропуск фазы или завершение, если не осталось больше фаз для обработки.
             if (isGranted && nextPhase !=* view0.phase) {
               for {
-                permSpec <- _permPhasesSpecs().iterator
-                if permSpec.phase ==* nextPhase
+                permSpec <- _findPhaseSpec( nextPhase )
                 fx <- (
                   permSpec.onGrantedByDefault ::
                   _emitSettingFx(permSpec, isGranted = true) ::
@@ -602,116 +642,127 @@ class WzFirstDiaAh[M <: AnyRef](
       )
   }
 
-  /** Сборка спецификация по фазам, которые требуют проверки прав доступа. */
-  private def _permPhasesSpecs(): LazyList[IPermissionSpec] = {
-    lazy val platform = platformRO.value
-    // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
-    lazy val h5PermApiAvail = Html5PermissionApi.isApiAvail()
+  // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
+  private lazy val h5PermApiAvail = Html5PermissionApi.isApiAvail()
 
-    val specs0 = new IPermissionSpec {
-      // Bluetooth
-      override def phase = MWzPhases.BlueToothPerm
-      override def isSupported() = hasBleRO()
-      override def readPermissionState() =
-        CordovaDiagonsticPermissionUtil.getBlueToothState()
-      override def requestPermissionFx = Effect.action {
-        BtOnOff(
-          isEnabled = OptionUtil.SomeBool.someTrue,
-          opts = MBeaconerOpts(
-            scanMode    = IBeaconsListenerApi.ScanMode.BALANCED,
-            askEnableBt = true,
-            oneShot     = false,
-          ),
+  /** GeoLocation access permission spec. */
+  final class GeoLocationSpec extends IPermissionSpec {
+    override def phase = MWzPhases.GeoLocPerm
+    override def isSupported(): Boolean = {
+      // Для cordova нет смысла проверять наличие плагина, который всегда должен быть.
+      CordovaConstants.isCordovaPlatform() || GeoLocUtilJs.envHasGeoLoc()
+    }
+    override def readPermissionState(): Future[IPermissionState] = {
+      def htmlAskPermF = {
+        IPermissionState.maybeKnownF(h5PermApiAvail)(
+          Html5PermissionApi.getPermissionState( PermissionName.geolocation )
         )
       }
-      override def settingKeys = {
-        ConfConst.ScSettings.BLUETOOTH_BEACONS_ENABLED ::
-        ConfConst.ScSettings.BLUETOOTH_BEACONS_BACKGROUND_SCAN ::
-        Nil
+      if (platformRO.value.isCordova) {
+        CordovaDiagonsticPermissionUtil
+          .getGeoLocPerm()
+          .recoverWith { case ex: Throwable =>
+            // diag-плагин на разных платформах работает по-разному. Отрабатываем ситуацию, когда он может не работать:
+            logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
+            htmlAskPermF
+          }
+      } else {
+        htmlAskPermF
       }
-    } #:: new IPermissionSpec {
-      // Notifications
-      override def phase = MWzPhases.NotificationPerm
-      override def isSupported(): Boolean = {
-        (platform.isCordova && CordovaNotificationlLocalUtil.isCnlApiAvailable()) ||
-        // Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
-        (platform.isBrowser && Html5NotificationUtil.isApiAvailable() && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
+    }
+    override def requestPermissionFx = Effect.action {
+      GeoLocOnOff( enabled = true, isHard = true )
+    }
+    override def listenChangesOfPot = Some {
+      sc3Circuit.scGeoLocRW.zoom[Pot[_]] { scGeoLoc =>
+        (for {
+          glWatcher <- scGeoLoc.watchers.valuesIterator
+          // glWatcher.watchId - not ok here, because it can be Ready() even with missing permissions.
+          pot = glWatcher.lastPos
+          // TODO Commented code, because watchers map have lenght 0 or 1. For many items, need to uncomment.
+          //if pot !=* Pot.empty
+        } yield {
+          pot
+        })
+          .nextOption()
+          .getOrElse( Pot.empty )
       }
-      override def readPermissionState(): Future[IPermissionState] = {
-        if (platform.isCordova) {
-          CordovaNotificationlLocalUtil.hasPermissionState()
+    }
+    override def settingKeys = ConfConst.ScSettings.LOCATION_ENABLED :: Nil
+  }
+
+  /** BlueTooth scan permission specification. */
+  final class BlueToothSpec extends IPermissionSpec {
+    // Bluetooth
+    override def phase = MWzPhases.BlueToothPerm
+    override def isSupported() = hasBleRO()
+    override def readPermissionState() =
+      CordovaDiagonsticPermissionUtil.getBlueToothState()
+    override def requestPermissionFx = Effect.action {
+      BtOnOff(
+        isEnabled = OptionUtil.SomeBool.someTrue,
+        opts = MBeaconerOpts(
+          scanMode    = IBeaconsListenerApi.ScanMode.BALANCED,
+          askEnableBt = true,
+          oneShot     = false,
+        ),
+      )
+    }
+    override def settingKeys = {
+      ConfConst.ScSettings.BLUETOOTH_BEACONS_ENABLED ::
+      ConfConst.ScSettings.BLUETOOTH_BEACONS_BACKGROUND_SCAN ::
+      Nil
+    }
+  }
+
+  /** Notifications specification. */
+  final class NotificationSpec extends IPermissionSpec {
+    lazy val platform = platformRO.value
+    // Notifications
+    override def phase = MWzPhases.NotificationPerm
+    override def isSupported(): Boolean = {
+      (platform.isCordova && CordovaNotificationlLocalUtil.isCnlApiAvailable()) ||
+      // Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
+      (platform.isBrowser && Html5NotificationUtil.isApiAvailable() && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
+    }
+    override def readPermissionState(): Future[IPermissionState] = {
+      if (platform.isCordova) {
+        CordovaNotificationlLocalUtil.hasPermissionState()
+      } else {
+        (if (h5PermApiAvail) {
+          Try {
+            Html5PermissionApi.getPermissionState( PermissionName.notifications )
+          }
         } else {
-          (if (h5PermApiAvail) {
-            Try {
-              Html5PermissionApi.getPermissionState( PermissionName.notifications )
-            }
-          } else {
-            Failure( new UnsupportedOperationException )
-          })
-            .recover { case _ =>
-              Html5NotificationUtil.getPermissionState()
-            }
-            .getOrElse( Future.failed(new UnsupportedOperationException) )
-        }
+          Failure( new UnsupportedOperationException )
+        })
+          .recover { case _ =>
+            Html5NotificationUtil.getPermissionState()
+          }
+          .getOrElse( Future.failed(new UnsupportedOperationException) )
       }
-      override def requestPermissionFx: Effect =
-        NotificationPermAsk( isVisible = true ).toEffectPure
-      override def onGrantedByDefault = None
-      override def settingKeys = ConfConst.ScSettings.NOTIFICATIONS_ENABLED :: Nil
-    } #::
+    }
+    override def requestPermissionFx: Effect =
+      NotificationPermAsk( isVisible = true ).toEffectPure
+    override def onGrantedByDefault = None
+    override def settingKeys = ConfConst.ScSettings.NOTIFICATIONS_ENABLED :: Nil
+  }
+
+  private def _allPhaseSpecs =
+    new GeoLocationSpec #::
+    new BlueToothSpec #::
+    new NotificationSpec #::
     // End of permissions specs.
     LazyList.empty[IPermissionSpec]
 
-    if (platform.osFamily contains MOsFamilies.Apple_iOS) {
-      specs0
+  private def _findPhaseSpec(phase: MWzPhase) =
+    _allPhaseSpecs.find(_.phase ==* phase)
 
-    } else {
-      // Запрос доступа к геолокации.
-      new IPermissionSpec {
-        override def phase = MWzPhases.GeoLocPerm
-        override def isSupported(): Boolean = {
-          // Для cordova нет смысла проверять наличие плагина, который всегда должен быть.
-          CordovaConstants.isCordovaPlatform() || GeoLocUtilJs.envHasGeoLoc()
-        }
-        override def readPermissionState(): Future[IPermissionState] = {
-          def htmlAskPermF = {
-            IPermissionState.maybeKnownF(h5PermApiAvail)(
-              Html5PermissionApi.getPermissionState( PermissionName.geolocation )
-            )
-          }
-          if (platform.isCordova) {
-            CordovaDiagonsticPermissionUtil
-              .getGeoLocPerm()
-              .recoverWith { case ex: Throwable =>
-                // diag-плагин на разных платформах работает по-разному. Отрабатываем ситуацию, когда он может не работать:
-                logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
-                htmlAskPermF
-              }
-          } else {
-            htmlAskPermF
-          }
-        }
-        override def requestPermissionFx = Effect.action {
-          GeoLocOnOff( enabled = true, isHard = true )
-        }
-        override def listenChangesOfPot = Some {
-          sc3Circuit.scGeoLocRW.zoom[Pot[_]] { scGeoLoc =>
-            (for {
-              glWatcher <- scGeoLoc.watchers.valuesIterator
-              // glWatcher.watchId - not ok here, because it can be Ready() even with missing permissions.
-              pot = glWatcher.lastPos
-              // TODO Commented code, because watchers map have lenght 0 or 1. For many items, need to uncomment.
-              //if pot !=* Pot.empty
-            } yield {
-              pot
-            })
-              .nextOption()
-              .getOrElse( Pot.empty )
-          }
-        }
-        override def settingKeys = ConfConst.ScSettings.LOCATION_ENABLED :: Nil
-      } #:: specs0
-    }
+  /** Start with asking these permissions? */
+  private def _platformStartPhases(): Seq[MWzPhase] = {
+    MWzPhases.BlueToothPerm ::
+    MWzPhases.NotificationPerm ::
+    Nil
   }
 
 }

@@ -68,6 +68,7 @@ case class MScSwitchCtx(
                          afterBackGrid    : Option[Effect]    = None,
                          viewsAction      : MScSwitchCtx.ViewsAction   = MScSwitchCtx.ViewsAction.RESET,
                          indexMapReset    : Boolean           = MScSwitchCtx.INDEX_MAP_RESET_DFLT,
+                         afterCancelSwitch: Option[Effect]    = None,
                        ) {
 
   override def toString: String = StringUtil.toStringHelper(this) { f =>

@@ -17,7 +17,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PeripheralStartStop, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, SettingsRestore, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineInit, PauseOrResume, PeripheralStartStop, PlatformReady, RouteTo, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingAction, SettingsDiaOpen, SettingsRestore, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.c.android.ScIntentsAh
@@ -476,7 +476,7 @@ final class PlatformAh[M](
     // Если вроде бы что-то изменяется, то запустить доп.проверку через settings о том, что действительно надо что-либо менять:
     Option.when( isToEnable0 || (!isScVisible && isActiveNow) ) {
       Effect.action {
-        SettingEffect(
+        SettingAction(
           key = ConfConst.ScSettings.LOCATION_ENABLED,
           fx  = { jsValue =>
             val isToEnable = isToEnable0 && jsValue.asOpt[Boolean].getOrElseTrue
