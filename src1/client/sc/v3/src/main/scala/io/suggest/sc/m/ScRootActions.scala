@@ -122,17 +122,18 @@ case object GlLeafletApiLocateTimeout extends IGeoLocAction
 
 
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
-case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IScTailAction
+case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IGeoLocTimerAction
+
+
+/** Marker for trait of actions, routed into ScRoutingAh controller. */
+sealed trait IScRoutingAction extends IScRootAction
 
 /** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL.
   *
   * @param mainScreen
   * @param force Ignore some checks. Used by BootAh, to bypass pre-boot-completed filters/checks.
   */
-case class RouteTo( mainScreen: SioPages.Sc3, force: Boolean = false) extends IScTailAction
-
-
-sealed trait IScTailAction extends IScRootAction
+case class RouteTo( mainScreen: SioPages.Sc3, force: Boolean = false) extends IScRoutingAction
 
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию.
   * @param mods Функция обновления роуты.
@@ -144,24 +145,31 @@ case class ResetUrlRoute(
                           force   : Boolean = false,
                           via     : SetRouteVia = SetRouteVia.HistoryPush,
                         )
-  extends IScTailAction
+  extends IScRoutingAction
+
+
+/** Actions, routed into IndexesRecentAh controller. */
+sealed trait IScIndexesRecentAction extends ISc3Action
 
 /** Восстановление текущего состояния ранее-посещённых индексов. */
 case class LoadIndexRecents(
                              clean: Boolean,
                              pot: Pot[MScIndexes] = Pot.empty
                            )
-  extends IScTailAction
+  extends IScIndexesRecentAction
 object LoadIndexRecents {
   def pot = GenLens[LoadIndexRecents](_.pot)
 }
 
 /** Сохранить в базу инфу по индексу. */
-case class SaveRecentIndex(inxRecent2: Option[MScIndexes] = None) extends IScTailAction
+case class SaveRecentIndex(inxRecent2: Option[MScIndexes] = None) extends IScIndexesRecentAction
 
 /** Выбор узла в списке недавних узлов. */
-case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScTailAction
+case class NodeRecentNodeClick(inxRecent: MSc3IndexResp ) extends IScIndexesRecentAction
 
+
+/** Marker trait for geo-loc timer actions, routed into GeoTimerAh controller. */
+sealed trait IGeoLocTimerAction extends ISc3Action
 
 /** Запуск таймера ожидания получения гео-координат.
   * @param switchCtx Index switch context.
@@ -175,13 +183,15 @@ case class GeoLocTimerStart(
                              animateLocBtn    : Boolean         = false,
                              onComplete       : Option[Boolean => Effect]     = None,
                            )
-  extends IScTailAction
+  extends IGeoLocTimerAction
 
-case object GeoLocTimerCancel extends IScTailAction
+case object GeoLocTimerCancel extends IGeoLocTimerAction
 
 /** Наступление таймаута получения гео-координат. */
-case object GeoLocTimeOut extends IScTailAction
+case object GeoLocTimeOut extends IGeoLocTimerAction
 
+
+sealed trait IScRespAction extends ISc3Action
 
 /** Экшен для запуска обработки унифицированного ответа выдачи, который бывает сложным и много-гранным.
   * @param reqTimeStamp Время запуска запроса к серверу.
@@ -197,7 +207,7 @@ case class HandleScApiResp(
                             reason         : IScApiRespReason,
                             switchCtxOpt   : Option[MScSwitchCtx] = None,
                           )
-  extends IScTailAction
+  extends IScRespAction
 {
 
   /** Проверить тип экшена ответа. */
@@ -376,8 +386,8 @@ case object LangInit extends IScLangAction
 
 
 /** For actions, routed into LocationButtonAh. */
-sealed trait IGridLocationButtonAction extends ISc3Action
+sealed trait ILocationButtonAction extends ISc3Action
 
 /** Requested to update/switch current location node.
   * Also, used to request location permission on first run. */
-case object RefreshCurrentLocation extends IGridLocationButtonAction
+case object RefreshCurrentLocation extends ILocationButtonAction

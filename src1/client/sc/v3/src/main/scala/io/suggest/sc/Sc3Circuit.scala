@@ -25,11 +25,11 @@ import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAh
 import io.suggest.routes.routes
 import io.suggest.sc.ads.MScNodeMatchInfo
-import io.suggest.sc.c.dev.{GeoLocAh, OnLineAh, PlatformAh, ScreenAh}
+import io.suggest.sc.c.dev.{GeoLocAh, OnLineAh, PlatformAh, ScGeoTimerAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.dia.{ScErrorDiaAh, ScLoginDiaAh, ScNodesDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler, LocationButtonAh}
-import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, ScConfAh, WelcomeAh}
+import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, NodesRecentAh, ScConfAh, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.menu.DlAppAh
 import io.suggest.sc.c.search._
@@ -73,6 +73,7 @@ import io.suggest.os.notify.IOsNotifyAction
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.c.android.{IIntentAction, ScIntentsAh}
+import io.suggest.sc.c.showcase.{ScErrorAh, ScHwButtonsAh, ScRespAh, ScRoutingAh}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh, ScLangAh}
 import io.suggest.sc.m.dia.first.IWz1Action
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
@@ -382,8 +383,7 @@ class Sc3Circuit(
 
   // Action-Handler'ы
 
-  /** Хвостовой контроллер -- сюда свалено разное управление выдачей. */
-  private def tailAh = {
+  private def scRespAh: HandlerFunction = {
     // Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах.
     // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
     val mixed: LazyList[IRespWithActionHandler] = (
@@ -409,31 +409,43 @@ class Sc3Circuit(
       new ConfUpdateRah #::
       mixed
 
-    new TailAh(
+    new ScRespAh(
       modelRW               = rootRW,
-      routerCtl             = spaRouterState.routerCtl,
       scRespHandlers        = respHandlers,
       scRespActionHandlers  = respActionHandlers,
-      scStuffApi            = scStuffApi,
     )
   }
 
+  private def scRoutingAh: HandlerFunction = new ScRoutingAh(
+    modelRW               = rootRW,
+    routerCtl             = spaRouterState.routerCtl,
+  )
 
-  private def geoTabAh = new GeoTabAh(
+  private def indexesRecentAh: HandlerFunction = new NodesRecentAh(
+    modelRW               = mkLensZoomRW( internalsInfoRW, MInternalInfo.inxRecents ),
+    scStuffApi            = scStuffApi,
+    scRootRO              = rootRW,
+  )
+
+  private def scHwButtonsAh: HandlerFunction = new ScHwButtonsAh(
+    modelRW = rootRW,
+  )
+
+  private def geoTabAh: HandlerFunction = new GeoTabAh(
     modelRW         = geoTabRW,
     api             = sc3UniApi,
     scRootRO        = rootRW,
     screenInfoRO    = screenInfoRO,
   )
 
-  private def rcvrMarkersInitAh = new RcvrMarkersInitAh(
+  private def rcvrMarkersInitAh: HandlerFunction = new RcvrMarkersInitAh(
     modelRW         = rcvrRespRW,
     api             = advRcvrsMapApi,
     argsRO          = rcvrsMapUrlRO,
     isOnlineRoOpt   = Some( onLineRW.zoom(_.isOnline) ),
   )
 
-  private def indexAh = new IndexAh(
+  private def indexAh: HandlerFunction = new IndexAh(
     api     = sc3UniApi,
     modelRW = indexRW,
     rootRO  = rootRW,
@@ -457,12 +469,12 @@ class Sc3Circuit(
     modelRW       = gridRW
   )
 
-  private def screenAh = new ScreenAh(
+  private def screenAh: HandlerFunction = new ScreenAh(
     modelRW = scScreenRW,
     rootRO  = rootRW
   )
 
-  private def searchTextAh = new STextAh(
+  private def searchTextAh: HandlerFunction = new STextAh(
     modelRW = searchTextRW
   )
 
@@ -472,7 +484,7 @@ class Sc3Circuit(
     geoLocApis   = geoLocApis,
   )
 
-  private def platformAh = new PlatformAh(
+  private def platformAh: HandlerFunction = new PlatformAh(
     modelRW           = platformRW,
     rootRO            = rootRW,
     dispatcher        = this,
@@ -480,7 +492,7 @@ class Sc3Circuit(
     needGeoLocRO      = () => spaRouterState.canonicalRoute.needGeoLoc,
   )
 
-  private def delayerAh = new ActionDelayerAh(
+  private def delayerAh: HandlerFunction = new ActionDelayerAh(
     modelRW = delayerRW,
   )
 
@@ -576,14 +588,14 @@ class Sc3Circuit(
     },
   )
 
-  private def wzFirstDiaAh = new WzFirstDiaAh(
+  private def wzFirstDiaAh: HandlerFunction = new WzFirstDiaAh(
     platformRO    = platformRW,
     hasBleRO      = hasBleRO,
     modelRW       = wzFirstOuterRW,
     sc3Circuit    = this,
   )
 
-  private def bootAh = new BootAh(
+  private def bootAh: HandlerFunction = new BootAh(
     modelRW = bootRW,
     circuit = this,
     needBootGeoLocRO = { () =>
@@ -592,22 +604,22 @@ class Sc3Circuit(
     },
   )
 
-  private def jdAh = new JdAh(
+  private def jdAh: HandlerFunction = new JdAh(
     modelRW = jdRuntimeRW,
   )
 
-  private def scErrorDiaAh = new ScErrorDiaAh(
+  private def scErrorDiaAh: HandlerFunction = new ScErrorDiaAh(
     modelRW = scErrorDiaRW,
     circuit = this,
   )
 
-  private def dlAppAh = new DlAppAh(
+  private def dlAppAh: HandlerFunction = new DlAppAh(
     modelRW       = dlAppDiaRW,
     scAppApi      = scAppApi,
     indexStateRO  = inxStateRO,
   )
 
-  private def scSettingsDiaAh = new ScSettingsDiaAh(
+  private def scSettingsDiaAh: HandlerFunction = new ScSettingsDiaAh(
     modelRW = mkLensZoomRW( dialogsRW, MScDialogs.settings ),
   )
 
@@ -640,7 +652,7 @@ class Sc3Circuit(
     )
   }
 
-  private def scDaemonAh = new ScDaemonAh(
+  private def scDaemonAh: HandlerFunction = new ScDaemonAh(
     modelRW       = daemonRW,
     platfromRO    = platformRW,
     dispatcher    = this,
@@ -668,20 +680,20 @@ class Sc3Circuit(
   }
 
   /** Контроллер статуса интернет-подключения. */
-  private def onLineAh = new OnLineAh(
+  private def onLineAh: HandlerFunction = new OnLineAh(
     modelRW       = onLineRW,
     dispatcher    = this,
     retryActionRO = scErrorDiaRW.zoom( _.flatMap(_.retryAction) ),
     platformRO    = platformRW,
   )
 
-  private def scConfAh = new ScConfAh(
+  private def scConfAh: HandlerFunction = new ScConfAh(
     modelRW  = confRW,
     scInitRO = rootRW.zoom(_.toScInit),
   )
 
   /** Контроллер управления отдельной формой логина. */
-  private def scLoginDiaAh = new ScLoginDiaAh(
+  private def scLoginDiaAh: HandlerFunction = new ScLoginDiaAh(
     modelRW = scLoginRW,
     getLoginFormCircuit = getLoginFormCircuit,
   )
@@ -692,7 +704,7 @@ class Sc3Circuit(
     sc3Circuit        = this,
   )
 
-  private def csrfTokenAh = new CsrfTokenAh(
+  private def csrfTokenAh: HandlerFunction = new CsrfTokenAh(
     modelRW       = csrfTokenRW,
     csrfTokenApi  = csrfTokenApi,
     onError       = Some { () =>
@@ -700,20 +712,20 @@ class Sc3Circuit(
     },
   )
 
-  private def logOutAh = mkLogOutAh( logOutRW )
-  private def welcomeAh = new WelcomeAh( indexWelcomeRW )
-  private def sessionAh = new SessionAh(
+  private def logOutAh: HandlerFunction = mkLogOutAh( logOutRW )
+  private def welcomeAh: HandlerFunction = new WelcomeAh( indexWelcomeRW )
+  private def sessionAh: HandlerFunction = new SessionAh(
     modelRW = loginSessionRW,
   )
-  private def jsRouterInitAh = new JsRouterInitAh(
+  private def jsRouterInitAh: HandlerFunction = new JsRouterInitAh(
     modelRW = jsRouterRW
   )
 
-  private def scIntentsAh = new ScIntentsAh(
+  private def scIntentsAh: HandlerFunction = new ScIntentsAh(
     modelRW = rootRW,
   )
 
-  private def scLangAh = new ScLangAh(
+  private def scLangAh: HandlerFunction = new ScLangAh(
     modelRW    = reactCtxRW,
     scStuffApi = scStuffApi,
     isLoggedIn = loggedInRO,
@@ -721,7 +733,15 @@ class Sc3Circuit(
     platformRO = platformRW,
   )
 
-  private def locationButtonAh = new LocationButtonAh(
+  private def locationButtonAh: HandlerFunction = new LocationButtonAh(
+    modelRW = rootRW,  // rootRW - stub-placeholder for value by now, root model not really needed.
+  )
+
+  private def scGeoTimerAh: HandlerFunction = new ScGeoTimerAh(
+    modelRW = rootRW,
+  )
+
+  private def scErrorAh: HandlerFunction = new ScErrorAh(
     modelRW = rootRW,
   )
 
@@ -731,15 +751,16 @@ class Sc3Circuit(
 
   /** Функция-роутер экшенов в конкретные контроллеры. */
   override protected val actionHandler: HandlerFunction = { (mroot, action) =>
-    val ctlOrNull: HandlerFunction = action match {
+    val handler: HandlerFunction = action match {
       case _: IBeaconerAction           => beaconerAh
       case _: IGridAction               => gridAh
       case _: IMapsAction               => mapAhs
       case _: IGeoLocAction             => geoLocAh
       case _: IJdAction                 => jdAh
-      case _: IScTailAction             => tailAh
+      case _: IScRoutingAction          => scRoutingAh
       case _: IOnlineAction             => onLineAh
       case _: IIndexAction              => indexAh
+      case _: IScRespAction             => scRespAh
       case _: ISearchTextAction         => searchTextAh
       case _: IScScreenAction           => screenAh
       case _: IPlatformAction           => platformAh
@@ -748,7 +769,9 @@ class Sc3Circuit(
       case _: ISessionAction            => sessionAh
       case _: IGeoTabAction             => geoTabAh
       case _: ICsrfTokenAction          => csrfTokenAh
-      case _: IGridLocationButtonAction => locationButtonAh
+      case _: IGeoLocTimerAction        => scGeoTimerAh
+      case _: ILocationButtonAction     => locationButtonAh
+      case _: IScIndexesRecentAction    => indexesRecentAh
       case _: IOsNotifyAction           => notifyAh.orNull
       case _: IScErrorAction            => scErrorDiaAh
       case _: IScAppAction              => dlAppAh
@@ -757,7 +780,7 @@ class Sc3Circuit(
       case _: IIntentAction             => scIntentsAh
       case _: IDaemonAction             => daemonBgModeAh
       case _: IDaemonSleepAction        => daemonSleepTimerAh
-      case _: IHwBtnAction              => tailAh
+      case _: IHwBtnAction              => scHwButtonsAh
       // редкие варианты:
       case _: IScConfAction             => scConfAh
       case _: IScLoginAction            => scLoginDiaAh
@@ -768,10 +791,9 @@ class Sc3Circuit(
       case _: IRcvrMarkersInitAction    => rcvrMarkersInitAh
       case _: IScJsRouterInitAction     => jsRouterInitAh
       case _: IDelayAction              => delayerAh
-      case _: ComponentCatch            => tailAh
+      case _: ComponentCatch            => scErrorAh
     }
-    Option( ctlOrNull )
-      .flatMap( _(mroot, action) )
+    handler( mroot, action )
   }
 
 

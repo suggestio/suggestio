@@ -1,0 +1,236 @@
+package io.suggest.sc.c.dev
+
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode.data.{Pot, Ready}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.common.empty.OptionUtil
+import io.suggest.perm.BoolOptPermissionState
+import io.suggest.sc.ScConstants
+import io.suggest.sc.c.showcase.ScRoutingAh
+import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.m.dia.first.{MWzPhases, WzPhasePermRes}
+import io.suggest.sc.m.{GeoLocTimeOut, GeoLocTimerCancel, GeoLocTimerStart, GlPubSignal, MScRoot}
+import io.suggest.sc.m.in.{MGeoLocTimerData, MInternalInfo, MScInternals}
+import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx}
+import io.suggest.sc.m.search.MMapInitState
+import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.sjs.dom2.DomQuick
+import io.suggest.spa.DoNothing
+import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.univeq._
+
+import scala.util.Success
+
+
+/** Showcase contoller for geolocation timer tasks. */
+class ScGeoTimerAh[M](
+                       modelRW: ModelRW[M, MScRoot],
+                     )
+  extends ActionHandler( modelRW )
+{ ah =>
+
+  /** Remove timer from state, and clear timer effect. */
+  private def _removeTimer(v0: MScRoot) = {
+    for (glt <- v0.internals.info.geoLockTimer.toOption) yield {
+      val alterF = MScRoot.internals
+        .composeLens( MScInternals.info )
+        .composeLens( MInternalInfo.geoLockTimer )
+        .set( Pot.empty.unavailable() )
+      val fx = _clearTimerFx( glt.timerId )
+      (alterF, fx)
+    }
+  }
+
+  /** Effect for geo-timer timer cancelling. */
+  private def _clearTimerFx(timerId: Int): Effect = {
+    Effect.action {
+      DomQuick.clearTimeout( timerId )
+      DoNothing
+    }
+  }
+
+  /** Start new geo-location timer and provide state changes.
+    *
+    * @return Updated state and effect for timer await.
+    */
+  def _mkGeoLocTimer(glTimerStart: GeoLocTimerStart, currTimerPot: Pot[MGeoLocTimerData]): (MScInternals => MScInternals, Effect) = {
+    // TODO impure: timer started outside effect.
+    val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
+    val modifier = MScInternals.info
+      .composeLens( MInternalInfo.geoLockTimer )
+      .set(
+        Ready(
+          MGeoLocTimerData(
+            timerId = tp.timerId,
+            reason = glTimerStart,
+          )
+        )
+          .pending()
+      )
+
+    var timeoutFx: Effect = Effect( tp.fut )
+    for (currTimer <- currTimerPot) {
+      timeoutFx += _clearTimerFx( currTimer.timerId )
+    }
+
+    (modifier, timeoutFx)
+  }
+
+
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // React for geolocation detected action.
+    case m: GlPubSignal =>
+      val v0 = value
+
+      var modsAcc = List.empty[MScRoot => MScRoot]
+      var fxAcc = List.empty[Effect]
+      var nonSilentUpdate = false
+      val mapNeedReset = v0.index.resp.isEmpty || v0.dialogs.first.isVisible
+
+      for {
+        // TODO But if no timer started (geoLocTimer==Pot.empty), what to do?
+        geoLockTimer <- v0.internals.info.geoLockTimer
+        glSignal <- m.origOpt
+        if glSignal.glType.isHighAccuracy
+      } {
+        fxAcc ::= Effect.action {
+          val indexMapReset2 = !mapNeedReset
+          val switchCtx = m.scSwitch.fold {
+            MScSwitchCtx(
+              indexQsArgs = MScIndexArgs(
+                geoIntoRcvr = true,
+                retUserLoc  = m.origOpt
+                  .fold(true)(_.either.isLeft),
+              ),
+              indexMapReset = indexMapReset2,
+            )
+          } (MScSwitchCtx.indexMapReset set indexMapReset2)
+          GetIndex( switchCtx )
+        }
+        fxAcc ::= Effect.action {
+          DomQuick.clearTimeout( geoLockTimer.timerId )
+          DoNothing
+        }
+
+        for {
+          (alterF, ctFx) <- _removeTimer(v0)
+        } {
+          modsAcc ::= alterF
+          fxAcc ::= ctFx
+        }
+      }
+
+      // Update location on the map.
+      // TODO Convert map alterings to effects, routed into other controllers? If so, this controller may be model-isolated into Pot[MGeoLocTimerData], instead of MScRoot.
+      for {
+        glSignal <- m.origOpt
+        geoLoc <- glSignal.locationOpt
+      } {
+        // Reset map state to detected coord during early stage. ReIndex will be called in from WzFirstAh#InitFirstRunWz(false).
+        if (v0.index.resp.isEmpty || v0.dialogs.first.isVisible)
+          modsAcc ::= ScRoutingAh.root_index_search_geo_init_state_LENS
+            .modify( _.withCenterInitReal( geoLoc.point ) )
+
+        // Always save coordinates to map .userLoc
+        var mapInitModF = MMapInitState.userLoc set Some(geoLoc)
+
+        if (
+          // Do NOT change map center, if this is just background demand index test.
+          !m.scSwitch.exists(_.demandLocTest) &&
+            // If current position is very awaited by initialization, then move map center to geoposition.
+            (
+              !v0.dialogs.first.isViewFinished ||
+              (v0.index.resp ==* Pot.empty)
+            ) &&
+            (v0.internals.info.currRoute.exists { currRoute =>
+              currRoute.locEnv.isEmpty && currRoute.nodeId.isEmpty
+            })
+        ) {
+          mapInitModF = mapInitModF andThen MMapInitState
+            .state.modify( _.withCenterInitReal(geoLoc.point) )
+          nonSilentUpdate = true
+        } else {
+          nonSilentUpdate = nonSilentUpdate || v0.index.search.panel.opened
+        }
+
+        modsAcc ::= MScRoot.index
+          .composeLens( ScRoutingAh._inxSearchGeoMapInitLens )
+          .modify( mapInitModF )
+      }
+
+      // If wzFirst waiting for geolocaiton permission, lets notify him
+      // TODO This is still needed? Need to review about WzFirstAh/IPermissionSpec.listenChangesOfPot state monitoring should be enought.
+      if (
+        v0.dialogs.first.isVisible &&
+          v0.dialogs.first.perms
+            .get( MWzPhases.GeoLocPerm )
+            .exists(_.isPending)
+      ) {
+        fxAcc ::= WzPhasePermRes(
+          phase = MWzPhases.GeoLocPerm,
+          res = Success( BoolOptPermissionState(OptionUtil.SomeBool.someTrue) ),
+          startTimeMs = None,
+        )
+          .toEffectPure
+      }
+
+      ah.optionalResult(
+        v2Opt = modsAcc
+          .reduceOption(_ andThen _)
+          .map(_(v0)),
+        fxOpt = fxAcc.mergeEffects,
+        silent = !nonSilentUpdate,
+      )
+
+
+    // Timeout waiting for geolocation data changes. Lets start re-indexing using current data.
+    case GeoLocTimeOut =>
+      val v0 = value
+      v0.internals.info.geoLockTimer.fold(noChange) { glTimerData =>
+        // Удалить из состояния таймер геолокации, запустить выдачу.
+        var fx: Effect = GetIndex( glTimerData.reason.switchCtx ).toEffectPure
+
+        val v2 = _removeTimer(v0)
+          .fold(v0) { case (alterF, cancelTimerFx) =>
+            fx += cancelTimerFx
+            alterF( v0 )
+          }
+
+        for (onCompleteFxF <- glTimerData.reason.onComplete)
+          fx += onCompleteFxF( false )
+
+        updated( v2, fx )
+      }
+
+
+    // Start geolocation timer action.
+    case m: GeoLocTimerStart =>
+      val v0 = value
+      val currLocOpt = v0.dev.geoLoc.currentLocation
+
+      if (m.allowImmediate && currLocOpt.exists(_._1.isHighAccuracy)) {
+        // Timer not needed, already have enought geo.data.
+        var fx: Effect = GetIndex( m.switchCtx ).toEffectPure
+        for (onCompleteFxF <- m.onComplete)
+          fx += onCompleteFxF(true)
+        effectOnly( fx )
+
+      } else {
+        val (viMod, fx) = _mkGeoLocTimer( m, v0.internals.info.geoLockTimer )
+        val v2 = MScRoot.internals.modify(viMod)(v0)
+        updated( v2, fx )
+      }
+
+    // Cancel geolocation timer
+    case GeoLocTimerCancel =>
+      val v0 = value
+
+      _removeTimer( v0 )
+        .fold(noChange) { case (modF, fx) =>
+          updated( modF(v0), fx )
+        }
+
+  }
+
+}

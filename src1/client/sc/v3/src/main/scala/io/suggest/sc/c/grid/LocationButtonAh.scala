@@ -63,6 +63,7 @@ final class LocationButtonAh[M](
                 }
               } else {
                 // Location disabled and/or not permitted. Only minimal fast first-step action.
+                // TODO switchCtx: Render hint to open related geolocation settings, to alter geolocation state.
                 GetIndex( finalSwitchCtx ).toEffectPure
               }
 
@@ -79,6 +80,7 @@ final class LocationButtonAh[M](
               }
               Some( startPermRequest )
 
+            // Unexpected type of JSON-value: should not happen, because it should be boolean.
             case other =>
               logger.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (m, locationEnabledKey, other) )
               val showErrorFx = Effect.action {
