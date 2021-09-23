@@ -95,7 +95,12 @@ case class MScRoot(
   }
   def locEnvUser: MLocEnv = {
     MLocEnv(
-      geoLoc     = userLocOpt.toList,
+      // Testing several geolocations at once, because current "user-expected location" is too abstract to be sure about one concrete value.
+      geoLoc     = (userLocOpt :: geoLocOpt :: Nil)
+        .iterator
+        .flatten
+        .distinct
+        .toList,
       beacons    = locEnvRadioBeacons,
     )
   }

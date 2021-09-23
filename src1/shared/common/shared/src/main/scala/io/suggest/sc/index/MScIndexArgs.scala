@@ -2,6 +2,7 @@ package io.suggest.sc.index
 
 import io.suggest.sc.ScConstants.ReqArgs._
 import io.suggest.text.StringUtil
+import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -26,7 +27,8 @@ object MScIndexArgs {
     // Всегда нужен хотя бы один ОБЯЗАТЕЛЬНЫЙ (не опциональный) формат. Иначе ScIndex будет неправильно начнётся.
     (__ \ NODE_ID_FN).formatNullable[String] and
     (__ \ GEO_INTO_RCVR_FN).format[Boolean] and
-    (__ \ RET_GEO_LOC_FN).format[Boolean]
+    (__ \ RET_GEO_LOC_FN).format[Boolean] and
+    (__ \ RETURN_EPHEMERAL).formatNullable[Boolean].formatBooleanOrFalse
   )( apply, unlift(unapply) )
 
   @inline implicit def univEq: UnivEq[MScIndexArgs] = UnivEq.derive
@@ -44,11 +46,13 @@ object MScIndexArgs {
   * @param retUserLoc Возвращать ли назад геолокацию юзера, принятую сервером?
   *                   true, пока геолокация неизвестна вообще, и сервер может её подсказать.
   *                   false в остальных случаях.
+  * @param returnEphemeral Return ephemeral "current location" node for coords.
   */
 case class MScIndexArgs(
                          nodeId       : Option[String]  = None,
                          geoIntoRcvr  : Boolean         = true,
                          retUserLoc   : Boolean         = false,
+                         returnEphemeral: Boolean         = false,
                        ) {
 
   override def toString = StringUtil.toStringHelper(this) { f =>

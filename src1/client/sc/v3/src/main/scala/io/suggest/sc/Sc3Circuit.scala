@@ -384,18 +384,14 @@ class Sc3Circuit(
   // Action-Handler'ы
 
   private def scRespAh: HandlerFunction = {
+    // Allow notifications, if notification permission granted.
+    lazy val osScNotificationsOpt = Option.when( osNotifyRW.value.hasPermission contains[Boolean] true )( scNotifications )
+
     // Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах.
     // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
     val mixed: LazyList[IRespWithActionHandler] = (
       new GridRespHandler(
-        isDoOsNotify = rootRW.zoom { mroot =>
-          // Разрешается делать нотификацию уровня ОС только если:
-          // 1. Есть разрешение на нотификации.
-          (mroot.dev.osNotify.hasPermission contains true) //&&
-          // TODO 2. Приложение скрыто, и требует привлечения внимания, и запрос был в фоне.
-          //!mroot.dev.platform.isUsingNow
-        },
-        scNotifications = scNotifications,
+        scNotificationsOpt = osScNotificationsOpt
       ) #::
         new GridFocusRespHandler #::
         new IndexRah #::

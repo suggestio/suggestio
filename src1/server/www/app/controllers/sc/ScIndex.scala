@@ -270,7 +270,7 @@ final class ScIndex @Inject()(
     def l99_ephemeralNode: MIndexNodeInfo = {
       MIndexNodeInfo(
         mnode = nodesUtil.userNodeInstance(
-          nameOpt     = Some( MsgCodes.`iSuggest` ),
+          nameOpt     = Some( MsgCodes.`Current.location` ),
           personIdOpt = None
         ),
         isRcvr = false
@@ -310,11 +310,11 @@ final class ScIndex @Inject()(
 
         // Не надо собирать доп.узлы, если по координатам уже есть узел с !isRcvr
         val ephemeralNodesFut = coordsNodesFut.flatMap { coordNodes =>
-          if (coordNodes.nonEmpty) {
-            Future.successful(Nil)
-          } else {
+          if (_scIndexArgs.returnEphemeral || coordNodes.isEmpty) {
             l95_ephemeralNodesFromPool
               .recover { case _ => l99_ephemeralNode :: Nil }
+          } else {
+            Future.successful(Nil)
           }
         }
 

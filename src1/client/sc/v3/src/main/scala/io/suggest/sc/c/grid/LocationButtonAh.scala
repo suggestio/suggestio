@@ -34,6 +34,7 @@ final class LocationButtonAh[M](
             case JsBoolean( isLocationEnabled ) =>
               val switchIndexQsArgs = MScIndexArgs(
                 retUserLoc = false,
+                returnEphemeral = true,
               )
               val finalSwitchCtx = MScSwitchCtx(
                 indexQsArgs   = switchIndexQsArgs,

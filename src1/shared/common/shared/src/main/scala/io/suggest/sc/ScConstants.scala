@@ -83,6 +83,9 @@ object ScConstants {
     /** Имя поля с флагом возврата данных геолокации клиента назад клиенту. */
     final def RET_GEO_LOC_FN    = "g"
 
+    /** Field name with flag, enforcing return ephemeral current-location node(s). */
+    final def RETURN_EPHEMERAL  = "reph"
+
   }
 
 

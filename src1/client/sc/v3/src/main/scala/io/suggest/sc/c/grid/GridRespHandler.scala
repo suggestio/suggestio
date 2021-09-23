@@ -2,7 +2,7 @@ package io.suggest.sc.c.grid
 
 import com.github.fisshy.react.scroll.AnimateScroll
 import diode.data.Pot
-import diode.{ActionResult, Effect, ModelRO}
+import diode.{ActionResult, Effect}
 import io.suggest.grid.GridScrollUtil
 import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
 import io.suggest.jd.MJdTagId
@@ -32,8 +32,7 @@ import scalaz.Tree
 
 /** Поддержка resp-handler'а для карточек плитки без фокусировки. */
 final class GridRespHandler(
-                             scNotifications    : ScNotifications,
-                             isDoOsNotify       : ModelRO[Boolean],
+                             scNotificationsOpt    : => Option[ScNotifications],
                            )
   extends IRespWithActionHandler
   with Log
@@ -346,15 +345,14 @@ final class GridRespHandler(
           .rootLabel
           .data
           .exists(_.info.isMad404)
-      } &&
-      // Системно разрешён рендер нотификации в текущем состоянии выдачи.
-      isDoOsNotify.value
-    ) {
+      }
+    ) for {
+      scNotifications <- scNotificationsOpt
       // Нужны ОС-нотификейшены по возможным новым карточкам. Вычислить, какие новые карточки ещё не показывались в уведомлениях.
-      val unNotifiedAdIds = newScAdsById -- g0.gNotify.seenAdIds
+      unNotifiedAdIds = newScAdsById -- g0.gNotify.seenAdIds
       // Собрать карточки по которым не было уведомлений (хотя бы одна карточка тут будет):
-      val unNotifiedAds = (for {
-        scAdTree      <- newScAds.iterator
+      unNotifiedAds = (for {
+        scAdTree  <- newScAds.iterator
         scAd = scAdTree.rootLabel
         adNodeId  <- scAd.nodeId
         if unNotifiedAdIds contains adNodeId
@@ -362,11 +360,9 @@ final class GridRespHandler(
         scAd
       })
         .to( LazyList )
-
-      for {
-        notifyFx <- scNotifications.adsNearbyFound( unNotifiedAds )
-      }
-        fxAcc ::= notifyFx
+      notifyFx <- scNotifications.adsNearbyFound( unNotifiedAds )
+    } {
+      fxAcc ::= notifyFx
     }
 
     // Опциональный эффект скролла вверх.
