@@ -34,7 +34,7 @@ final class ScSearchUtil {
 
 
   /** Компиляция значений query string в MNodeSearch. */
-  def qs2NodesSearch(qs: MScQs, geoLocOpt2: Option[MGeoLoc], radioCtx: MRadioBeaconsSearchCtx): Future[MNodeSearch] = {
+  def qs2NodesSearch(qs: MScQs, qsGeoLocs2: Seq[MGeoLoc], radioCtx: MRadioBeaconsSearchCtx): Future[MNodeSearch] = {
     // По каким типа узлов фильтровать? Зависит от текущей вкладки поиска.
     //val tabOpt = qs.search.tab
     //val isMultiSearch = tabOpt.isEmpty
@@ -66,7 +66,9 @@ final class ScSearchUtil {
         .toSeq
     }
 
-    val distanceSort = geoLocOpt2.map(_.point)
+    val distanceSort = qsGeoLocs2
+      .headOption
+      .map(_.point)
 
     // LocEnv tags from radio-beacons: Also do tags search in all visible beacons:
     if (radioCtx.uidsClear.nonEmpty) {
@@ -79,26 +81,26 @@ final class ScSearchUtil {
     }
 
     // Поиск по тегам.
-      edgesCrs ::= Criteria(
-        predicates  = MPredicates.TaggedBy.Self :: Nil,
-        tags        = tagCrs,
-        nodeIds     = qs.search.rcvrId.toStringOpt.toSeq,
-        // Отработать геолокацию: искать только теги, размещенные в текущей области (но если НЕ задан id узла-ресивера)
-        gsIntersect = OptionUtil.maybeOpt( qs.search.rcvrId.isEmpty ) {
-          for (geoLoc <- geoLocOpt2) yield {
+    edgesCrs ::= Criteria(
+      predicates  = MPredicates.TaggedBy.Self :: Nil,
+      tags        = tagCrs,
+      nodeIds     = qs.search.rcvrId.toStringOpt.toSeq,
+      // Отработать геолокацию: искать только теги, размещенные в текущей области (но если НЕ задан id узла-ресивера)
+      gsIntersect = Option.when( qs.search.rcvrId.isEmpty && qsGeoLocs2.nonEmpty ) {
+        GsCriteria(
+          levels = MNodeGeoLevels.geoTag :: Nil,
+          shapes = for (geoLoc <- qsGeoLocs2) yield {
             val circle = CircleGs(
               center  = geoLoc.point,
               radiusM = 1
             )
-            GsCriteria(
-              levels = MNodeGeoLevels.geoTag :: Nil,
-              shapes = GeoShapeJvm.toEsQueryMaker(circle) :: Nil
-            )
-          }
-        },
-        must = should,
-        geoDistanceSort = distanceSort
-      )
+            GeoShapeJvm.toEsQueryMaker(circle)
+          },
+        )
+      },
+      must = should,
+      geoDistanceSort = distanceSort
+    )
 
     // Активировать поиск по ресиверам.
     if (queryTextTags.nonEmpty) {
@@ -106,15 +108,17 @@ final class ScSearchUtil {
       edgesCrs ::= Criteria(
         predicates  = MPredicates.NodeLocation :: Nil,
         // Ограничить поиск радиусом от текущей точки. Она обязательно задана, иначе бы этот код не вызывался (см. флаг выше).
-        gsIntersect = for (geoLoc <- geoLocOpt2) yield {
-          val circle = CircleGs(
-            center  = geoLoc.point,
-            // 100км вокруг текущей точки
-            radiusM = FTS_SEARCH_RADIUS_M
-          )
+        gsIntersect = Option.when( qsGeoLocs2.nonEmpty ) {
           GsCriteria(
             levels = MNodeGeoLevels.geoPlacesSearchAt,
-            shapes = GeoShapeJvm.toEsQueryMaker(circle) :: Nil
+            shapes = for (geoLoc <- qsGeoLocs2) yield {
+              val circle = CircleGs(
+                center  = geoLoc.point,
+                // 100км вокруг текущей точки
+                radiusM = FTS_SEARCH_RADIUS_M
+              )
+              GeoShapeJvm.toEsQueryMaker(circle)
+            },
           )
         },
         must        = should,

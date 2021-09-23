@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.MGeoPoint
 import play.api.libs.json._
@@ -32,10 +32,26 @@ object MGeoLocData
   implicit def geoLocDataJson: OFormat[MGeoLocData] = {
     val F = Fields
     (
-      (__ \ F.COORDS_FN).formatNullable[MGeoPoint] and
-      (__ \ F.ACCURACY_FN).formatNullable[Int] and
-      (__ \ F.TOWN_FN).formatNullable[String] and
-      (__ \ F.COUNTRY_FN).formatNullable[String]
+      (__ \ F.COORDS_FN).formatNullable[Seq[MGeoPoint]]
+        .inmap[Seq[MGeoPoint]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          seq => Option.when(seq.nonEmpty)(seq)
+        ) and
+      (__ \ F.ACCURACY_FN).formatNullable[Seq[Int]]
+        .inmap[Seq[Int]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          seq => Option.when(seq.nonEmpty)(seq)
+        ) and
+      (__ \ F.TOWN_FN).formatNullable[Seq[String]]
+        .inmap[Seq[String]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          seq => Option.when(seq.nonEmpty)(seq)
+        ) and
+      (__ \ F.COUNTRY_FN).formatNullable[Seq[String]]
+        .inmap[Seq[String]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          seq => Option.when(seq.nonEmpty)(seq)
+        )
     )(apply, unlift(unapply))
   }
 
@@ -60,10 +76,10 @@ object MGeoLocData
 
 /** Класс модели геоинформации. */
 final case class MGeoLocData(
-  coords    : Option[MGeoPoint] = None,
-  accuracy  : Option[Int]       = None,
-  town      : Option[String]    = None,
-  country   : Option[String]    = None
+  coords    : Seq[MGeoPoint]    = Nil,
+  accuracy  : Seq[Int]          = Nil,
+  town      : Seq[String]       = Nil,
+  country   : Seq[String]       = Nil,
 )
   extends EmptyProduct
 {

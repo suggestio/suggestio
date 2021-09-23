@@ -92,7 +92,7 @@ final class ScAdSearchUtil @Inject() (
       // Поддержка геопоиска в выдаче.
       args.search.tagNodeId.fold [Unit] {
         // Геотегов не указано. Но можно искать размещения карточек в указанной точке.
-        for (geoLoc <- args.common.locEnv.geoLocOpt) {
+        for (geoLoc <- args.common.locEnv.geoLoc) {
           eacc ::= Criteria(
             predicates  = MPredicates.AdvGeoPlace :: Nil,
             must        = must,
@@ -110,7 +110,7 @@ final class ScAdSearchUtil @Inject() (
         if (args.search.rcvrId.nonEmpty)
           predsAcc ::= tagPredParent.DirectTag
 
-        if (args.common.locEnv.geoLocOpt.nonEmpty)
+        if (args.common.locEnv.geoLoc.nonEmpty)
           predsAcc ::= tagPredParent.AdvGeoTag
 
         // Указан тег. Ищем по тегу с учетом геолокации:
@@ -120,13 +120,15 @@ final class ScAdSearchUtil @Inject() (
             .map(_.id),
           nodeIdsMatchAll = true,
           must       = must,
-          gsIntersect = for {
-            geoLoc <- args.common.locEnv.geoLocOpt
-          } yield {
-            GsCriteria(
-              levels = MNodeGeoLevels.geoTag :: Nil,
-              shapes = GeoShapeJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil,
-            )
+          gsIntersect = {
+            val geoLocs = args.common.locEnv.geoLoc
+            Option.when( geoLocs.nonEmpty ) {
+              GsCriteria(
+                levels = MNodeGeoLevels.geoTag :: Nil,
+                shapes = for (geoLoc <- geoLocs) yield
+                  GeoShapeJvm.toEsQueryMaker( PointGs(geoLoc.point) ),
+              )
+            }
           }
         )
       }

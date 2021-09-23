@@ -9,7 +9,7 @@ import io.suggest.ble.MUidBeacon
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MScreen}
 import io.suggest.es.model.MEsUuId
-import io.suggest.geo.{GeoPoint, MGeoPoint, MLocEnv}
+import io.suggest.geo.{GeoPoint, MGeoLoc, MGeoPoint, MLocEnv}
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknModifyQs, MLknOpKey, MLknOpKeys, MLknOpValue}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
@@ -826,6 +826,66 @@ object CommonModelsJvm extends MacroLogsDyn {
         }
       }
 
+    }
+  }
+
+
+  /** QSB support for MGeoLoc. */
+  implicit def mGeoLocQsb(implicit
+                          geoPointB  : QueryStringBindable[MGeoPoint],
+                          doubleOptB : QueryStringBindable[Option[Double]],
+                         ): CrossQsBindable[MGeoLoc] = {
+    MGeoLoc.mGeoLocQsB( geoPointB, doubleOptB )
+  }
+
+
+  implicit def mLocEnvQsb(implicit
+                          geoLocB   : QueryStringBindable[MGeoLoc],
+                          beaconsB  : QueryStringBindable[QsbSeq[MUidBeacon]],
+                         ): QueryStringBindable[MLocEnv] = {
+    new AbstractQueryStringBindable[MLocEnv] {
+      private def geoLocOptB = implicitly[QueryStringBindable[Option[MGeoLoc]]]
+      private def geoLocsSeqB = implicitly[QueryStringBindable[QsbSeq[MGeoLoc]]]
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLocEnv]] = {
+        val k = key1F(key)
+        val F = MLocEnv.Fields
+        for {
+          geoLocsE <- {
+            val geoLocKey = k( F.GEO_LOC_FN )
+            geoLocsSeqB
+              .bind( geoLocKey, params )
+              .map( _.map(_.items) )
+              .filter( _.fold(_ => true, _.nonEmpty) ) // Left() - bypass?
+              .orElse {
+                // 2021-09-22 Compat. non-seq optional values for cordova mobile-apps <= v5.2.1
+                geoLocOptB
+                  .bind( geoLocKey, params )
+                  .map( _.map(_.toSeq) )
+              }
+          }
+          beaconsE      <- beaconsB.bind   (k( F.BEACONS_FN ), params)
+        } yield {
+          for {
+            geoLocs     <- geoLocsE
+            beacons     <- beaconsE
+          } yield {
+            MLocEnv(
+              geoLoc   = geoLocs,
+              beacons  = beacons.items
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MLocEnv): String = {
+        val k = key1F(key)
+        val F = MLocEnv.Fields
+        _mergeUnbinded1(
+          geoLocsSeqB.unbind (k( F.GEO_LOC_FN ), QsbSeq(value.geoLoc) ),
+          beaconsB.unbind    (k( F.BEACONS_FN ), QsbSeq(value.beacons) ),
+        )
+      }
     }
   }
 

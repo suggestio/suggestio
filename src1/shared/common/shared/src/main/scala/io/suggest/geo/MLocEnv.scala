@@ -19,7 +19,7 @@ object MLocEnv extends IEmpty {
 
   override type T = MLocEnv
 
-  override val empty = apply()
+  override def empty = apply()
 
   object Fields {
     final def GEO_LOC_FN = "e"
@@ -29,10 +29,14 @@ object MLocEnv extends IEmpty {
   /** Поддержка JSON для инстансов [[MLocEnv]].
     * В первую очередь для js-роутера и qs.
     */
-  implicit val MLOC_ENV_FORMAT: OFormat[MLocEnv] = {
+  implicit def locEnvJson: OFormat[MLocEnv] = {
     val F = Fields
     (
-      (__ \ F.GEO_LOC_FN).formatNullable[MGeoLoc] and
+      (__ \ F.GEO_LOC_FN).formatNullable[Seq[MGeoLoc]]
+        .inmap[Seq[MGeoLoc]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          seq => Option.when( seq.nonEmpty )(seq)
+        ) and
       (__ \ F.BEACONS_FN).formatNullable[Seq[MUidBeacon]]
         .inmap[Seq[MUidBeacon]](
           EmptyUtil.opt2ImplEmptyF(Nil),
@@ -46,7 +50,7 @@ object MLocEnv extends IEmpty {
     UnivEq.derive
   }
 
-  def geoLocOpt   = GenLens[MLocEnv](_.geoLocOpt)
+  def geoLoc      = GenLens[MLocEnv](_.geoLoc)
   def beacons     = GenLens[MLocEnv](_.beacons)
 
 }
@@ -55,11 +59,13 @@ object MLocEnv extends IEmpty {
 /**
   * Класс экземпляров модели информации о локации.
   *
-  * @param geoLocOpt Данные геолокации.
+  * @param geoLoc Geolocation coords data. Usually, single or zero-length collection.
+  *               Heading element guessed as main/primary/etc, depending on usage context,
+  *               so any additianal coords must be specified in tail.
   * @param beacons Данные видимых radio-маячков.
   */
 case class MLocEnv(
-                    geoLocOpt     : Option[MGeoLoc]    = None,
+                    geoLoc        : Seq[MGeoLoc]       = Nil,
                     beacons       : Seq[MUidBeacon]    = Nil
                   )
   extends EmptyProduct
@@ -68,7 +74,8 @@ case class MLocEnv(
   override def toString: String = {
     StringUtil.toStringHelper(this, 64) { renderF =>
       val F = MLocEnv.Fields
-      geoLocOpt foreach renderF( F.GEO_LOC_FN )
+      if (geoLoc.nonEmpty)
+        renderF( F.GEO_LOC_FN )( geoLoc.mkString("[", ", ", "]") )
       if (beacons.nonEmpty)
         renderF( F.BEACONS_FN )( beacons.mkString("[", ", ", "]") )
     }

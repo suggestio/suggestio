@@ -61,7 +61,7 @@ case class MScSwitchCtx(
                          indexQsArgs      : MScIndexArgs,
                          focusedAdId      : Option[String]    = None,
                          demandLocTest    : Boolean           = false,
-                         forceGeoLoc      : Option[MGeoLoc]   = None,
+                         forceGeoLoc      : Seq[MGeoLoc]      = Nil,
                          showWelcome      : Boolean           = true,
                          afterIndex       : Option[Effect]    = None,
                          afterBack        : Option[Effect]    = None,

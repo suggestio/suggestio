@@ -113,13 +113,18 @@ final class ScUniApi @Inject()(
               .set(scIndexResp.nodeId.toEsUuIdOpt)(qs.search),
             common = {
               MScCommonQs.locEnv
-                .composeLens( MLocEnv.geoLocOpt )
+                .composeLens( MLocEnv.geoLoc )
                 .set {
-                  OptionUtil.maybeOpt( scIndexResp.nodeId.isEmpty ) {
+                  if (scIndexResp.nodeId.isEmpty) {
                     // Узел не задан. Попытаться достать координаты.
                     scIndexResp.geoPoint
-                      .map( MGeoLoc(_) )
-                      .orElse( qs.common.locEnv.geoLocOpt )
+                      .fold {
+                        qs.common.locEnv.geoLoc
+                      } { geoPoint =>
+                        MGeoLoc( geoPoint ) :: Nil
+                      }
+                  } else {
+                    Nil
                   }
                 }(
                   // Использовать indexLogin

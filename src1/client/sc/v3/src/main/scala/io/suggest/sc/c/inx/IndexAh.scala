@@ -97,7 +97,8 @@ object IndexAh {
       // Если nodeId не задан, то взять гео-точку из qs
       inxGeoPoint = OptionUtil.maybeOpt( inx.nodeId.isEmpty ) {
         // Не используем текущее значение карты, т.к. карта тоже могла измениться:
-        m.qs.common.locEnv.geoLocOpt
+        m.qs.common.locEnv.geoLoc
+          .headOption
           .map(_.point)
       },
       name  = inx.name,
@@ -546,10 +547,10 @@ class IndexAh[M](
         // Когда уже задан id-ресивера, не надо слать на сервер маячки и географию.
         locEnv = {
           // Слать на сервер координаты с карты или с gps, если идёт определение местоположения.
-          if (switchCtx.demandLocTest)
-            root.locEnvUser
-          else if (switchCtx.forceGeoLoc.nonEmpty)
+          if (switchCtx.forceGeoLoc.nonEmpty)
             MLocEnv(switchCtx.forceGeoLoc, root.locEnvRadioBeacons)
+          else if (switchCtx.demandLocTest)
+            root.locEnvUser
           else if (switchCtx.indexQsArgs.nodeId.isEmpty)
             root.locEnvMap
           else
@@ -722,11 +723,12 @@ class IndexAh[M](
           .getOrElse( MScSwitchCtx( indexQsArgs2 ) )
           .copy(
             indexQsArgs = indexQsArgs2,
-            forceGeoLoc = for {
+            forceGeoLoc = (for {
               mgp <- prevNodeView.inxGeoPoint
             } yield {
               MGeoLoc(point = mgp)
-            },
+            })
+              .toList,
             showWelcome = false, // prevNodeView.rcvrId.nonEmpty,
             viewsAction = MScSwitchCtx.ViewsAction.POP,
           )
@@ -789,7 +791,8 @@ class IndexAh[M](
                 {nodeFound =>
                   val nodeFound2 = nodeFound.nodeId.fold {
                     // Ephemeral 404-node is selected. Need to reset geoPoint to qs loc env, so user will be properly placed.
-                    switchS0.okAction.qs.common.locEnv.geoLocOpt
+                    switchS0.okAction.qs.common.locEnv.geoLoc
+                      .headOption
                       .orElse {
                         // To use retUserLoc or current map result, if no geolocation was available during request (very first run index request).
                         v0.search.geo.mapInit.userLoc

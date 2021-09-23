@@ -89,13 +89,13 @@ case class MScRoot(
   }
   def locEnvMap: MLocEnv = {
     MLocEnv(
-      geoLocOpt  = geoLocOpt,
+      geoLoc     = geoLocOpt.toList,
       beacons    = locEnvRadioBeacons,
     )
   }
   def locEnvUser: MLocEnv = {
     MLocEnv(
-      geoLocOpt  = userLocOpt,
+      geoLoc     = userLocOpt.toList,
       beacons    = locEnvRadioBeacons,
     )
   }

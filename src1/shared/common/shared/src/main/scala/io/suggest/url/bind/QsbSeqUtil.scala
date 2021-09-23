@@ -29,12 +29,12 @@ object QsbSeqUtil {
             .filter( _.startsWith(keyPrefix) )
             // Привести полные qs-ключи вида "x[12].a.b"  к  "x[12]"
             .flatMap { kFull =>
-              val closingBrakedIndex = kFull.indexOf(keySufCh, keyPrefix.length)
-              if (closingBrakedIndex <= 0) {
+              val closingBraketIndex = kFull.indexOf(keySufCh, keyPrefix.length)
+              if (closingBraketIndex <= 0) {
                 println(s"${QsbSeqUtil.getClass.getSimpleName}.bind($key): invalid qs-key: $kFull, params =\n $params")
                 Nil
               } else {
-                val k = kFull.substring(0, closingBrakedIndex + 1)
+                val k = kFull.substring(0, closingBraketIndex + 1)
                 k :: Nil
               }
             }

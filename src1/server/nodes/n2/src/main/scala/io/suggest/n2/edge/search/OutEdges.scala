@@ -67,9 +67,10 @@ object OutEdges extends MacroLogsImpl {
 
         // Отрабатываем гео-шейпы, там тоже очень желательны query вместо filter.
         // Явно работать с Option API, чтобы избежать скрытых логических ошибок при смене Option на Seq.
-        if (oe.gsIntersect.isDefined) {
+        if (oe.gsIntersect.nonEmpty) {
           // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
           val fn = EF.EO_INFO_GS_FN
+
           val gqNf = {
             val gsi = oe.gsIntersect.get
 
@@ -80,7 +81,8 @@ object OutEdges extends MacroLogsImpl {
                 val gjsFr = QueryBuilders.termQuery(fn, gjsCompat)
                 if (withQname)
                   gjsFr.queryName(s"GeoJSON compat q: $fn=$gjsCompat")
-                val q = QueryBuilders.boolQuery()
+                val q = QueryBuilders
+                  .boolQuery()
                   .must(qb0)
                   .filter(gjsFr)
                 if (withQname)

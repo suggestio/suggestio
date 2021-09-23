@@ -25,7 +25,9 @@ object ScQsUtil {
   /** Сборка LocEnv на основе описанных данных. */
   private def getLocEnv(mroot: MScRoot, withGeoLoc: Boolean, withRadioBeacons: Boolean = true): MLocEnv = {
     MLocEnv(
-      geoLocOpt  = OptionUtil.maybeOpt(withGeoLoc)( mroot.geoLocOpt ),
+      geoLoc  = OptionUtil
+        .maybeOpt(withGeoLoc)( mroot.geoLocOpt )
+        .toList,
       // При переходе в под-узел, зачем отображать маячки с предыдущей страницы? Незачем.
       beacons = if (withRadioBeacons) mroot.locEnvRadioBeacons else Nil,
     )

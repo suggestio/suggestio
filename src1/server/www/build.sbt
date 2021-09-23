@@ -107,9 +107,6 @@ routesImport ++= Seq(
   "io.suggest.geo.GeoPoint.Implicits._",
   "io.suggest.mbill2.m.item.typ.MItemTypesJvm._",
 
-  "io.suggest.geo.MGeoLocJvm._",
-  "io.suggest.geo.MLocEnvJvm._",
-
   "io.suggest.n2.edge.MPredicatesJvm._",
 
   "io.suggest.n2.node.MNodeTypesJvm._",

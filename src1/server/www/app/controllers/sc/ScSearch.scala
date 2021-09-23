@@ -43,11 +43,11 @@ final class ScSearch @Inject()(
 
     def nodesSearch: Future[MNodeSearch] = {
       for {
-        mGeoLocOpt2 <- _geoIpInfo.reqGeoLocFut
+        mGeoLocs2 <- _geoIpInfo.reqGeoLocsFut
         radioSearchCtx <- _radioSearchCtxFut
         mNodeSearch <- {
-          LOGGER.trace(s"$logPrefix geoLoc = ${mGeoLocOpt2.orNull} and ${radioSearchCtx.uidsClear.size} radio-beacons")
-          scSearchUtil.qs2NodesSearch( _qs, mGeoLocOpt2, radioSearchCtx )
+          LOGGER.trace(s"$logPrefix geoLoc = ${mGeoLocs2.length} geoLocs and ${radioSearchCtx.uidsClear.size} radio-beacons")
+          scSearchUtil.qs2NodesSearch( _qs, mGeoLocs2, radioSearchCtx )
         }
       } yield {
         mNodeSearch

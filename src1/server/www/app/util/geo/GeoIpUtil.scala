@@ -131,16 +131,16 @@ class GeoIpUtil @Inject() (
     * @param geoIpLocOptFut Функция запуска geoip-геолокации.
     * @return Фьючерс с опциональным результатом MGeoLoc, как правило Some().
     */
-  def geoLocOrFromIp(geoLocOpt0: Option[MGeoLoc])
-                    (geoIpLocOptFut: => Future[Option[MGeoLoc]]): Future[Option[MGeoLoc]] = {
-    geoLocOpt0.fold [Future[Option[MGeoLoc]]] {
+  def geoLocOrFromIp(geoLocOpt0: Seq[MGeoLoc])
+                    (geoIpLocOptFut: => Future[Seq[MGeoLoc]]): Future[Seq[MGeoLoc]] = {
+    if (geoLocOpt0.isEmpty) {
       // Подавить и залоггировать возможные проблемы.
       geoIpLocOptFut.recover { case ex: Throwable =>
         LOGGER.warn(s"geoLocOrFromIp($geoLocOpt0): failed to geoIP", ex)
-        None
+        Nil
       }
-    } { r =>
-      Future.successful( Some(r) )
+    } else {
+      Future.successful( geoLocOpt0 )
     }
   }
 

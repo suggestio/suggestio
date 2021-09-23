@@ -10,7 +10,7 @@ import japgolly.univeq._
 object SioPagesUtilJs extends Log {
 
   /** JavaScript client-side URL QueryString bindable for SioPages.Sc3 (Showcase state URI query-string). */
-  def sc3QsBindableF: QsBindable[SioPages.Sc3] = {
+  def sc3QsBindableJs: QsBindable[SioPages.Sc3] = {
     import QsBindableUtilJs.{qsBindableInt, qsBindableLong, qsBindableBoolean}
     import QsbSeqUtil._
 
@@ -32,7 +32,7 @@ object SioPagesUtilJs extends Log {
     parseSc3FromQsTokens( tokens )
   }
   def parseSc3FromQsTokens( tokens: Map[String, Seq[String]] ): SioPages.Sc3 = {
-    sc3QsBindableF
+    sc3QsBindableJs
       .bindF( ScJsState.QSB_KEY, tokens )
       .flatMap( _.toOption )
       .getOrElse( SioPages.Sc3.empty )
@@ -45,6 +45,6 @@ object SioPagesUtilJs extends Log {
     * @return URL query string.
     */
   def sc3ToQs(mainScreen: SioPages.Sc3): String =
-    sc3QsBindableF.unbindF( ScJsState.QSB_KEY, mainScreen )
+    sc3QsBindableJs.unbindF( ScJsState.QSB_KEY, mainScreen )
 
 }

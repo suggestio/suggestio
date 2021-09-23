@@ -7,6 +7,8 @@ import MGeoPoint.JsonFormatters.QS_OBJECT
 import diode.FastEq
 import io.suggest.spa.OptFastEq
 import io.suggest.text.StringUtil
+import io.suggest.url.bind.{QsBindable, QsBinderF, QsUnbinderF}
+import io.suggest.url.bind.QueryStringBindableUtil.{_mergeUnbinded1, key1F}
 import japgolly.univeq._
 import monocle.macros.GenLens
 
@@ -53,6 +55,41 @@ object MGeoLoc {
 
   def point = GenLens[MGeoLoc](_.point)
   def accuracyOptM = GenLens[MGeoLoc](_.accuracyOptM)
+
+
+  /** QSB support for MGeoLoc. */
+  implicit def mGeoLocQsB(implicit
+                          geoPointB  : QsBindable[MGeoPoint],
+                          doubleOptB : QsBindable[Option[Double]],
+                         ): QsBindable[MGeoLoc] = {
+    new QsBindable[MGeoLoc] {
+      override def bindF: QsBinderF[MGeoLoc] = { (key, params) =>
+        val k = key1F(key)
+        for {
+          centerE           <- geoPointB.bindF (k(CENTER_FN),      params)
+          accuracyOptE      <- doubleOptB.bindF(k(ACCURACY_M_FN),  params)
+        } yield {
+          for {
+            center          <- centerE
+            accuracyOptM    <- accuracyOptE
+          } yield {
+            MGeoLoc(
+              point         = center,
+              accuracyOptM  = accuracyOptM
+            )
+          }
+        }
+      }
+
+      override def unbindF: QsUnbinderF[MGeoLoc] = { (key, value) =>
+        val k = key1F(key)
+        _mergeUnbinded1(
+          geoPointB .unbindF (k(CENTER_FN),      value.point),
+          doubleOptB.unbindF (k(ACCURACY_M_FN),  value.accuracyOptM),
+        )
+      }
+    }
+  }
 
 }
 

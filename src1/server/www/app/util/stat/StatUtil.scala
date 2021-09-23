@@ -307,26 +307,32 @@ final class StatUtil @Inject()(
     def mlocation: MStatLocation = {
       MStatLocation(
         geo = {
-          val _geoOpt = locEnvOpt.flatMap(_.geoLocOpt)
+          val _geoLocs = locEnvOpt
+            .toList
+            .flatMap(_.geoLoc)
           MGeoLocData(
-            coords = for (geo <- _geoOpt) yield geo.point,
-            accuracy = for (
-              geo <- _geoOpt;
+            coords = for (geo <- _geoLocs) yield geo.point,
+            accuracy = for {
+              geo <- _geoLocs
               accurM <- geo.accuracyOptM
-            ) yield accurM.toInt,
+            } yield accurM.toInt,
           )
         },
         geoIp = {
           val _geoIpOpt = geoIpLoc
           MGeoLocData(
             coords    = _geoIpOpt
-              .map(_.center),
+              .map(_.center)
+              .toList,
             accuracy  = _geoIpOpt
-              .flatMap(_.accuracyMetersOpt),
+              .flatMap(_.accuracyMetersOpt)
+              .toList,
             town      = _geoIpOpt
-              .flatMap(_.cityName),
+              .flatMap(_.cityName)
+              .toList,
             country   = _geoIpOpt
               .flatMap(_.countryIso2)
+              .toList,
           )
         }
       )
@@ -338,10 +344,11 @@ final class StatUtil @Inject()(
     def mstat: MStat = {
       MStat(
         common    = mcommon,
-        actions   = Seq(
-          statActions,
-          userSaOpt.toSeq,
-          beaconsStats
+        actions   = (
+          statActions ::
+          userSaOpt.toSeq ::
+          beaconsStats ::
+          Nil
         ).flatten,
         timestamp = ctx.now,
         ua        = mua,

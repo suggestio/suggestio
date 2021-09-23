@@ -13,10 +13,8 @@ import io.suggest.sc.sc3.{MSc3Resp, MScCommonQs, MScQs}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 import io.suggest.ueq.UnivEqUtil._
-import monocle.Traversal
 
 import scala.concurrent.Future
-import scalaz.std.option._
 
 import scala.scalajs.js
 
@@ -73,20 +71,25 @@ object ScUniApi {
     // Нормализовать гео-координаты до нескольких цифр после запятой: 4 цифры достаточно для кэша.
     val qs_common_locEnv_geoLoc_LENS = MScQs.common
       .composeLens( MScCommonQs.locEnv )
-      .composeLens( MLocEnv.geoLocOpt )
+      .composeLens( MLocEnv.geoLoc )
 
-    for {
-      mloc0 <- qs_common_locEnv_geoLoc_LENS.get( scQs )
-    } {
-      var glModF = MGeoLoc.point
+    val geoLocs0 = qs_common_locEnv_geoLoc_LENS.get( scQs )
+    if (geoLocs0.nonEmpty) {
+      val updateCoordsF = MGeoLoc.point
         .modify( _.withCoordScale(MGeoPoint.FracScale.NEAR) )
-
-      if (mloc0.accuracyOptM.nonEmpty)
-        glModF = glModF andThen MGeoLoc.accuracyOptM.set( None )
+      val unsetAccuracyF = MGeoLoc.accuracyOptM set None
 
       updateFuns ::= qs_common_locEnv_geoLoc_LENS
-        .composeTraversal( Traversal.fromTraverse[Option, MGeoLoc] )
-        .modify( glModF )
+        .modify { geoLocs0 =>
+          for (geoLoc <- geoLocs0) yield {
+            var modF = updateCoordsF
+
+            if( geoLoc.accuracyOptM.nonEmpty)
+              modF = modF andThen unsetAccuracyF
+
+            modF( geoLoc )
+          }
+        }
     }
 
     val scQs2 =

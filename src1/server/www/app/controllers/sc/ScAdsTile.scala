@@ -66,11 +66,11 @@ final class ScAdsTile @Inject() (
         // Grid patching for radio-beacons-only grid search. Remove all geoLoc and receiver data, if any:
         var modsAcc = List.empty[MScQs => MScQs]
 
-        if (_qsRaw.common.locEnv.geoLocOpt.nonEmpty) {
+        if (_qsRaw.common.locEnv.geoLoc.nonEmpty) {
           modsAcc ::= MScQs.common
             .composeLens( MScCommonQs.locEnv )
-            .composeLens( MLocEnv.geoLocOpt )
-            .set( None )
+            .composeLens( MLocEnv.geoLoc )
+            .set( Nil )
         }
 
         if (_qsRaw.search.rcvrId.nonEmpty) {

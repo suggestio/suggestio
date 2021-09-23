@@ -138,18 +138,23 @@ final class ScIndex @Inject()(
     /** поискать покрывающий ТЦ/город/район. */
     def l50_detectUsingCoords: Future[Seq[MIndexNodeInfo]] = {
       for {
-        geoLocOpt <- _geoIpInfo.reqGeoLocFut
+        geoLocs <- _geoIpInfo.reqGeoLocsFut
 
         // Пусть будет сразу NSEE, если нет данных геолокации.
-        geoLoc = {
-          if (geoLocOpt.isEmpty)
-            LOGGER.trace(s"$logPrefix No geolocation, nothing to search")
-          geoLocOpt.get
+        if {
+          val r = geoLocs.nonEmpty
+          if (!r) LOGGER.trace(s"$logPrefix No geolocation, nothing to search")
+          r
         }
 
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
-        circle = CircleGs(geoLoc.point, radiusM = 1)
-        qShapes = GeoShapeJvm.toEsQueryMaker( circle ) :: Nil
+        qShapes = for {
+          geoLoc <- geoLocs
+        } yield {
+          val circle = CircleGs(geoLoc.point, radiusM = 1)
+          GeoShapeJvm.toEsQueryMaker( circle )
+        }
+
         nodeLocPreds = MPredicates.NodeLocation :: Nil
 
         // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:
@@ -190,7 +195,7 @@ final class ScIndex @Inject()(
               }
             )
           } yield {
-            LOGGER.trace(s"$logPrefix $geoLoc on level $ngl => [${mnodes.length}]: [${mnodes.iterator.flatMap(_.id).mkString(", ")}]")
+            LOGGER.trace(s"$logPrefix ${geoLocs.length} geoLocs(${geoLocs.mkString("|")}) on level $ngl => [${mnodes.length}]: [${mnodes.iterator.flatMap(_.id).mkString(", ")}]")
             mnodes
               .iterator
               .map { mnode =>
@@ -227,7 +232,7 @@ final class ScIndex @Inject()(
           .reverse
 
         //LOGGER.trace(s"$logPrefix First-detected node#${resNode.mnode.idOrNull} isRcvr?${resNode.isRcvr}")
-        LOGGER.trace(s"$logPrefix For $geoLoc geolocated ${r.length} receivers: [${r.iterator.flatMap(_.mnode.id).mkString(", ")}]")
+        LOGGER.trace(s"$logPrefix For ${geoLocs.length} geoLocs (${geoLocs.mkString(", ")}) geolocated ${r.length} receivers: [${r.iterator.flatMap(_.mnode.id).mkString(", ")}]")
 
         r
       }
@@ -450,44 +455,52 @@ final class ScIndex @Inject()(
           // - Ближайшую к текущей локации точку, чтобы избежать ситуации.
           // - либо первую центральную точку,
           // - либо первую попавшующся точку вообще.
-          val r = (for {
-            geoLoc <- _qs.common.locEnv.geoLocOpt
-            // Если есть хотя бы 2 точки, то надо выбирать ближайшую.
-            if edgesPoints.lengthIs > 1
-          } yield {
-            // Есть геолокация. Найти ближайшую точку среди имеющихся.
-            val nearestPoint = edgesPoints
-              .minBy { centerPoint =>
-                CoordOps.distanceXY[MGeoPoint, GeoCoord_t]( centerPoint, geoLoc.point )
-                  .abs
-                  .doubleValue
-              }( Ordering.Double.TotalOrdering )
-            LOGGER.trace(s"$logPrefix Node#${mnode.idOrNull}: nearest to $geoLoc point => $nearestPoint\n Choosen from ${edgesPoints.length} points: ${edgesPoints.mkString(" | ")}")
+          val qsGeoLocs = _qs.common.locEnv.geoLoc
+          def __nearestPointOf(gpIter: Iterator[MGeoPoint]): Option[MGeoPoint] = {
+            import Ordering.Double.TotalOrdering
+            // Detect nearest point to current request geolocation
+            val nearestPoint = gpIter
+              .minByOption { centerPoint =>
+                qsGeoLocs
+                  .iterator
+                  .map { geoLoc =>
+                    CoordOps
+                      .distanceXY[MGeoPoint, GeoCoord_t]( centerPoint, geoLoc.point )
+                      .abs
+                      .doubleValue
+                  }
+                  .minOption
+                  .getOrElse( Double.PositiveInfinity )
+              }
+            LOGGER.trace(s"$logPrefix Node#${mnode.idOrNull}: nearest to ${qsGeoLocs.length} qs geopoints => $nearestPoint\n Choosen from ${edgesPoints.length} points: ${edgesPoints.mkString(" | ")}")
             nearestPoint
-          })
-            // Нет геолокации - ищем первую попавщуюся центральную точку:
-            .orElse {
-              val r = edgesPoints.headOption
-              LOGGER.trace(s"$logPrefix Node#${mnode.idOrNull}: Choosen the only possible geopoint ${r.orNull}")
-              r
-            }
+          }
+
+          val r = if (qsGeoLocs.nonEmpty && edgesPoints.lengthIs > 1) {
+            __nearestPointOf( edgesPoints.iterator )
+
+          } else if (edgesPoints.isEmpty) {
             // Нет центральных точек - взять первую попавшуюся из любого шейпа.
-            .orElse {
-              (for {
+            __nearestPointOf {
+              for {
                 nlEdge <- nodeLocEdges.iterator
                 gs <- nlEdge.info.geoShapes
               } yield {
-                val r = gs.shape.firstPoint
-                LOGGER.warn(s"$logPrefix Node#${mnode.idOrNull} choose any shape firstPoint $r, because no geoPoints or centerPoints.")
-                r
-              })
-                .nextOption()
+                val first = gs.shape.firstPoint
+                LOGGER.warn(s"$logPrefix Node#${mnode.idOrNull} choose any shape firstPoint $first, because no geoPoints or centerPoints.")
+                first
+              }
             }
+
+          } else {
+            val hd = edgesPoints.headOption
+            LOGGER.trace(s"$logPrefix Node#${mnode.idOrNull}: Choosen the only possible geopoint ${hd.orNull}")
+            hd
+          }
 
           LOGGER.trace(s"$logPrefix Node#${mnode.id} geo pt. => $r")
           r
         }
-
         Future.successful(mgpOpt)
       }
 

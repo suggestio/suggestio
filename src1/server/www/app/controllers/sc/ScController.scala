@@ -112,8 +112,8 @@ final class ScCtlUtil @Inject()(
     lazy val geoIpLocOptFut = geoIpUtil.geoIpRes2geoLocOptFut( geoIpResOptFut )
 
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
-    lazy val reqGeoLocFut: Future[Option[MGeoLoc]] = {
-      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpLocOptFut )
+    lazy val reqGeoLocsFut: Future[Seq[MGeoLoc]] = {
+      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLoc )( geoIpLocOptFut.map(_.toList) )
     }
 
   }
