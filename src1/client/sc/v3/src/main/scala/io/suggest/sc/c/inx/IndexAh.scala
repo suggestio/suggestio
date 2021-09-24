@@ -4,7 +4,7 @@ import cordova.plugins.statusbar.CdvStatusBar
 import diode._
 import diode.data.{Pot, Ready}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.{MGeoLoc, MGeoPoint, MLocEnv}
+import io.suggest.geo.{MGeoLoc, MGeoLocSources, MGeoPoint, MLocEnv}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.{ActionHandlerExt, EffectsOps, PotOpsExt}
@@ -726,7 +726,10 @@ class IndexAh[M](
             forceGeoLoc = (for {
               mgp <- prevNodeView.inxGeoPoint
             } yield {
-              MGeoLoc(point = mgp)
+              MGeoLoc(
+                point = mgp,
+                source = Some(MGeoLocSources.NodeInfo),
+              )
             })
               .toList,
             showWelcome = false, // prevNodeView.rcvrId.nonEmpty,

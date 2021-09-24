@@ -45,6 +45,9 @@ object GeoConstants {
     /** Радиус круга, описывающего данные геолокации устройства. */
     def ACCURACY_M_FN     = "u"
 
+    /** Field name of coordinates source identifier. */
+    def SOURCE_FN = "s"
+
   }
 
 

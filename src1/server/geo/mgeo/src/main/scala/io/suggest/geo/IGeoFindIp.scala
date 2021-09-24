@@ -40,6 +40,6 @@ trait IGeoFindIpResult {
 
 
   def toGeoLoc: MGeoLoc =
-    MGeoLoc(center, accuracyMetersOpt.map(_.toDouble))
+    MGeoLoc( center, Some(MGeoLocSources.GeoIP), accuracyMetersOpt.map(_.toDouble) )
 
 }

@@ -67,91 +67,86 @@ object OutEdges extends MacroLogsImpl {
 
         // Отрабатываем гео-шейпы, там тоже очень желательны query вместо filter.
         // Явно работать с Option API, чтобы избежать скрытых логических ошибок при смене Option на Seq.
-        if (oe.gsIntersect.nonEmpty) {
+        for (gsi <- oe.gsIntersect) {
           // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
           val fn = EF.EO_INFO_GS_FN
 
-          val gqNf = {
-            val gsi = oe.gsIntersect.get
-
-            /** Добавить в query фильтр по флагу */
-            def _withGjsCompatFilter(qb0: QueryBuilder): QueryBuilder = {
-              gsi.gjsonCompat.fold(qb0) { gjsCompat =>
-                val fn = EF.EO_INFO_GS_GJSON_COMPAT_FN
-                val gjsFr = QueryBuilders.termQuery(fn, gjsCompat)
-                if (withQname)
-                  gjsFr.queryName(s"GeoJSON compat q: $fn=$gjsCompat")
-                val q = QueryBuilders
-                  .boolQuery()
-                  .must(qb0)
-                  .filter(gjsFr)
-                if (withQname)
-                  q.queryName("bool with GeoJSON compat filter")
-                q
-              }
-            }
-
-            // Есть какие-то критерии поиска. Сразу пытаемся искать по шейпам...
-            val nq: QueryBuilder = if (gsi.shapes.nonEmpty) {
-              val levels1: Iterable[MNodeGeoLevel] = if (gsi.levels.isEmpty)
-                MNodeGeoLevels.values
-              else
-                gsi.levels
-              val queriesIter = for {
-                shape   <- gsi.shapes.iterator
-                glevel  <- levels1.iterator
-              } yield {
-                val shapeFn = EF.EO_INFO_GS_SHAPE_FN( glevel )
-                val qb0 = shape.toEsQuery(shapeFn)
-                if (withQname)
-                  qb0.queryName(s"shape q: gnl=$glevel fn=$shapeFn shape=${shape.getClass.getSimpleName}")
-                _withGjsCompatFilter(qb0)
-              }
-              // Объединяем сгенеренные queries в одну.
-              val queries = queriesIter.toList
-              if (queries.tail.isEmpty) {
-                queries.head
-              } else {
-                val bq = QueryBuilders.boolQuery()
-                for (q <- queries) {
-                  bq.should(q)
-                }
-                bq.minimumShouldMatch( 1 )
-                if (withQname)
-                  bq.queryName(s"bool: ${queries.length} shapes")
-                bq
-              }
-
-            } else if (gsi.levels.nonEmpty) {
-              // Нет шейпов, это значит есть уровни.
-              val fn = EF.EO_INFO_GS_GLEVEL_FN
-              val levelNames = gsi.levels.map(_.esfn)
-              val qb0 = QueryBuilders.termsQuery(fn, levelNames: _*)
+          /** Добавить в query фильтр по флагу */
+          def _withGjsCompatFilter(qb0: QueryBuilder): QueryBuilder = {
+            gsi.gjsonCompat.fold(qb0) { gjsCompat =>
+              val fn = EF.EO_INFO_GS_GJSON_COMPAT_FN
+              val gjsFr = QueryBuilders.termQuery(fn, gjsCompat)
               if (withQname)
-                qb0.queryName(s"terms: ${fn} = ${levelNames.length}lvls: [${levelNames.mkString(", ")}]")
-              _withGjsCompatFilter(qb0)
-
-            } else {
-              // Нужно искать по флагу совместимости с GeoJSON.
-              val gjsCompat = gsi.gjsonCompat.get
-              val q = QueryBuilders.termQuery(EF.EO_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
+                gjsFr.queryName(s"GeoJSON compat q: $fn=$gjsCompat")
+              val q = QueryBuilders
+                .boolQuery()
+                .must(qb0)
+                .filter(gjsFr)
               if (withQname)
-                q.queryName(s"gjs compat: $gjsCompat")
+                q.queryName("bool with GeoJSON compat filter")
               q
             }
-
-            QueryBuilders.nestedQuery( fn, nq, ScoreMode.Max )
           }
 
+          // Есть какие-то критерии поиска. Сразу пытаемся искать по шейпам...
+          val gsQueries: List[QueryBuilder] = if (gsi.shapes.nonEmpty) {
+            val levels1: Iterable[MNodeGeoLevel] = if (gsi.levels.isEmpty)
+              MNodeGeoLevels.values
+            else
+              gsi.levels
+
+            val queries = (for {
+              shape   <- gsi.shapes.iterator
+              glevel  <- levels1.iterator
+            } yield {
+              val shapeFn = EF.EO_INFO_GS_SHAPE_FN( glevel )
+              val qb0 = shape.toEsQuery(shapeFn)
+              if (withQname)
+                qb0.queryName(s"shape q: gnl=$glevel fn=$shapeFn shape=${shape.getClass.getSimpleName}")
+              _withGjsCompatFilter(qb0)
+            })
+              .toList
+
+            // Объединяем сгенеренные queries в одну.
+            queries
+
+          } else if (gsi.levels.nonEmpty) {
+            // Нет шейпов, это значит есть уровни.
+            val fn = EF.EO_INFO_GS_GLEVEL_FN
+            val levelNames = gsi.levels.map(_.esfn)
+            val qb0 = QueryBuilders.termsQuery(fn, levelNames: _*)
+            if (withQname)
+              qb0.queryName(s"terms: ${fn} = ${levelNames.length}lvls: [${levelNames.mkString(", ")}]")
+            _withGjsCompatFilter(qb0) :: Nil
+
+          } else {
+            // Нужно искать по флагу совместимости с GeoJSON.
+            val gjsCompat = gsi.gjsonCompat.get
+            val q = QueryBuilders.termQuery(EF.EO_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
+            if (withQname)
+              q.queryName(s"gjs compat: $gjsCompat")
+            q :: Nil
+          }
+
+          val finalGsiQuery = gsQueries
+            .map { gsQ =>
+              MWrapClause(
+                must          = IMust.SHOULD,
+                queryBuilder  = QueryBuilders.nestedQuery( fn, gsQ, ScoreMode.Max ),
+              )
+            }
+            .toBoolQuery
+
           if (withQname)
-            gqNf.queryName(s"nested: e.info.geoShape fn=${fn}")
+            finalGsiQuery.queryName(s"bool?[nested]: e.info.geoShape fn=${fn} over ${gsQueries.length} shapes")
 
           _qOpt = _qOpt.map { qb0 =>
-            QueryBuilders.boolQuery()
-              .must(qb0)
-              .filter(gqNf)
+            QueryBuilders
+              .boolQuery()
+              .must( qb0 )
+              .filter( finalGsiQuery )
           }.orElse {
-            Some(gqNf)
+            Some( finalGsiQuery )
           }
         }
 

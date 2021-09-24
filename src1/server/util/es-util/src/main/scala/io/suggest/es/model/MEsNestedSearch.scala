@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import org.elasticsearch.index.query.InnerHitBuilder
 
@@ -66,4 +67,14 @@ object MEsNestedClause {
 case class MEsNestedClause[T](
                                clause         : T,
                                innerHits      : Option[InnerHitBuilder]       = None,
-                             )
+                             ) {
+
+  override def toString: String = {
+    innerHits.fold( clause.toString ) { ih =>
+      StringUtil.toStringHelper(this) {
+        StringUtil.toStringRenderProduct( this )
+      }
+    }
+  }
+
+}

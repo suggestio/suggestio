@@ -1,9 +1,9 @@
 package io.suggest.n2.edge.search
 
 import java.time.ZoneOffset
-
 import enumeratum._
 import io.suggest.es.model.{IMust, Must_t}
+import io.suggest.text.StringUtil
 
 /**
   * Suggest.io
@@ -17,13 +17,15 @@ final case class EsRange(
                           dateFormat        : Option[String]          = None,
                           timeZone          : Option[ZoneOffset]      = None,
                           must              : Must_t                  = IMust.SHOULD,
-                        )
+                        ) {
+  override def toString = StringUtil.toStringHelper("")( StringUtil.toStringRenderProduct(this) )
+}
 
 
-final class EsRangeClause private(
-                                   val op     : EsRangeOp,
-                                   val value  : Any,
-                                 )
+final case class EsRangeClause private(
+                                        val op     : EsRangeOp,
+                                        val value  : Any,
+                                      )
 object EsRangeClause {
 
   case class op(op: EsRangeOp) {

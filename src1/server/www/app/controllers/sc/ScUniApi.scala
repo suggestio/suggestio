@@ -1,10 +1,9 @@
 package controllers.sc
 
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.Implicits._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId.Implicits._
-import io.suggest.geo.{MGeoLoc, MLocEnv}
+import io.suggest.geo.{MGeoLoc, MGeoLocSources, MLocEnv}
 import io.suggest.n2.node.MNode
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.sc3._
@@ -121,7 +120,10 @@ final class ScUniApi @Inject()(
                       .fold {
                         qs.common.locEnv.geoLoc
                       } { geoPoint =>
-                        MGeoLoc( geoPoint ) :: Nil
+                        MGeoLoc(
+                          geoPoint,
+                          source = Some(MGeoLocSources.NodeInfo)
+                        ) :: Nil
                       }
                   } else {
                     Nil

@@ -52,7 +52,7 @@ case class MScIndexArgs(
                          nodeId       : Option[String]  = None,
                          geoIntoRcvr  : Boolean         = true,
                          retUserLoc   : Boolean         = false,
-                         returnEphemeral: Boolean         = false,
+                         returnEphemeral: Boolean       = false,
                        ) {
 
   override def toString = StringUtil.toStringHelper(this) { f =>

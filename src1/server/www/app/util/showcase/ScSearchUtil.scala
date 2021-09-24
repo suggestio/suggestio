@@ -1,10 +1,9 @@
 package util.showcase
 
 import io.suggest.common.empty.OptionUtil
-
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.es.model.{IMust, MEsNestedSearch}
-import io.suggest.geo.{CircleGs, GeoShapeJvm, MGeoLoc, MNodeGeoLevels}
+import io.suggest.geo.{CircleGs, GeoShapeToEsQuery, MGeoLoc, MNodeGeoLevels}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.n2.node.{MNodeType, MNodeTypes}
@@ -94,7 +93,7 @@ final class ScSearchUtil {
               center  = geoLoc.point,
               radiusM = 1
             )
-            GeoShapeJvm.toEsQueryMaker(circle)
+            GeoShapeToEsQuery( circle )
           },
         )
       },
@@ -117,7 +116,7 @@ final class ScSearchUtil {
                 // 100км вокруг текущей точки
                 radiusM = FTS_SEARCH_RADIUS_M
               )
-              GeoShapeJvm.toEsQueryMaker(circle)
+              GeoShapeToEsQuery( circle )
             },
           )
         },

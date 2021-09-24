@@ -10,6 +10,7 @@ import io.suggest.text.StringUtil
 import io.suggest.url.bind.{QsBindable, QsBinderF, QsUnbinderF}
 import io.suggest.url.bind.QueryStringBindableUtil.{_mergeUnbinded1, key1F}
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
 
 /**
@@ -25,6 +26,7 @@ object MGeoLoc {
     * В первую очередь для URL query_string в js-роутере. */
   implicit def MGEO_LOC_FORMAT: OFormat[MGeoLoc] = (
     (__ \ CENTER_FN).format[MGeoPoint] and
+    (__ \ SOURCE_FN).formatNullable[MGeoLocSource] and
     (__ \ ACCURACY_M_FN).formatNullable[Double]
   )(apply, unlift(unapply))
 
@@ -49,17 +51,20 @@ object MGeoLoc {
   object GeoLocNearbyFastEq extends FastEq[MGeoLoc] {
     override def eqv(a: MGeoLoc, b: MGeoLoc): Boolean = {
       MGeoPoint.GeoPointsNearbyFastEq.eqv(a.point, b.point) &&
-      AccuracyMOptNearbyFastEq.eqv( a.accuracyOptM, b.accuracyOptM )
+      AccuracyMOptNearbyFastEq.eqv( a.accuracyOptM, b.accuracyOptM ) &&
+      (a.source ===* b.source)
     }
   }
 
   def point = GenLens[MGeoLoc](_.point)
   def accuracyOptM = GenLens[MGeoLoc](_.accuracyOptM)
+  def source = GenLens[MGeoLoc](_.source)
 
 
   /** QSB support for MGeoLoc. */
   implicit def mGeoLocQsB(implicit
                           geoPointB  : QsBindable[MGeoPoint],
+                          geoLocSourceOptB: QsBindable[Option[MGeoLocSource]],
                           doubleOptB : QsBindable[Option[Double]],
                          ): QsBindable[MGeoLoc] = {
     new QsBindable[MGeoLoc] {
@@ -67,15 +72,18 @@ object MGeoLoc {
         val k = key1F(key)
         for {
           centerE           <- geoPointB.bindF (k(CENTER_FN),      params)
+          sourceOptE        <- geoLocSourceOptB.bindF( k(SOURCE_FN), params )
           accuracyOptE      <- doubleOptB.bindF(k(ACCURACY_M_FN),  params)
         } yield {
           for {
             center          <- centerE
+            sourceOpt       <- sourceOptE
             accuracyOptM    <- accuracyOptE
           } yield {
             MGeoLoc(
               point         = center,
-              accuracyOptM  = accuracyOptM
+              source        = sourceOpt,
+              accuracyOptM  = accuracyOptM,
             )
           }
         }
@@ -85,6 +93,7 @@ object MGeoLoc {
         val k = key1F(key)
         _mergeUnbinded1(
           geoPointB .unbindF (k(CENTER_FN),      value.point),
+          geoLocSourceOptB.unbindF( k(SOURCE_FN), value.source ),
           doubleOptB.unbindF (k(ACCURACY_M_FN),  value.accuracyOptM),
         )
       }
@@ -101,18 +110,18 @@ object MGeoLoc {
  * по мнению самого сервера suggest.io на основе bss/wifi/ibeacon.
  * @param point Географическая координата.
  * @param accuracyOptM Погрешность в метрах.
+ * @param source Source of coordinate, if disclosed.
  */
 
 case class MGeoLoc(
                     point         : MGeoPoint,
-                    accuracyOptM  : Option[Double]  = None
+                    source        : Option[MGeoLocSource],
+                    accuracyOptM  : Option[Double]  = None,
                   ) {
 
   override def toString: String = {
-    StringUtil.toStringHelper(this, 16) { renderF =>
-      val render0 = renderF("")
-      render0( point )
-      accuracyOptM foreach render0
+    StringUtil.toStringHelper(this, 16) {
+      StringUtil.toStringRenderProduct(this)
     }
   }
 

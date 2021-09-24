@@ -1,6 +1,7 @@
 package io.suggest.es.search
 
 import io.suggest.es.model.EsModelUtil
+import io.suggest.text.StringUtil
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -58,4 +59,12 @@ trait RandomSort extends DynSearchArgs {
 case class MRandomSortData(
   generation  : Long,
   weight      : Option[Float] = None
-)
+) {
+  override def toString: String = {
+    weight.fold( generation.toString ) { _ =>
+      StringUtil.toStringHelper(this) {
+        StringUtil.toStringRenderProduct(this)
+      }
+    }
+  }
+}

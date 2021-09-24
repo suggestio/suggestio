@@ -5,8 +5,9 @@ import io.suggest.dev.MOsFamily
 import io.suggest.es.model.{IMust, Must_t}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.MGeoPoint
-import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicate, MPredicates}
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicate}
 import io.suggest.n2.media.storage.MStorage
+import io.suggest.text.StringUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 
@@ -44,8 +45,8 @@ import scala.annotation.tailrec
   * @param pictureWidthPx Ширина картинки. Аналогично высоте.
   */
 final case class Criteria(
-                           nodeIds           : Seq[String]              = Nil,
                            predicates        : Seq[MPredicate]          = Nil,
+                           nodeIds           : Seq[String]              = Nil,
                            must              : Must_t                   = IMust.SHOULD,
                            // info
                            flag              : Option[Boolean]          = None,
@@ -64,7 +65,7 @@ final case class Criteria(
                            fileIsOriginal    : Option[Boolean]          = None,
                            fileStorType      : Set[MStorage]            = Set.empty,
                            fileStorMetaData  : Set[String]              = Set.empty,
-                           fileStorShards : Option[Set[String]]      = None,
+                           fileStorShards    : Option[Set[String]]      = None,
                            // media.picture
                            pictureHeightPx   : List[Int]                = Nil,
                            pictureWidthPx    : List[Int]                = Nil,
@@ -76,54 +77,8 @@ final case class Criteria(
   def isContainsSort: Boolean =
     geoDistanceSort.nonEmpty
 
-  override def toString: String = {
-    val sb = new StringBuilder(128, productPrefix)
-    sb.append('(')
-
-    sb.append(
-      IMust.toString(must)
-    )
-
-    val _preds = predicates
-    if (_preds.nonEmpty) {
-      sb.append( ",p=[" )
-        .append( _preds.mkString(",") )
-        .append( ']')
-    }
-
-    val _nodeIds = nodeIds
-    if (_nodeIds.nonEmpty) {
-      val delim = s" ${if (nodeIdsMatchAll) "&" else "|"} "
-      sb.append(",nodes=[")
-      for (nodeId <- _nodeIds) {
-        sb.append(nodeId)
-          .append(delim)
-      }
-      sb.append(']')
-    }
-
-    for (_flag <- flag) {
-      sb.append(",flag=")
-        .append( _flag )
-    }
-
-    for (_tag <- tags) {
-      sb.append(",tag=")
-        .append(_tag)
-    }
-
-    for (_gsCr <- gsIntersect) {
-      sb.append(",gs=")
-        .append(_gsCr)
-    }
-
-    for (mgp <- geoDistanceSort) {
-      sb.append(",geoDistanceSort=")
-        .append(mgp.toHumanFriendlyString)
-    }
-
-    sb.append(')')
-      .toString()
+  override def toString: String = StringUtil.toStringHelper("") {
+    StringUtil.toStringRenderProduct(this)
   }
 
 }

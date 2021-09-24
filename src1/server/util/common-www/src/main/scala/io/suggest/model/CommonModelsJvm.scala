@@ -9,7 +9,7 @@ import io.suggest.ble.MUidBeacon
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MScreen}
 import io.suggest.es.model.MEsUuId
-import io.suggest.geo.{GeoPoint, MGeoLoc, MGeoPoint, MLocEnv}
+import io.suggest.geo.{GeoPoint, MGeoLoc, MGeoLocSource, MGeoPoint, MLocEnv}
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknModifyQs, MLknOpKey, MLknOpKeys, MLknOpValue}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
@@ -512,11 +512,11 @@ object CommonModelsJvm extends MacroLogsDyn {
   /** routes-Биндер для параметров showcase'а. */
   implicit def mScIndexArgsQsb: QueryStringBindable[MScIndexArgs] = {
     new AbstractQueryStringBindable[MScIndexArgs] {
-      import io.suggest.sc.ScConstants.ReqArgs.{GEO_INTO_RCVR_FN, NODE_ID_FN, RET_GEO_LOC_FN}
+      import io.suggest.sc.ScConstants.ReqArgs._
 
       def strOptB = implicitly[QueryStringBindable[Option[String]]]
       def boolB = implicitly[QueryStringBindable[Boolean]]
-      def boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
+      val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScIndexArgs]] = {
         val f = key1F(key)
@@ -527,16 +527,19 @@ object CommonModelsJvm extends MacroLogsDyn {
           geoIntoRcvrE        <- boolB.bind(f(GEO_INTO_RCVR_FN),      params)
           // TODO 2020-07-16: Надо через несколько дней/недель заменить boolOpt на bool, убрав соотв.костыли.
           retUserLocOptE      <- boolOptB.bind(f(RET_GEO_LOC_FN),     params)
+          returnEphemeralE    <- boolOptB.bind(f(RETURN_EPHEMERAL),   params)
         } yield {
           for {
             _adnIdOpt         <- adnIdOptE
             _geoIntoRcvr      <- geoIntoRcvrE
             _retUserLocOpt    <- retUserLocOptE
+            _returnEphemeralO <- returnEphemeralE
           } yield {
             MScIndexArgs(
               nodeId          = _adnIdOpt,
               geoIntoRcvr     = _geoIntoRcvr,
-              retUserLoc      = _retUserLocOpt.getOrElseFalse
+              retUserLoc      = _retUserLocOpt.getOrElseFalse,
+              returnEphemeral = _returnEphemeralO.getOrElseFalse,
             )
           }
         }
@@ -547,7 +550,8 @@ object CommonModelsJvm extends MacroLogsDyn {
         _mergeUnbinded1(
           strOptB.unbind(f(NODE_ID_FN),           value.nodeId),
           boolB.unbind  (f(GEO_INTO_RCVR_FN),     value.geoIntoRcvr),
-          boolOptB.unbind(f(RET_GEO_LOC_FN),      OptionUtil.maybeTrue(value.retUserLoc) )
+          boolOptB.unbind(f(RET_GEO_LOC_FN),      OptionUtil.maybeTrue(value.retUserLoc) ),
+          boolOptB.unbind(f(RETURN_EPHEMERAL),    OptionUtil.maybeTrue(value.returnEphemeral) ),
         )
       }
 
@@ -830,12 +834,16 @@ object CommonModelsJvm extends MacroLogsDyn {
   }
 
 
+  implicit def mGeoLocSourceQsb(implicit strB: QueryStringBindable[String]): CrossQsBindable[MGeoLocSource] =
+    MGeoLocSource.geoLocSourceQsB( strB )
+
   /** QSB support for MGeoLoc. */
   implicit def mGeoLocQsb(implicit
                           geoPointB  : QueryStringBindable[MGeoPoint],
+                          geoLocSourceB: QueryStringBindable[Option[MGeoLocSource]],
                           doubleOptB : QueryStringBindable[Option[Double]],
                          ): CrossQsBindable[MGeoLoc] = {
-    MGeoLoc.mGeoLocQsB( geoPointB, doubleOptB )
+    MGeoLoc.mGeoLocQsB( geoPointB, geoLocSourceB, doubleOptB )
   }
 
 
@@ -855,7 +863,7 @@ object CommonModelsJvm extends MacroLogsDyn {
             val geoLocKey = k( F.GEO_LOC_FN )
             geoLocsSeqB
               .bind( geoLocKey, params )
-              .map( _.map(_.items) )
+              .map( _.map(_.items.distinctBy(_.point)) ) // TODO distinctBy - move into qs validation (not yet implemented)
               .filter( _.fold(_ => true, _.nonEmpty) ) // Left() - bypass?
               .orElse {
                 // 2021-09-22 Compat. non-seq optional values for cordova mobile-apps <= v5.2.1

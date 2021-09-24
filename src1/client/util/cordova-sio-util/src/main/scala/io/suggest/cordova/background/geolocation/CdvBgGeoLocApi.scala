@@ -37,6 +37,8 @@ final class CdvBgGeoLocApi(
   private var _onLocationF: js.Function1[Location, Unit] = null
   private var _onErrorOptF: Option[js.Function1[BackgroundGeolocationError, Unit]] = None
 
+  private val _someGeoLocSource = Some( MGeoLocSources.NativeGeoLocApi )
+
 
   override def underlying =
     Option.when( isAvailable() )( CdvBackgroundGeolocation )
@@ -62,7 +64,8 @@ final class CdvBgGeoLocApi(
           lat = loc.latitude,
           lon = loc.longitude
         ),
-        accuracyOptM = loc.accuracy.toOption
+        accuracyOptM = loc.accuracy.toOption,
+        source = _someGeoLocSource,
       )
       options.onLocation( mgl )
     }

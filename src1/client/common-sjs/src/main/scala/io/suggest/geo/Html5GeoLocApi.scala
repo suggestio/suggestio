@@ -28,6 +28,7 @@ final class Html5GeoLocApi extends GeoLocApi {
   private var _onPosErrorOptF: Option[js.Function1[dom.PositionError, Unit]] = None
   private var _domPositionOptions: PositionOptions = null
 
+  private val _someGeoLocSource = Some( MGeoLocSources.NativeGeoLocApi )
 
   override def configure(options: GeoLocApiWatchOptions): Future[_] = {
     _options = Some( options )
@@ -36,6 +37,7 @@ final class Html5GeoLocApi extends GeoLocApi {
       val geoLoc = MGeoLoc(
         point        = MGeoPointJs( pos.coords ),
         accuracyOptM = Some( pos.coords.accuracy ),
+        source       = _someGeoLocSource,
       )
       options.onLocation( geoLoc )
     }: js.Function1[dom.Position, Unit]

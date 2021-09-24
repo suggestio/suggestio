@@ -3,6 +3,7 @@ package controllers.sc
 import io.suggest.adn.MAdnRights
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
@@ -27,6 +28,7 @@ import japgolly.univeq._
 import models.im.{MImgT, MImgWithWhInfo}
 import models.mwc.MWelcomeRenderArgs
 import models.req.IReq
+import org.locationtech.spatial4j.shape.SpatialRelation
 
 import javax.inject.Inject
 import scala.concurrent.Future
@@ -134,10 +136,18 @@ final class ScIndex @Inject()(
       }
     }
 
+    private def _nodeLocPredicates = MPredicates.NodeLocation :: Nil
+
+    private def _geoLocToEsShape(geoLoc: MGeoLoc): GeoShapeToEsQuery = {
+      val circle = CircleGs( geoLoc.point, radiusM = 1 )
+      GeoShapeToEsQuery( circle )
+    }
+
 
     /** поискать покрывающий ТЦ/город/район. */
     def l50_detectUsingCoords: Future[Seq[MIndexNodeInfo]] = {
       for {
+        // TODO To append detected geoIp into requested qs geoLocs? Need this?
         geoLocs <- _geoIpInfo.reqGeoLocsFut
 
         // Пусть будет сразу NSEE, если нет данных геолокации.
@@ -147,15 +157,8 @@ final class ScIndex @Inject()(
           r
         }
 
-        // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
-        qShapes = for {
-          geoLoc <- geoLocs
-        } yield {
-          val circle = CircleGs(geoLoc.point, radiusM = 1)
-          GeoShapeJvm.toEsQueryMaker( circle )
-        }
-
-        nodeLocPreds = MPredicates.NodeLocation :: Nil
+        qShapes = geoLocs.map( _geoLocToEsShape )
+        nodeLocPreds = _nodeLocPredicates
 
         // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:
         (withAdnRights1, adnRightsMustOrNot1) = if (!_scIndexArgs.geoIntoRcvr) {
@@ -165,7 +168,7 @@ final class ScIndex @Inject()(
           (Nil, true)
         }
         someTrue = {
-          LOGGER.trace(s"$logPrefix geoIntoRcvr=${_scIndexArgs.geoIntoRcvr} => adnRights=[${withAdnRights1.mkString(",")}] adnRightsMustOrNot=${adnRightsMustOrNot1}")
+          LOGGER.trace(s"$logPrefix geoIntoRcvr=${_scIndexArgs.geoIntoRcvr} => adnRights=[${withAdnRights1.mkString(",")}] adnRightsMustOrNot=${adnRightsMustOrNot1}\n qShapes = [${qShapes.mkString(", ")}]")
           OptionUtil.SomeBool.someTrue
         }
 
@@ -195,7 +198,7 @@ final class ScIndex @Inject()(
               }
             )
           } yield {
-            LOGGER.trace(s"$logPrefix ${geoLocs.length} geoLocs(${geoLocs.mkString("|")}) on level $ngl => [${mnodes.length}]: [${mnodes.iterator.flatMap(_.id).mkString(", ")}]")
+            LOGGER.trace(s"$logPrefix ${qShapes.length} geoLocs(${qShapes.iterator.map(_.gs).mkString("|")}) on level $ngl => [${mnodes.length}]: [${mnodes.iterator.flatMap(_.id).mkString(", ")}]")
             mnodes
               .iterator
               .map { mnode =>
@@ -309,18 +312,71 @@ final class ScIndex @Inject()(
           Nil
 
         // Не надо собирать доп.узлы, если по координатам уже есть узел с !isRcvr
-        val ephemeralNodesFut = coordsNodesFut.flatMap { coordNodes =>
-          if (_scIndexArgs.returnEphemeral || coordNodes.isEmpty) {
+        val ephemeralNodesFut = for {
+          coordNodes <- coordsNodesFut
+          isAlsoRenderEphemeral = {
+            if (
+              coordNodes.isEmpty ||
+              (_scIndexArgs.returnEphemeral && !coordNodes.exists(!_.isRcvr))
+            ) {
+              LOGGER.trace(s"$logPrefix Will ad ephemeral node to ${coordNodes.length} coord-detected nodes, qs.retEph?${_scIndexArgs.returnEphemeral}")
+              true
+
+            } else if (_scIndexArgs.returnEphemeral) {
+              val qsGeoLocsAll = _qs.common.locEnv.geoLoc
+              val qShapesS4J = qsGeoLocsAll
+                .iterator
+                .filter(_.source contains[MGeoLocSource] MGeoLocSources.NativeGeoLocApi)
+                .map( _geoLocToEsShape(_).esShapeBuilder.buildS4J() )
+                .toSeq
+              LOGGER.trace(s"$logPrefix Prepared ${qShapesS4J.length} geo-shapes for user geo.locations\n qs.geoLocsAll = $qsGeoLocsAll")
+
+              val nodesHaveNonRcvrIntercsection = qShapesS4J.isEmpty || {
+                val preds = _nodeLocPredicates
+                coordNodes.exists { m =>
+                  !m.isRcvr && {
+                    (for {
+                      nodeLocEdge <- m.mnode.edges.withPredicateIter( preds: _* )
+                      edgeGs <- nodeLocEdge.info.geoShapes.iterator
+                      edgeShape <- Option( edgeGs.shape )
+                        .collect { case gsQ: IGeoShapeQuerable => gsQ }
+                        .iterator
+                      edgeShapeS4J = GeoShapeToEsQuery( edgeShape )
+                        .esShapeBuilder
+                        .buildS4J()
+                      qShapeS4J <- qShapesS4J.iterator
+                      relation = edgeShapeS4J relate qShapeS4J
+                      isShapesIntersects = (relation != SpatialRelation.DISJOINT)
+                      if isShapesIntersects
+                    } yield {
+                      LOGGER.trace(s"$logPrefix Detected userLoc intersection with semi-ephemeral non-rcvr node#${m.mnode.idOrNull} gs#${edgeGs} :: intersect-relation=${relation}")
+                      true
+                    })
+                      .nextOption()
+                      .getOrElseFalse
+                  }
+                }
+              }
+              LOGGER.trace(s"$logPrefix Has non-rcrv semi-ephemeral nodes intersections? $nodesHaveNonRcvrIntercsection shapes[${qShapesS4J.length}]")
+              !nodesHaveNonRcvrIntercsection
+
+            } else {
+              false
+            }
+          }
+          r <- if (isAlsoRenderEphemeral) {
             l95_ephemeralNodesFromPool
               .recover { case _ => l99_ephemeralNode :: Nil }
           } else {
             Future.successful(Nil)
           }
+        } yield {
+          r
         }
 
         for {
           nodeLists <- Future.sequence {
-            futs1 :+ ephemeralNodesFut
+            futs1 appended ephemeralNodesFut
           }
         } yield {
           val nodes = nodeLists.flatten

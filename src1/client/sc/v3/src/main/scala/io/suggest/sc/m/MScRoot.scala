@@ -2,7 +2,7 @@ package io.suggest.sc.m
 
 import diode.FastEq
 import io.suggest.ble.MUidBeacon
-import io.suggest.geo.{MGeoLoc, MLocEnv}
+import io.suggest.geo.{MGeoLoc, MGeoLocSources, MLocEnv}
 import io.suggest.sc.m.dev.MScDev
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.grid.MGridS
@@ -71,7 +71,8 @@ case class MScRoot(
   def geoLocOpt: Option[MGeoLoc] = {
     Some(
       MGeoLoc(
-        point = index.search.geo.mapInit.state.center
+        point = index.search.geo.mapInit.state.center,
+        source = Some( MGeoLocSources.GeoMap ),
       )
     )
   }
@@ -99,7 +100,8 @@ case class MScRoot(
       geoLoc     = (userLocOpt :: geoLocOpt :: Nil)
         .iterator
         .flatten
-        .distinct
+        // TODO Use ~= comparison or rounded data?
+        .distinctBy(_.point)
         .toList,
       beacons    = locEnvRadioBeacons,
     )

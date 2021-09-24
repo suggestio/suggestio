@@ -33,16 +33,6 @@ object GeoShapeJvm extends MacroLogsDyn {
     c.toEsShapeBuilder( gs.asInstanceOf[c.Shape_t] )
   }
 
-  def toEsQueryMaker(gs: IGeoShapeQuerable): IToEsQueryFn = {
-    val geom = toEsShapeBuilder(gs).buildGeometry()
-
-    new IToEsQueryFn {
-      override def toEsQuery(fn: String): QueryBuilder = {
-        QueryBuilders.geoShapeQuery( fn, geom )
-      }
-    }
-  }
-
 }
 
 

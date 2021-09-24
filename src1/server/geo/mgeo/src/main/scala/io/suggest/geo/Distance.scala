@@ -68,25 +68,14 @@ trait IToEsQueryFn {
   def toEsQuery(fn: String): QueryBuilder
 }
 
+case class GeoShapeToEsQuery( gs: IGeoShapeQuerable ) extends IToEsQueryFn {
 
-/** Описание того, как надо фильтровать по дистанции относительно какой-то точки на поверхности планеты. */
-final case class GeoDistanceQuery(
-  center      : MGeoPoint,
-  distanceMax : Distance
-)
-  extends IToEsQueryFn
-{
-
-  def outerCircle = CircleGs(center, radiusM = distanceMax.meters)
+  def esShapeBuilder = GeoShapeJvm.toEsShapeBuilder(gs)
 
   override def toEsQuery(fn: String): QueryBuilder = {
-    val geom = GeoShapeJvm
-      .toEsShapeBuilder( outerCircle )
-      .buildGeometry()
-
-    QueryBuilders.geoShapeQuery( fn, geom )
-    // util:2a9e4a872bff До 2016.jan.14 здесь жил ни разу не тестированный код вырезания inner-круга, т.е. distanceMin.
-    // Он был удалён, т.к. был завязан на N2-утиль, которая должна жить в отдельном проекте. Да и он просто мертвый был.
+    QueryBuilders.geoShapeQuery( fn, esShapeBuilder.buildGeometry() )
   }
+
+  override def toString = gs.toString
 
 }

@@ -152,6 +152,40 @@ object StringUtil {
   def isBase64UrlSafe(s: String): Boolean =
     s matches "^[-a-zA-Z0-9_]+$"
 
+  /** Render scala.Product using
+    * {{{
+    *   toStringHelper(that, ... )( toStringRenderProduct(that) ).
+    * }}}
+    */
+  def toStringRenderProduct(that: Product)(renderF: String => Any => Unit): Unit = {
+    def renderValueF(k: String, rawValue: Any, renderEmptyColl: Boolean): Unit = {
+      rawValue match {
+        case opt: Option[_] =>
+          for (o <- opt)
+            renderValueF(k, o, true)
+        case iter: IterableOnce[_] =>
+          val iterator = iter.iterator
+          if (renderEmptyColl || iterator.nonEmpty)
+            renderF( k )( iterator.mkString("[", ",", "]") )
+        case null => // do nothing
+        case b: Boolean =>
+          if (b) renderF(k)(b)
+        case other =>
+          renderF( k )(other)
+      }
+    }
+
+    for {
+      (k, v) <- {
+        val kvIter = that.productElementNames.zip( that.productIterator )
+        // Do not render key for very first element:
+        val (_, v) = kvIter.next()
+        Iterator.single("" -> v) ++ kvIter
+      }
+    } {
+      renderValueF( k, v, false )
+    }
+  }
 
   /** Поддержка быстрой перезаписи toString()-метода, чтобы исключить кучу None/Some или иных слов-сорняков
     * и именованием присутствующих полей.
@@ -173,13 +207,17 @@ object StringUtil {
     *               $1 - функция рендера имени поля класса и значения.
     * @return Строка для возврата наружу из перезаписываемого toString()-метода.
     */
-  def toStringHelper(that: Product, lenDflt: Int = 256, delimiter: Char = ',')
+  def toStringHelper(that: AnyRef, lenDflt: Int = 256, delimiter: Char = ',')
                     (render: (String => Any => Unit) => Unit): String = {
     val sb = new StringBuilder( lenDflt )
 
     if (that != null) {
-      sb.append( that.productPrefix )
-        .append( '(' )
+      sb append (that match {
+        case p: Product => p.productPrefix
+        case _ => that.toString
+      })
+
+      sb.append( '(' )
     }
 
     val eqSign = '='
