@@ -166,10 +166,6 @@ object IndexAh {
             .set( inx.userGeoLoc )(s0)
         }
 
-        // Возможный сброс состояния тегов
-        if (s0.geo.found.nonEmpty)
-          fxsAcc ::= SearchTextChanged("", noWait = true).toEffectPure
-
         // Если заход в узел с карты, то надо скрыть search-панель.
         if (s0.panel.opened && {
           m.switchCtxOpt.showWelcome &&
@@ -178,6 +174,18 @@ object IndexAh {
           s0 = MScSearch.panel
             .composeLens( MSearchPanelS.opened )
             .set( false )(s0)
+        }
+
+        // Возможный сброс состояния тегов
+        if (s0.text.query.nonEmpty)
+          fxsAcc ::= SearchTextChanged("", noWait = true).toEffectPure
+        else if (s0.geo.found.nonEmpty) {
+          if (s0.panel.opened)
+            fxsAcc ::= DoNodesSearch(clear = true, ignorePending = true).toEffectPure
+          else
+            s0 = MScSearch.geo
+              .composeLens( MGeoTabS.found )
+              .set( MNodesFoundS.empty )(s0)
         }
 
         // Сбросить флаг mapInit.loader, если он выставлен.

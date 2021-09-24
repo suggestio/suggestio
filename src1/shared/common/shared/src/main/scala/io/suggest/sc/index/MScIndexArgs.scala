@@ -4,6 +4,7 @@ import io.suggest.sc.ScConstants.ReqArgs._
 import io.suggest.text.StringUtil
 import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -32,6 +33,8 @@ object MScIndexArgs {
   )( apply, unlift(unapply) )
 
   @inline implicit def univEq: UnivEq[MScIndexArgs] = UnivEq.derive
+
+  def retUserLoc = GenLens[MScIndexArgs](_.retUserLoc)
 
 }
 

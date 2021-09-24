@@ -198,10 +198,9 @@ final class GeoLocAh[M](
                 val isOnOff = v0.switch.onOff.getOrElseTrue
                 v0.switch.copy(
                   onOff    = v0.switch.onOff.ready( isOnOff ),
-                  scSwitch = None
                 )
               } else {
-                v0.switch.withOutScSwitch
+                v0.switch
               }
             },
             leafletLoc = v0.leafletLoc
@@ -209,7 +208,7 @@ final class GeoLocAh[M](
           )
 
           // Уведомить другие контроллеры о наступлении геолокации.
-          fxAcc ::= GlPubSignal( Some(loc), v0.switch.scSwitch ).toEffectPure
+          fxAcc ::= GlPubSignal( Some(loc) ).toEffectPure
 
           ah.optionalResult( Some(v2),  fxAcc.mergeEffects,  silent = v0.switch.onOff ===* v2.switch.onOff )
 
@@ -252,7 +251,7 @@ final class GeoLocAh[M](
       val v0 = value
 
       // Сборка GlPubSignal, который обычно (но не всегда) нужен.
-      def glPubErrFx = GlPubSignal( None, m.scSwitch orElse v0.switch.scSwitch )
+      def glPubErrFx = GlPubSignal( None )
         .toEffectPure
 
       // Оформляем всю логику через option, чтобы не было паутины if:
@@ -267,18 +266,8 @@ final class GeoLocAh[M](
         }
         .fold {
           // Нельзя включить геолокацию сейчас.
-          if (v0.switch.hardLock && !m.isHard) {
-            // Жесткое выключение. Уведомить другие подсистемы, что в итоге нет геолокации:
-            val v2 = MScGeoLoc.switch
-              .modify(_.withOutScSwitch)(v0)
-            updatedSilent(v2, glPubErrFx)
+          effectOnly( glPubErrFx )
 
-          } else {
-            // И даже уведомлять никого не надо ни о чём (но надо, если задан scSwitch-контекст).
-            m.scSwitch.fold(noChange) { _ =>
-              effectOnly(glPubErrFx)
-            }
-          }
         } {
           // Включение геолокации:
           case true =>
@@ -299,8 +288,6 @@ final class GeoLocAh[M](
 
               var switchModAccF = MGeoLocSwitchS.onOff
                 .modify( _.ready(true).pending() )
-              if (m.scSwitch.nonEmpty)
-                switchModAccF = switchModAccF andThen (MGeoLocSwitchS.scSwitch set m.scSwitch)
 
               val v2 = (
                 MScGeoLoc.watchers.modify(_ ++ watchers2) andThen
@@ -361,7 +348,7 @@ final class GeoLocAh[M](
 
         } { watcher0 =>
           // Если onOff - pending, то сохранить ошибку:
-          var fxAcc: Effect = GlPubSignal( Some(m), v0.switch.scSwitch ).toEffectPure
+          var fxAcc: Effect = GlPubSignal( Some(m) ).toEffectPure
           var modAccF = List.empty[MScGeoLoc => MScGeoLoc]
           def _modAccMerge = modAccF
             .reduceOption(_ andThen _)
@@ -378,9 +365,6 @@ final class GeoLocAh[M](
           if (m.error.isPermissionDenied) {
             // TODO Отрабатывать так для всех ошибок? Ведь таймаут геолокации и POSITION_UNAVAILABLE аналогичны по сути:
             // Если ошибка DENIED, то выключить геолокацию жестко:
-            if (v0.switch.scSwitch.nonEmpty)
-              modAccF ::= MScGeoLoc.switch.modify(_.withOutScSwitch)
-
             val v1 = _modAccMerge
 
             val (clearWatchersFxOpt, v2) = _doDisableFx(
@@ -403,9 +387,7 @@ final class GeoLocAh[M](
 
             modAccF ::= (
               MScGeoLoc.watchers
-                .modify( _ + (m.glType -> wa2) ) andThen
-              MScGeoLoc.switch
-                .modify(_.withOutScSwitch)
+                .modify( _ + (m.glType -> wa2) )
             )
             val v2 = _modAccMerge
 

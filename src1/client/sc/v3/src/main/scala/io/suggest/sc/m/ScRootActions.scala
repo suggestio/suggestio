@@ -71,8 +71,6 @@ case class GeoLocOnOff(
                         enabled     : Boolean,
                         isHard      : Boolean,
                         onlyTypes   : Iterable[GeoLocType] = Nil,
-                        // TODO Записывать это напрямую в состояние из circuit? Или эффектом отдельным? Или...?
-                        scSwitch    : Option[MScSwitchCtx]    = None,
                       )
   extends IGeoLocAction
 {
@@ -81,7 +79,6 @@ case class GeoLocOnOff(
     fEmpty(enabled)
     if (isHard) f("hard")(isHard)
     if (onlyTypes.nonEmpty) f("onlyTypes")(onlyTypes)
-    scSwitch foreach fEmpty
   }
 }
 
@@ -122,7 +119,7 @@ case object GlLeafletApiLocateTimeout extends IGeoLocAction
 
 
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
-case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IGeoLocTimerAction
+case class GlPubSignal( origOpt: Option[IGeoLocSignal] ) extends IGeoLocTimerAction
 
 
 /** Marker for trait of actions, routed into ScRoutingAh controller. */

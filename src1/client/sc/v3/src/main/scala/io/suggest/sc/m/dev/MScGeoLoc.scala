@@ -4,7 +4,6 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.{EmptyProduct, OptionUtil}
 import io.suggest.geo.{GeoLocType, MGeoLoc}
-import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -82,8 +81,7 @@ object MGeoLocSwitchS {
     override def eqv(a: MGeoLocSwitchS, b: MGeoLocSwitchS): Boolean = {
       (a.onOff        ===* b.onOff) &&
       (a.hardLock      ==* b.hardLock) &&
-      (a.prevGeoLoc   ===* b.prevGeoLoc) &&
-      (a.scSwitch     ===* b.scSwitch)
+      (a.prevGeoLoc   ===* b.prevGeoLoc)
     }
   }
   @inline implicit def univEq: UnivEq[MGeoLocSwitchS] = UnivEq.derive
@@ -91,12 +89,6 @@ object MGeoLocSwitchS {
   def onOff = GenLens[MGeoLocSwitchS](_.onOff)
   def hardLock = GenLens[MGeoLocSwitchS](_.hardLock)
   def prevGeoLoc = GenLens[MGeoLocSwitchS](_.prevGeoLoc)
-  def scSwitch = GenLens[MGeoLocSwitchS](_.scSwitch)
-
-  implicit final class GlSwitchS( private val ss: MGeoLocSwitchS ) extends AnyVal {
-    def withOutScSwitch: MGeoLocSwitchS =
-      if (ss.scSwitch.isEmpty) ss else (scSwitch set None)(ss)
-  }
 
 }
 /** Контейнер данных состояния "рубильника" геолокации.
@@ -107,13 +99,11 @@ object MGeoLocSwitchS {
   * @param prevGeoLoc Последняя геолокация с предшествующего сеанса геолокации, если есть.
   *                   При врЕменном прерывании геолокации (экран выключили, например) значение сохраняется сюда,
   *                   чтобы после узнать, изменилось ли местоположение с момента предыдущего состояния выдачи.
-  * @param scSwitch Доп.состояние switch-контекста, которое сбрасывается после первого pub-сигнала.
   */
 case class MGeoLocSwitchS(
                            onOff           : Pot[Boolean]                        = Pot.empty,
                            hardLock        : Boolean                             = false,
                            prevGeoLoc      : Option[MGeoLoc]                     = None,
-                           scSwitch        : Option[MScSwitchCtx]                = None,
                          )
 
 

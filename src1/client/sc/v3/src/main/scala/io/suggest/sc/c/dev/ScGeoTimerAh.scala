@@ -86,31 +86,31 @@ class ScGeoTimerAh[M](
       var modsAcc = List.empty[MScRoot => MScRoot]
       var fxAcc = List.empty[Effect]
       var nonSilentUpdate = false
+      // TODO Bypass initial flag via info.geoLockTimer.reason? do not do any detection here.
       val mapNeedReset = v0.index.resp.isEmpty || v0.dialogs.first.isVisible
 
+      val geoLocTimerDataOpt0 = v0.internals.info.geoLockTimer
       for {
         // TODO But if no timer started (geoLocTimer==Pot.empty), what to do?
-        geoLockTimer <- v0.internals.info.geoLockTimer
+        geoLockTimer <- geoLocTimerDataOpt0
         glSignal <- m.origOpt
         if glSignal.glType.isHighAccuracy
       } {
         fxAcc ::= Effect.action {
           val indexMapReset2 = !mapNeedReset
-          val switchCtx = m.scSwitch.fold {
-            MScSwitchCtx(
-              indexQsArgs = MScIndexArgs(
-                geoIntoRcvr = true,
-                retUserLoc  = m.origOpt
-                  .fold(true)(_.either.isLeft),
-              ),
-              indexMapReset = indexMapReset2,
-            )
-          } (MScSwitchCtx.indexMapReset set indexMapReset2)
-          GetIndex( switchCtx )
-        }
-        fxAcc ::= Effect.action {
-          DomQuick.clearTimeout( geoLockTimer.timerId )
-          DoNothing
+          val scSwitch0 = geoLockTimer.reason.switchCtx
+          val switchCtx2 = if (mapNeedReset) {
+            (
+              (MScSwitchCtx.indexMapReset set indexMapReset2) andThen
+              MScSwitchCtx.indexQsArgs
+                .composeLens( MScIndexArgs.retUserLoc )
+               .modify( _ || !m.origOpt.exists(_.isSuccess) )
+            )(scSwitch0)
+          } else {
+            scSwitch0
+          }
+
+          GetIndex( switchCtx2 )
         }
 
         for {
@@ -137,7 +137,7 @@ class ScGeoTimerAh[M](
 
         if (
           // Do NOT change map center, if this is just background demand index test.
-          !m.scSwitch.exists(_.demandLocTest) &&
+          !geoLocTimerDataOpt0.exists(_.reason.switchCtx.demandLocTest) &&
             // If current position is very awaited by initialization, then move map center to geoposition.
             (
               !v0.dialogs.first.isViewFinished ||

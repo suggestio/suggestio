@@ -497,7 +497,6 @@ final class PlatformAh[M](
                 GeoLocOnOff(
                   enabled  = isScVisible,
                   isHard   = false,
-                  scSwitch = OptionUtil.maybe(isRunGeoLocInx)(sctx)
                 )
               }
 

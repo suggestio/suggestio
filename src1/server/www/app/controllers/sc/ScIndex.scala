@@ -295,7 +295,7 @@ final class ScIndex @Inject()(
           // Надо выкинуть !isRcvr, если ЕСТЬ isRcvr.
           if (
             coordNodes.exists(m => !m.isRcvr) &&
-            coordNodes.exists(_.isRcvr)
+            ( _scIndexArgs.returnEphemeral || coordNodes.exists(_.isRcvr) )
           ) {
             val r = coordNodes.filter(_.isRcvr)
             LOGGER.trace(s"$logPrefix Dropping non-rcvr nodes: \n was ${coordNodes.length} nodes = ${coordNodes.iterator.map(_.currNodeIdOpt getOrElse "?").mkString(", ")}\n become ${r.length} nodes = ${r.iterator.map(_.currNodeIdOpt getOrElse "?").mkString(", ")}")
@@ -324,41 +324,21 @@ final class ScIndex @Inject()(
 
             } else if (_scIndexArgs.returnEphemeral) {
               val qsGeoLocsAll = _qs.common.locEnv.geoLoc
-              val qShapesS4J = qsGeoLocsAll
-                .iterator
+              val qGpsShapes = qsGeoLocsAll
                 .filter(_.source contains[MGeoLocSource] MGeoLocSources.NativeGeoLocApi)
-                .map( _geoLocToEsShape(_).esShapeBuilder.buildS4J() )
-                .toSeq
-              LOGGER.trace(s"$logPrefix Prepared ${qShapesS4J.length} geo-shapes for user geo.locations\n qs.geoLocsAll = $qsGeoLocsAll")
+              LOGGER.trace(s"$logPrefix Prepared ${qGpsShapes.length} GPS-geo-shapes for user geo.locations from qs.geoLocsAll[${qsGeoLocsAll.length}]=${qsGeoLocsAll}")
 
-              val nodesHaveNonRcvrIntercsection = qShapesS4J.isEmpty || {
-                val preds = _nodeLocPredicates
+              val nodesHaveNonRcvrIntersection = qGpsShapes.isEmpty || {
                 coordNodes.exists { m =>
-                  !m.isRcvr && {
-                    (for {
-                      nodeLocEdge <- m.mnode.edges.withPredicateIter( preds: _* )
-                      edgeGs <- nodeLocEdge.info.geoShapes.iterator
-                      edgeShape <- Option( edgeGs.shape )
-                        .collect { case gsQ: IGeoShapeQuerable => gsQ }
-                        .iterator
-                      edgeShapeS4J = GeoShapeToEsQuery( edgeShape )
-                        .esShapeBuilder
-                        .buildS4J()
-                      qShapeS4J <- qShapesS4J.iterator
-                      relation = edgeShapeS4J relate qShapeS4J
-                      isShapesIntersects = (relation != SpatialRelation.DISJOINT)
-                      if isShapesIntersects
-                    } yield {
-                      LOGGER.trace(s"$logPrefix Detected userLoc intersection with semi-ephemeral non-rcvr node#${m.mnode.idOrNull} gs#${edgeGs} :: intersect-relation=${relation}")
-                      true
-                    })
-                      .nextOption()
-                      .getOrElseFalse
-                  }
+                  !m.isRcvr &&
+                  m .intersectionsWith( qGpsShapes )
+                    .map(_ => true)
+                    .nextOption()
+                    .getOrElseFalse
                 }
               }
-              LOGGER.trace(s"$logPrefix Has non-rcrv semi-ephemeral nodes intersections? $nodesHaveNonRcvrIntercsection shapes[${qShapesS4J.length}]")
-              !nodesHaveNonRcvrIntercsection
+              LOGGER.trace(s"$logPrefix Has non-rcrv semi-ephemeral nodes intersections? $nodesHaveNonRcvrIntersection shapes[${qGpsShapes.length}]")
+              !nodesHaveNonRcvrIntersection
 
             } else {
               false
@@ -483,29 +463,50 @@ final class ScIndex @Inject()(
         }
       }
 
+      // Если нет географии, то поискать центр для найденного узла.
+      // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
+      lazy val nodeLocEdges = mnode.edges
+        .withPredicateIter( _nodeLocPredicates: _* )
+        .to( LazyList )
+
+      lazy val nodeLocCenters = {
+        // Ленивая коллекция гео-точек для NodeLocation-эджей
+        nodeLocEdges
+          .flatMap { medge =>
+            val ei = medge.info
+            if (ei.geoPoints.nonEmpty) {
+              ei.geoPoints
+            } else {
+              ei.geoShapes
+                .flatMap { gs =>
+                  gs.shape
+                    .centerPoint
+                    .orElse {
+                      // Try to detect center using spatial4j:
+                      for {
+                        edgeShape <- Some( gs.shape )
+                          .collect { case gsQ: IGeoShapeQuerable => gsQ }
+                        pointS4J <- Option {
+                          GeoShapeToEsQuery( edgeShape )
+                            .esShapeBuilder
+                            .buildS4J()
+                            .getCenter
+                        }
+                      } yield {
+                        GeoPoint( pointS4J )
+                      }
+                    }
+                }
+            }
+          }
+      }
 
       /** Поиск отображаемой координаты узла.
         * Карта на клиенте будет отцентрована по этой точке. */
       def nodeGeoPointOptFut: Future[Option[MGeoPoint]] = {
         // Если география уже активна на уровне index-запроса, то тут ничего делать не требуется.
-        val mgpOpt = OptionUtil.maybeOpt( isRcvr ) {
-          // Если нет географии, то поискать центр для найденного узла.
-          // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
-          val nodeLocEdges = mnode.edges
-            .withPredicateIter( MPredicates.NodeLocation )
-            .to( LazyList )
-
-          // Ленивая коллекция гео-точек для NodeLocation-эджей
-          val edgesPoints: Seq[MGeoPoint] = nodeLocEdges
-            .flatMap { medge =>
-              val ei = medge.info
-              if (ei.geoPoints.nonEmpty) {
-                ei.geoPoints
-              } else {
-                ei.geoShapes
-                  .flatMap( _.shape.centerPoint )
-              }
-            }
+        val mgpOpt: Option[MGeoPoint] = if (isRcvr) {
+          val edgesPoints = nodeLocCenters
 
           // Надо вернуть
           // - Ближайшую к текущей локации точку, чтобы избежать ситуации.
@@ -556,9 +557,49 @@ final class ScIndex @Inject()(
 
           LOGGER.trace(s"$logPrefix Node#${mnode.id} geo pt. => $r")
           r
+
+        } else {
+          // Non-receiver or ephemeral node. Center point depends on NodeLocation shape intersection with qs geoLocs, if any.
+          intersectionsWith( _qs.common.locEnv.geoLoc )
+            .map( _._1.point )
+            .nextOption()
+            .orElse {
+              nodeLocCenters.headOption
+            }
         }
+
         Future.successful(mgpOpt)
       }
+
+
+      /** Collect intersection information against these geolocations. */
+      def intersectionsWith(geoLocs: Iterable[MGeoLoc]) = {
+        val geoLocsS4J = geoLocs
+          .map { geoLoc =>
+            val s4j = _geoLocToEsShape( geoLoc )
+              .esShapeBuilder
+              .buildS4J()
+            geoLoc -> s4j
+          }
+        for {
+          nodeLocEdge <- mnode.edges.withPredicateIter( _nodeLocPredicates: _* )
+          edgeGs <- nodeLocEdge.info.geoShapes.iterator
+          edgeShape <- Some( edgeGs.shape )
+            .collect { case gsQ: IGeoShapeQuerable => gsQ }
+            .iterator
+          edgeShapeS4J = GeoShapeToEsQuery( edgeShape )
+            .esShapeBuilder
+            .buildS4J()
+          (geoLoc, qShapeS4J) <- geoLocsS4J.iterator
+          relation = edgeShapeS4J relate qShapeS4J
+          isShapesIntersects = (relation != SpatialRelation.DISJOINT)
+          if isShapesIntersects
+        } yield {
+          LOGGER.trace(s"$logPrefix Detected shape intersection with node#${mnode.idOrNull} rcvr?${isRcvr} gs#${edgeGs.id}#${edgeGs.shape.shapeType} :: intersect-relation => ${relation}")
+          (geoLoc, nodeLocEdge, edgeGs, edgeShape)
+        }
+      }
+
 
       /** RespAction для index-ответа. */
       val indexRespActionFut: Future[Option[MSc3IndexResp]] = {

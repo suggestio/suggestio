@@ -41,6 +41,7 @@ object MScSwitchCtx {
   final def INDEX_MAP_RESET_DFLT = true
 
   def indexMapReset = GenLens[MScSwitchCtx](_.indexMapReset)
+  def indexQsArgs = GenLens[MScSwitchCtx](_.indexQsArgs)
 
 }
 
