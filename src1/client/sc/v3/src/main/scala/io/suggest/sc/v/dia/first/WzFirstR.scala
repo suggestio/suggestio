@@ -1,10 +1,9 @@
 package io.suggest.sc.v.dia.first
 
-import com.materialui.{Mui, MuiAlertTitle, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps}
+import com.materialui.{Mui, MuiAlertTitle, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.r.plat.PlatformComponents
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -88,12 +87,16 @@ class WzFirstR(
               // Крутилка ожидания:
               ReactCommonUtil.maybeNode( props.frame ==* MWzFrames.InProgress ) {
                 React.Fragment(
-                  MuiLinearProgress(
-                    new MuiLinearProgressProps {
-                      override val variant = MuiProgressVariants.indeterminate
-                      override val color = MuiColorTypes.secondary
+                  MuiLinearProgress {
+                    val css = new MuiLinearProgressClasses {
+                      override val root = ScCssStatic.Snacks.progress.htmlClass
                     }
-                  ),
+                    new MuiLinearProgressProps {
+                      override val classes = css
+                      override val variant = MuiProgressVariants.indeterminate
+                      override val color = MuiColorTypes.primary
+                    }
+                  },
                   <.br
                 )
               },

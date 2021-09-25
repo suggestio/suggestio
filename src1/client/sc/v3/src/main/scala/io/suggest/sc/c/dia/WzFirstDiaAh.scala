@@ -481,6 +481,21 @@ class WzFirstDiaAh[M <: AnyRef](
         noChange
       }
 
+
+    case m: WzDebugView =>
+      val v0 = value
+      val view2 = MWzFirstS(
+        phase = m.phase,
+        frame = m.frame,
+        reason = v0.view
+          .fold( InitFirstRunWz(
+            showHide = true,
+            onlyPhases = m.phase :: Nil,
+          ))(_.reason),
+      )
+      val v2 = MWzFirstOuterS.view.modify( _.ready( view2 ) )(v0)
+      updated(v2)
+
   }
 
 

@@ -558,6 +558,11 @@ object ScCssStatic extends StyleSheet.Inline {
       border.attr := ("1px " + solid.value + " rgb(49,49,49)"),
     )
 
+    /** Progress bar style. */
+    val progress = style(
+      height( 1.px ),
+    )
+
   }
 
 

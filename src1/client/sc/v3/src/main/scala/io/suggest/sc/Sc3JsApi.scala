@@ -6,6 +6,7 @@ import io.suggest.log.Log
 import io.suggest.pick.JsBinaryUtil
 import io.suggest.radio.{MRadioSignal, MRadioSignalJs, MRadioSignalTypes}
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.m.dia.first.{MWzFrames, MWzPhases, WzDebugView}
 import io.suggest.sc.m.{SetDebug, UpdateUnsafeScreenOffsetBy}
 import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx, UnIndex}
 import io.suggest.sjs.dom2.DomQuick
@@ -232,6 +233,16 @@ object Sc3JsApi extends Log {
     rootState()
       .grid.core.ads.adsTreePot
       .fold("")(_.drawTree)
+  }
+
+
+  /** Render wzFirst dialog part on the screen. */
+  @JSExport
+  def wz1DebugView(phase: String, frame: String): Unit = _d {
+    WzDebugView(
+      phase = MWzPhases.withNameInsensitive( phase ),
+      frame = MWzFrames.withNameInsensitive( frame ),
+    )
   }
 
 }

@@ -56,3 +56,7 @@ case class WzReadPermissions(
                               onlyPhases    : Seq[MWzPhase]           = Nil,
                             )
   extends IWz1Action
+
+
+/** For debugging: show on screen some part of wizard. */
+case class WzDebugView(phase: MWzPhase, frame: MWzFrame) extends IWz1Action

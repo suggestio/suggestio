@@ -208,26 +208,29 @@ object GridBuilderUtilJs {
     } else if (gbRes.nextRender.animFromBottom) {
       // Требуется явный рендер снизу, чтобы юзер заметил, что наверху что-то появилось.
       EnterExitStyle.fromBottom
-    } else {
 
+    } else {
       // Если среди блоков qd_blockless, то react-measure будет глючить на любых масштабируемых эффектах.
       // Поэтому надо оставить только эффекты без изменения размеров.
-      val maxAnims = if (gbRes.coords.exists {
+      val animId = if (gbRes.coords.exists {
         // TODO Opt Надо бы ограничивать анимацию только на НОВЫХ, впервые добавленных в плитку, элементах qd-blockless, а не для любых.
         _.gbBlock.jdt.name ==* MJdTagNames.QD_CONTENT
       }) {
-        1   // 0, 1
+        // only `fromTop`, `fromBottom`, because no scaling here. So QD_CONTENT + react-measure will work ok.
+        // `fromTop` disabled at 2021-09-25, because sometimes up-transformed some SVG-elements looks like bug in iOS (possibly not only iOS).
+        0
       } else {
         // Только обычные блоки, без qd-blockless. Можно рендерить спокойно любой анимацией.
-        4   // 0, 1, 2, 3, 4
+        new Random().nextInt(3)   // 0, 1, 2
       }
-      new Random().nextInt(maxAnims + 1) match {
-        case 0 => EnterExitStyle.fromTop
-        case 1 => EnterExitStyle.fromBottom
+
+      animId match {
+        case 0 => EnterExitStyle.fromBottom
         // Анимации ниже - трансформируют размер. Несовместимо с react-measure, которая используется для qd-blockless (всё будет глючить):
-        case 2 => EnterExitStyle.fromCenter
-        case 3 => EnterExitStyle.foldUp
-        case _ => EnterExitStyle.simple
+        case 1 => EnterExitStyle.fromCenter
+        case 2 => EnterExitStyle.simple
+        //case 3 => EnterExitStyle.fromTop
+        //case 4 => EnterExitStyle.foldUp
         // Эти эффекты отключены из дизайнерских соображений:
         //case 5 => EnterExitStyle.newspaper
         //case 2 => EnterExitStyle.fromLeftToRight
