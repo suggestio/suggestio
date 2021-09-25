@@ -397,11 +397,15 @@ class WzFirstDiaAh[M <: AnyRef](
         v0.view.isEmpty &&
         WzFirstDiaAh.isNeedWizardFlowVal
       ) {
+        val (phases, reason) = if (m.onlyPhases.isEmpty) {
+          val phases2 =_platformStartPhases()
+          phases2 -> m.copy(onlyPhases = phases2)
+        } else {
+          m.onlyPhases -> m
+        }
         val readPermsFx = Effect.action {
           WzReadPermissions(
-            onlyPhases =
-              if (m.onlyPhases.isEmpty) _platformStartPhases()
-              else m.onlyPhases,
+            onlyPhases = phases,
           )
         }
         // TODO Insert into URL info about running wz? This is non-actual anymore?
@@ -412,7 +416,7 @@ class WzFirstDiaAh[M <: AnyRef](
           MWzFirstOuterS.view set Ready(MWzFirstS(
             phase = MWzPhases.Starting,
             frame = MWzFrames.InProgress,
-            reason = m,
+            reason = reason,
           )).pending()
         )(v0)
 
@@ -496,6 +500,11 @@ class WzFirstDiaAh[M <: AnyRef](
         }
         .drop(1)
 
+      if v0.view.fold(true) { v =>
+        v.reason.onlyPhases.isEmpty ||
+        (v.reason.onlyPhases contains[MWzPhase] nextPhase)
+      }
+
       // Найти и разобраться с pot с пермишшеном фазы:
       permPot <- v0.perms.get( nextPhase )
 
@@ -507,6 +516,7 @@ class WzFirstDiaAh[M <: AnyRef](
           // avoiding perm.isPrompt, because unsure about cases like https://github.com/dpa99c/cordova-diagnostic-plugin/issues/439
           val isDenied = perm.isDenied
           val isGranted = perm.isGranted
+          println( nextPhase, perm, isDenied, isGranted )
 
           if (!isDenied && !isGranted) {
             // Permission not yet requested. Ask user about enabling feature (or don't ask, if noAsk=true)

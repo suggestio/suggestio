@@ -29,7 +29,7 @@ class NotificationSettingsR(
       onOffSettingR.component(
         onOffSettingR.PropsVal(
           text            = crCtxProv.message( MsgCodes.`Notifications` ),
-          onOff           = Right( ConfConst.ScSettings.LOCATION_ENABLED ),
+          onOff           = Right( ConfConst.ScSettings.NOTIFICATIONS_ENABLED ),
           isCheckedProxy  = propsProxy.zoom(_.hasPermission),
         )
       )

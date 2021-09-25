@@ -36,7 +36,7 @@ import scala.util.Success
 class BootAh[M](
                  modelRW    : ModelRW[M, MScBoot],
                  circuit    : Sc3Circuit,
-                 needBootGeoLocRO: () => Boolean,
+                 needBootPermsRO: () => Boolean,
                )
   extends ActionHandler( modelRW )
   with Log
@@ -214,7 +214,7 @@ class BootAh[M](
       override def depends = {
         var deps = MBootServiceIds.JsRouter :: MBootServiceIds.Language :: super.depends
 
-        if ( needBootGeoLocRO() )
+        if ( needBootPermsRO() )
           deps ::= MBootServiceIds.GeoLocDataAcc
 
         deps
@@ -236,7 +236,7 @@ class BootAh[M](
       override def depends = MBootServiceIds.InitShowcaseIndex :: super.depends
       override def startFx: Effect = {
         // Initialize permissions wizard, then wait until it finishes:
-        val isNeedBootGeoLoc = needBootGeoLocRO()
+        val isNeedBootGeoLoc = needBootPermsRO()
         val initFx = Effect.action {
           InitFirstRunWz( isNeedBootGeoLoc )
         }

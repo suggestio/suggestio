@@ -594,9 +594,11 @@ class Sc3Circuit(
   private def bootAh: HandlerFunction = new BootAh(
     modelRW = bootRW,
     circuit = this,
-    needBootGeoLocRO = { () =>
-      spaRouterState.canonicalRoute.fold(false)(_.needGeoLoc) ||
-      currRouteRW.value.exists(_.needGeoLoc)
+    needBootPermsRO = { () =>
+      platformRW.value.isCordova || (
+        spaRouterState.canonicalRoute.fold(false)(_.needGeoLoc) ||
+        currRouteRW.value.exists(_.needGeoLoc)
+      )
     },
   )
 
