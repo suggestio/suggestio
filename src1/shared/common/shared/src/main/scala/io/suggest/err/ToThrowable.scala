@@ -11,4 +11,8 @@ object ToThrowable {
   implicit def dummy: ToThrowable[Throwable] =
     identity
 
+  implicit def stringToThrowable: ToThrowable[String] = { s =>
+    new RuntimeException( s )
+  }
+
 }

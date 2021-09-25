@@ -8,14 +8,14 @@ import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.conf.ConfConst
 import io.suggest.cordova.CordovaConstants
-import io.suggest.dev.MPlatformS
+import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
 import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{BoolOptPermissionState, CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, MScRoot, ResetUrlRoute, SettingSet}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, MScRoot, ResetUrlRoute, SettingAction, SettingSet}
 import io.suggest.sc.m.dia.first._
 import io.suggest.log.Log
 import io.suggest.sc.Sc3Circuit
@@ -29,7 +29,7 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
-import scala.concurrent.{Future, TimeoutException}
+import scala.concurrent.{Future, Promise, TimeoutException}
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
 import io.suggest.sc.u.Sc3ConfUtil
@@ -66,20 +66,12 @@ class WzFirstDiaAh[M <: AnyRef](
 
   /** Make Effect of updating phase-related settings. */
   private def _emitSettingFx(phaseSpec: IPermissionSpec, isGranted: Boolean): Option[Effect] = {
-    val settingsKeys = phaseSpec.settingKeys
-    OptionUtil.maybeOpt( settingsKeys.nonEmpty ) {
-      val settingValue = JsBoolean( isGranted )
+    val settingsActions = phaseSpec.settings( isGranted )
+    OptionUtil.maybeOpt( settingsActions.nonEmpty ) {
       (for {
-        settingsKey <- settingsKeys.iterator
+        settingsAction <- settingsActions.iterator
       } yield {
-        Effect.action {
-          SettingSet(
-            key   = settingsKey,
-            value = settingValue,
-            save  = true,
-            runSideEffect = false,
-          )
-        }
+        settingsAction.toEffectPure
       })
         .mergeEffects
     }
@@ -713,16 +705,68 @@ class WzFirstDiaAh[M <: AnyRef](
           .getOrElse( Pot.empty )
       }
     }
-    override def settingKeys = ConfConst.ScSettings.LOCATION_ENABLED :: Nil
+    override def settings(isGranted: Boolean): List[SettingSet] = {
+      val isGrantedJs = JsBoolean( isGranted )
+
+      // On android, location access also grants access to bluetooth scanning:
+      val confKeysAcc: List[SettingSet] = {
+        if (isGranted && (platformRO.value.osFamily contains[MOsFamily] MOsFamilies.Android)) {
+          ConfConst.ScSettings.bluetoothKeys
+            .map( SettingSet(_, isGrantedJs, save = true, runSideEffect = true ) )
+        } else {
+          Nil
+        }
+      }
+
+      SettingSet( ConfConst.ScSettings.LOCATION_ENABLED, isGrantedJs, save = true, runSideEffect = false ) ::
+        confKeysAcc
+    }
   }
 
   /** BlueTooth scan permission specification. */
   final class BlueToothSpec extends IPermissionSpec {
-    // Bluetooth
+    // TODO Need onChange handler, at least for android for LOCATION(!) permission.
     override def phase = MWzPhases.BlueToothPerm
     override def isSupported() = hasBleRO()
-    override def readPermissionState() =
-      CordovaDiagonsticPermissionUtil.getBlueToothState()
+    override def readPermissionState() = {
+      val plat = platformRO.value
+      plat.osFamily
+        .filter(_ => plat.isCordova)
+        .fold [Future[IPermissionState]] {
+          Future failed new UnsupportedOperationException
+        } { osFamily =>
+          CordovaDiagonsticPermissionUtil.getBlueToothPermissionState(
+            osFamily,
+            configFut = {
+              // Read current bluetooth value from configuration
+              // Used for iOS-cases, because iOS requests permission when reading permission via API.
+              // TODO Make this code shorten and cleaner!
+              val p = Promise[Option[Boolean]]()
+              val confKey = ConfConst.ScSettings.BLUETOOTH_BEACONS_ENABLED
+              try {
+                sc3Circuit.dispatch {
+                  SettingAction(
+                    key = confKey,
+                    fx = { jsValue =>
+                      val r = jsValue.asOpt[Boolean]
+                      val fx = Effect.action {
+                        p.success(r)
+                        DoNothing
+                      }
+                      Some(fx)
+                    }
+                  )
+                }
+              } catch {
+                case ex: Throwable =>
+                  logger.error( ErrorMsgs.CONFIG_ACTION_FAILED, ex, (osFamily, confKey) )
+                  p.tryFailure(ex)
+              }
+              p.future
+            }
+          )
+        }
+    }
     override def requestPermissionFx = Effect.action {
       BtOnOff(
         isEnabled = OptionUtil.SomeBool.someTrue,
@@ -733,10 +777,16 @@ class WzFirstDiaAh[M <: AnyRef](
         ),
       )
     }
-    override def settingKeys = {
-      ConfConst.ScSettings.BLUETOOTH_BEACONS_ENABLED ::
-      ConfConst.ScSettings.BLUETOOTH_BEACONS_BACKGROUND_SCAN ::
-      Nil
+    override def settings(isGranted: Boolean): List[SettingSet] = {
+      val isGrantedJs = JsBoolean( isGranted )
+      var btConfKeys = ConfConst.ScSettings.bluetoothKeys
+        .map( SettingSet(_, isGrantedJs, save = true, runSideEffect = false) )
+
+      // Android: bluetooth permission also activates geolocation.
+      if (isGranted && (platformRO.value.osFamily contains[MOsFamily] MOsFamilies.Android))
+        btConfKeys ::= SettingSet( ConfConst.ScSettings.LOCATION_ENABLED, isGrantedJs, save = true, runSideEffect = true )
+
+      btConfKeys
     }
   }
 
@@ -770,7 +820,10 @@ class WzFirstDiaAh[M <: AnyRef](
     override def requestPermissionFx: Effect =
       NotificationPermAsk( isVisible = true ).toEffectPure
     override def onGrantedByDefault = None
-    override def settingKeys = ConfConst.ScSettings.NOTIFICATIONS_ENABLED :: Nil
+    override def settings(isGranted: Boolean) = {
+      // runSideEffect = true causes NotifyStartStop(true), that not called previously.
+      SettingSet( ConfConst.ScSettings.NOTIFICATIONS_ENABLED, JsBoolean(isGranted), save = true, runSideEffect = true ) :: Nil
+    }
   }
 
   private def _allPhaseSpecs =
@@ -785,9 +838,19 @@ class WzFirstDiaAh[M <: AnyRef](
 
   /** Start with asking these permissions? */
   private def _platformStartPhases(): Seq[MWzPhase] = {
-    MWzPhases.BlueToothPerm ::
-    MWzPhases.NotificationPerm ::
-    Nil
+    val acc0: List[MWzPhase] =
+      MWzPhases.NotificationPerm ::
+      Nil
+
+    platformRO.value.osFamily.fold( acc0 ) {
+      case MOsFamilies.Apple_iOS =>
+        // On iOS: Ask for bluetooth access on start, because there are no case (no button) to ask it.
+        MWzPhases.BlueToothPerm ::
+        acc0
+      case MOsFamilies.Android =>
+        // On android, do not ask bluetooth permission. Enable it with location button, because bluetooth scanning needs FINE LOCATION permission.
+        acc0
+    }
   }
 
 }
@@ -809,7 +872,7 @@ sealed trait IPermissionSpec {
   /** If defined, the Pot can be used for detection of permission state changes. */
   def listenChangesOfPot: Option[ModelR[MScRoot, Pot[_]]] = None
   /** Update saved settings, when permission grants or denies. */
-  def settingKeys: List[String]
+  def settings(isGranted: Boolean): List[SettingSet]
 }
 
 

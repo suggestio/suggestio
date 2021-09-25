@@ -134,6 +134,7 @@ object ErrorMsgs {
   def KV_STORAGE_ACTION_FAILED = "Kv.storage.action.failed"
 
   def CONF_SAVE_FAILED = "Conf.save.failed"
+  def CONFIG_ACTION_FAILED = "Config.action.failed"
 
   def CACHING_ERROR = "Cache.error"
 

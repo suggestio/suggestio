@@ -2,12 +2,14 @@ package io.suggest.perm
 
 import cordova.Cordova
 import cordova.plugins.diagnostic.{BluetoothState_t, LocationMode_t, PermissionStatus_t}
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.fut.FutureUtil
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.log.Log
-import io.suggest.msg.ErrorMsgs
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -20,40 +22,47 @@ object CordovaDiagonsticPermissionUtil extends Log {
   /** Получение данных пермишшена. */
   def getGeoLocPerm(): Future[CdpGeoLocPermData] = {
     // Вызов нативной функции с подпиской на события:
-    try {
-      val geoLocP = Promise[PermissionStatus_t]()
-      Cordova.plugins.diagnostic.getLocationAuthorizationStatus(
-        geoLocP.success,
-        message =>
-          geoLocP.failure( new RuntimeException(message) )
-      )
-      for (res <- geoLocP.future) yield {
+    FutureUtil.tryCatchFut {
+      for {
+        res <- Cordova.plugins.diagnostic.getLocationAuthorizationStatusF()
+      } yield {
         CdpGeoLocPermData( res )
       }
-    } catch {
-      case ex: Throwable =>
-        logger.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, ErrorMsgs.GEO_LOCATION_FAILED )
-        Future.failed( ex )
     }
   }
 
 
-  /** Состояние доступности bluetooth. */
-  def getBlueToothState(): Future[CdpBlueToothData] = {
-    val btStateP = Promise[BluetoothState_t]()
-    try {
-      Cordova.plugins.diagnostic.getBluetoothState(
-        btStateP.success,
-        message =>
-          btStateP.failure( new RuntimeException(message) )
-      )
-    } catch {
-      case ex: Throwable =>
-        btStateP.tryFailure( ex )
+  /** Read bluetooth permission state.
+    *
+    * @param osFamily Device operating system.
+    * @param config Read data from current configuration.
+    * @return
+    */
+  def getBlueToothPermissionState(osFamily: MOsFamily, configFut: => Future[Option[Boolean]]): Future[IPermissionState] = {
+    FutureUtil.tryCatchFut {
+      osFamily match {
+        case MOsFamilies.Android =>
+          Cordova.plugins.diagnostic
+            .isBluetoothAvailableF()
+            .flatMap[IPermissionState] { isAvail =>
+              if (!isAvail)
+                Future successful BoolOptPermissionState( OptionUtil.SomeBool.someFalse )
+              else
+                getGeoLocPerm()
+            }
+        case MOsFamilies.Apple_iOS =>
+          configFut
+            .recover { case _ => None }
+            .flatMap { isGrantedOpt =>
+              if (isGrantedOpt.isEmpty) {
+                Future successful BoolOptPermissionState( None )
+              } else {
+                Cordova.plugins.diagnostic.getBluetoothStateF()
+                  .map( CdpBlueToothData.apply )
+              }
+            }
+      }
     }
-
-    for (btState <- btStateP.future) yield
-      CdpBlueToothData( btState )
   }
 
 
@@ -77,6 +86,8 @@ import CordovaDiagonsticPermissionUtil._
   * @param permStatus Итоговый статус пермишшена.
   */
 case class CdpGeoLocPermData( permStatus: PermissionStatus_t ) extends IPermissionState {
+
+  override def value = permStatus
 
   override def isPoweredOn: Boolean =
     true
@@ -120,6 +131,8 @@ case class CdpGeoLocPermData( permStatus: PermissionStatus_t ) extends IPermissi
   */
 case class CdpBlueToothData( btState: BluetoothState_t ) extends IPermissionState {
 
+  override def value = btState
+
   override def isPoweredOn: Boolean =
     btState ==* BtStates.POWERED_ON
 
@@ -130,7 +143,7 @@ case class CdpBlueToothData( btState: BluetoothState_t ) extends IPermissionStat
     BtStates.UNAUTHORIZED contains btState
 
   override def isPrompt: Boolean =
-    btState ==* BtStates.UNKNOWN    // TODO Вероятно, тут должно быть всегда true?
+    btState ==* BtStates.UNKNOWN
 
   override def hasOnChangeApi: Boolean = true
 

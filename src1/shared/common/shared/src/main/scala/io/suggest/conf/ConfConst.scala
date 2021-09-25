@@ -29,6 +29,10 @@ object ConfConst {
     /** It is ok, if no side-effect occurs when changing this setting keys. */
     final def NO_SIDE_FX_ON_CHANGE: Set[String] =
       Set.empty[String] + BLUETOOTH_BEACONS_BACKGROUND_SCAN
+
+    def locationKeys = LOCATION_ENABLED :: Nil
+    def bluetoothKeys = BLUETOOTH_BEACONS_ENABLED :: BLUETOOTH_BEACONS_BACKGROUND_SCAN :: Nil
+
   }
 
 

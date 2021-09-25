@@ -9,7 +9,7 @@ import io.suggest.i18n.MLanguages
 import io.suggest.kv.MKvStorage
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.os.notify.{NotificationPermAsk, NotifyStartStop}
+import io.suggest.os.notify.NotifyStartStop
 import io.suggest.sc.m.{GeoLocOnOff, LangSwitch, ResetUrlRoute, SettingAction, SettingSet, SettingsDiaOpen, SettingsRestore, WithSettings}
 import io.suggest.sc.m.dia.settings.MScSettingsDia
 import io.suggest.sc.sc3.MScSettingsData
@@ -141,12 +141,7 @@ class ScSettingsDiaAh[M](
         Some(fx)
 
       } else if (m.key ==* K.NOTIFICATIONS_ENABLED) {
-        val fx = Effect.action {
-          if (isEnabled2)
-            NotificationPermAsk( isVisible = true )
-          else
-            NotifyStartStop( isStart = isEnabled2 )
-        }
+        val fx = NotifyStartStop( isStart = isEnabled2 ).toEffectPure
         Some(fx)
 
       } else if (m.key ==* K.LANGUAGE) {

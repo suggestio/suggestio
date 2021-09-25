@@ -111,6 +111,8 @@ case class Html5PermissionState(
 
   import Html5PermissionApi._
 
+  override def value = pStatus
+
   /** Управление питанием GPS не затрагивается в html5-спеках. */
   override def isPoweredOn = true
 

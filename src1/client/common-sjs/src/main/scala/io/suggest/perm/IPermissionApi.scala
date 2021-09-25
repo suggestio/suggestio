@@ -41,9 +41,13 @@ trait IPermissionState {
   /** Выключить мониторинг изменения состояния. */
   def onChangeReset(): Unit
 
+  def value: AnyRef
+
   override final def toString: String = {
     val sb = new StringBuilder( 32, getClass.getSimpleName )
       .append( '(' )
+      .append( value )
+      .append( ':' )
 
     if (isGranted)
       sb.append('+')
@@ -89,6 +93,7 @@ case class PermissionStateSnapshot(
                                   )
   extends IPermissionState
 {
+  override def value = (isGranted, parent)
   override def isPoweredOn = parent.isPoweredOn
   override def isDenied = !isGranted
   override def isPrompt = false
@@ -113,6 +118,8 @@ final case class BoolOptPermissionState(
   override def hasOnChangeApi = false
   override def onChange(f: Function[IPermissionState, _]): Unit = ???
   override def onChangeReset(): Unit = ???
+
+  override def value = permitted
 }
 
 

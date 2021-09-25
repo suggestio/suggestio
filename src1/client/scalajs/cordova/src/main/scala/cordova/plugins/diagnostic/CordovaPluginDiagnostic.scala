@@ -1,8 +1,12 @@
 package cordova.plugins.diagnostic
 
+import io.suggest.sjs.JsApiUtil
+
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
 import scala.scalajs.js.|
+import io.suggest.err.ToThrowable._
 
 /**
   * Suggest.io
@@ -96,6 +100,15 @@ object CordovaPluginDiagnostic {
 
     def iosOnly: CordovaPluginDiagnosticsIos =
       cpd.asInstanceOf[CordovaPluginDiagnosticsIos]
+
+    def isBluetoothAvailableF(): Future[Boolean] =
+      JsApiUtil.call1ErrFut( cpd.isBluetoothAvailable )
+
+    def getBluetoothStateF(): Future[BluetoothState_t] =
+      JsApiUtil.call1ErrFut( cpd.getBluetoothState )
+
+    def getLocationAuthorizationStatusF(): Future[PermissionStatus_t] =
+      JsApiUtil.call1ErrFut( cpd.getLocationAuthorizationStatus )
 
   }
 }

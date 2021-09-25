@@ -1,5 +1,5 @@
 #!/bin/sh
-set -x
+#set -x
 ## Собрать и установить на android-мобильник.
 
 [[ $(adb devices | wc -l) -le 2 ]] && {
