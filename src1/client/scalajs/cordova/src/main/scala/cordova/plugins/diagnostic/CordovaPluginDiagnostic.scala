@@ -92,7 +92,9 @@ trait CordovaPluginDiagnostic extends js.Object {
 
 
 object CordovaPluginDiagnostic {
-  implicit class CpdOpsExt( val cpd: CordovaPluginDiagnostic ) extends AnyVal {
+
+  /** Extension methods/helpers for [[CordovaPluginDiagnostic]]. */
+  implicit class CpdOpsExt( private val cpd: CordovaPluginDiagnostic ) extends AnyVal {
 
     /** Расширить API методами, пригодными только для андройда. */
     def androidOnly: CordovaPluginDiagnosticAndroid =
@@ -111,6 +113,7 @@ object CordovaPluginDiagnostic {
       JsApiUtil.call1ErrFut( cpd.getLocationAuthorizationStatus )
 
   }
+
 }
 
 

@@ -523,7 +523,6 @@ class WzFirstDiaAh[M <: AnyRef](
           // avoiding perm.isPrompt, because unsure about cases like https://github.com/dpa99c/cordova-diagnostic-plugin/issues/439
           val isDenied = perm.isDenied
           val isGranted = perm.isGranted
-          println( nextPhase, perm, isDenied, isGranted )
 
           if (!isDenied && !isGranted) {
             // Permission not yet requested. Ask user about enabling feature (or don't ask, if noAsk=true)
@@ -842,7 +841,11 @@ class WzFirstDiaAh[M <: AnyRef](
       MWzPhases.NotificationPerm ::
       Nil
 
-    platformRO.value.osFamily.fold( acc0 ) {
+    val plat = platformRO.value
+    val phases = plat.osFamily.fold {
+      // Browser: don't ask bluetooth on startup, no WebBluetooth support.
+      acc0
+    } {
       case MOsFamilies.Apple_iOS =>
         // On iOS: Ask for bluetooth access on start, because there are no case (no button) to ask it.
         MWzPhases.BlueToothPerm ::
@@ -851,6 +854,8 @@ class WzFirstDiaAh[M <: AnyRef](
         // On android, do not ask bluetooth permission. Enable it with location button, because bluetooth scanning needs FINE LOCATION permission.
         acc0
     }
+
+    phases
   }
 
 }

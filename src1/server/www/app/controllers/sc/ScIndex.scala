@@ -9,7 +9,8 @@ import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model._
 import io.suggest.es.search.MSubSearch
-import io.suggest.geo._
+import io.suggest.geo
+import io.suggest.geo.{MGeoLocSources, _}
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
@@ -157,7 +158,27 @@ final class ScIndex @Inject()(
           r
         }
 
-        qShapes = geoLocs.map( _geoLocToEsShape )
+        geoLocQueryShapes = geoLocs
+          .map { geoLoc => geoLoc -> _geoLocToEsShape( geoLoc ) }
+        // For buildings geo-level: search using any geolocations. For semi-epheral stuff: use only via real geolocation.
+        qShapesBuilding = geoLocQueryShapes
+          .map( _._2 )
+        qShapesNonBuilding = if (
+          _scIndexArgs.returnEphemeral &&
+          geoLocQueryShapes.exists(_._1.source contains[MGeoLocSource] MGeoLocSources.NativeGeoLocApi)
+        ) {
+          // TODO Use more complex check: if qs.index.retEph && ... && *isDemandLocTesting* ?
+          // Non-building (district, town, etc) - contains semi-ephemeral nodes just for design uses.
+          // But, when user presses "location button" in shocase, ephemeral node to return must as exact as possible to current GPS location.
+          geoLocQueryShapes
+            .iterator
+            .filter( _._1.source contains[MGeoLocSource] MGeoLocSources.NativeGeoLocApi )
+            .map( _._2 )
+            .toSeq
+        } else {
+          // Return any ephemeral node, without any forcing "my location node".
+          qShapesBuilding
+        }
         nodeLocPreds = _nodeLocPredicates
 
         // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:
@@ -168,7 +189,7 @@ final class ScIndex @Inject()(
           (Nil, true)
         }
         someTrue = {
-          LOGGER.trace(s"$logPrefix geoIntoRcvr=${_scIndexArgs.geoIntoRcvr} => adnRights=[${withAdnRights1.mkString(",")}] adnRightsMustOrNot=${adnRightsMustOrNot1}\n qShapes = [${qShapes.mkString(", ")}]")
+          LOGGER.trace(s"$logPrefix geoIntoRcvr=${_scIndexArgs.geoIntoRcvr} => adnRights=[${withAdnRights1.mkString(",")}] adnRightsMustOrNot=${adnRightsMustOrNot1}\n qShapes.building = [${qShapesBuilding.mkString(", ")}]")
           OptionUtil.SomeBool.someTrue
         }
 
@@ -186,7 +207,12 @@ final class ScIndex @Inject()(
                     gsIntersect = Some {
                       GsCriteria(
                         levels = ngl :: Nil,
-                        shapes = qShapes,
+                        shapes = {
+                          if (ngl ==* MNodeGeoLevels.NGL_BUILDING)
+                            qShapesBuilding
+                          else
+                            qShapesNonBuilding
+                        },
                       )
                     },
                   )
@@ -198,7 +224,7 @@ final class ScIndex @Inject()(
               }
             )
           } yield {
-            LOGGER.trace(s"$logPrefix ${qShapes.length} geoLocs(${qShapes.iterator.map(_.gs).mkString("|")}) on level $ngl => [${mnodes.length}]: [${mnodes.iterator.flatMap(_.id).mkString(", ")}]")
+            LOGGER.trace(s"$logPrefix ${qShapesBuilding.length} geoLocs(${qShapesBuilding.iterator.map(_.gs).mkString("|")}) on level $ngl => [${mnodes.length}]: [${mnodes.iterator.flatMap(_.id).mkString(", ")}]")
             mnodes
               .iterator
               .map { mnode =>

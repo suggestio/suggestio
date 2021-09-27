@@ -35,7 +35,7 @@ object CordovaDiagonsticPermissionUtil extends Log {
   /** Read bluetooth permission state.
     *
     * @param osFamily Device operating system.
-    * @param config Read data from current configuration.
+    * @param configFut Read data from current configuration.
     * @return
     */
   def getBlueToothPermissionState(osFamily: MOsFamily, configFut: => Future[Option[Boolean]]): Future[IPermissionState] = {
