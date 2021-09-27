@@ -11,7 +11,7 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
 
   /** Bluetooth radio signal. */
   case object BluetoothEddyStone extends MRadioSignalType("eddy") {
-    override def goneAwayAfterSeconds = 5
+    override def goneAwayAfterSeconds = 7
     /** Measured signal power for EddyStone-UID transferred inside radio-signal. */
     override def rssi0 = None
     /** Measured distance for EddyStone is 0 cm. */
@@ -21,7 +21,7 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     /** On test beacons, "5 seconds" was not enough, there were false positives.
       * "9 seconds" turned out to be not enough on android at the end of 2020y - the card disappeared & appeared.
       */
-    override def lostAfterSeconds = 15
+    override def lostAfterSeconds = 20
   }
 
   /** Wi-Fi radio signal. */
@@ -31,7 +31,7 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     override def rssi0 = Some( -27 )
     override def distance0m = Some( 0 )
     override def nodeType = MNodeTypes.RadioSource.WifiAP
-    override def lostAfterSeconds = 30
+    override def lostAfterSeconds = 45
   }
 
 

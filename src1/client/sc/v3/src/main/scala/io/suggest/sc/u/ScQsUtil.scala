@@ -152,7 +152,7 @@ object ScQsUtil {
         locEnv = getLocEnv(
           mroot,
           // geoLoc will be ignored by ScAdsTile, because of MScQs().grid.onlyRadioBeacons is set.
-          withGeoLoc = false,
+          withGeoLoc = true,
           withRadioBeacons = true,
         ),
       ),

@@ -4,7 +4,6 @@ import diode._
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
 import io.suggest.log.Log
-import io.suggest.radio.beacon.{BtOnOff, IBeaconsListenerApi, MBeaconerOpts}
 import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m._
@@ -409,8 +408,9 @@ final class ScRoutingAh(
           }
         }
 
-        val v2 = (currRouteLens set Some(nextRoute2))( v0 )
-        updatedSilent(v2, fx)
+        //val v2 = (currRouteLens set Some(nextRoute2))( v0 )
+        //updatedSilent(v2, fx)
+        effectOnly( fx )
       }
 
   }
