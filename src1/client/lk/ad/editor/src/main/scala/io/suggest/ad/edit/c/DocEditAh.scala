@@ -93,7 +93,6 @@ class DocEditAh[M](
   implicit class MDocSOptOpsExt( val treeLocOpt: Option[TreeLoc[JdTag]] ) {
 
     def docUpdated[T](v0: MDocS, p1Lens: Lens[MJdProps1, T], runtime: Boolean = true)(f: T => T): ActionResult[M] = {
-      println(0, treeLocOpt)
       treeLocOpt.fold(noChange) { treeLoc0 =>
         val treeLoc2 = treeLoc0
           .modifyLabel {
@@ -1920,7 +1919,6 @@ class DocEditAh[M](
 
     // Активация/деакцивация вручную заданной обводки для блока/документа.
     case m: OutlineOnOff =>
-      println(1, m)
       val v0 = _ensureGroupOutlined( value )
       val treeLocOpt = v0.jdDoc.jdArgs.selJdt.treeLocOpt
       treeLocOpt
@@ -1931,23 +1929,17 @@ class DocEditAh[M](
           (jdt.name ==* MJdTagNames.STRIP) &&
           (jdt.props1.outline.nonEmpty !=* m.onOff)
 
-          println(2, r, jdt)
           r
         }
         .docUpdated( v0, MJdProps1.outline, runtime = false ) { jdOutlineOpt0 =>
-          println(3, jdOutlineOpt0)
           Option.when( m.onOff ) {
             // Включение. Выставить начальное состояние:
-            val r =
             jdOutlineOpt0 getOrElse {
               MJdOutLine(
                 color = treeLocOpt
                   .flatMap(_.getLabel.props1.bgColor),
               )
             }
-            println(4, r)
-
-            r
           }
         }
 

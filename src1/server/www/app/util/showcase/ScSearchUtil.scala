@@ -80,51 +80,53 @@ final class ScSearchUtil {
     }
 
     // Поиск по тегам.
-    edgesCrs ::= Criteria(
-      predicates  = MPredicates.TaggedBy.Self :: Nil,
-      tags        = tagCrs,
-      nodeIds     = qs.search.rcvrId.toStringOpt.toSeq,
-      // Отработать геолокацию: искать только теги, размещенные в текущей области (но если НЕ задан id узла-ресивера)
-      gsIntersect = Option.when( qs.search.rcvrId.isEmpty && qsGeoLocs2.nonEmpty ) {
-        GsCriteria(
-          levels = MNodeGeoLevels.geoTag :: Nil,
-          shapes = for (geoLoc <- qsGeoLocs2) yield {
-            val circle = CircleGs(
-              center  = geoLoc.point,
-              radiusM = 1
-            )
-            GeoShapeToEsQuery( circle )
-          },
-        )
-      },
-      must = should,
-      geoDistanceSort = distanceSort
-    )
-
-    // Активировать поиск по ресиверам.
-    if (queryTextTags.nonEmpty) {
-      // TODO Поиск по названию, с названием или даже без, с учётом координат.
+    if (qsGeoLocs2.nonEmpty) {
       edgesCrs ::= Criteria(
-        predicates  = MPredicates.NodeLocation :: Nil,
-        // Ограничить поиск радиусом от текущей точки. Она обязательно задана, иначе бы этот код не вызывался (см. флаг выше).
-        gsIntersect = Option.when( qsGeoLocs2.nonEmpty ) {
+        predicates  = MPredicates.TaggedBy.Self :: Nil,
+        tags        = tagCrs,
+        nodeIds     = qs.search.rcvrId.toStringOpt.toSeq,
+        // Отработать геолокацию: искать только теги, размещенные в текущей области (но если НЕ задан id узла-ресивера)
+        gsIntersect = Option.when( qs.search.rcvrId.isEmpty ) {
           GsCriteria(
-            levels = MNodeGeoLevels.geoPlacesSearchAt,
+            levels = MNodeGeoLevels.geoTag :: Nil,
             shapes = for (geoLoc <- qsGeoLocs2) yield {
               val circle = CircleGs(
                 center  = geoLoc.point,
-                // 100км вокруг текущей точки
-                radiusM = FTS_SEARCH_RADIUS_M
+                radiusM = 1
               )
               GeoShapeToEsQuery( circle )
             },
           )
         },
-        must        = should,
-        // Поиск по имени проходит через индекс тегов, куда должно быть сохранено имя в соотв. adv-билдере
-        tags        = tagCrs,
+        must = should,
         geoDistanceSort = distanceSort
       )
+
+      // Search for geo-nodes by NodeLocation.
+      if (tagCrs.nonEmpty) {
+        // TODO Поиск по названию, с названием или даже без, с учётом координат.
+        edgesCrs ::= Criteria(
+          predicates  = MPredicates.NodeLocation :: Nil,
+          // Ограничить поиск радиусом от текущей точки. Она обязательно задана, иначе бы этот код не вызывался (см. флаг выше).
+          gsIntersect = Some {
+            GsCriteria(
+              levels = MNodeGeoLevels.geoPlacesSearchAt,
+              shapes = for (geoLoc <- qsGeoLocs2) yield {
+                val circle = CircleGs(
+                  center  = geoLoc.point,
+                  // 100км вокруг текущей точки
+                  radiusM = FTS_SEARCH_RADIUS_M
+                )
+                GeoShapeToEsQuery( circle )
+              },
+            )
+          },
+          must        = should,
+          // Поиск по имени проходит через индекс тегов, куда должно быть сохранено имя в соотв. adv-билдере
+          tags        = tagCrs,
+          geoDistanceSort = distanceSort
+        )
+      }
     }
 
     // TODO with distance sort - актуально для списка результатов. Менее актуально для карты (но всё-таки тоже актуально).

@@ -128,9 +128,15 @@ class ScGeoTimerAh[M](
         geoLoc <- glSignal.locationOpt
       } {
         // Reset map state to detected coord during early stage. ReIndex will be called in from WzFirstAh#InitFirstRunWz(false).
-        if (v0.index.resp.isEmpty || v0.dialogs.first.isVisible)
+        if (
+          v0.index.resp.isEmpty ||
+          v0.dialogs.first.isVisible ||
+          // geoIntoRcrv: For example, right after wzFirst, location timer is started, and map position must obey to any geolocation.
+          geoLocTimerDataOpt0.exists( _.reason.switchCtx.indexQsArgs.geoIntoRcvr )
+        ) {
           modsAcc ::= ScRoutingAh.root_index_search_geo_init_state_LENS
             .modify( _.withCenterInitReal( geoLoc.point ) )
+        }
 
         // Always save coordinates to map .userLoc
         var mapInitModF = MMapInitState.userLoc set Some(geoLoc)

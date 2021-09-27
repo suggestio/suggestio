@@ -41,17 +41,22 @@ final class ScSearch @Inject()(
     def _radioSearchCtxFut: Future[MRadioBeaconsSearchCtx]
     def _geoIpInfo: ScCtlUtil#GeoIpInfo
 
-    def nodesSearch: Future[MNodeSearch] = {
-      for {
-        mGeoLocs2 <- _geoIpInfo.reqGeoLocsFut
+    def nodeSearchOptFut: Future[Option[MNodeSearch]] = {
+      (for {
         radioSearchCtx <- _radioSearchCtxFut
+        mGeoLocs2 = _qs.common.locEnv.geoLoc
+        if (radioSearchCtx.uidsClear.nonEmpty || mGeoLocs2.nonEmpty)
         mNodeSearch <- {
           LOGGER.trace(s"$logPrefix geoLoc = ${mGeoLocs2.length} geoLocs and ${radioSearchCtx.uidsClear.size} radio-beacons")
           scSearchUtil.qs2NodesSearch( _qs, mGeoLocs2, radioSearchCtx )
         }
       } yield {
-        mNodeSearch
-      }
+        Some( mNodeSearch )
+      })
+        .recover { case _: NoSuchElementException =>
+          LOGGER.trace(s"$logPrefix No search coords available: no qs.geolocations and no qs.beacons at all.")
+          None
+        }
     }
 
     /** Сборка sink'а для сохранения найденных узлов в статистику. */
@@ -130,23 +135,25 @@ final class ScSearch @Inject()(
     /** Реактивный поиск и json-рендер тегов и узлов, вместо старого обычного поиска тегов. */
     def nodeInfosSrc: Source[MGeoNodePropsShapes, _] = {
       val srcFut = for {
-        msearch <- nodesSearch
+        msearchOpt <- nodeSearchOptFut
       } yield {
-        // Организовать чтение найденных узлов из БД:
-        val src0 = advGeoRcvrsUtil
-          .nodesAdvGeoPropsSrc(
-            // Нельзя сорсить напрямую через search scroll, т.к. это нарушает порядок сортировки. Имитируем Source через dynSearch:
-            mNodes.dynSearchSource( msearch ),
-          )
-          // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
-          .alsoTo( saveScStatSink )
+        msearchOpt.fold [Source[MGeoNodePropsShapes, _]] ( Source.empty ) { msearch =>
+          // Организовать чтение найденных узлов из БД:
+          val src0 = advGeoRcvrsUtil
+            .nodesAdvGeoPropsSrc(
+              // Нельзя сорсить напрямую через search scroll, т.к. это нарушает порядок сортировки. Имитируем Source через dynSearch:
+              mNodes.dynSearchSource( msearch ),
+            )
+            // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
+            .alsoTo( saveScStatSink )
 
-        advGeoRcvrsUtil
-          .withNodeLocShapes( src0 )
-          .map { case (_, advNodePropsShapes) =>
-            // TODO Не рендерить гео-данные для тегов!
-            advNodePropsShapes
-          }
+          advGeoRcvrsUtil
+            .withNodeLocShapes( src0 )
+            .map { case (_, advNodePropsShapes) =>
+              // TODO Не рендерить гео-данные для тегов!
+              advNodePropsShapes
+            }
+        }
       }
       Source.futureSource( srcFut )
     }

@@ -479,7 +479,7 @@ final class PlatformAh[M](
         SettingAction(
           key = ConfConst.ScSettings.LOCATION_ENABLED,
           fx  = { jsValue =>
-            val isToEnable = isToEnable0 && jsValue.asOpt[Boolean].getOrElseTrue
+            val isToEnable = isToEnable0 && jsValue.asOpt[Boolean].getOrElseFalse
 
             Option.when( isToEnable || (!isScVisible && isActiveNow) ) {
               lazy val sctx = MScSwitchCtx(
@@ -541,7 +541,7 @@ final class PlatformAh[M](
             settingsData.data.value
               .get( k )
               .flatMap( _.asOpt[Boolean] )
-              .getOrElseTrue
+              .getOrElseFalse
 
           // Проверить, включён ли bluetooth в настройках?
           val isBleEnabledInSettings = __getBool( S.BLUETOOTH_BEACONS_ENABLED )

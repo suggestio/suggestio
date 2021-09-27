@@ -443,6 +443,7 @@ class WzFirstDiaAh[M <: AnyRef](
                 demandLocTest = true,
                 indexQsArgs = MScIndexArgs(
                   geoIntoRcvr = true,
+                  returnEphemeral = true,
                 ),
                 /*forceGeoLoc = sc3Circuit.scGeoLocRW
                   .value

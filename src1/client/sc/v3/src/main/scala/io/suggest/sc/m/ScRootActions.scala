@@ -226,7 +226,7 @@ case class HandleScApiResp(
     copy(switchCtxOpt = switchCtxOpt)
 
   override def toString: String = {
-    StringUtil.toStringHelper(this, 512) { renderF =>
+    StringUtil.toStringHelper(this, 512, delimiter = '\n') { renderF =>
       val render0 = renderF("")
       reqTimeStamp foreach render0
       renderF("qs")( qs )
