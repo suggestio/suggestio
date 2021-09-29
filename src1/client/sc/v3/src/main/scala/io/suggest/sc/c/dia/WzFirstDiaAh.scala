@@ -50,7 +50,6 @@ import play.api.libs.json.JsBoolean
   */
 class WzFirstDiaAh[M <: AnyRef](
                                  platformRO       : ModelRO[MPlatformS],
-                                 hasBleRO         : ModelRO[Boolean],
                                  modelRW          : ModelRW[M, MWzFirstOuterS],
                                  sc3Circuit       : Sc3Circuit,
                                )
@@ -727,7 +726,7 @@ class WzFirstDiaAh[M <: AnyRef](
   final class BlueToothSpec extends IPermissionSpec {
     // TODO Need onChange handler, at least for android for LOCATION(!) permission.
     override def phase = MWzPhases.BlueToothPerm
-    override def isSupported() = hasBleRO()
+    override def isSupported() = platformRO.value.hasReadioBeacons
     override def readPermissionState() = {
       val plat = platformRO.value
       plat.osFamily

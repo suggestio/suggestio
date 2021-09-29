@@ -1,12 +1,9 @@
 package io.suggest.sc.v.dia.settings
 
 import com.materialui.{MuiLink, MuiLinkClasses, MuiLinkProps, MuiListItem, MuiListItemText, MuiPaper}
-import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.dev.MOsFamily
+import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import ReactCommonUtil.Implicits._
-import io.suggest.common.empty.OptionUtil
 import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.m.SettingsDiaOpen
 import io.suggest.sc.m.dev.MScDev
@@ -27,58 +24,47 @@ class BlueToothUnAvailInfoR(
   type Props_t = MScDev
   type Props = ModelProxy[Props_t]
 
-  /**
-    *
-    * @param btMissOnOsC Есть Bt LE => None
-    *                    Нет Bt LE, и браузер => Some(None)
-    *                    Нет Bt LE, и приложение => Some( Some(osFamily) ).
-    */
-  case class State(
-                    btMissOnOsC       : ReactConnectProxy[Option[Option[MOsFamily]]],
-                  )
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     private lazy val _onInstallAppClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, SettingsDiaOpen(opened = false) ) >>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, DlAppOpen(opened = true) )
     }
 
-    def render(s: State): VdomElement = {
+    def render(p: Props): VdomElement = {
       // Если bluetooth недоступен на данной платформе, то вывести сообщение:
-      s.btMissOnOsC { btMissOnOsProxy =>
-        btMissOnOsProxy.value.whenDefinedEl { btMissOpt =>
-          crCtxProv.consume { crCtx =>
-            MuiListItem()(
-              MuiPaper()(
+      val hasRadioBeacons = p.value.platform.hasReadioBeacons
 
-                MuiListItemText()(
-                  crCtx.messages(
-                    MsgCodes.`0.not.supported.on.this.platform.1`,
-                    MsgCodes.`Bluetooth`,
-                    btMissOpt.fold( crCtx.messages(MsgCodes.`Browser`) )( _.value ),
-                  ),
+      ReactCommonUtil.maybeEl( !hasRadioBeacons ) {
+        crCtxProv.consume { crCtx =>
+          MuiListItem()(
+            MuiPaper()(
+
+              MuiListItemText()(
+                crCtx.messages(
+                  MsgCodes.`0.not.supported.on.this.platform.1`,
+                  MsgCodes.`Bluetooth`,
+                  crCtx.messages( MsgCodes.`Browser` ),
                 ),
-
-                // Если это браузер, то вывести плашку о необходимости установки приложения.
-                ReactCommonUtil.maybeNode( btMissOpt.isEmpty ) {
-                  MuiListItemText()(
-                    MuiLink(
-                      new MuiLinkProps {
-                        override val onClick = _onInstallAppClickCbF
-                        override val classes = new MuiLinkClasses {
-                          override val root = ScCssStatic.cursorPointer.htmlClass
-                        }
-                      }
-                    )(
-                      crCtx.messages( MsgCodes.`Install.app.for.access.to.0`, MsgCodes.`Bluetooth` ),
-                    ),
-                  )
-                },
-
               ),
-            )
-          }
+
+              // Если это браузер, то вывести плашку о необходимости установки приложения.
+              MuiListItemText()(
+                MuiLink(
+                  new MuiLinkProps {
+                    override val onClick = _onInstallAppClickCbF
+                    override val classes = new MuiLinkClasses {
+                      override val root = ScCssStatic.cursorPointer.htmlClass
+                    }
+                  }
+                )(
+                  crCtx.messages( MsgCodes.`Install.app.for.access.to.0`, MsgCodes.`Bluetooth` ),
+                ),
+              ),
+
+            ),
+          )
         }
       }
     }
@@ -88,16 +74,7 @@ class BlueToothUnAvailInfoR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
-      State(
-        btMissOnOsC = propsProxy.connect { p =>
-          val hasBle = p.beaconer.hasBle contains[Boolean] true
-          Option.when( !hasBle ) {
-            OptionUtil.maybeOpt( !p.platform.isBrowser )( p.platform.osFamily )
-          }
-        },
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 

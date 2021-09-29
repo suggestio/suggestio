@@ -335,9 +335,6 @@ final class PlatformAh[M](
           // Возможно, что HwScreenUtil не смогло определить точные размеры экрана, и нужно повторить определение экрана после наступления cordova ready.
           fxAcc ::= ScreenResetPrepare.toEffectPure
 
-          // Проверить, не изменились ли ещё какие-то платформенные флаги?
-          fxAcc ::= BtOnOff( isEnabled = None ).toEffectPure
-
           // Определить платформу cordova, если она не была правильно определена на предыдущем шаге.
           if (v0.isCordova) {
 
@@ -449,7 +446,7 @@ final class PlatformAh[M](
       val isUsingNow = m.isStart getOrElse value.isUsingNow
       var fxAcc = List.empty[Effect]
 
-      for (fx <- _bleBeaconerControlFx( isUsingNow ))
+      for (fx <- _beaconerControlFx( isUsingNow ))
         fxAcc ::= fx
 
       // Запускать/глушить фоновый GPS-мониторинг:
@@ -517,12 +514,13 @@ final class PlatformAh[M](
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
     */
-  private def _bleBeaconerControlFx( isScVisible: Boolean, plat: MPlatformS = value ): Option[Effect] = {
+  private def _beaconerControlFx( isScVisible: Boolean, plat: MPlatformS = value ): Option[Effect] = {
     val mroot = rootRO()
 
     // Не выполнять эффектов, если результата от них не будет (без фактической смены состояния или hardOff).
     Option.when(
-      (mroot.dev.beaconer.hasBle contains[Boolean] true) &&
+      // hasBle will be deleted, because filling this flag causes Bluetooth permission request on the screen.
+      //(mroot.dev.beaconer.hasBle contains[Boolean] true) &&
       plat.isReady &&
       // Нельзя запрашивать bluetooth до boot'а GeoLoc: BLE scan требует права ACCESS_FINE_LOCATION,
       // приводя к проблеме http://source.suggest.io/sio/sio2/issues/5 , а вместе с

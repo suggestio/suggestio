@@ -39,7 +39,3 @@ private[beacon] case object DoGc extends IBeaconerAction
   * @param tryEnabled New isEnabled state.
   */
 private[beacon] case class BtOnOffFinish(tryEnabled: Try[Boolean] ) extends IBeaconerAction
-
-
-/** Result for testing about bluetooth abilities presence. */
-private[beacon] case class HasBleRes(hasBle: Pot[Boolean] ) extends IBeaconerAction

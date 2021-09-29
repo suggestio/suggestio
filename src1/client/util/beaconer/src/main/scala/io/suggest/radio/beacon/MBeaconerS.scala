@@ -45,7 +45,6 @@ object MBeaconerS {
   def gcIntervalId = GenLens[MBeaconerS](_.gcIntervalId)
   def nearbyReport = GenLens[MBeaconerS](_.nearbyReport)
   def opts = GenLens[MBeaconerS]( _.opts )
-  def hasBle = GenLens[MBeaconerS]( _.hasBle )
 
 }
 
@@ -66,11 +65,6 @@ object MBeaconerS {
   *                      Error - API failed to initialize.
   * @param gcIntervalId timer id for GC in beacons.
   * @param nearbyReport Overall report about currently visible beacons.
-  * @param hasBle Has BLE scan support on this device?
-  *               Can be checked after Cordova PLATFORM_READY
-  *               Pot.empty - not checked, by now.
-  *               Ready(true|false) - Detected bluetooth support.
-  *               failed(ex) - Detection failed.
   */
 case class MBeaconerS(
                        isEnabled            : Pot[Boolean]               = Pot.empty,
@@ -82,7 +76,6 @@ case class MBeaconerS(
                        envFingerPrint       : Option[Int]                = None,
                        apis                 : Pot[Map[MRadioSignalType, IBeaconsListenerApi]] = Pot.empty,
                        opts                 : MBeaconerOpts              = MBeaconerOpts.default,
-                       hasBle               : Pot[Boolean]               = Pot.empty,
                      )
   extends EmptyProduct
 {

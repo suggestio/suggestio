@@ -57,7 +57,7 @@ class ScNodesDiaAh[M](
         nodesCircuit.dispatch( TreeInit() )
 
       // Отправляем текущий список маячков, даже пустой - тогда хотя бы будет создана подгруппа маячков в списке.
-      if (sc3Circuit.hasBleRO.value)
+      if (sc3Circuit.platformRW.value.hasReadioBeacons)
         nodesCircuit.dispatch( beaconDetectedAction() )
 
       // Восстановить режим формы, если происходил сброс диалога.

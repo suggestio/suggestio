@@ -45,6 +45,9 @@ object MPlatformS {
     def isReady: Boolean =
       plat.isReadyPot contains true
 
+    def hasReadioBeacons: Boolean =
+      plat.isCordova
+
   }
 
   def lastModifiedMs() = System.currentTimeMillis()

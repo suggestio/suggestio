@@ -20,7 +20,7 @@ import japgolly.univeq._
 
 import java.time.Instant
 import scala.concurrent.{Future, Promise}
-import scala.util.{Success, Try}
+import scala.util.Success
 
 /**
   * Suggest.io
@@ -563,7 +563,6 @@ class BeaconerAh[M](
       val isEnabledNow = v0.isEnabled contains[Boolean] true
       val isEnabled2 = m.isEnabled contains[Boolean] true
       def isDisabled2 = m.isEnabled contains[Boolean] false
-      def hasBle2 = v0.hasBle orElse v0.hasBle.pending()
 
       if (
         // First, check for duplicate on/off action with different beaconer options.
@@ -637,7 +636,6 @@ class BeaconerAh[M](
           // Usually, here None - because no beacons expected here.
           gcIntervalId  = ensureGcInterval( v0.beacons.isEmpty, v0.gcIntervalId ),
           opts          = m.opts,
-          hasBle        = hasBle2,
         )
         updated( v2, fx )
 
@@ -686,7 +684,6 @@ class BeaconerAh[M](
           opts              = m.opts,
           nearbyReport      = bcnsNearby2.map(_._2),
           beacons           = beacons2,
-          hasBle            = hasBle2,
         )
 
         ah.updatedMaybeEffect( v2, fxAcc.mergeEffects )
@@ -694,23 +691,8 @@ class BeaconerAh[M](
       } else {
         // Already enabled, or already disabled, or m.isEnabled == None.
         // But if hasBle.isEmpty, need to check for bluetooth availability on current device.
-        if (v0.hasBle.isEmpty) {
-          val hasBleFx = Effect.action {
-            val hasBlePot2 = v0.hasBle withTry Try {
-              _beaconApisAvailable()
-                .exists(_.radioSignalType ==* MRadioSignalTypes.BluetoothEddyStone)
-            }
-            HasBleRes( hasBlePot2 )
-          }
-          val v2Opt = Option.when( !v0.hasBle.isPending ) {
-            MBeaconerS.hasBle.modify(_.pending())(v0)
-          }
-          ah.optionalResult( v2Opt, Some(hasBleFx), silent = true )
-
-        } else {
-          logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
-          noChange
-        }
+        logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
+        noChange
       }
 
 
@@ -747,9 +729,6 @@ class BeaconerAh[M](
           beacons           = beacons2,
           gcIntervalId      = gcTimer2,
           afterOnOff        = None,
-          hasBle = v0.hasBle
-            .orElse( falsePot2 )
-            .fail( ex ),
         )
         ah.updatedMaybeEffect( v2, v0.afterOnOff )
 
@@ -764,7 +743,6 @@ class BeaconerAh[M](
           apis              = v0.apis.ready( m.apisReady ),
           gcIntervalId      = ensureGcInterval(v0.beacons.isEmpty, v0.gcIntervalId),
           afterOnOff        = None,
-          hasBle            = truePot2.ready( m.apisReady.nonEmpty ),
         )
 
         val timerFx2 = if (v0.opts.oneShot)
@@ -827,19 +805,6 @@ class BeaconerAh[M](
             }
           }
         )
-      }
-
-
-    // ReSet hasBle flag.
-    case m: HasBleRes =>
-      val v0 = value
-      if (v0.hasBle ==* m.hasBle) {
-        noChange
-
-      } else {
-        val v2 = (MBeaconerS.hasBle set m.hasBle)(v0)
-        // Silent, because no model value circuit subscription expected here.
-        updatedSilent(v2)
       }
 
   }

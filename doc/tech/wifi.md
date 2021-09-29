@@ -18,6 +18,7 @@ May work. As of july-2021, need to debug/test this.
 
 ## Add, manage, etc
 Use [showcase nodes manager](showcase/nodes.md#registering-radio-beacon) to catch WiFi-signal and register it as node:
+
 ![Register WiFi router as node](../images/showcase-nodes-register-wifi.gif)
 
 Nothing different here from [bluetooth beacons](bluetooth-beacons.md) scanning and registration.

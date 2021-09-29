@@ -336,7 +336,6 @@ class Sc3Circuit(
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
   private[sc] def beaconerEnabled = beaconerRW.zoom(_.isEnabled contains true)
   private[sc] def beaconsRO       = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
-  private[sc] def hasBleRO        = mkLensZoomRO( beaconerRW, MBeaconerS.hasBle ).zoom( _ contains[Boolean] true )
 
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
   private[sc] def wzFirstOuterRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
@@ -586,7 +585,6 @@ class Sc3Circuit(
 
   private def wzFirstDiaAh: HandlerFunction = new WzFirstDiaAh(
     platformRO    = platformRW,
-    hasBleRO      = hasBleRO,
     modelRW       = wzFirstOuterRW,
     sc3Circuit    = this,
   )
