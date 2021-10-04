@@ -59,7 +59,12 @@ class ScRespAh(
           for (ex <- m.tryResp.toEither.left) yield {
             val actionRes0 = respHandler.handleReqError(ex, rhCtx0)
             // Append OnLineCheckConn effect (check if error related to lost internet connection).
-            val withOnlineCheckFx = (OnlineCheckConn.toEffectPure :: actionRes0.effectOpt.toList).mergeEffects
+            var fxAcc = actionRes0.effectOpt.toList
+
+            if (OnlineCheckConn.maybeNeedCheckConnectivity(ex))
+              fxAcc ::= OnlineCheckConn.toEffectPure
+
+            val withOnlineCheckFx = fxAcc.mergeEffects
             ActionResult( actionRes0.newModelOpt, withOnlineCheckFx )
           }
         }

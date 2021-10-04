@@ -301,3 +301,8 @@ async.ec.cpusingle {
 }
 
 
+# Dev Mode
+play.akka.dev-mode.akka.http.parsing.max-uri-length = 16384
+# Prod Mode
+akka.http.parsing.max-uri-length = 16384
+

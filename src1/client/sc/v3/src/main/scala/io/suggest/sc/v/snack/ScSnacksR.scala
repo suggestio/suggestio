@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.r.CatchR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.{CloseError, MScRoot}
+import io.suggest.sc.m.{CloseError, MScRoot, OnlineCheckReset}
 import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
@@ -38,19 +38,35 @@ final class ScSnacksR(
                     currSnackOrNullC      : ReactConnectProxy[ISnackComp],
                   )
 
+  private def _currSnackOrNull(p: MScRoot): ISnackComp = {
+    if (!p.dev.onLine.isOnline)
+      offlineSnackR
+    else if (p.dialogs.first.isVisible)
+      wzFirstR
+    else if (p.index.state.switch.ask.nonEmpty)
+      indexSwitchAskR
+    else if (p.dialogs.error.nonEmpty)
+      scErrorDiaR
+    else
+      null
+  }
 
   class Backend( $: BackendScope[Props, State] ) {
 
     /** Закрытие плашки без аппрува. */
     private lazy val _onCloseJsCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      // TODO Определить текущие открытые snack'и, и выслать туда сигналы?
       $.props >>= { propsProxy: Props =>
         val p = propsProxy.value
-
         var actions = List.empty[DAction]
-        if (p.index.state.switch.ask.nonEmpty)
+
+        // Detect currently opened snack, and send signal.
+        // TODO Move into controller (ScErrorDiaAh)?
+        val currSnackOrNull = _currSnackOrNull( p )
+        if (currSnackOrNull ===* offlineSnackR)
+          actions ::= OnlineCheckReset
+        else if (currSnackOrNull ===* indexSwitchAskR)
           actions ::= IndexSwitchNodeClick()
-        if (p.dialogs.error.nonEmpty)
+        else if (currSnackOrNull ===* scErrorDiaR)
           actions ::= CloseError
 
         actions
@@ -59,7 +75,7 @@ final class ScSnacksR(
             ReactDiodeUtil.dispatchOnProxyScopeCB( $, a )
           }
           .reduceOption(_ >> _)
-          .getOrElse( Callback.empty )
+          .getOrElse(Callback.empty)
       }
     }
 
@@ -118,18 +134,7 @@ final class ScSnacksR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        currSnackOrNullC = propsProxy.connect { p =>
-          if (!p.dev.onLine.isOnline)
-            offlineSnackR
-          else if (p.dialogs.first.isVisible)
-            wzFirstR
-          else if (p.index.state.switch.ask.nonEmpty)
-            indexSwitchAskR
-          else if (p.dialogs.error.nonEmpty)
-            scErrorDiaR
-          else
-            null
-        },
+        currSnackOrNullC = propsProxy.connect( _currSnackOrNull ),
 
       )
     }

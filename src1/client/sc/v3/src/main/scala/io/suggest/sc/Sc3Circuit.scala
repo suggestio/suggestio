@@ -703,9 +703,7 @@ class Sc3Circuit(
   private def csrfTokenAh: HandlerFunction = new CsrfTokenAh(
     modelRW       = csrfTokenRW,
     csrfTokenApi  = csrfTokenApi,
-    onError       = Some { () =>
-      OnlineCheckConn.toEffectPure
-    },
+    onError       = Some( OnlineCheckConn.maybeFxOpt ),
   )
 
   private def logOutAh: HandlerFunction = mkLogOutAh( logOutRW )

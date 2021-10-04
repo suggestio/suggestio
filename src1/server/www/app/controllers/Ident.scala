@@ -478,22 +478,24 @@ final class Ident @Inject() (
       }
       // И расшифровать присланные данные токена:
       .validateM { smsReq =>
-        val fut0 = for (pgpKey <- pgpKeyFut) yield {
+        (for {
+          pgpKey <- pgpKeyFut
+        } yield {
           val pgpMsg = pgpUtil.unminifyPgpMessage( smsReq.token )
           val ottIdStr = JioStreamsUtil.stringIo[String]( pgpMsg, outputSizeInit = 256 )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
           val ottId = UUID.fromString( ottIdStr )
           LOGGER.trace(s"$logPrefix Found tokenId#$ottId in request")
           (smsReq, ottId)
-        }
-        fut0.transform { tryRes =>
-          val resE = tryRes
-            .toEither
-            .left.map { ex =>
-              LOGGER.error(s"$logPrefix Unabled to decrypt/parse token", ex)
-              NotAcceptable("invalid")
-            }
-          Success( resE )
-        }
+        })
+          .transform { tryRes =>
+            val resE = tryRes
+              .toEither
+              .left.map { ex =>
+                LOGGER.error(s"$logPrefix Unabled to decrypt/parse token", ex)
+                NotAcceptable("invalid")
+              }
+            Success( resE )
+          }
       }
   }
 

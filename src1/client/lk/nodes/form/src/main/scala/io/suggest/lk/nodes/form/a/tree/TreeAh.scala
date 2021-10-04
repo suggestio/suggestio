@@ -487,8 +487,8 @@ class TreeAh[M](
         }
 
         // Если была ошибка, то запросить действия-эффекты снаружи:
-        if (v0.idsTree.isFailed)
-          fx = nodesDiConf.retryErrorFx( fx )
+        for (ex <- v0.idsTree.exceptionOption)
+          fx = nodesDiConf.retryErrorFx( ex, fx )
 
         val v2 = MTree.idsTree.modify( _.pending() )(v0)
         updated(v2, fx)

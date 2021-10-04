@@ -48,22 +48,25 @@ class ScErrorDiaAh(
       val v0 = value
 
       // Проверить связь с инетом
-      val checkOnlineFx = OnlineCheckConn.toEffectPure
+      val checkOnlineFxOpt = Option.when[Effect]( m.scErr.exceptionOpt.fold(true)(OnlineCheckConn.maybeNeedCheckConnectivity) )( OnlineCheckConn.toEffectPure )
 
       if (v0.fold(true)(_.potRO.exists(_.value.isPending))) {
         // Если перезапись, то надо отписаться от любой предыдущей подписки на событие:
-        var fx: Effect = checkOnlineFx
+        var fxAcc: List[Effect] = checkOnlineFxOpt.toList
 
         // Надо подписаться на события изменения связанного pot'а, чтобы после error-диалог после retry мог сам скрыться с экрана.
-        for (v <- v0; unSubsFx <- ScErrorDiaAh._maybeUnSubscribeFx(v))
-          fx += unSubsFx
+        for {
+          v <- v0
+          unSubsFx <- ScErrorDiaAh._maybeUnSubscribeFx(v)
+        }
+          fxAcc ::= unSubsFx
 
         val v2 = Some(m.scErr)
-        updated( v2, fx )
+        ah.updatedMaybeEffect( v2, fxAcc.mergeEffects )
 
       } else {
         // Две+ статические ошибки не выводим, просто оставляем всё как есть.
-        effectOnly( checkOnlineFx )
+        ah.maybeEffectOnly( checkOnlineFxOpt )
       }
 
 
@@ -121,11 +124,10 @@ class ScErrorDiaAh(
     // Закрыть диалог ошибки.
     case CloseError =>
       value.fold(noChange) { errDia0 =>
-        var fx: Effect = OnlineCheckConn.toEffectPure
-        for (subsFx <- ScErrorDiaAh._maybeUnSubscribeFx( errDia0 ))
-          fx += subsFx
+        //var fx: Effect = OnlineCheckConn.toEffectPure  // Disabled. Not needed?
+        val fxOpt = ScErrorDiaAh._maybeUnSubscribeFx( errDia0 )
 
-        updated( None, fx )
+        ah.updatedMaybeEffect( None, fxOpt )
       }
 
   }

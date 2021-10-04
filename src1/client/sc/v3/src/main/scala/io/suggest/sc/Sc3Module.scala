@@ -508,15 +508,19 @@ class Sc3Module extends Log { outer =>
       override def onErrorFxOpt: Option[Effect] =
         Some( _toSc3CircuitFx(OnlineCheckConn) )
 
-      override def retryErrorFx(effect: Effect): Effect = {
-        (
+      override def retryErrorFx(ex: Throwable, effect: Effect): Effect = {
+        var actionsAcc: List[DAction] = (
           CsrfTokenEnsure(
             force = true,
             onComplete = Some(effect),
           ) ::
-          OnlineCheckConn ::
           Nil
         )
+
+        if ( OnlineCheckConn.maybeNeedCheckConnectivity(ex) )
+          actionsAcc ::= OnlineCheckConn
+
+        actionsAcc
           .iterator
           .map( _toSc3CircuitFx )
           .mergeEffects

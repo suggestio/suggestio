@@ -6,7 +6,7 @@ import io.suggest.dev.MPlatformS
 import io.suggest.event.DomEvents
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{OnlineCheckConn, OnlineCheckConnRes, OnlineInit, RetryError}
+import io.suggest.sc.m.{OnlineCheckConn, OnlineCheckConnRes, OnlineCheckReset, OnlineInit, RetryError}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.m.dev.{MOnLineInfo, MOnLineS}
 import io.suggest.sjs.dom2.NetworkInformation
@@ -161,13 +161,24 @@ class OnLineAh[M](
         updatedSilent(v2, fx)
 
       } else if (!m.init && v0.state.nonEmpty) {
-        // Де-инициализация
+        // De-initialization
         val unSubscribeFx = _subscribeFx( false )
         val v2 = MOnLineS.empty
-        updatedSilent( v2, unSubscribeFx )
+        updated( v2, unSubscribeFx )
 
       } else {
         logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0) )
+        noChange
+      }
+
+
+    case OnlineCheckReset =>
+      val v0 = value
+      val v2 = MOnLineS.empty
+      if (v0 !=* v2) {
+        val unSubscribeFx = _subscribeFx( false )
+        updated( v2, unSubscribeFx )
+      } else {
         noChange
       }
 

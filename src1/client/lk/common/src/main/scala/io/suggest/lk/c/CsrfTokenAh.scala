@@ -25,7 +25,7 @@ import scala.util.Success
 class CsrfTokenAh[M](
                       modelRW       : ModelRW[M, Pot[MCsrfToken]],
                       csrfTokenApi  : ICsrfTokenApi,
-                      onError       : Option[() => Effect],
+                      onError       : Option[Throwable => Option[Effect]],
                     )
   extends ActionHandler( modelRW )
   with Log
@@ -73,8 +73,8 @@ class CsrfTokenAh[M](
               .after( 2.seconds )
 
             // Проверить соединение с инетом.
-            for (fxF <- onError)
-              fxAcc += fxF()
+            for (fxOptF <- onError; fx <- fxOptF(ex))
+              fxAcc += fx
 
             Some(fxAcc)
           },

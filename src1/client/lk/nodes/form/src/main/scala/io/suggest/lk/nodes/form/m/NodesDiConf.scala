@@ -43,7 +43,7 @@ trait NodesDiConf extends IMHttpClientConfig {
   /** Трансформер эффекта, который используется для подавления ошибки.
     * Для sc3 требуется проверить валидность CSRF-токена, например.
     */
-  def retryErrorFx(effect: Effect): Effect
+  def retryErrorFx(ex: Throwable, effect: Effect): Effect
 
   def onErrorFxOpt: Option[Effect]
 
@@ -75,7 +75,7 @@ object NodesDiConf {
     override def needLogInVdom(chs: VdomNode*) = EmptyVdom
     override def withBleBeacons = false
     override def onErrorFxOpt = None
-    override def retryErrorFx(effect: Effect) = effect
+    override def retryErrorFx(ex: Throwable, effect: Effect) = effect
     override lazy val nfcApi = {
       // Standard WebNFC API will is tried automatically.
       val webNfc = new WebNfcApi

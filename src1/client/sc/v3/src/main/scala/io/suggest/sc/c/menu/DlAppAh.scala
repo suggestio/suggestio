@@ -93,7 +93,7 @@ class DlAppAh(
         val fxOpt = m.tryResp.fold[Option[Effect]](
           {ex =>
             // Если ошибка, отрендерить всплывающее сообщение:
-            val fx = Effect.action {
+            var fx: Effect = Effect.action {
               val errDiaS = MScErrorDia(
                 messageCode     = ErrorMsgs.XHR_UNEXPECTED_RESP,
                 potRO           = Some( modelRW.zoom[Pot[Any]](_.getReq) ),
@@ -101,7 +101,11 @@ class DlAppAh(
                 retryAction     = Some( MkAppDlInfoReq ),
               )
               SetErrorState( errDiaS )
-            } + OnlineCheckConn.toEffectPure
+            }
+
+            if (OnlineCheckConn.maybeNeedCheckConnectivity(ex))
+              fx += OnlineCheckConn.toEffectPure
+
             Some(fx)
           },
           {resp =>

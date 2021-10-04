@@ -1,11 +1,13 @@
 package io.suggest.sc.m
 
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.{ActionResult, Effect}
 import diode.data.Pot
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.i18n.MLanguage
 import io.suggest.lk.nodes.form.m.MLkNodesMode
 import io.suggest.msg.JsonPlayMessages
+import io.suggest.proto.http.model.HttpFailedException
 import io.suggest.routes.routes
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MOnLineInfo}
@@ -318,10 +320,23 @@ sealed trait IOnlineAction extends DAction
 case class OnlineInit(init: Boolean) extends IOnlineAction
 
 /** Инициализация или ручная проверка connectivity. */
-case object OnlineCheckConn extends IOnlineAction
+case object OnlineCheckConn extends IOnlineAction {
+  /** @return true, if need to check online connectivity, depending on exception occured. */
+  def maybeNeedCheckConnectivity: PartialFunction[Throwable, Boolean] = {
+    case httpEx: HttpFailedException =>
+      httpEx.resp.isEmpty
+    case _ =>
+      false
+  }
+
+  def maybeFxOpt( ex: Throwable ): Option[Effect] =
+    Option.when( OnlineCheckConn.maybeNeedCheckConnectivity(ex) )( OnlineCheckConn.toEffectPure )
+}
 
 /** Результат [[OnlineCheckConn]]. */
 case class OnlineCheckConnRes( netInfo: MOnLineInfo ) extends IOnlineAction
+
+case object OnlineCheckReset extends IOnlineAction
 
 
 sealed trait IScConfAction extends IScRootAction
