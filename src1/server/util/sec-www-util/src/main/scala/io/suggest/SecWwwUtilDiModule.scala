@@ -1,6 +1,6 @@
 package io.suggest
 
-import io.suggest.sec.util.{ScryptUtil, SecInitUtil}
+import io.suggest.sec.util.{PgpUtil, ScryptUtil, SecInitUtil}
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 
@@ -11,8 +11,12 @@ final class SecWwwUtilDiModule extends Module {
     (new ScryptUtil).disableNativeCode()
     (new SecInitUtil).ensureBcJce()
 
-    // Nothing to bind, everything already initialized impure.
-    Nil
+    // TODO Only first run initialization needed. eagerly() causes useless singletons in memory here.
+    val pgpBind = bind[PgpUtil]
+      .toSelf
+      .eagerly()
+
+    pgpBind :: Nil
   }
 
 }

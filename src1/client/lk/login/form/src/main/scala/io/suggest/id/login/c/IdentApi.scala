@@ -159,6 +159,7 @@ class IdentApiHttp(
       )
     )
       .resultFut
+      .successIf20X
       // И распарсить ответ:
       .unJson[MRegTokenResp]
   }
