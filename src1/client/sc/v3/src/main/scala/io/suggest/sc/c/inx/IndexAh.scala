@@ -243,7 +243,7 @@ object IndexAh {
 
       wcInfo2 <- respData.resp.welcome
       // Не надо отображать текущее приветствие повторно:
-      if !(respData.resp.welcome contains[MWelcomeInfo] wcInfo2)
+      if !(i0.resp.exists(_.resp.welcome contains[MWelcomeInfo] wcInfo2))
     } yield {
       val tstamp = System.currentTimeMillis()
 

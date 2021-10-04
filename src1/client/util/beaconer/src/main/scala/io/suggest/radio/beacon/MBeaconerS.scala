@@ -20,7 +20,7 @@ import monocle.macros.GenLens
   */
 object MBeaconerS {
 
-  def empty = MBeaconerS()
+  def empty = apply()
 
   @inline implicit def univEq: UnivEq[MBeaconerS] = UnivEq.force
 
