@@ -32,7 +32,7 @@ trait ICredentialsStorage {
     * @param regContext Registration credentials.
     * @return Future with saved node.
     */
-  def updateEmailPw(personNode: MNode, regContext: MRegContext, emailFlag: Boolean): Future[MNode]
+  def updateCredentials(personNode: MNode, regContext: MRegContext, emailFlag: Boolean): Future[MNode]
 
   /** Create, save and return new person node.
     *

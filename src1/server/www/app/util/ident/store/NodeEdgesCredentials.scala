@@ -156,7 +156,7 @@ final class NodeEdgesCredentials @Inject()(
   }
 
 
-  override def updateEmailPw(personNode: MNode, regContext: MRegContext, emailFlag: Boolean): Future[MNode] = {
+  override def updateCredentials(personNode: MNode, regContext: MRegContext, emailFlag: Boolean): Future[MNode] = {
     lazy val logPrefix = s"updateCredentials(${regContext.email.getOrElse("")}, ${regContext.phoneNumber}, node#${personNode.id.orNull}):"
 
     // Уже существует узел. Организовать сброс пароля.
@@ -174,8 +174,8 @@ final class NodeEdgesCredentials @Inject()(
           .filter { e0 =>
             e0.predicate match {
               // Эджи пароля удаляем безусловно
-              case MPredicates.Ident.Password =>
-                LOGGER.trace(s"$logPrefix Drop edge Password $e0 of node#$nodeId\n $e0")
+              case MPredicates.Ident.Password | MPredicates.Ident.Phone =>
+                LOGGER.trace(s"$logPrefix Drop edge ${e0.predicate} of node#$nodeId\n $e0")
                 false
               // Эджи почты: неподтвердённые - удалить.
               case MPredicates.Ident.Email if !e0.info.flag.contains(true) =>
@@ -187,25 +187,30 @@ final class NodeEdgesCredentials @Inject()(
           }
           .to( LazyList )
 
+        var addEdgesAcc = _passwordEdge(regContext.password) :: Nil
+
         // Отработать email-эдж. Если он уже есть для текущей почты, то оставить как есть. Иначе - создать новый, неподтверждённый эдж.
-        val edges2 = regContext.email.fold( edges1 ) { email =>
-          edges1
-            .find { e =>
-              (e.predicate ==* MPredicates.Ident.Email) &&
-              regContext.email.exists( e.nodeIds.contains )
-            }
-            .fold {
-              // Add new email-edge
-              val emailEdge = _emailEdge( emailFlag, email )
-              LOGGER.trace(s"$logPrefix Inserting Email-edge#$email on node#$nodeId\n $emailEdge")
-              emailEdge #:: edges1
-            } { emailExistsEdge =>
-              LOGGER.trace(s"$logPrefix Keep edge Email#$email as-is on node#$nodeId\n $emailExistsEdge")
-              edges1
-            }
+        for {
+          email <- regContext.email
+          if !edges1.exists { e =>
+            (e.predicate ==* MPredicates.Ident.Email) &&
+            regContext.email.exists( e.nodeIds.contains )
+          }
+        } {
+          // Add new email-edge
+          val emailEdge = _emailEdge( emailFlag, email )
+          LOGGER.trace(s"$logPrefix Inserting Email-edge#$email on node#$nodeId\n $emailEdge")
+          addEdgesAcc ::= emailEdge
         }
 
-        MNodeEdges.edgesToMap1( _passwordEdge(regContext.password) #:: edges2 )
+        // Append phone number edge, if any.
+        for {
+          phoneNumber <- regContext.phoneNumber
+        } {
+          addEdgesAcc ::= _phoneEdge( phoneNumber )
+        }
+
+        MNodeEdges.edgesToMap1( edges1 appendedAll addEdgesAcc )
       }( personNode )
 
     mNodes.saveReturning( mnode1 )

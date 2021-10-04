@@ -9,7 +9,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.err.{HttpResultingException, MCheckException}
-import io.suggest.es.model.{EsModel, MEsNestedSearch, MEsUuId}
+import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch, MEsUuId}
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
@@ -769,11 +769,20 @@ final class Ident @Inject() (
                 new MNodeSearch {
                   override val nodeTypes = MNodeTypes.Person :: Nil
                   override val outEdges: MEsNestedSearch[Criteria] = {
-                    val cr = Criteria(
+                    val should = IMust.SHOULD
+                    val phoneNumerCr = Criteria(
                       nodeIds    = regCreds.phone :: Nil,
                       predicates = MPredicates.Ident.Phone :: Nil,
+                      must = should,
+                      flag = OptionUtil.SomeBool.someTrue,
                     )
-                    MEsNestedSearch.plain( cr )
+                    val emailCr = Criteria(
+                      nodeIds    = regCreds.email :: Nil,
+                      predicates = MPredicates.Ident.Email :: Nil,
+                      must = should,
+                      flag = OptionUtil.SomeBool.someTrue,
+                    )
+                    MEsNestedSearch.plain( phoneNumerCr, emailCr )
                   }
                   // Надо падать на ситуации, когда есть несколько узлов с одним номером телефона.
                   override def limit = 2
@@ -813,7 +822,7 @@ final class Ident @Inject() (
                 ),
               )
             } { mnode =>
-              credentialsStorage.updateEmailPw( mnode, mRegCtx, emailFlag = false )
+              credentialsStorage.updateCredentials( mnode, mRegCtx, emailFlag = false )
             }
           }
 
