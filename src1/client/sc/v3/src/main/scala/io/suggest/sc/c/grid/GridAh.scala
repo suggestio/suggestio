@@ -433,8 +433,17 @@ class GridAh[M](
                 }
               }(gridAds0)
 
-              // если карточек вообще не осталось, то надо отрендерить 404-карточку.
-              val isReturn404 = gridAds2.adsTreePot.exists(_.subForest.isEmpty)
+              // If no ads or 404-ad dispayed, also to request 404-ad from server.
+              val isReturn404 = gridAds2
+                .adsTreePot
+                // toOption+headOption: Forcing O(1) here, because 404-ads shown when nothing more.
+                .toOption
+                .flatMap(_.subForest.headOption)
+                .fold(true) {
+                   _.rootLabel
+                    .data
+                    .exists(_.info.isMad404)
+                }
 
               // ads2.exists(_.isEmpty): Если после зачистки BLE-карточек, не осталось карточек, то запросить 404-карточку с сервера.
               Either.cond(

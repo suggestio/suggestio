@@ -159,7 +159,8 @@ final class CdvWifiWizard2BeaconsApi_Android
               },
             )
           }
-          .to( LazyList )
+          // Non-lazy list to guarantee thread-safety against JSON-objects, received from plugin.
+          .to( List )
 
         if radioSignals.nonEmpty
       } {
