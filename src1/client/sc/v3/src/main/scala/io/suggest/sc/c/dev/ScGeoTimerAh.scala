@@ -104,7 +104,7 @@ class ScGeoTimerAh[M](
               (MScSwitchCtx.indexMapReset set indexMapReset2) andThen
               MScSwitchCtx.indexQsArgs
                 .composeLens( MScIndexArgs.retUserLoc )
-               .modify( _ || !m.origOpt.exists(_.isSuccess) )
+                .modify( _ || !m.origOpt.exists(_.isSuccess) )
             )(scSwitch0)
           } else {
             scSwitch0
@@ -127,23 +127,12 @@ class ScGeoTimerAh[M](
         glSignal <- m.origOpt
         geoLoc <- glSignal.locationOpt
       } {
-        // Reset map state to detected coord during early stage. ReIndex will be called in from WzFirstAh#InitFirstRunWz(false).
-        if (
-          v0.index.resp.isEmpty ||
-          v0.dialogs.first.isVisible ||
-          // geoIntoRcrv: For example, right after wzFirst, location timer is started, and map position must obey to any geolocation.
-          geoLocTimerDataOpt0.exists( _.reason.switchCtx.indexQsArgs.geoIntoRcvr )
-        ) {
-          modsAcc ::= ScRoutingAh.root_index_search_geo_init_state_LENS
-            .modify( _.withCenterInitReal( geoLoc.point ) )
-        }
-
         // Always save coordinates to map .userLoc
         var mapInitModF = MMapInitState.userLoc set Some(geoLoc)
 
         if (
           // Do NOT change map center, if this is just background demand index test.
-          !geoLocTimerDataOpt0.exists(_.reason.switchCtx.demandLocTest) &&
+          !geoLocTimerDataOpt0.exists(_.reason.switchCtx.demandLocTest) && ((
             // If current position is very awaited by initialization, then move map center to geoposition.
             (
               !v0.dialogs.first.isViewFinished ||
@@ -152,6 +141,13 @@ class ScGeoTimerAh[M](
             (v0.internals.info.currRoute.exists { currRoute =>
               currRoute.locEnv.isEmpty && currRoute.nodeId.isEmpty
             })
+          ) || (
+            // Reset map state to detected coord during early stage. ReIndex will be called in from WzFirstAh#InitFirstRunWz(false).
+            v0.index.resp.isEmpty ||
+            v0.dialogs.first.isVisible ||
+            // geoIntoRcrv: For example, right after wzFirst, location timer is started, and map position must obey to any geolocation.
+            geoLocTimerDataOpt0.exists( _.reason.switchCtx.indexQsArgs.geoIntoRcvr )
+          ))
         ) {
           mapInitModF = mapInitModF andThen MMapInitState
             .state.modify( _.withCenterInitReal(geoLoc.point) )

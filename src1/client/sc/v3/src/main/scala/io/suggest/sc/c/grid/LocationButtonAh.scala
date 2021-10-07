@@ -39,14 +39,16 @@ final class LocationButtonAh[M](
               val finalSwitchCtx = MScSwitchCtx(
                 indexQsArgs   = switchIndexQsArgs,
                 demandLocTest = true,
+                dedupViaScQs  = false,
+                // TODO Почему-то херится полная геолокация по карте на втором switch-index запросе
               )
 
               val fx: Effect = if (isLocationEnabled) {
                 // Location already enabled, this is normal flow. Make immediate answer and timer request.
                 val afterSwitchFxSome = Some {
                   // If cancelled or index switching completed, also cancel geo-lock timer:
-                  Effect.action( GeoLocTimerCancel ) +
-                  Effect.action( GetIndexCancel )
+                  GeoLocTimerCancel.toEffectPure +
+                  GetIndexCancel.toEffectPure
                 }
                 GetIndex(
                   switchCtx = MScSwitchCtx(
@@ -54,6 +56,7 @@ final class LocationButtonAh[M](
                     afterCancelSwitch = afterSwitchFxSome,
                     afterIndex        = afterSwitchFxSome,
                     demandLocTest     = true,
+                    dedupViaScQs      = false,
                   )
                 ).toEffectPure + Effect.action {
                   GeoLocTimerStart(

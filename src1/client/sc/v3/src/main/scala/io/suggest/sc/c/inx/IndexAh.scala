@@ -605,13 +605,25 @@ class IndexAh[M](
       ),
     )
 
+    // Check if index-request args are really changed URL qs:
+    var dedupAgainst = (for {
+      resp0 <- v0.resp
+      // dedupViaScQs: ignore current index resp., if forcing flag defined.
+      if switchCtx.dedupViaScQs
+    } yield {
+      resp0.scQs
+    })
+      .toList
+
+    // For continious demand-index-testing, also deduplicate against already opened switchAsk QueryString args.
+    for {
+      inxAsk <- v0.state.switch.ask
+      if switchCtx.demandLocTest
+    }
+      dedupAgainst ::= inxAsk.okAction.qs
+
     // Deduplicating requests:
-    if (
-      // Forced index reload? Never deduplicate.
-      !reason.isInstanceOf[ReGetIndex] &&
-      // or if index-request args are really changed:
-      (v0.resp.exists(_.scQs ==* args))
-    ) {
+    if (dedupAgainst contains[MScQs] args) {
       // Дубликат запроса. Бывает при запуске, когда jsRouter и wzFirst сыплят одинаковые RouteTo().
       noChange
 
@@ -967,6 +979,7 @@ class IndexAh[M](
         ),
         focusedAdId = None,
         showWelcome = false,
+        dedupViaScQs = false,
       )
 
       _getIndex(

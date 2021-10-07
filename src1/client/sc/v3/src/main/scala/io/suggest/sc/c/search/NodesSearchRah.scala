@@ -76,9 +76,7 @@ class NodesSearchRah(
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
     // Накатить результаты в состояние: помимо данных тегов, надо ещё и для карты маркеры подготовить.
     val g0 = ctx.value0.index.search.geo
-
     val nodesResp = ra.search.get
-    println( getClass.getSimpleName, "applyRespAction()", nodesResp, ctx.m.reason,"\n", g0.rcvrsNotCached, g0.found )
 
     // Надо решить, как поступать с исходным списком: конкатенация или перезапись.
     val nodes2 = g0

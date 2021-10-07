@@ -57,6 +57,7 @@ object MScSwitchCtx {
   * @param afterBack Эффект при переходе назад. Требует storePrevIndex=true или иных условий для IndexAh._indexUpdated().
   * @param afterBackGrid Эффект после "назад" и после получения и обработки начальной порции блоков плитки.
   * @param indexMapReset Обновить гео.карту по индексу узла с сервера.
+  * @param dedupViaScQs Allow index-requests deduplication via qsArgs.
   */
 case class MScSwitchCtx(
                          indexQsArgs      : MScIndexArgs,
@@ -70,6 +71,7 @@ case class MScSwitchCtx(
                          viewsAction      : MScSwitchCtx.ViewsAction   = MScSwitchCtx.ViewsAction.RESET,
                          indexMapReset    : Boolean           = MScSwitchCtx.INDEX_MAP_RESET_DFLT,
                          afterCancelSwitch: Option[Effect]    = None,
+                         dedupViaScQs     : Boolean           = true,
                        ) {
 
   override def toString: String = StringUtil.toStringHelper(this) { f =>
@@ -83,6 +85,7 @@ case class MScSwitchCtx(
     afterBackGrid foreach f("afterBackGrid")
     if (viewsAction !=* MScSwitchCtx.ViewsAction.RESET) f("viewsAction")(viewsAction)
     if (indexMapReset !=* MScSwitchCtx.INDEX_MAP_RESET_DFLT) f("inxMapRst")(indexMapReset)
+    if (!dedupViaScQs) f("dedupViaScQs")(dedupViaScQs)
   }
 
 }
