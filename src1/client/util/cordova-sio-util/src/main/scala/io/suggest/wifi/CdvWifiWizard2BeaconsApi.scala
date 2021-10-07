@@ -130,42 +130,27 @@ final class CdvWifiWizard2BeaconsApi_Android
       )
         .toFuture
     } {
-      for {
-        // Convert timestamp (since device OS boot) to nearest j.t.Instant via comparing with current Instant.
-        // This is totally unprecise, but enought for current usage.
-        latestTstampD <- scanResults
-          .iterator
-          .map( _.timestamp )
-          .maxOption
-        // Guessing: latestTimestamp == now. TODO Increase precision of timestamp convertion.
-        latestTstamp = latestTstampD.toLong
+      val radioSignals = scanResults
+        .iterator
+        .map { wifi =>
+          MRadioSignalJs(
+            signal = MRadioSignal(
+              factoryUid  = Option( wifi.BSSID )
+                // Remove delimiters from MAC-address to make it short for URL query-string:
+                .map( NetworkingUtil.minifyMacAddress ),
+              customName  = Option( wifi.SSID ),
+              rssi        = Some( wifi.level ),
+              typ         = MRadioSignalTypes.WiFi,
+            ),
+            // 2021-11-07: Don't using wifi.timestamp here, because it have plus-minus 10-20 minutes jumps, only using now() here for all results.
+            seenAt = now,
+          )
+        }
+        // Non-lazy list to guarantee thread-safety against JSON-objects, received from plugin.
+        .to( List )
 
-        radioSignals = scanResults
-          .iterator
-          .map { wifi =>
-            MRadioSignalJs(
-              signal = MRadioSignal(
-                factoryUid  = Option( wifi.BSSID )
-                  // Remove delimiters from MAC-address to make it short for URL query-string:
-                  .map( NetworkingUtil.minifyMacAddress ),
-                customName  = Option( wifi.SSID ),
-                rssi        = Some( wifi.level ),
-                typ         = MRadioSignalTypes.WiFi,
-              ),
-              seenAt = {
-                val wifiTstamp = wifi.timestamp.toLong
-                if (wifiTstamp ==* latestTstamp) now
-                else now.minusMillis( latestTstamp - wifiTstamp )
-              },
-            )
-          }
-          // Non-lazy list to guarantee thread-safety against JSON-objects, received from plugin.
-          .to( List )
-
-        if radioSignals.nonEmpty
-      } {
+      if (radioSignals.nonEmpty)
         doDispatch( radioSignals, opts )
-      }
     }
   }
 

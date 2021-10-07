@@ -771,20 +771,15 @@ final class Ident @Inject() (
                 new MNodeSearch {
                   override val nodeTypes = MNodeTypes.Person :: Nil
                   override val outEdges: MEsNestedSearch[Criteria] = {
-                    val should = IMust.SHOULD
                     val phoneNumerCr = Criteria(
                       nodeIds    = regCreds.phone :: Nil,
                       predicates = MPredicates.Ident.Phone :: Nil,
-                      must = should,
+                      must = IMust.MUST,
                       flag = OptionUtil.SomeBool.someTrue,
                     )
-                    val emailCr = Criteria(
-                      nodeIds    = regCreds.email :: Nil,
-                      predicates = MPredicates.Ident.Email :: Nil,
-                      must = should,
-                      flag = OptionUtil.SomeBool.someTrue,
-                    )
-                    MEsNestedSearch.plain( phoneNumerCr, emailCr )
+                    // DO NOT search via email here, because during signUp email is not-so-good checked:
+                    // 3rd party anonymous user may register over foreign email, if to search aslo via email here.
+                    MEsNestedSearch.plain( phoneNumerCr )
                   }
                   // Надо падать на ситуации, когда есть несколько узлов с одним номером телефона.
                   override def limit = 2

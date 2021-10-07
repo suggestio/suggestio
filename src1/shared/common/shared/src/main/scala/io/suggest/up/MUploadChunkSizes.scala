@@ -18,7 +18,7 @@ object MUploadChunkSizes extends IntEnum[MUploadChunkSize] {
 
   case object S_1mib extends MUploadChunkSize( 1048576 )
 
-  def default: MUploadChunkSize = S256k
+  def default: MUploadChunkSize = S_1mib
   def max = values.last
 
   override def values = findValues

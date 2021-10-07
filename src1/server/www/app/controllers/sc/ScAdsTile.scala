@@ -362,8 +362,6 @@ final class ScAdsTile @Inject() (
           }
         }
       } yield {
-        if (mads2.isEmpty)
-          LOGGER.debug(s"$logPrefix Missing all/any ads, NO 404 ads from [$nodeId404], something going wrong.")
         mads2.zipWithIndex
       }
 

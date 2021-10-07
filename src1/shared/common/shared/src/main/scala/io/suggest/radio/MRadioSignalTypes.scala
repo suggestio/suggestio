@@ -22,16 +22,18 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
       * "9 seconds" turned out to be not enough on android at the end of 2020y - the card disappeared & appeared.
       */
     override def lostAfterSeconds = 20
+    override def showDistance = true
   }
 
   /** Wi-Fi radio signal. */
   case object WiFi extends MRadioSignalType("wifi") {
     override def goneAwayAfterSeconds = 20
     // Possible values from random measurments https://www.researchgate.net/figure/RSSI-versus-distance-for-BLE-Wi-Fi-and-XBee_fig5_317150846
-    override def rssi0 = Some( -27 )
+    override def rssi0 = Some( -2 )
     override def distance0m = Some( 0 )
     override def nodeType = MNodeTypes.RadioSource.WifiAP
     override def lostAfterSeconds = 45
+    override def showDistance = false
   }
 
 
@@ -57,6 +59,8 @@ sealed abstract class MRadioSignalType(override val value: String) extends Strin
 
   /** After how much time of radio-silence, this signal will be marked as lost? */
   def lostAfterSeconds: Int
+
+  def showDistance: Boolean
 
 }
 

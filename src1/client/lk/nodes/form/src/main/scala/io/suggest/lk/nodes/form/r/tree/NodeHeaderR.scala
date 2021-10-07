@@ -99,11 +99,12 @@ final class NodeHeaderR(
               if (!beacon.isVisible) {
                 Mui.SvgIcons.SignalWifi0Bar
               } else signal.rssi.fold[MuiSvgIcon]( Mui.SvgIcons.Wifi ) { rssi =>
-                if (rssi > -50) Mui.SvgIcons.SignalWifi4Bar
-                else if (rssi > -60) Mui.SvgIcons.SignalWifi3Bar
-                else if (rssi > -70) Mui.SvgIcons.SignalWifi2Bar
-                else if (rssi > -80) Mui.SvgIcons.SignalWifi1Bar
-                else Mui.SvgIcons.SignalWifi0Bar
+                val rssiAbs = Math.abs( rssi )
+                if (rssiAbs > 95) Mui.SvgIcons.SignalWifi0Bar
+                else if (rssiAbs > 85) Mui.SvgIcons.SignalWifi1Bar
+                else if (rssiAbs > 70) Mui.SvgIcons.SignalWifi2Bar
+                else if (rssiAbs > 55) Mui.SvgIcons.SignalWifi3Bar
+                else Mui.SvgIcons.SignalWifi4Bar
               }
 
             case MRadioSignalTypes.BluetoothEddyStone =>
@@ -220,7 +221,7 @@ final class NodeHeaderR(
         // Если не-adv режим, то отрендерить в заголовке расстояние до маячка.
         (for {
           beacon <- st.beacon
-          if !s.isAdv
+          if !s.isAdv && beacon.data.signal.signal.typ.showDistance
         } yield {
           val chs = lkNodesFormCss.consume { lkNodesCss =>
             MuiTypoGraphy {

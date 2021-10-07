@@ -215,7 +215,7 @@ final class ScAdSearchUtil @Inject() (
         }
       )
 
-      lazy val logPrefix = s"_bleBeacons2search(${bcnsQs.size}bcns)[${System.currentTimeMillis()}]:"
+      lazy val logPrefix = s"_radioBeaconsSearch(${bcnsQs.size}bcns)[${System.currentTimeMillis()}]:"
       LOGGER.trace(s"$logPrefix Beacons = ${bcnsQs.mkString(", ")}.\n Dirty bcn uids set: ${_uidsQs.mkString(", ")}")
 
       for {
@@ -252,7 +252,7 @@ final class ScAdSearchUtil @Inject() (
             val _qsBeacons2 = qsBeacons2
 
             if (_qsBeacons2.isEmpty) {
-              LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
+              LOGGER.trace(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
               Nil
             } else {
               // Difference between tag search and main-screen search in predicate level and nodes-level:

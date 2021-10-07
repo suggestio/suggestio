@@ -70,7 +70,7 @@ case class MBeaconerS(
                        isEnabled            : Pot[Boolean]               = Pot.empty,
                        afterOnOff           : Option[Effect]             = None,
                        notifyAllTimer       : Option[MTsTimerId]         = None,
-                       beacons              : Map[String, MRadioData]   = Map.empty,
+                       beacons              : Map[String, MRadioData]    = Map.empty,
                        nearbyReport         : BeaconsNearby_t            = Nil,
                        gcIntervalId         : Option[Int]                = None,
                        envFingerPrint       : Option[Int]                = None,
