@@ -371,7 +371,7 @@ matrix:
   synapse:
     image:
       repository: "matrixdotorg/synapse"
-      tag: v1.22.1
+      tag: "v1.44.0"
       pullPolicy: IfNotPresent
     service:
       type: ClusterIP
@@ -469,7 +469,7 @@ matrix:
     # Element Kubernetes resource settings
     image:
       repository: "vectorim/riot-web"
-      tag: v1.7.12
+      tag: "v1.7.34-rc.1"
       pullPolicy: IfNotPresent
     service:
       type: ClusterIP
@@ -555,7 +555,7 @@ matrix:
       enabled: true
       image:
         repository: "devture/exim-relay"
-        tag: "4.93.1-r0"
+        tag: "4.94.2-r0-4"
         pullPolicy: IfNotPresent
       service:
         type: ClusterIP
@@ -605,7 +605,7 @@ matrix:
 
       image:
         repository: "matrixdotorg/matrix-appservice-irc"
-        tag: "release-0.22.0-rc1"
+        tag: "release-0.31.0"
         pullPolicy: IfNotPresent
       replicaCount: 1
       resources: {}

@@ -12,7 +12,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.DoNothing
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 import scala.collection.immutable.HashMap
@@ -128,8 +128,12 @@ final class CordovaLocalNotificationAh[M](
 
       } else if ( m.isStart && CordovaNotificationlLocalUtil.isCnlApiAvailable()) {
         // Сразу узнать текущее состояние разрешений доступа:
-        val fx = NotificationPermAsk(isVisible = false).toEffectPure
-        effectOnly( fx )
+        if (v0.permission contains[Boolean] true) {
+          noChange
+        } else {
+          val fx = NotificationPermAsk(isVisible = false).toEffectPure
+          effectOnly( fx )
+        }
 
       } else if (v0.listeners.nonEmpty) {
         val cancelFx = Effect.action {
@@ -437,10 +441,9 @@ final class CordovaLocalNotificationAh[M](
     case m: NotificationPermAsk =>
       // Залить pending в состояние, если там ещё не pending.
       val v0 = value
-      val v2Opt = if (v0.permission.isPending) {
-        None
-      } else {
-        Some( MCnlNotifierS.permission.modify(_.pending())(v0) )
+
+      val v2Opt = Option.when(!v0.permission.isPending) {
+        MCnlNotifierS.permission.modify(_.pending())(v0)
       }
 
       // Расшаренное между эффектами значение проверки прав доступа:
@@ -462,15 +465,7 @@ final class CordovaLocalNotificationAh[M](
       // Надо поместить состояние контроллера результат запроса, если оно изменилось.
       var fx: Effect = Effect {
         for (isAllowedOpt <- isAllowedOptFut) yield {
-          (for {
-            // Нет смысла сохранять None в состояние.
-            isAllowed <- isAllowedOpt
-            // Notify-система должна быть активна.
-            if !(v0.permission contains[Boolean] isAllowed)
-          } yield {
-            CnlSavePermission( isAllowedOpt )
-          })
-            .getOrElse( DoNothing )
+          CnlSavePermission( isAllowedOpt )
         }
       }
 
@@ -495,12 +490,15 @@ final class CordovaLocalNotificationAh[M](
       if (m.isAllowedOpt.isEmpty && !v0.permission.isPending) {
         noChange
       } else {
-        val v2 = MCnlNotifierS.permission.modify { permPot0 =>
-          m.isAllowedOpt
-            .fold( permPot0.unPending )( permPot0.ready )
-        }(v0)
-
-        updated(v2)
+        val permPot0 = v0.permission
+        val permPot2 = m.isAllowedOpt
+          .fold( permPot0.unPending )( permPot0.ready )
+        if (permPot2 ==* permPot0) {
+          noChange
+        } else {
+          val v2 = MCnlNotifierS.permission.set(permPot2) (v0)
+          updated(v2)
+        }
       }
 
   }

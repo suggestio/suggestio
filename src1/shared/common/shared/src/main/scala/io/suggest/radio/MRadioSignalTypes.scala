@@ -25,10 +25,12 @@ object MRadioSignalTypes extends StringEnum[MRadioSignalType] {
     override def showDistance = true
   }
 
+
   /** Wi-Fi radio signal. */
   case object WiFi extends MRadioSignalType("wifi") {
     override def goneAwayAfterSeconds = 20
-    // Possible values from random measurments https://www.researchgate.net/figure/RSSI-versus-distance-for-BLE-Wi-Fi-and-XBee_fig5_317150846
+    // Possible values from random measurments https://www.researchgate.net/figure/RSSI-versus-distance-for-BLE-Wi-Fi-and-XBee_fig5_317150846 => -20 dbm
+    // TODO Need to check/change distance formula (RadioUtil) or distanceCm-rssi0 combination here.
     override def rssi0 = Some( -2 )
     override def distance0m = Some( 0 )
     override def nodeType = MNodeTypes.RadioSource.WifiAP
@@ -60,6 +62,7 @@ sealed abstract class MRadioSignalType(override val value: String) extends Strin
   /** After how much time of radio-silence, this signal will be marked as lost? */
   def lostAfterSeconds: Int
 
+  /** Is allow rendering (and calculating) in-meters distance (via RSSI/RSSI0) in nodes management (LkNodes) interface. */
   def showDistance: Boolean
 
 }
