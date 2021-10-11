@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIcon, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIcon, MuiSvgIconProps, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -11,6 +11,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.lk.nodes.{MLknOpKeys, MLknOpValue}
+import io.suggest.lk.r.plat.PlatformComponents
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.netif.NetworkingUtil
 import io.suggest.radio.MRadioSignalTypes
@@ -39,6 +40,7 @@ final class NodeHeaderR(
                          treeStuffR           : TreeStuffR,
                          crCtxP               : React.Context[MCommonReactCtx],
                          lkNodesFormCss       : React.Context[LkNodesFormCss],
+                         platformComponents   : PlatformComponents,
                        ) {
 
   case class PropsVal(
@@ -297,7 +299,7 @@ final class NodeHeaderR(
               override val onClick = _stopPropagationCbF
             }
           )(
-            MuiSwitch(
+            platformComponents.muiSwitch(
               new MuiSwitchProps {
                 override val checked = {
                   advPot

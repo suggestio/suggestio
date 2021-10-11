@@ -2,6 +2,7 @@ package util.acl
 
 import javax.inject.Inject
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.err.HttpResultingException
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{MAdProdNodesChainReq, MUserInit, MUserInits}
 import play.api.mvc._
@@ -46,41 +47,67 @@ final class CanFreelyAdvAdOnNode @Inject() (
 
         val madReqOptFut = canAdvAd.maybeAllowed(adId, ireq)
         val user = ireq.user
-        val nodesChainOptFut = isNodeAdmin.isNodeChainAdmin(nodeKey, user)
+        lazy val logPrefix = s"($adId, ${nodeKey.mkString("/")}):"
 
-        MUserInits.initUser(user, userInits1)
+        val nodesChainOptFut = isNodeAdmin
+          .isNodeChainAdmin(nodeKey, user)
+          .filter(_.nonEmpty)
+          .recoverWith {
+            // For single-length paths use legacy path-less detection: view as node id only.
+            // For example, LkNodes form => visible radio-beacons list => own radio-beacon => isAdv flag changed.
+            case ex: Throwable if (nodeKey.lengthIs == 1) =>
+              if (!ex.isInstanceOf[NoSuchElementException])
+                LOGGER.warn( s"$logPrefix Recovering unexpected exception for nodesChain $nodeKey", ex )
 
-        def logPrefix = s"apply($adId, ${nodeKey.mkString("/")}):"
+              isNodeAdmin.isNodeAdminUpFrom(
+                nodeId = nodeKey.head,
+                user   = user,
+              )
+          }
+          .recover { case ex: Throwable =>
+            if (!ex.isInstanceOf[NoSuchElementException])
+              LOGGER.warn( s"$logPrefix Unrecoverable exception for nodeChain ${nodeKey}", ex )
+            None
+          }
 
-        madReqOptFut.flatMap {
-          // Проверка доступа к карточке выполнена успешно.
-          case Some(madProdReq) =>
-            // Теперь проверить узлы, заданные в nodeKey:
-            nodesChainOptFut.flatMap {
-              // Успешно проверена вся цепочка узлов. Можно запускать код экшена.
-              case Some(nodesChain) =>
-                val mreq2 = MAdProdNodesChainReq(
-                  mad         = madProdReq.mad,
-                  producer    = madProdReq.producer,
-                  nodesChain  = nodesChain,
-                  request     = ireq,
-                  user        = user
-                )
-                block(mreq2)
-
-              // Был доступ к карточке, но нет доступа на указанный узел. В норме этой ситуации не должно возникать.
-              case None =>
-                LOGGER.warn(s"$logPrefix User#$user have adv access to ad#$adId, but nodes chain access validation failed.")
-                httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"Failed in ${RcvrKey.rcvrKey2urlPath(nodeKey)}" )
-            }
-
-          // Проверка прав на карточку рекламную не пройдена.
-          case None =>
+        (for {
+          madProdReqOpt <- madReqOptFut
+          madProdReq = madProdReqOpt getOrElse {
+            // No access to ad-card for current user.
             LOGGER.warn(s"$logPrefix User have no access for ad#$adId.")
-            httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"No access for ad#$adId" )
-        }
+            throw new HttpResultingException(
+              httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"No access for ad#$adId" ),
+            )
+          }
 
+          _ = MUserInits.initUser(user, userInits1)
+          nodesChainOpt <- nodesChainOptFut
+          nodesChain = nodesChainOpt getOrElse {
+            // No access to pointed node. In normal flow, this just should not happen.
+            LOGGER.warn(s"$logPrefix User#$user have adv access to ad#$adId, but nodes chain access validation failed.")
+            throw new HttpResultingException(
+              httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"Failed in ${RcvrKey.rcvrKey2urlPath(nodeKey)}" )
+            )
+          }
+
+          // Successfully verified node chain.
+          mreq2 = MAdProdNodesChainReq(
+            mad         = madProdReq.mad,
+            producer    = madProdReq.producer,
+            nodesChain  = nodesChain,
+            request     = ireq,
+            user        = user
+          )
+          result <- block( mreq2 )
+
+        } yield {
+          result
+        })
+          .recoverWith {
+            case ex: HttpResultingException => ex.httpResFut
+          }
       }
+
     }
   }
 

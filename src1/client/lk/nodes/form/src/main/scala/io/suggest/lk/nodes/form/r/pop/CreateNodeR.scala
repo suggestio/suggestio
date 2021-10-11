@@ -162,30 +162,6 @@ class CreateNodeR(
         override val variant = MuiTextField.Variants.standard
       }
 
-      lazy val nodeTypesSelectOptions = {
-        MNodeTypes
-          .lkNodesUserCanCreate
-          .map[VdomNode] { ntype =>
-            val optionText = crCtxP.message( ntype.singular )
-
-            if (isUseNativeSelect) {
-              <.option(
-                ^.value := ntype.value,
-                ^.key := ntype.value,
-                optionText,
-              )
-            } else {
-              MuiMenuItem.component.withKey( ntype.value )(
-                new MuiMenuItemProps {
-                  override val value = ntype.value
-                }
-              )(
-                optionText,
-              )
-            }
-          }
-      }
-
       // Готовим функция-рендерер для всех элементов селекта:
       val renderF = if (isUseNativeSelect) {
         (nodePathStr: String, mnsNodePathRev: Either[String, (MNodeState, NodePath_t)]) =>
@@ -238,8 +214,35 @@ class CreateNodeR(
           ): VdomElement
       }
 
+      val platCss = platformCssStatic()
+
       crCtxP.consume { crCtx =>
-        val platCss = platformCssStatic()
+        // Options for select of node types.
+        lazy val nodeTypesSelectOptions = {
+          MNodeTypes
+            .lkNodesUserCanCreate
+            .map[VdomNode] { ntype =>
+              val optionText = crCtx.messages( ntype.singular )
+
+              if (isUseNativeSelect) {
+                crCtxP.consume { crCtx =>
+                  <.option(
+                    ^.value := ntype.value,
+                    ^.key := ntype.value,
+                    optionText,
+                  )
+                }
+              } else {
+                MuiMenuItem.component.withKey( ntype.value )(
+                  new MuiMenuItemProps {
+                    override val value = ntype.value
+                  }
+                )(
+                  optionText,
+                )
+              }
+            }
+        }
 
         val diaChs = List[VdomElement](
           // Заголовок окна:

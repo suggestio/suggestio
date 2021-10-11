@@ -347,7 +347,7 @@ final class AdvBuilderUtil @Inject() (
                          next: Iterable[MItem] => IAdvBuilder,
                        ): IAdvBuilder = {
 
-    lazy val logPrefix = s"installNodeGeoTag(${System.currentTimeMillis}):"
+    lazy val logPrefix = s"installNodeGeoTag(${System.currentTimeMillis} pred#$predicate itype#$itype):"
 
     val (tagItems, other) = items.partition { i =>
       // Интересуют только item'ы тегов, у которых всё правильно оформлено.
@@ -399,7 +399,7 @@ final class AdvBuilderUtil @Inject() (
                   val tnIdOpt = tnOpt.flatMap(_.id)
                   // If tag is missing in state, do crash: logical error here and it need attention.
                   if (tnIdOpt.isEmpty)
-                    throw new IllegalStateException(s"$logPrefix No tag-node found for tag-face or _id missing: $tnOpt")
+                    throw new IllegalStateException(s"$logPrefix No tag-node found for tag-face or _id missing: ''$tagFace'' => ${tnOpt.orNull}\n Tag faces[${tagFacesSet.size}]: [${tagFacesSet.mkString(", ")}]\n GsItems[${gsItems.size}] = [${gsItems.iterator.flatMap(_.id).mkString(", ")}]")
                   tnIdOpt
                 }
                 .toSet

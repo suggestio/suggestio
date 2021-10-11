@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
+import io.suggest.lk.r.plat.PlatformComponents
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -23,6 +24,7 @@ final class NodeAdvRowR(
                          treeStuffR           : TreeStuffR,
                          lkNodesFormCssP      : React.Context[LkNodesFormCss],
                          crCtxP               : React.Context[MCommonReactCtx],
+                         platformComponents   : PlatformComponents,
                        ) {
 
   case class PropsVal(
@@ -72,7 +74,7 @@ final class NodeAdvRowR(
             ReactCommonUtil.maybeNode( s.flag.isPending ) {
               treeStuffR.LineProgress()
             },
-            MuiSwitch(
+            platformComponents.muiSwitch(
               new MuiSwitchProps {
                 override val checked  = s.flag contains true
                 override val disabled = s.flag.isPending
