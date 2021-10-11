@@ -29,6 +29,8 @@ class YakaUtil @Inject() (
   with IMPaySystem
 {
 
+  private def configuration = injector.instanceOf[Configuration]
+
   /** id магазина в системе яндекс-кассы.
     * По идее, всегда одинков, т.к. это номер единственного аккаунта по БД яндекса.
     */
@@ -54,15 +56,7 @@ class YakaUtil @Inject() (
     override def eshopActionMethod = HttpVerbs.POST
 
     /** URL экшена оплаты. */
-    override def eshopActionUrl: String = {
-      val sb = new StringBuilder(40)
-        .append( "https://" )
-      // Для демо-кассы надо demo-домен юзать.
-      if (isDemo)
-        sb.append( "demo" )
-      sb.append( "money.yandex.ru/eshop.xml" )
-        .toString()
-    }
+    override def eshopActionUrl = "https://yoomoney.ru/eshop.xml"
 
     override final def toString = super.toString
   }
@@ -70,11 +64,11 @@ class YakaUtil @Inject() (
 
   /** Доступные для работы конфигурации яндекс-кассы. */
   lazy val PROFILES: Map[MTestProdMode, IYakaProfile] = {
-    val iter = for {
-      confSeq <- injector.instanceOf[Configuration]
+    (for {
+      conf <- configuration
         .getOptional[Seq[Configuration]](CONF_PREFIX + "profiles")
         .iterator
-      conf    <- confSeq
+        .flatten
       scId    <- conf.getOptional[Long]("scid")
       modeId  <- conf.getOptional[String]("mode")
     } yield {
@@ -86,8 +80,8 @@ class YakaUtil @Inject() (
       )
       LOGGER.debug(s"PROFILES: Found profile $yProf")
       mode -> yProf
-    }
-    iter.toMap
+    })
+      .toMap
   }
 
   LOGGER.info(s"${PROFILES.size} profiles total: ${PROFILES.mkString("\n ", " \n ", "")}")
