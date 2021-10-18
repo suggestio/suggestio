@@ -294,14 +294,14 @@ final class LkAdvExt @Inject() (
           .toMap
 
         for (targets <- _targetsFut) yield {
-          val iter = for {
+          (for {
             target <- targets.iterator
             tgId   <- target.id
             info   <- targetsMap.get(tgId)
           } yield {
             MExtTargetInfoFull(target, info.returnTo)
-          }
-          iter.toList
+          })
+            .toList
         }
       }
 

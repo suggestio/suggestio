@@ -1194,3 +1194,7 @@ Adv.in.tag=Размещение в #теге
 
 Requesting.permission=Запрашивается разрешение...
 Current.location=Текущее местоположение
+
+Cannot.connect.to.remote.system=Нет связи с удалённой системой
+Check.your.internet.connection.and.retry=Проверьте ваше интернет-соединение и повторите попытку.
+

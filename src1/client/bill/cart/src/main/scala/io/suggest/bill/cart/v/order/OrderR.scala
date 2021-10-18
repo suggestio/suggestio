@@ -4,6 +4,7 @@ import com.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
 import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}
+import io.suggest.bill.cart.v.pay.CartPayR
 import io.suggest.bill.cart.v.txn.TxnsR
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
@@ -24,11 +25,11 @@ import japgolly.univeq._
 class OrderR(
               cartCss                : OrderCss,
               jdCssStatic            : JdCssStatic,
+              cartPayR               : CartPayR,
               val itemRowR           : ItemRowR,
               val itemsTableHeadR    : ItemsTableHeadR,
               val itemsTableBodyR    : ItemsTableBodyR,
               val itemsToolBarR      : ItemsToolBarR,
-              val goToPayBtnR        : GoToPayBtnR,
               val orderInfoR         : OrderInfoR,
               val txnsR              : TxnsR,
             ) {
@@ -42,7 +43,6 @@ class OrderR(
                     orderHeadC      : ReactConnectProxy[itemsTableHeadR.Props_t],
                     orderBodyC      : ReactConnectProxy[itemsTableBodyR.Props_t],
                     toolBarPropsC   : ReactConnectProxy[itemsToolBarR.Props_t],
-                    goToPayPropsC   : ReactConnectProxy[goToPayBtnR.Props_t],
                     orderOptC       : ReactConnectProxy[orderInfoR.Props_t],
                     txnsPricedOptC  : ReactConnectProxy[txnsR.Props_t],
                   )
@@ -81,11 +81,8 @@ class OrderR(
         <.br,
         <.br,
 
-        // PAY button, when payment is possible (non-empty cart-order).
-        s.goToPayPropsC { goToPayBtnR.component.apply },
-
-        <.br,
-        <.br,
+        // Payment controls:
+        cartPayR.component( propsProxy ),
 
         // Transactions list, if any:
         s.txnsPricedOptC { txnsR.component.apply }
@@ -141,23 +138,6 @@ class OrderR(
             )
           }
         }( OptFastEq.Wrapped( itemsToolBarR.ItemsToolBarRPropsValFastEq ) ),
-
-        goToPayPropsC = propsProxy.connect { props =>
-          for {
-            // TODO onNodeId: Allow to submit without nodeId, currenly Lk API historically depends on onNodeId, but not very needed.
-            onNodeId <- props.conf.onNodeId
-            if props.order.orderContents.exists { ocJs =>
-              val oc = ocJs.content
-              oc.items.nonEmpty &&
-              oc.order.exists(_.status ==* MOrderStatuses.Draft)
-            }
-          } yield {
-            goToPayBtnR.PropsVal(
-              onNodeId = onNodeId,
-              disabled = props.order.orderContents.isPending
-            )
-          }
-        }( OptFastEq.Wrapped( goToPayBtnR.GoToPayBtnRPropsValFastEq ) ),
 
         orderOptC = propsProxy.connect { mroot =>
           for {

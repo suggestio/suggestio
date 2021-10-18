@@ -1,4 +1,4 @@
-@(orderIdOpt: Option[Gid_t], mnode: MNode, formStateB64: String)(implicit ctx: Context)
+@(orderIdOpt: Option[Gid_t], mnode: MNode, formStateB64: String, isCartPayable: Boolean)(implicit ctx: Context)
 
 @* Шаблон для react-компонента cart-page. *@
 
@@ -9,14 +9,23 @@
 @import io.suggest.adv.AdvConstants
 @import lk.lkwdgts._formStateInputTpl
 @import io.suggest.i18n.MsgCodes
+@import io.suggest.pay.MPaySystems
 @import views.html.stuff.{jsTpl2HtmlTpl, _preLoaderLkTpl}
 @import views.js.stuff.jsRevRouterTpl
+
+@cartHeadAfter() = {
+  @* Prefetch all supported PaySystems widgets JS in background. *@
+  @for( paySystem <- MPaySystems.values; scriptUrl <- paySystem.payWidgetJsScriptUrl) {
+     <link rel="prefetch" as="script" href="@scriptUrl" />
+  }
+}
 
 @billingBaseTpl(
   title       = orderIdOpt.fold( messages(MsgCodes.`Cart`) )( messages(MsgCodes.`Order.N`, _) ),
   mnode       = mnode,
   rightCurrEl = Some( mlk.BillingRightPanelLinks.RPL_CART ),
-  rightAfter  = Some( _rightPriceContTpl()() )
+  rightAfter  = Some( _rightPriceContTpl()() ),
+  headAfter   = Option.when( isCartPayable )( cartHeadAfter() ),
 ) {
 
   @_formStateInputTpl( formStateB64 )
@@ -30,8 +39,9 @@
     jsRevRouterTpl( csrfAll = true, cdn = false )(
       routes.javascript.LkBill2.getOrder,
       routes.javascript.LkBill2.deleteItems,
-      routes.javascript.LkBill2.cartSubmit
-    )
+      routes.javascript.LkBill2.cartSubmit,
+      routes.javascript.LkBill2.thanksForBuy,
+)
   )
 
 }

@@ -272,5 +272,6 @@ object ErrorMsgs {
   def INTENT_ACTION_UNKNOWN = "Intent.action.unknown"
 
   def WIFI_SSID_INVALID = "Wifi.ssid.invalid"
+  def CANNOT_CONNECT_TO_REMOTE_SYSTEM = "Cannot.connect.to.remote.system"
 
 }

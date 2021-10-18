@@ -65,7 +65,7 @@ class CspUtil @Inject() (
 
       CspHeader(
         policy = CspPolicy(
-          defaultSrc  = commonSources,
+          defaultSrc  = Set.empty[String] + Csp.Sources.SELF,
           imgSrc      = commonSources + Csp.Sources.DATA ++ cdnNodes,
           styleSrc    = commonSourcesWithInline,
           scriptSrc   = commonSourcesWithInline,

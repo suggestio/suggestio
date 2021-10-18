@@ -28,6 +28,7 @@ object HttpConst {
     final def CONTENT_RANGE         = Words.Content_ + RANGE
     final def COOKIE                = "Cookie"
     final def SET_COOKIE            = "Set-Cookie"
+    final def IDEMPOTENCE_KEY       = "Idempotence-Key"
 
     object XRequestedWith {
       final def XRW_VALUE           = "XHR"

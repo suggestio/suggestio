@@ -38,3 +38,5 @@ case class MMessage(
                      args    : JsArray = JsArray.empty,
                    )
 
+
+case class MMessageException( mmessage: MMessage ) extends RuntimeException

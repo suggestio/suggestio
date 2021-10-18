@@ -3,8 +3,11 @@ package io.suggest.pay
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.bill._
 import io.suggest.common.empty.OptionUtil
+import io.suggest.enum2.EnumeratumUtil
 import io.suggest.i18n.MsgCodes
+import io.suggest.sec.csp.CspPolicy
 import japgolly.univeq._
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -48,10 +51,50 @@ object MPaySystems extends StringEnum[MPaySystem] {
     // 2016.may.12: Яндекс-касса уже починила фреймы 2 недели назад. Пока просто отключаем отработку фреймов тут:
     override def returnRespHdr_XFrameOptions_AllowFrom = None // Some( "https://money.yandex.ru/cashdesk/" )
 
+    /** At most one external script is supported.
+      * For possible multi-script loads in future, will need to implement support for parallel async+defer script loads.
+      */
+    override def payWidgetJsScriptUrl = None
   }
 
 
-  /** Все платёжные системы. */
+  /** YandexKassa transferred to Sberbank and renamed into "YooKassa" with new API v3. */
+  case object YooKassa extends MPaySystem("yookassa") {
+
+    override def supportedCurrency(currency: MCurrency): Option[ICurrencyPayInfo] = {
+      // By now, only RUB is supported on
+      val rub = MCurrencies.RUB
+      OptionUtil.maybe( currency ==* rub ) {
+        val centsInRub = rub.centsInUnit
+        MCurrencyPayInfo(
+          currency              = rub,
+          // Lower limit: bank cards cannot pay above 1 RUB.
+          lowerDebtLimitOpt     = Some( centsInRub ),
+          // Upper limit: big random.
+          upperDebtLimitOpt     = Some( 1000000 * centsInRub )
+        )
+      }
+    }
+    override def nameI18n = MsgCodes.`YooKassa`
+    override def nodeIdOpt = Some( nameI18n )
+    /** YooKassa js-widget needs additional CSP headers on related page. */
+    override def orderPageCsp = Some {
+      val subSet = Set.empty[String] + "https://*.yookassa.ru/" + "https://yookassa.ru/" + "https://yoomoney.ru/" + "https://*.yoomoney.ru/" + "https://yastatic.net"
+      (
+        CspPolicy.defaultSrc.modify( _ ++ subSet ) andThen
+        CspPolicy.scriptSrc.modify( _ ++ subSet ) andThen
+        CspPolicy.imgSrc.modify(_ ++ subSet ) andThen
+        CspPolicy.styleSrc.modify(_ ++ subSet) andThen
+        CspPolicy.connectSrc.modify(_ ++ subSet)
+      )
+    }
+
+    override def payWidgetJsScriptUrl = Some( "https://yookassa.ru/checkout-widget/v1/checkout-widget.js" )
+  }
+
+
+  def default: MPaySystem = YooKassa
+
   override def values = findValues
 
 }
@@ -83,10 +126,16 @@ sealed abstract class MPaySystem(override val value: String) extends StringEnumE
     */
   def returnRespHdr_XFrameOptions_AllowFrom: Option[String] = None
 
+  def orderPageCsp: Option[CspPolicy => CspPolicy] = None
+
+  def payWidgetJsScriptUrl: Option[String]
 }
 
+object MPaySystem {
 
-/** Интерфейс для инстансов, содержащих поле платежной системы. */
-trait IMPaySystem {
-  def paySystem: MPaySystem
+  @inline implicit def univEq: UnivEq[MPaySystem] = UnivEq.derive
+
+  implicit def paySystemJson: Format[MPaySystem] =
+    EnumeratumUtil.valueEnumEntryFormat( MPaySystems )
+
 }

@@ -1,8 +1,8 @@
 package io.suggest.bill.cart
 
 import diode.react.ReactConnector
-import io.suggest.bill.cart.c.{BillConfAh, ILkCartApi, LkCartApiXhrImpl, OrderItemsAh}
-import io.suggest.bill.cart.m.{LoadCurrentOrder, MCartRootS, MOrderItemsS}
+import io.suggest.bill.cart.c.{BillConfAh, CartPayAh, ILkCartApi, LkCartApiHttpImpl, OrderItemsAh}
+import io.suggest.bill.cart.m.{IBillConfAction, ICartPayAction, IOrderItemsAction, LoadCurrentOrder, MCartRootS, MOrderItemsS}
 import io.suggest.bill.cart.u.CartUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.CircuitLog
@@ -51,29 +51,37 @@ abstract class CartCircuitBase
 
 
   // Models
-  private val orderRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.order)( MOrderItemsS.MOrderItemsSFastEq )
-  private val confRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.conf)
+  private def orderRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.order)
+  private def confRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.conf)
+  private def payRW = CircuitUtil.mkLensRootZoomRW( this, MCartRootS.pay )
 
 
   // APIs for controllers
-  val lkCartApi: ILkCartApi = new LkCartApiXhrImpl
+  def lkCartApi: ILkCartApi = new LkCartApiHttpImpl
 
 
   // Controllers
-  private val orderItemsAh = new OrderItemsAh(
+  private def orderItemsAh: HandlerFunction = new OrderItemsAh(
     lkCartApi   = lkCartApi,
     modelRW     = orderRW
   )
 
-  private val billConfAh = new BillConfAh(
+  private def billConfAh: HandlerFunction = new BillConfAh(
     modelRW = confRW
   )
 
-  override protected val actionHandler: HandlerFunction = {
-    composeHandlers(
-      orderItemsAh,
-      billConfAh
-    )
+  private def cartPayAh: HandlerFunction = new CartPayAh(
+    modelRW   = payRW,
+    lkCartApi = lkCartApi,
+  )
+
+  override protected val actionHandler: HandlerFunction = { (mroot, action) =>
+    val handler: HandlerFunction = action match {
+      case _: IBillConfAction           => billConfAh
+      case _: IOrderItemsAction         => orderItemsAh
+      case _: ICartPayAction            => cartPayAh
+    }
+    handler( mroot, action )
   }
 
 

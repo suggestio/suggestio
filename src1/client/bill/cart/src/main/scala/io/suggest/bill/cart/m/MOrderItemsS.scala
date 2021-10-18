@@ -29,6 +29,7 @@ object MOrderItemsS {
 
   def orderContents = GenLens[MOrderItemsS](_.orderContents)
   def itemsSelected = GenLens[MOrderItemsS](_.itemsSelected)
+  def jdRuntime = GenLens[MOrderItemsS](_.jdRuntime)
 
 }
 

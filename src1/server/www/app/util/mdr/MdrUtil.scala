@@ -266,14 +266,14 @@ final class MdrUtil @Inject() (
             .flatMap(_.meta.basic.langs)
             .toSet
           val availLangs = langs.availables.toList
-          val iter = for {
+          (for {
             langCode   <- allLangCodes.iterator
             lang       <- Lang.get( langCode )
           } yield {
             val msgs = messagesApi.preferred( lang :: availLangs )
             langCode -> msgs
-          }
-          iter.toMap
+          })
+            .toMap
         }
 
         personId2EmailsMap <- personId2EmailsMapFut

@@ -71,13 +71,13 @@ case object MImgFormats extends StringEnum[MImgFormat] {
   }
 
   private val _mimeValues: Map[String, MImgFormat] = {
-    val iter = for {
+    (for {
       imgFmt <- values.iterator
       mime   <- imgFmt.allMimes
     } yield {
       mime.toLowerCase -> imgFmt
-    }
-    iter.toMap
+    })
+      .toMap
   }
 
   /**

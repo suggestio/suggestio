@@ -399,7 +399,7 @@ final class AdvBuilderUtil @Inject() (
                   val tnIdOpt = tnOpt.flatMap(_.id)
                   // If tag is missing in state, do crash: logical error here and it need attention.
                   if (tnIdOpt.isEmpty)
-                    throw new IllegalStateException(s"$logPrefix No tag-node found for tag-face or _id missing: ''$tagFace'' => ${tnOpt.orNull}\n Tag faces[${tagFacesSet.size}]: [${tagFacesSet.mkString(", ")}]\n GsItems[${gsItems.size}] = [${gsItems.iterator.flatMap(_.id).mkString(", ")}]")
+                    throw new IllegalStateException(s"$logPrefix No tag-node found for tag-face or _id missing: ''$tagFace'' => ${tnOpt.orNull}\n Tag faces[${tagFacesSet.size}]: [${tagFacesSet.mkString(", ")}]\n GsItems[${gsItems.size}]: [${gsItems.iterator.flatMap(_.id).mkString(", ")}]\n Tag nodes map[${ctxOuter.tagNodesMap.size}]: [${ctxOuter.tagNodesMap.view.mapValues(_.idOrNull).mkString(", ")}]")
                   tnIdOpt
                 }
                 .toSet

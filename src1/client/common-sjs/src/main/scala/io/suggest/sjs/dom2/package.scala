@@ -47,4 +47,7 @@ package object dom2 {
   @inline implicit def xhr2(xhr: dom.XMLHttpRequest): XmlHttpRequest2 =
     xhr.asInstanceOf[XmlHttpRequest2]
 
+  @inline implicit def htmlScriptTagExt( scriptTag: dom.html.Script ): HtmlScriptTagExt =
+    scriptTag.asInstanceOf[HtmlScriptTagExt]
+
 }

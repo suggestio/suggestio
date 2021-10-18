@@ -129,6 +129,7 @@ object MsgCodes {
   val `Adv.for.free.without.moderation` = "Adv.for.free.without.moderation"
 
   val `Yandex.Kassa` = "Yandex.Kassa"
+  val `YooKassa` = "YooKassa"
   val `Order.price` = "Order.price"
   val `Minimal.payment` = "Minimal.payment"
   val `Order.number` = "Order.number"
@@ -534,5 +535,7 @@ object MsgCodes {
   val `Requesting.permission` = "Requesting.permission"
   val `Current.location` = "Current.location"
   val `Continue` = "Continue"
+
+  val `Check.your.internet.connection.and.retry` = "Check.your.internet.connection.and.retry"
 
 }

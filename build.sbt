@@ -172,7 +172,7 @@ lazy val loginFormSjs = {
 /** Scala.js React.js component/forms for Suggest.io billing Cart. */
 lazy val cartSjs = {
   Project(id = "cart-sjs", base = file(DIR0 + "client/bill/cart"))
-    .dependsOn( lkCommonSjs, reactMaterialUiSjs, jdRenderSjs )
+    .dependsOn( lkCommonSjs, reactMaterialUiSjs, jdRenderSjs, yooKassaSjs )
 }
 
 /** Scala.js API form Moment.js. */
@@ -492,6 +492,11 @@ lazy val reactMaterialUiSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** yoomoney js apis. */
+lazy val yooKassaSjs = {
+  Project(id = "scalajs-yookassa", base = file(DIR0 + "client/scalajs/yookassa"))
+}
+
 /** Scala.js API for mui-treasury (material-ui addons). */
 lazy val muiTreasurySjs = {
   Project(id = "scalajs-mui-treasury", base = file(DIR0 + "client/scalajs/mui-treasury"))
@@ -682,7 +687,7 @@ lazy val client = project
     lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,
     asmCryptoJsSjs, asmCryptoSioSjs,
     sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
-    cartSjs,
+    cartSjs, yooKassaSjs,
     flowjsSjs,
   )
 

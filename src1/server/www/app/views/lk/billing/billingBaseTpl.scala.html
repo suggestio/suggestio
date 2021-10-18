@@ -1,5 +1,5 @@
-@(title: String, mnode: MNode, rightCurrEl: Option[mlk.BillingRightPanelLink] = None, rightAfter: Option[Html] = None
-)(content: Html)(implicit ctx: Context)
+@(title: String, mnode: MNode, rightCurrEl: Option[mlk.BillingRightPanelLink] = None, rightAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для шаблонов биллинга в личном кабинете. *@
 
@@ -41,19 +41,11 @@
   @rightAfter
 }
 
-@*
-@headAfter1 = {
-  @_bxSliderCssTpl()
-}
-*@
 
 @lk.lkBaseLayout(
   title       = title,
   leftCurrEl  = Some(mlk.LkLeftPanelLinks.LPL_BILLING),
   nodeOpt     = Some(mnode),
-  rightBar    = Some(rightBar)
+  rightBar    = Some(rightBar),
+  headAfter   = headAfter,
 )(content)
-@* {
-  @content
-  @_bxSliderJsTpl()
-}*@

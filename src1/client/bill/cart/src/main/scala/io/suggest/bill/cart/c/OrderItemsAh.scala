@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.c
 
-import diode.data.PendingBase
+import diode.data.{PendingBase, Pot}
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.bill.cart.m._
 import io.suggest.bill.cart.u.CartUtil
@@ -19,7 +19,7 @@ import scala.util.Success
   * Description: Controller for order-related actions.
   */
 class OrderItemsAh[M](
-                       lkCartApi        : ILkCartApi,
+                       lkCartApi        : => ILkCartApi,
                        modelRW          : ModelRW[M, MOrderItemsS]
                      )
   extends ActionHandler(modelRW)

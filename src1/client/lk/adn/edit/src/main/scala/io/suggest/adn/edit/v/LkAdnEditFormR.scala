@@ -371,7 +371,7 @@ class LkAdnEditFormR(
             if (props.node.resView.galImgs.isEmpty) {
               Nil
             } else {
-              val iter = for {
+              (for {
                 galImg <- props.node.resView.galImgs.iterator
                 edge <- props.node.edges
                   .get( galImg.edgeUid )
@@ -391,8 +391,8 @@ class LkAdnEditFormR(
                   uploadStatus = edge.fileJs
                     .map(_.upload)
                 )
-              }
-              iter.toSeq
+              })
+                .toSeq
             }
           }( FastEqUtil.CollFastEq[nodeGalleryR.PropsValEl, Seq]( nodeGalleryR.NodeGalleryRPropsValElFastEq ) )
         }

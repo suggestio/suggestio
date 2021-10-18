@@ -483,6 +483,8 @@ final class JsMessagesUtil @Inject() (
       MC.`No.transactions.found` ::
       MC.`Payment.for.order.N` ::
       MC.`Transactions` ::
+      MC.`Check.your.internet.connection.and.retry` ::
+      ErrorMsgs.CANNOT_CONNECT_TO_REMOTE_SYSTEM ::
       (ORDER_STATUSES_I18N reverse_::: ITEM_STATUSES_I18N reverse_::: NODE_TYPES_I18N)
   }
 

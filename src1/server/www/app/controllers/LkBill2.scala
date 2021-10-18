@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
-import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
+import io.suggest.bill.cart.{MCartConf, MCartIdeas, MCartInit, MCartSubmitResult, MOrderContent}
 import io.suggest.bill.price.dsl.{MReasonType, MReasonTypes}
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.bill.{MCurrency, MPrice}
@@ -12,7 +12,6 @@ import io.suggest.color.MColors
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
-import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdConf
 import io.suggest.mbill2.m.gid.Gid_t
@@ -21,6 +20,7 @@ import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.pay.MPaySystems
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sec.util.Csrf
@@ -42,6 +42,8 @@ import util.adv.geo.AdvGeoRcvrsUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.GalleryUtil
 import util.mdr.MdrUtil
+import util.pay.yookassa.YooKassaUtil
+import util.sec.CspUtil
 import views.html.lk.billing._
 import views.html.lk.billing.order._
 
@@ -83,6 +85,8 @@ final class LkBill2 @Inject() (
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val mOrders = injector.instanceOf[MOrders]
   private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val yooKassaUtil = injector.instanceOf[YooKassaUtil]
   implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
@@ -453,18 +457,49 @@ final class LkBill2 @Inject() (
           .toString()
       }
 
+      // Check, if cart is payble, so view will also render scripts-prefetching tags to boost possible payment procedure:
+      val isCart = requestOrderIdOpt.isEmpty
+      val isCartPayableFut = if (!isCart) {
+        Future.successful(false)
+      } else {
+        for {
+          orderIdOpt  <- orderIdOptFut
+          cartHasItems <- orderIdOpt.fold( Future.successful(false) ) { orderId =>
+            slick.db.run {
+              bill2Util.orderHasItems( orderId )
+            }
+          }
+        } yield {
+          cartHasItems
+        }
+      }
+
+      // Render CSP HTTP header for possible embed-on-page payment-systems:
+      val cspHeaderOpt = MPaySystems
+        .values
+        .iterator
+        .flatMap( _.orderPageCsp )
+        .reduceLeftOption( _ andThen _ )
+        .flatMap( cspUtil.mkCustomPolicyHdr )
+
       // Данные формы для инициализации.
       for {
         orderIdOpt      <- orderIdOptFut
         formInitB64     <- formInitB64Fut
         ctx             <- ctxFut
+        isCartPayable   <- isCartPayableFut
       } yield {
+        import cspUtil.Implicits._
+
         val html = OrderPageTpl(
           orderIdOpt    = orderIdOpt,
           mnode         = request.mnode,
-          formStateB64  = formInitB64
+          formStateB64  = formInitB64,
+          isCartPayable = isCartPayable,
         )(ctx)
+
         Ok( html )
+          .withCspHeader( cspHeaderOpt )
       }
     }
   }
@@ -608,7 +643,7 @@ final class LkBill2 @Inject() (
         .toSet
       allNodesMap <- allNodesMapFut
     } yield {
-      val iter = for {
+      (for {
         mnode  <- rcvrsIds.iterator.flatMap( allNodesMap.get )
         if mnode.id.nonEmpty
       } yield {
@@ -620,8 +655,8 @@ final class LkBill2 @Inject() (
           name    = mnode.guessDisplayNameOrId,
           // Пока без иконки. TODO Решить, надо ли иконку рендерить?
         )
-      }
-      iter.toSeq
+      })
+        .toSeq
     }
 
     // Собрать множество nodeId из mitems:
@@ -762,12 +797,11 @@ final class LkBill2 @Inject() (
   /**
     * Сабмит формы подтверждения корзины.
     *
-    * @param onNodeId На каком узле сейчас находимся?
     * @return Редирект или страница оплаты.
     */
-  def cartSubmit(onNodeId: String) = csrf.Check {
-    isNodeAdmin(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
-      lazy val logPrefix = s"cartSubmit($onNodeId)#${System.currentTimeMillis()}:"
+  def cartSubmit() = csrf.Check {
+    isAuth().async { implicit request =>
+      lazy val logPrefix = s"cartSubmit()#${System.currentTimeMillis()}:"
 
       // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
       // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
@@ -778,7 +812,7 @@ final class LkBill2 @Inject() (
 
         // Дальше надо бы делать транзакцию
         // Произвести чтение, анализ и обработку товарной корзины:
-        (cartIdea, mdrNotifyCtx, owi) <- slick.db.run {
+        (cartResolution, mdrNotifyCtx, cartWithItems0) <- slick.db.run {
           import slick.profile.api._
           val dbAction = for {
             // Прочитать текущую корзину
@@ -797,46 +831,86 @@ final class LkBill2 @Inject() (
           dbAction.transactionally
         }
 
-      } yield {
-        LOGGER.debug(s"$logPrefix Done, person#${request.user.personIdOpt.orNull} contract#$contractId order#${owi.morder.id.orNull} with ${owi.mitems.size} items\n => ${cartIdea.getClass.getSimpleName}")
+        resp <- {
+          LOGGER.debug(s"$logPrefix Done, person#${request.user.personIdOpt.orNull} contract#$contractId order#${cartWithItems0.order.id.orNull} with ${cartWithItems0.items.size} items\n => ${cartResolution.getClass.getSimpleName}")
+          implicit lazy val ctx = implicitly[Context]
+          cartResolution.idea match {
 
-        cartIdea match {
+            // Need to activate an external payment system:
+            case MCartIdeas.NeedMoney =>
+              val paySystem = MPaySystems.default
+              paySystem match {
+                case MPaySystems.YooKassa =>
+                  val payPrices = cartResolution.needMoney.get
+                  require(payPrices.lengthIs == 1, s"Only one currency allowed for $paySystem")
+                  // TODO payProfile: Detect test/prod using URL qs args, filtering by request.user.isSuper
+                  val payProfile = yooKassaUtil.firstProfile.get
+                  for {
+                    paymentStarted <- yooKassaUtil.preparePayment(
+                      profile   = payProfile,
+                      orderItem = cartResolution.newCart getOrElse cartWithItems0,
+                      payPrice  = payPrices.head,
+                      personOpt = Some( personNode ),
+                    )(ctx)
+                  } yield {
+                    MCartSubmitResult(
+                      cartIdea  = cartResolution.idea,
+                      paySystem = Some( paySystem ),
+                      metadata  = Some( paymentStarted.metadata ),
+                    )
+                  }
 
-          // Недостаточно бабла на балансах юзера в sio, это нормально.
-          case r: MCartIdeas.NeedMoney =>
-            Redirect( controllers.pay.routes.PayYaka.payForm(r.cart.morder.id.get, onNodeId) )
-
-          // Хватило денег на балансах или они не потребовались. Такое бывает в т.ч. после возврата юзера из платежной системы.
-          // Ордер был исполнен вместе с его наполнением.
-          case oc: MCartIdeas.OrderClosed =>
-            // Запустить уведомление по модерации.
-            if (mdrUtil.isMdrNotifyNeeded( mdrNotifyCtx )) {
-              for {
-                personNameOpt <- nodesUtil.getPersonName( request.user.personNodeOptFut )
-                orderTotal = MPrice.toSumPricesByCurrency(oc.cart.mitems).values.headOption
-                tplArgs = MMdrNotifyMeta(
-                  // Вычислить общую суммы обработанного заказа.
-                  paidTotal   = orderTotal,
-                  orderId     = owi.morder.id,
-                  personId    = request.user.personIdOpt,
-                  personName  = personNameOpt
-                )
-                _ <- mdrUtil.sendMdrNotify( mdrNotifyCtx, tplArgs )
-              } {
-                // Do nothing
-                LOGGER.trace(s"$logPrefix Mdr-notify done, personName=${personNameOpt.orNull}, orderTotal=${orderTotal.orNull}")
+                // Deprecated. Support will be removed and not implemented here.
+                case MPaySystems.YaKa =>
+                  ???
               }
-            }
-            // Отправить юзера на страницу "Спасибо за покупку"
-            Redirect( routes.LkBill2.thanksForBuy(onNodeId) )
 
-          // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
-          case MCartIdeas.NothingToDo =>
-            implicit val ctx = implicitly[Context]
-            Redirect( routes.LkBill2.orderPage(onNodeId) )
-              .flashing( FLASH.ERROR -> ctx.messages(MsgCodes.`Your.cart.is.empty`) )
+            // Order was closed, using user's internal balance.
+            case MCartIdeas.OrderClosed =>
+              // In background, generate need-moderation notification to related moderators.
+              if (mdrUtil.isMdrNotifyNeeded( mdrNotifyCtx )) {
+                for {
+                  personNameOpt <- nodesUtil.getPersonName( request.user.personNodeOptFut )
+                  orderTotal = MPrice
+                    .toSumPricesByCurrency(
+                      cartResolution.newCart
+                        .iterator
+                        .flatMap(_.items)
+                    )
+                    .values
+                    .headOption
+                  tplArgs = MMdrNotifyMeta(
+                    // Вычислить общую суммы обработанного заказа.
+                    paidTotal   = orderTotal,
+                    orderId     = cartWithItems0.order.id,
+                    personId    = request.user.personIdOpt,
+                    personName  = personNameOpt
+                  )
+                  _ <- mdrUtil.sendMdrNotify( mdrNotifyCtx, tplArgs )(ctx)
+                } {
+                  // Do nothing
+                  LOGGER.trace(s"$logPrefix Mdr-notify done, personName=${personNameOpt.orNull}, orderTotal=${orderTotal.orNull}")
+                }
+              }
 
+              // Response to client-side js.
+              val resp = MCartSubmitResult(
+                cartIdea = cartResolution.idea,
+              )
+              Future.successful( resp )
+
+
+            // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
+            case MCartIdeas.NothingToDo =>
+              Future successful MCartSubmitResult(
+                cartIdea = cartResolution.idea,
+              )
+
+          }
         }
+
+      } yield {
+        Ok( Json.toJsObject(resp) )
       }
     }
   }

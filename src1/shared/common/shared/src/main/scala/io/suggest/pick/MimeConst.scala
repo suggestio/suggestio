@@ -32,6 +32,7 @@ object MimeConst {
 
 
   final def APPLICATION_JSON            = Words.APPLICATION_ + Words.JSON
+  final def APPLICATION_JAVASCRIPT      = Words.APPLICATION_ + "javascript"
   final def TEXT_HTML                   = Words.TEXT_ + "html"
   final def TEXT_PLAIN                  = Words.TEXT_ + "plain"
   final def APPLICATION_OCTET_STREAM    = Words.APPLICATION_ + "octet-stream"

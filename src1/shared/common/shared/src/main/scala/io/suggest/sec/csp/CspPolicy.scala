@@ -108,6 +108,7 @@ object CspPolicy {
   def frameAncestors = GenLens[CspPolicy]( _.frameAncestors )
   def pluginTypes = GenLens[CspPolicy]( _.pluginTypes )
   def workerSrc = GenLens[CspPolicy]( _.workerSrc )
+  def prefetchSrc = GenLens[CspPolicy](_.prefetchSrc)
 
 
   def allowOsmLeaflet =
@@ -170,6 +171,7 @@ final case class CspPolicy(
                             frameAncestors    : Set[String]     = Set.empty,
                             pluginTypes       : Set[String]     = Set.empty,
                             workerSrc         : Set[String]     = Set.empty,
+                            prefetchSrc       : Set[String]     = Set.empty,
                           )
   extends EmptyProduct
 {

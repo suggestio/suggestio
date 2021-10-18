@@ -64,6 +64,8 @@ object LkCommonModule {
 
   lazy val color2PickerR = wire[Color2PickerR]
 
+  lazy val scriptTagR = wire[ScriptTagR]
+
 }
 
 

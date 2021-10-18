@@ -166,12 +166,12 @@ object MFonts extends StringEnum[MFont] {
     * Это можно обойти, убрав quill, либо отрефакторив названия классов в styl-css-файлах.
     */
   lazy val cssClass2FontMap: Map[String, MFont] = {
-    val iter = for {
+    (for {
       v <- values.iterator
     } yield {
       v.cssFontFamily -> v
-    }
-    iter.toMap
+    })
+      .toMap
   }
 
   def withCssClass(fileName: String): MFont = cssClass2FontMap(fileName)

@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.c
 
-import io.suggest.bill.cart.MOrderContent
+import io.suggest.bill.cart.{MCartSubmitResult, MOrderContent}
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.routes.routes
@@ -33,11 +33,16 @@ trait ILkCartApi {
     */
   def deleteItems(itemIds: Iterable[Gid_t]): Future[MOrderContent]
 
+  /** Submit current cart into payment processing.
+    * @return Future with cart submission result.
+    */
+  def cartSubmit(): Future[MCartSubmitResult]
+
 }
 
 
 /** Bill-Cart API implementation over HTTP Fetch/XHR. */
-final class LkCartApiXhrImpl extends ILkCartApi {
+final class LkCartApiHttpImpl extends ILkCartApi {
 
   override def getOrder(orderId: Option[Gid_t]): Future[MOrderContent] = {
     HttpClient.execute(
@@ -65,6 +70,17 @@ final class LkCartApiXhrImpl extends ILkCartApi {
       .respAuthFut
       .successIf200
       .unJson[MOrderContent]
+  }
+
+  override def cartSubmit(): Future[MCartSubmitResult] = {
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkBill2.cartSubmit(),
+      )
+    )
+      .respAuthFut
+      .successIf200
+      .unJson[MCartSubmitResult]
   }
 
 }

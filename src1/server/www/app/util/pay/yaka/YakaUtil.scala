@@ -6,7 +6,7 @@ import Forms._
 import javax.inject.Inject
 import io.suggest.bill._
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.pay.{IMPaySystem, MPaySystems}
+import io.suggest.pay.MPaySystems
 import io.suggest.primo.{MTestProdMode, MTestProdModes}
 import io.suggest.text.util.TextHashUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -26,7 +26,6 @@ class YakaUtil @Inject() (
                            injector: Injector
                          )
   extends MacroLogsImpl
-  with IMPaySystem
 {
 
   private def configuration = injector.instanceOf[Configuration]
@@ -38,7 +37,7 @@ class YakaUtil @Inject() (
 
   private def CONF_PREFIX = "sio.pay.yaka."
 
-  override def paySystem = MPaySystems.YaKa
+  def paySystem = MPaySystems.YaKa
 
 
   /** Реализация IYakaConf. */

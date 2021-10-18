@@ -8,6 +8,7 @@ import akka.stream.scaladsl.{Keep, Sink}
 
 import javax.inject.Inject
 import io.suggest.bill._
+import io.suggest.bill.cart.{MCartIdeas, MCartResolution}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
@@ -24,7 +25,6 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystem
 import io.suggest.primo.id._
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
-import models.mbill.MCartIdeas
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
@@ -272,6 +272,16 @@ final class Bill2Util @Inject() (
       .headOption
   }
 
+  def orderHasItems(orderId: Gid_t): DBIOAction[Boolean, NoStream, Effect.Read] = {
+    mItems
+      .query
+      .filter { i =>
+        i.orderId === orderId
+      }
+      .exists
+      .result
+  }
+
   private def _getLastOrderSql(contractId: Gid_t, status: MOrderStatus) = {
     mOrders.query
       .filter { q =>
@@ -417,7 +427,7 @@ final class Bill2Util @Inject() (
     for {
       // Обновляем статус ордера.
       morder3 <- {
-        val morder2 = order.morder.withStatus( MOrderStatuses.Closed )
+        val morder2 = order.order.withStatus( MOrderStatuses.Closed )
         for {
           ordersUpdated <- mOrders.saveStatus( morder2 )
           if ordersUpdated ==* 1
@@ -428,7 +438,7 @@ final class Bill2Util @Inject() (
 
       // Обновляем item'ы ордера, возвращаем обновлённые инстансы.
       mitems3 <- {
-        val actions = for (itm <- order.mitems) yield {
+        val actions = for (itm <- order.items) yield {
           val itm2 = itm.withStatus( orderClosedItemStatus(itm.iType) )
           for {
             itemsUpdated <- mItems.updateStatus(itm2)
@@ -452,22 +462,24 @@ final class Bill2Util @Inject() (
     *
     * @param order Результат prepareCartTxn().
     */
-  def maybeExecuteOrder(order: MOrderWithItems): DBIOAction[MCartIdeas.Idea, NoStream, RW] = {
+  def maybeExecuteOrder(order: MOrderWithItems): DBIOAction[MCartResolution, NoStream, RW] = {
 
-    lazy val logPrefix = s"maybeExecuteCart(${order.morder.id.orNull} ${System.currentTimeMillis}):"
+    lazy val logPrefix = s"maybeExecuteCart(${order.order.id.orNull} ${System.currentTimeMillis}):"
 
-    LOGGER.trace(s"$logPrefix There are ${order.mitems.size} items: ${order.mitems.iterator.flatMap(_.id).mkString(", ")}")
+    LOGGER.trace(s"$logPrefix There are ${order.items.size} items: ${order.items.iterator.flatMap(_.id).mkString(", ")}")
 
-    if (order.mitems.isEmpty) {
+    if (order.items.isEmpty) {
       // Корзина пуста. Should not happen.
       LOGGER.trace(s"$logPrefix no items in the cart")
-      DBIO.successful( MCartIdeas.NothingToDo )
+      DBIO.successful( MCartResolution(MCartIdeas.NothingToDo) )
 
-    } else if ( !itemsHasPrice(order.mitems) ) {
+    } else if ( !itemsHasPrice(order.items) ) {
       // Итемы есть, но всё бесплатно. Исполнить весь этот контракт прямо тут.
       LOGGER.trace(s"$logPrefix Only FREE items in cart.")
-      for (_ <- closeOrder(order)) yield {
-        MCartIdeas.OrderClosed(order, Nil)
+      for {
+        _ <- closeOrder( order )
+      } yield {
+        MCartResolution( MCartIdeas.OrderClosed )
       }
 
     } else {
@@ -477,13 +489,13 @@ final class Bill2Util @Inject() (
 
       for {
         // Узнаём текущее финансовое состояние юзера...
-        balances    <- mBalances.findByContractId( order.morder.contractId ).forUpdate
+        balances    <- mBalances.findByContractId( order.order.contractId ).forUpdate
 
         // Строим карту полученных балансов юзера для удобства работы:
         balancesMap = MCurrencies.hardMapByCurrency(balances)
 
         // Считаем полную стоимость заказа-корзины.
-        totalPrices = MPrice.toSumPricesByCurrency(order.mitems).values
+        totalPrices = MPrice.toSumPricesByCurrency(order.items).values
 
         // Пройтись по ценам, узнать достаточно ли бабла у юзера на балансах по всем валютам заказа
         (balUpdActions, notEnoughtPrices) = {
@@ -529,7 +541,7 @@ final class Bill2Util @Inject() (
                         balanceId   = mbalance2.id.get,
                         amount      = withdrawAmount,
                         txType      = MTxnTypes.Payment,
-                        orderIdOpt  = order.morder.id
+                        orderIdOpt  = order.order.id
                       )
                     }
                   } yield {
@@ -548,7 +560,11 @@ final class Bill2Util @Inject() (
           if (notEnoughtPrices.nonEmpty) {
             // Юзеру на балансах не хватает денег по как минимум одной валюте.
             // Вернуть наверх требование сначала доплатить сколько-то недостающих денег.
-            val idea = MCartIdeas.NeedMoney(order, notEnoughtPrices)
+            val idea = MCartResolution(
+              MCartIdeas.NeedMoney,
+              //newCart = Some( order ),
+              needMoney = Some( notEnoughtPrices ),
+            )
             DBIO.successful(idea)
 
           } else {
@@ -558,7 +574,11 @@ final class Bill2Util @Inject() (
               // Закрываем исходный ордер корзины.
               order2    <- closeOrder(order)
             } yield {
-              MCartIdeas.OrderClosed(order2, balances2)
+              MCartResolution(
+                MCartIdeas.OrderClosed,
+                newCart     = Some( order2 ),
+                newBalances = Some( balances2 ),
+              )
             }
           }
         }
@@ -580,11 +600,11 @@ final class Bill2Util @Inject() (
     * @return DB-экшен.
     */
   def forceFinalizeOrder(owi: MOrderWithItems): DBIOAction[ForceFinalizeOrderRes, NoStream, RWT] = {
-    val orderId = owi.morder.id.get
-    val contractId = owi.morder.contractId
+    val orderId = owi.order.id.get
+    val contractId = owi.order.contractId
 
     lazy val logPrefix = s"forceFinalizeOrder($orderId):"
-    LOGGER.trace(s"$logPrefix Starting, items = ${owi.mitems.toIdIter[Gid_t].mkString(", ")}")
+    LOGGER.trace(s"$logPrefix Starting, items = ${owi.items.toIdIter[Gid_t].mkString(", ")}")
 
     val a = for {
 
@@ -593,7 +613,7 @@ final class Bill2Util @Inject() (
         // Собираем валюты, которые упомянуты в item'ах заказа.
         val itemCurrencies = MCurrencies
           .toCurrenciesIter {
-            MPrice.toPricesIter(owi.mitems)
+            MPrice.toPricesIter(owi.items)
           }
           .toSet
         for {
@@ -617,7 +637,7 @@ final class Bill2Util @Inject() (
                         okItemsCount : Int = 0
                       )
         // Проходим по всем item'ам, пытаемся вычесть лишку с балансов.
-        val acc9 = owi.mitems
+        val acc9 = owi.items
           .foldLeft( Acc() ) { (acc0, mitem) =>
             val balOpt0 = acc0.balsMap.get( mitem.price.currency )
 
@@ -743,7 +763,7 @@ final class Bill2Util @Inject() (
 
           // Закрыть статус текущего ордера.
           morder9 <- {
-            val morder2 = owi.morder.withStatus( MOrderStatuses.Closed )
+            val morder2 = owi.order.withStatus( MOrderStatuses.Closed )
             for {
               ordersUpdated <- mOrders.saveStatus( morder2 )
               if ordersUpdated ==* 1
@@ -754,7 +774,7 @@ final class Bill2Util @Inject() (
           }
 
         } yield {
-          LOGGER.trace(s"$logPrefix Finished processing order#$orderId with ${owi.mitems.size} orig.items. SkippedCartOpt=${skippedCartOpt.flatMap(_.id).orNull} (normally, null).")
+          LOGGER.trace(s"$logPrefix Finished processing order#$orderId with ${owi.items.size} orig.items. SkippedCartOpt=${skippedCartOpt.flatMap(_.id).orNull} (normally, null).")
           ForceFinalizeOrderRes(
             closedOrder     = morder9,
             skippedCartOpt  = skippedCartOpt,
