@@ -16,6 +16,7 @@ object Mui {
       extends js.Any
   @js.native @JSImport("@material-ui/core/BottomNavigation/BottomNavigationItem", JSImport.Default) object BottomNavigationItem
       extends js.Any
+  @js.native @JSImport("@material-ui/core/Box", JSImport.Default) object Box extends js.Any
   @js.native @JSImport("@material-ui/core/Button", JSImport.Default) object Button extends js.Any
 
   @js.native @JSImport("@material-ui/core/Card", JSImport.Default) object Card extends js.Any
@@ -30,6 +31,7 @@ object Mui {
   @js.native @JSImport("@material-ui/core/CircularProgress", JSImport.Default) object CircularProgress
       extends js.Any
   @js.native @JSImport("@material-ui/core/ClickAwayListener", JSImport.Default) object ClickAwayListener extends js.Any
+  @js.native @JSImport("@material-ui/core/Collapse", JSImport.Default) object Collapse extends js.Any
   @js.native @JSImport("@material-ui/core/DatePicker", JSImport.Default) object DatePicker extends js.Any
   @js.native @JSImport("@material-ui/core/Dialog", JSImport.Default) object Dialog         extends js.Any
   @js.native @JSImport("@material-ui/core/DialogActions", JSImport.Default) object DialogActions extends js.Any

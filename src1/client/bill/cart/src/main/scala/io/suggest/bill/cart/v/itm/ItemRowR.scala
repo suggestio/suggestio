@@ -9,7 +9,7 @@ import io.suggest.bill.price.dsl.PriceReasonI18n
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.{CircleGs, PointGs}
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.n2.node.MNodeTypes
@@ -20,7 +20,6 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
@@ -35,7 +34,8 @@ import scala.scalajs.js
   * Description: Single item row react-component.
   */
 class ItemRowR(
-                orderCss: OrderCss
+                orderCss    : OrderCss,
+                crCtxP      : React.Context[MCommonReactCtx],
               ) {
 
   /** Single row properties.
@@ -148,7 +148,7 @@ class ItemRowR(
                     avaIconComponent()()
                   ).rawElement
                 }
-                override val label: js.UndefOr[React.Node] = {
+                override val label = {
                   <.span(
                     // Name of receiver (target) node, if any.
                     props.rcvrNode
@@ -174,7 +174,7 @@ class ItemRowR(
                         HtmlConstants.NBSP_STR,
                         MuiToolTip.component.withKey("t")(
                           new MuiToolTipProps {
-                            override val title: React.Node = Messages( MsgCodes.`Tag` )
+                            override val title = crCtxP.message( MsgCodes.`Tag` ).rawNode
                           }
                         )(
                           MuiChip {
@@ -199,7 +199,7 @@ class ItemRowR(
             for (hintMsgCode <- iconHintCodeOpt) {
               chip = MuiToolTip(
                 new MuiToolTipProps {
-                  override val title: React.Node = Messages( hintMsgCode )
+                  override val title = crCtxP.message( hintMsgCode ).rawNode
                 }
               )( chip )
             }
@@ -249,9 +249,9 @@ class ItemRowR(
           MuiTableCell()(
             MuiToolTip(
               new MuiToolTipProps {
-                override val title: React.Node = {
+                override val title = {
                   <.span(
-                    Messages( props.mitem.status.nameI18n ),
+                    crCtxP.message( props.mitem.status.nameI18n ),
                     props.mitem.reasonOpt.whenDefinedNode { reason =>
                       <.span(
                         <.br,

@@ -9,17 +9,16 @@ import io.suggest.bill.cart.m.{LoadCurrentOrder, MOrderContentJs}
 import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.render.v.JdR
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.msg.{JsFormatUtil, Messages}
+import io.suggest.msg.JsFormatUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactDiodeUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
@@ -34,6 +33,7 @@ class ItemsTableBodyR(
                        orderCss               : OrderCss,
                        jdR                    : JdR,
                        val itemRowR           : ItemRowR,
+                       crCtxP                 : React.Context[MCommonReactCtx],
                      ) {
 
   case class PropsVal(
@@ -95,7 +95,7 @@ class ItemsTableBodyR(
             Mui.SvgIcons.Warning()(),
             MuiToolTip(
               new MuiToolTipProps {
-                override val title: React.Node = ex.toString
+                override val title = ex.toString
               }
             )(
               MuiTypoGraphy(
@@ -104,7 +104,7 @@ class ItemsTableBodyR(
                   override val variant = MuiTypoGraphyVariants.caption
                 }
               )(
-                Messages( MsgCodes.`Something.gone.wrong` ),
+                crCtxP.message( MsgCodes.`Something.gone.wrong` ),
                 HtmlConstants.ELLIPSIS
               )
             ),
@@ -112,7 +112,7 @@ class ItemsTableBodyR(
             // Reload button
             MuiToolTip(
               new MuiToolTipProps {
-                override val title: React.Node = Messages( MsgCodes.`Reload` )
+                override val title = crCtxP.message( MsgCodes.`Reload` ).rawNode
               }
             )(
               MuiIconButton(
@@ -132,7 +132,7 @@ class ItemsTableBodyR(
           if ( orderContent.items.isEmpty ) {
             // Cart is empty:
             fullRowCell(
-              Messages( MsgCodes.`Your.cart.is.empty` )
+              crCtxP.message( MsgCodes.`Your.cart.is.empty` )
             )
 
           } else {
@@ -167,7 +167,7 @@ class ItemsTableBodyR(
                         val nodeName = nodeProps.nameOrIdOrEmpty
                         MuiToolTip {
                           new MuiToolTipProps {
-                            override val title: React.Node = nodeName
+                            override val title = nodeName
                           }
                         } {
                           nodeProps.logoOpt
@@ -238,7 +238,7 @@ class ItemsTableBodyR(
                   emptyCell,
                   MuiTableCell()(
                     MuiTypoGraphy( typoProps )(
-                      Messages( MsgCodes.`Total` ),
+                      crCtxP.message( MsgCodes.`Total` ),
                       HtmlConstants.SPACE,
                       HtmlConstants.`(`, orderContent.items.length, HtmlConstants.`)`,
                       HtmlConstants.COLON

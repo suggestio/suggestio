@@ -6,8 +6,7 @@ import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartSelectItem
 import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.common.html.HtmlConstants
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
@@ -25,6 +24,7 @@ import scala.scalajs.js
   */
 class ItemsTableHeadR(
                        orderCss    : OrderCss,
+                       crCtxP      : React.Context[MCommonReactCtx],
                      ) {
 
   /** Properties model. */
@@ -77,12 +77,12 @@ class ItemsTableHeadR(
 
           // Item contents/name columnt.
           MuiTableCell()(
-            Messages( MsgCodes.`_order.Items` )
+            crCtxP.message( MsgCodes.`_order.Items` )
           ),
 
           // Price column.
           MuiTableCell()(
-            Messages( MsgCodes.`Price` )
+            crCtxP.message( MsgCodes.`Price` )
           ),
 
           // Optional status column.

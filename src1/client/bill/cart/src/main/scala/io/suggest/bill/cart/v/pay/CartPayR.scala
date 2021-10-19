@@ -4,8 +4,6 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
 import io.suggest.bill.cart.v.pay.systems.YooKassaCartR
-import io.suggest.common.empty.OptionUtil
-import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.pay.{MPaySystem, MPaySystems}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -19,7 +17,6 @@ import japgolly.univeq._
 class CartPayR(
                 paySystemScriptR    : PaySystemScriptR,
                 yooKassaCartR       : => YooKassaCartR,
-                val goToPayBtnR     : PayButtonR,
               ) {
 
   type Props_t = MCartRootS
@@ -27,16 +24,12 @@ class CartPayR(
 
   case class State(
                     paySystemForWidgetPotC      : ReactConnectProxy[Pot[MPaySystem]],
-                    payButtonEnabledOptC        : ReactConnectProxy[goToPayBtnR.Props_t],
                   )
 
   class Backend( $: BackendScope[Props, _] ) {
 
     def render(p: Props, s: State): VdomElement = {
       <.div(
-
-        // PAY button, when payment is possible (non-empty cart-order).
-        s.payButtonEnabledOptC { goToPayBtnR.component.apply },
 
         // Render widget component, when everything else is ready:
         s.paySystemForWidgetPotC { paySystemPotProxy =>
@@ -55,7 +48,7 @@ class CartPayR(
             }
         },
 
-        // script tag:
+        // external payment system widget script tag:
         p.wrap(_.pay.paySystemInit)( paySystemScriptR.component.apply ),
 
       )
@@ -75,25 +68,6 @@ class CartPayR(
             Pot.empty
           else
             props
-        },
-
-        payButtonEnabledOptC = propsProxy.connect { props =>
-          OptionUtil.maybeOpt(
-            props.order.orderContents.exists { ocJs =>
-              val oc = ocJs.content
-              oc.items.nonEmpty &&
-                oc.order.exists(_.status ==* MOrderStatuses.Draft)
-            } && {
-              val psIni = props.pay.paySystemInit
-              psIni.isEmpty || psIni.isFailed
-            }
-          ) (
-            OptionUtil.SomeBool {
-              !props.order.orderContents.isPending &&
-              !props.pay.cartSubmit.isPending &&
-              !props.pay.paySystemInit.isPending
-            }
-          )
         },
 
       )

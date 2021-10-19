@@ -68,7 +68,7 @@ final class ScriptTagR {
     }
 
     /** Remove tag from tree and from state. */
-    def _remoteScriptTags: Callback = {
+    def _removeScriptTags: Callback = {
       for {
         scriptTag <- _scriptTagRef.get
         _ = {
@@ -81,7 +81,7 @@ final class ScriptTagR {
     }
 
     def render(): VdomElement = {
-      (_remoteScriptTags >> _appendScriptTags).runNow()
+      (_removeScriptTags >> _appendScriptTags).runNow()
 
       ReactCommonUtil.VdomNullElement
     }
@@ -93,7 +93,7 @@ final class ScriptTagR {
     .builder[Props]
     .stateless
     .renderBackend[Backend]
-    .componentWillUnmount( _.backend._remoteScriptTags )
+    .componentWillUnmount( _.backend._removeScriptTags )
     .shouldComponentUpdatePure( _.nextProps.shouldUpdate )
     .build
 

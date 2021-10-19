@@ -1,7 +1,7 @@
 package io.suggest.bill.cart
 
 import com.softwaremill.macwire._
-import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}
+import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsDeleteSelectedR}
 import io.suggest.bill.cart.v.order._
 import io.suggest.bill.cart.v.pay.{CartPayR, PayButtonR, PaySystemScriptR}
 import io.suggest.bill.cart.v.pay.systems.YooKassaCartR
@@ -28,7 +28,7 @@ class CartModules {
   lazy val itemRowR = wire[ItemRowR]
   lazy val itemTableHeadR = wire[ItemsTableHeadR]
   lazy val itemTableBodyR = wire[ItemsTableBodyR]
-  lazy val itemsToolBarR = wire[ItemsToolBarR]
+  lazy val itemsToolBarR = wire[ItemsDeleteSelectedR]
   lazy val orderInfoR = wire[OrderInfoR]
   lazy val txnsR = wire[TxnsR]
 

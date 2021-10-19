@@ -37,12 +37,12 @@ class PaySystemScriptR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private val _onScriptLoad = { _: dom.Event =>
+    private val _onScriptLoad = Some { _: dom.Event =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, PaySystemJsInit( Right( None ) ) )
         .runNow()
     }
 
-    private val _onScriptError = { e: dom.ErrorEvent =>
+    private val _onScriptError = Some { e: dom.ErrorEvent =>
       logger.error( ErrorMsgs.CONNECTION_ERROR, msg = e )
       ($.props >>= { props: Props =>
         val args = JsArray(
@@ -61,7 +61,7 @@ class PaySystemScriptR(
     }
 
 
-    def render(p: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       React.Fragment(
 
         // Render exception, if any.
@@ -102,8 +102,8 @@ class PaySystemScriptR(
             scriptTagR.component(
               scriptTagR.Props(
                 src       = scriptUrl,
-                onLoad    = Some( _onScriptLoad ),
-                onError   = Some( _onScriptError ),
+                onLoad    = _onScriptLoad,
+                onError   = _onScriptError,
                 defer     = true,
                 async     = true,
               )
