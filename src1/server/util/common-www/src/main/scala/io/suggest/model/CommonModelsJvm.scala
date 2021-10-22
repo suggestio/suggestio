@@ -2,7 +2,7 @@ package io.suggest.model
 
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
-import _root_.play.api.mvc.QueryStringBindable
+import _root_.play.api.mvc.{PathBindable, QueryStringBindable}
 import io.suggest.common.empty.OptionUtil
 import OptionUtil.BoolOptOps
 import io.suggest.ble.MUidBeacon
@@ -16,6 +16,7 @@ import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
 import io.suggest.n2.node.{MNodeIdType, MNodeType}
+import io.suggest.pay.{MPaySystem, MPaySystems}
 import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
@@ -55,6 +56,8 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def uploadChunkSizeQsb: CrossQsBindable[MUploadChunkSize] =
     EnumeratumJvmUtil.valueEnumQsb( MUploadChunkSizes )
 
+  implicit def paySystemPb: PathBindable[MPaySystem] =
+    EnumeratumJvmUtil.valueEnumPb( MPaySystems )
 
   /** Поддержка сырого биндинга из query-string. */
   implicit def fidQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[Fid] = {

@@ -334,7 +334,7 @@ final class PayYaka @Inject() (
               // Проверить ордер, цену, захолдить ордер если требуется.
               _ <- slick.db.run {
                 import slick.profile.api._
-                val a = for {
+                (for {
                   // Обсчитать ордер
                   mOrder0 <- bill2Util.checkPayableOrder(
                     orderId             = yReq.orderId,
@@ -347,8 +347,8 @@ final class PayYaka @Inject() (
                   mOrderHold <- bill2Util.holdOrder( mOrder0 )
                 } yield {
                   mOrderHold
-                }
-                a.transactionally
+                })
+                  .transactionally
               }
 
               statMas0 <- statMas0Fut
@@ -483,7 +483,7 @@ final class PayYaka @Inject() (
                 .toSeq
             }
 
-            val payFut: Future[(List[MAction], Xml)] = for {
+            (for {
               // Дождаться данных по узлу юзера.
               usrNodeOpt <- usrNodeOptFut
               usrNode = usrNodeOpt.get
@@ -492,7 +492,7 @@ final class PayYaka @Inject() (
               // Выполнить действия в биллинге, связанные с проведением платежа.
               (balTxn, mdrNotifyCtx, ffor) <- slick.db.run {
                 import slick.profile.api._
-                val a = for {
+                (for {
                   // Проверить ордер, что он в статусе HOLD или DRAFT.
                   mOrder0  <- bill2Util.getOpenedOrderForUpdate(yReq.orderId, validContractId = contractId)
 
@@ -517,9 +517,8 @@ final class PayYaka @Inject() (
 
                 } yield {
                   (balTxn, mdrNotifyCtx1, ffor1)
-                }
-
-                a.transactionally
+                })
+                  .transactionally
               }
 
               // Узнать начальные данные для статистики.
@@ -601,26 +600,25 @@ final class PayYaka @Inject() (
 
               // Собрать результат.
               (statMasAcc, xml)
-            }
-
-            payFut.recoverWith { case ex: Throwable =>
-              val yReqStr = yReq.toString
-              LOGGER.error(s"$logPrefix Unable to process payment $yReqStr", ex)
-              for (statMas0 <- statMas0Fut) yield {
-                val maErr = MAction(
-                  actions = MActionTypes.PayBadOrder :: Nil,
-                  textNi  = ex.toString :: yReqStr :: Nil
-                )
-                val xml = _YakaRespTpl(
-                  yakaAction  = yakaAction,
-                  errCode     = yakaUtil.ErrorCodes.ORDER_ERROR,
-                  shopId      = profile.shopId,
-                  invoiceId   = Some( yReq.invoiceId ),
-                  errMsg      = Some( ex.getMessage )
-                )
-                (maErr :: statMas0, xml)
+            })
+              .recoverWith { case ex: Throwable =>
+                val yReqStr = yReq.toString
+                LOGGER.error(s"$logPrefix Unable to process payment $yReqStr", ex)
+                for (statMas0 <- statMas0Fut) yield {
+                  val maErr = MAction(
+                    actions = MActionTypes.PayBadOrder :: Nil,
+                    textNi  = ex.toString :: yReqStr :: Nil
+                  )
+                  val xml = _YakaRespTpl(
+                    yakaAction  = yakaAction,
+                    errCode     = yakaUtil.ErrorCodes.ORDER_ERROR,
+                    shopId      = profile.shopId,
+                    invoiceId   = Some( yReq.invoiceId ),
+                    errMsg      = Some( ex.getMessage )
+                  )
+                  (maErr :: statMas0, xml)
+                }
               }
-            }
 
           } else {
             _badMd5(profile, yakaAction, yReq, expMd5)

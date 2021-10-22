@@ -305,7 +305,7 @@ final class LkAdvGeo @Inject() (
               val dbAction = for {
                 // Найти/создать корзину
                 cart    <- bill2Util.ensureCart(
-                  contractId = e.mc.id.get,
+                  contractId = e.contract.id.get,
                   status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
                 )
 
@@ -328,7 +328,7 @@ final class LkAdvGeo @Inject() (
             }
 
           } yield {
-            LOGGER.debug(s"$logPrefix $itemsAdded items added into cart#${itemsCart.id.orNull} of contract#${e.mc.id.orNull} with item status '$status'.")
+            LOGGER.debug(s"$logPrefix $itemsAdded items added into cart#${itemsCart.id.orNull} of contract#${e.contract.id.orNull} with item status '$status'.")
 
             val rCall = routes.LkAdvGeo.forAd(adId)
             val retCall = if (!isSuFree) {

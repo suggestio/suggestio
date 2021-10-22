@@ -11,7 +11,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.pay.MPaySystem
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -37,27 +37,29 @@ class PaySystemScriptR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private val _onScriptLoad = Some { _: dom.Event =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, PaySystemJsInit( Right( None ) ) )
-        .runNow()
+    private val _onScriptLoad = Some {
+      ReactCommonUtil.cbFun1ToF { _: dom.Event =>
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, PaySystemJsInit( Right( None ) ) )
+      }
     }
 
-    private val _onScriptError = Some { e: dom.ErrorEvent =>
-      logger.error( ErrorMsgs.CONNECTION_ERROR, msg = e )
-      ($.props >>= { props: Props =>
-        val args = JsArray(
-          (for {
-            paySystem <- props.value.toOption
-            jsUrl <- paySystem.payWidgetJsScriptUrl
-          } yield {
-            JsString( jsUrl )
-          })
-            .toSeq
-        )
+    private val _onScriptError = Some {
+      ReactCommonUtil.cbFun1ToF { e: dom.ErrorEvent =>
+        $.props >>= { props: Props =>
+          logger.error( ErrorMsgs.CONNECTION_ERROR, msg = e )
+          val args = JsArray(
+            (for {
+              paySystem <- props.value.toOption
+              jsUrl <- paySystem.payWidgetJsScriptUrl
+            } yield {
+              JsString( jsUrl )
+            })
+              .toSeq
+          )
 
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $, PaySystemJsInit( Left( MMessage(ErrorMsgs.CANNOT_CONNECT_TO_REMOTE_SYSTEM, args) ) ) )
-      })
-        .runNow()
+          ReactDiodeUtil.dispatchOnProxyScopeCB( $, PaySystemJsInit( Left( MMessage(ErrorMsgs.CANNOT_CONNECT_TO_REMOTE_SYSTEM, args) ) ) )
+        }
+      }
     }
 
 

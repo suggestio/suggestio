@@ -6,6 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.enum2.EnumeratumUtil
 import io.suggest.i18n.MsgCodes
 import io.suggest.sec.csp.CspPolicy
+import io.suggest.url.bind.QsBindable
 import japgolly.univeq._
 import play.api.libs.json.Format
 
@@ -137,5 +138,8 @@ object MPaySystem {
 
   implicit def paySystemJson: Format[MPaySystem] =
     EnumeratumUtil.valueEnumEntryFormat( MPaySystems )
+
+  implicit def paySystemQsB(implicit strB: QsBindable[String]): QsBindable[MPaySystem] =
+    EnumeratumUtil.qsBindable( MPaySystems )
 
 }

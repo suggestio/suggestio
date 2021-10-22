@@ -314,6 +314,14 @@ final class MItems @Inject() (
       .result
   }
 
+  def itemIdsForOrder(orderIds: Gid_t*): DBIOAction[Seq[Gid_t], Streaming[Gid_t], Effect.Read] = {
+    assert( orderIds.nonEmpty, "At least one order_id must be defined in arg$1" )
+    query
+      .filter( _.orderId inSet orderIds )
+      .map(_.id)
+      .result
+  }
+
 }
 
 

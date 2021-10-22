@@ -201,7 +201,7 @@ final class LkAdnMap @Inject() (
               val dbAction = for {
                 // Инициализировать корзину, если требуется...
                 cart    <- bill2Util.ensureCart(
-                  contractId = e.mc.id.get,
+                  contractId = e.contract.id.get,
                   status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
                 )
 
@@ -224,7 +224,7 @@ final class LkAdnMap @Inject() (
             // Логгируем удачное закидывание товара в корзину.
             LOGGER.debug {
               val n = "\n "
-              s"$logPrefix Added ADN-map into cart ${e.mc.id.orNull}, su=$isSuFree: ${itemsAdded.mkString(n,n,"")}"
+              s"$logPrefix Added ADN-map into cart ${e.contract.id.orNull}, su=$isSuFree: ${itemsAdded.mkString(n,n,"")}"
             }
 
             // Рендерить HTTP-ответ: Это 200 ok + url location в теле ответа.

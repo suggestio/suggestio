@@ -19,7 +19,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
-import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
+import io.suggest.mbill2.m.txn.{MTxn, MTxnType, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystem
@@ -63,13 +63,13 @@ final class Bill2Util @Inject() (
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val esModel = injector.instanceOf[EsModel]
   lazy val bill2Conf = injector.instanceOf[Bill2Conf]
-  private lazy val mOrders = injector.instanceOf[MOrders]
-  protected lazy val mContracts = injector.instanceOf[MContracts]
-  private lazy val mItems = injector.instanceOf[MItems]
-  private lazy val mBalances = injector.instanceOf[MBalances]
-  private lazy val mTxns = injector.instanceOf[MTxns]
+  lazy val mOrders = injector.instanceOf[MOrders]
+  lazy val mContracts = injector.instanceOf[MContracts]
+  lazy val mItems = injector.instanceOf[MItems]
+  lazy val mBalances = injector.instanceOf[MBalances]
+  lazy val mTxns = injector.instanceOf[MTxns]
   protected lazy val mNodes = injector.instanceOf[MNodes]
-  private lazy val mDebugs = injector.instanceOf[MDebugs]
+  lazy val mDebugs = injector.instanceOf[MDebugs]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
   protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
@@ -235,7 +235,7 @@ final class Bill2Util @Inject() (
   def initNodeContract(mnode: MNode) = {
     lazy val logPrefix = s"initNodeContract(${mnode.idOrNull}):"
 
-    val encDbio = for {
+    (for {
       // Создать новый контракт в БД биллинга
       mc2 <- {
         val mc = MContract()
@@ -256,8 +256,8 @@ final class Bill2Util @Inject() (
     } yield {
       LOGGER.debug(s"$logPrefix Done, contract#${mc2.id.orNull}")
       EnsuredNodeContract(mc2, mnode2)
-    }
-    encDbio.transactionally
+    })
+      .transactionally
   }
 
 
@@ -308,7 +308,7 @@ final class Bill2Util @Inject() (
   }
   /** Удалить ордер вместе с item'ами. Такое можно сделать только если не было транзакций по ордеру/item'ам. */
   def deleteOrder(orderId: Gid_t): DBIOAction[Int, NoStream, RWT] = {
-    val dbAction = for {
+    (for {
       orderItemIds  <- mItems.findIdsByOrderId( orderId )
       // Удаляем все item'ы в корзине разом.
       itemsDeleted  <- mItems.deleteById(orderItemIds: _*)
@@ -320,32 +320,32 @@ final class Bill2Util @Inject() (
     } yield {
       LOGGER.info(s"clearCart($orderId) cartOrderId[$orderId] cleared. Total deleted:\n $itemsDeleted items\n $ordersDeleted orders\n $debugsDeleted debugs")
       itemsDeleted
-    }
-    dbAction.transactionally
+    })
+      .transactionally
   }
 
 
   def deleteItem(itemId: Gid_t): DBIOAction[Int, NoStream, WT] = {
-    val dbAction = for {
+    (for {
       itemsDeleted  <- mItems.deleteById(itemId)
       debugsDeleted <- mDebugs.deleteByObjectId( itemId )
     } yield {
       LOGGER.debug(s"deleteItem($itemId): Deleted $itemsDeleted items with $debugsDeleted debugs.")
       itemsDeleted
-    }
-    dbAction.transactionally
+    })
+      .transactionally
   }
 
 
   def deleteContract(contractId: Gid_t): DBIOAction[Int, NoStream, WT] = {
-    val dbAction = for {
+    (for {
       contractsDeleted <- mContracts.deleteById( contractId )
       debugsDeleted    <- mDebugs.deleteByObjectId( contractId )
     } yield {
       LOGGER.info(s"deleteContract($contractId): Deleted $contractsDeleted contracts, $debugsDeleted debugs")
       contractsDeleted
-    }
-    dbAction.transactionally
+    })
+      .transactionally
   }
 
 
@@ -606,7 +606,7 @@ final class Bill2Util @Inject() (
     lazy val logPrefix = s"forceFinalizeOrder($orderId):"
     LOGGER.trace(s"$logPrefix Starting, items = ${owi.items.toIdIter[Gid_t].mkString(", ")}")
 
-    val a = for {
+    (for {
 
       // Узнаём текущее финансовое состояние юзера в контексте текущего ордера...
       balsMap0 <- {
@@ -788,8 +788,8 @@ final class Bill2Util @Inject() (
       LOGGER.trace(s"$logPrefix Done.")
       // Вернуть что-нибудь. Результат тут пока не очень важен.
       r
-    }
-    a.transactionally
+    })
+      .transactionally
   }
 
 
@@ -802,7 +802,7 @@ final class Bill2Util @Inject() (
     */
   def increaseBalanceAsIncome(contractId: Gid_t, price: MPrice): DBIOAction[MTxn, NoStream, RWT] = {
     lazy val logPrefix = s"increaseBalanceSimple(c#$contractId, $price)[${System.currentTimeMillis()}]:"
-    val dba = for {
+    (for {
       // Сразу искать баланс в нужной валюте:
       balOpt      <- mBalances.getByContractCurrency(contractId, price.currency).forUpdate
 
@@ -836,8 +836,8 @@ final class Bill2Util @Inject() (
     } yield {
       LOGGER.trace(s"$logPrefix: Done")
       ctxn2
-    }
-    dba.transactionally
+    })
+      .transactionally
   }
 
 
@@ -999,7 +999,7 @@ final class Bill2Util @Inject() (
       enc         <- ensureNodeContract(rcvrNode)
 
     } yield {
-      LOGGER.debug(s"$logPrefix => Money rcvr#${enc.mnode.idOrNull}, contract#${enc.mc.id.orNull}")
+      LOGGER.debug(s"$logPrefix => Money rcvr#${enc.mnode.idOrNull}, contract#${enc.contract.id.orNull}")
       enc
     }
   }
@@ -1085,7 +1085,7 @@ final class Bill2Util @Inject() (
 
           } yield {
             val resp2 = resp.flatten
-            LOGGER.debug(s"$logPrefix Finally, found ${resp2.length} money-rcvrs: ${resp2.iterator.map{ mri => s"${mri.price} -> c#${mri.enc.mc.id.orNull} node#${mri.enc.mnode.idOrNull}" }.mkString("\n ")}")
+            LOGGER.debug(s"$logPrefix Finally, found ${resp2.length} money-rcvrs: ${resp2.iterator.map{ mri => s"${mri.price} -> c#${mri.enc.contract.id.orNull} node#${mri.enc.mnode.idOrNull}" }.mkString("\n ")}")
             resp2
           }
         }
@@ -1104,7 +1104,7 @@ final class Bill2Util @Inject() (
   def approveItem(itemId: Gid_t): DBIOAction[ApproveItemResult, NoStream, RWT] = {
     lazy val logPrefix = s"approveItemAction($itemId):"
 
-    val a = for {
+    (for {
       // Получить и заблокировать обрабатываемый item.
       mitem0 <- _prepareAwaitingItem(itemId)
 
@@ -1156,7 +1156,7 @@ final class Bill2Util @Inject() (
             // TODO Отработать комиссию с item'а здесь? Если да, то откуда её брать? С тарифа узла и типа item'а?
             for {
               // Найти/создать кошелек получателя денег
-              mrBalance0    <- ensureBalanceFor(mr.enc.mc.id.get, mr.price.currency)
+              mrBalance0    <- ensureBalanceFor(mr.enc.contract.id.get, mr.price.currency)
               // Зачислить деньги на баланс.
               // TODO В будущем, когда будет нормальная торговля между юзерами, надо будет проводить какие-то транзакции на стороне seller'а.
               // TODO И по идее надо будет зачислять селлеру как blocked, т.к. продавца надо держать на поводке.
@@ -1166,7 +1166,7 @@ final class Bill2Util @Inject() (
             } yield {
               // foreach в виде map, т.к. DBIO не подразумевает foreach
               val mrAmount2 = mrAmount2Opt.get
-              LOGGER.debug(s"$logPrefix Money receiver[${mr.enc.mnode.id.orNull}] contract[${mr.enc.mc.id.orNull}] balance[${mrBalance0.id.orNull}] updated: ${mrBalance0.blocked} + ${mr.price.amount} => $mrAmount2 ${mrBalance0.price.currency}")
+              LOGGER.debug(s"$logPrefix Money receiver[${mr.enc.mnode.id.orNull}] contract[${mr.enc.contract.id.orNull}] balance[${mrBalance0.id.orNull}] updated: ${mrBalance0.blocked} + ${mr.price.amount} => $mrAmount2 ${mrBalance0.price.currency}")
             }
           }
           DBIO.seq(actions: _*)
@@ -1176,8 +1176,8 @@ final class Bill2Util @Inject() (
     } yield {
       LOGGER.trace(s"$logPrefix Done ok.")
       ApproveItemResult( mitem2 )
-    }
-    a.transactionally
+    })
+      .transactionally
   }
 
 
@@ -1190,10 +1190,11 @@ final class Bill2Util @Inject() (
     */
   def ensureBalanceFor(contractId: Gid_t, currency: MCurrency): DBIOAction[MBalance, NoStream, RWT] = {
     lazy val logPrefix = s"ensureBalanceFor($contractId,$currency):"
-    val dbAction = for {
+    (for {
       // Считать баланс получателя...
       balanceOpt <- {
-        mBalances.getByContractCurrency(contractId, currency)
+        mBalances
+          .getByContractCurrency(contractId, currency)
           .forUpdate
       }
 
@@ -1211,9 +1212,8 @@ final class Bill2Util @Inject() (
 
     } yield {
       balance0
-    }
-    // Несколько действий, которые очень желательно выполнять в непрерывной связке:
-    dbAction.transactionally
+    })
+      .transactionally
   }
 
 
@@ -1226,7 +1226,7 @@ final class Bill2Util @Inject() (
     */
   def refuseItem(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RWT] = {
     lazy val logPrefix = s"refuseItem($itemId):"
-    val dbAction = for {
+    (for {
       // Получить и заблокировать текущий item.
       mitem0 <- _prepareAwaitingItem(itemId)
 
@@ -1270,12 +1270,9 @@ final class Bill2Util @Inject() (
 
     } yield {
       LOGGER.trace(s"$logPrefix Saved MTxn[${mtxn2.id.orNull}]")
-      // Собрать итог работы экшена...
       RefuseItemResult(mitem2, mtxn2)
-    }
-
-    // Важно исполнять это транзакцией.
-    dbAction.transactionally
+    })
+      .transactionally
   }
 
 
@@ -1358,6 +1355,7 @@ final class Bill2Util @Inject() (
     val itemOrderIdsQ = mItems.query
       .filter(_.id === itemId)
       .map(_.orderId)
+      .take( 1 )
 
     // Найти contractId указанного ордера.
     mOrders.query
@@ -1544,7 +1542,6 @@ final class Bill2Util @Inject() (
     *
     * Метод дёргается на check-стадии оплаты: платежная система ещё не списала деньги,
     * но хочет проверить достоверность присланных юзером данных по оплачиваемому заказу.
-    * S.io проверяет ордер и "холдит" его, чтобы защититься от изменений до окончания оплаты.
     *
     * @param orderId Заявленный платежной системой order_id. Ордер будет проверен на связь с контрактом.
     * @param validContractId Действительный contract_id юзера, выверенный по максимуму.
@@ -1554,9 +1551,9 @@ final class Bill2Util @Inject() (
     */
   def checkPayableOrder(orderId: Gid_t, validContractId: Gid_t, paySys: MPaySystem,
                         claimedOrderPrices: Map[MCurrency, MPrice]): DBIOAction[MOrder, NoStream, RWT] = {
-    lazy val logPrefix = s"checkHoldOrder(o=$orderId,c=$validContractId):"
+    lazy val logPrefix = s"checkPayableOrder(o=$orderId,c=$validContractId):"
 
-    val a = for {
+    (for {
 
       // Прочитать и проверить запрошенный ордер.
       mOrder <- getOpenedOrderForUpdate(orderId, validContractId = validContractId)
@@ -1593,12 +1590,9 @@ final class Bill2Util @Inject() (
       }
 
     } yield {
-      // Вернуть что-нибудь...
       mOrder
-    }
-
-    // Транзакция обязательна, т.к. тут вопрос в безопасности: иначе возможно внезапное изменение ордера в рамках race-conditions.
-    a.transactionally
+    })
+      .transactionally
   }
 
 
@@ -1634,7 +1628,7 @@ final class Bill2Util @Inject() (
   def unholdOrder(orderId: Gid_t): DBIOAction[MOrder, NoStream, RWT] = {
     lazy val logPrefix = s"unHoldOrder($orderId)[${System.currentTimeMillis()}]:"
 
-    val a = for {
+    (for {
       // Прочитать новый ордер в рамках транзакции.
       morderOpt <- mOrders.getById(orderId).forUpdate
       morder = morderOpt.get
@@ -1681,9 +1675,8 @@ final class Bill2Util @Inject() (
     } yield {
       LOGGER.debug(s"$logPrefix Order now draft. Was HOLD.")
       morder2
-    }
-    // Только атомарно, иначе совем опасно.
-    a.transactionally
+    })
+      .transactionally
   }
 
 
@@ -1695,7 +1688,7 @@ final class Bill2Util @Inject() (
     */
   def mergeOrders(orderIdForDelete: Gid_t, toOrderId: Gid_t): DBIOAction[Int, NoStream, WT] = {
     lazy val logPrefix = s"mergeOrders($orderIdForDelete => $toOrderId)[${System.currentTimeMillis()}]:"
-    val a = for {
+    (for {
 
       // Обновить все item'ы, транзакции и прочее.
       depRowsUpdated <- moveOrderDeps(orderIdForDelete, toOrderId = toOrderId)
@@ -1713,8 +1706,8 @@ final class Bill2Util @Inject() (
     } yield {
       LOGGER.info(s"$logPrefix Deleted $ordersDeleted cart-order with $orderDebugsDeleted order's debugs.")
       ordersDeleted
-    }
-    a.transactionally
+    })
+      .transactionally
   }
 
 
@@ -1811,48 +1804,78 @@ final class Bill2Util @Inject() (
     * @return MTxn.
     */
   def incrUserBalanceFromPaySys(contractId: Gid_t, mprice: MPrice, psTxnUid: String, orderIdOpt: Option[Gid_t] = None,
-                                comment: Option[String] = None): DBIOAction[MTxn, NoStream, RWT] = {
-    // Найти баланс юзера для текущей валюты.
-    val a = for {
-      // Узнать текущий баланс юзера
-      usrBalance0Opt <- mBalances.getByContractCurrency(contractId, mprice.currency)
-        .forUpdate
+                                comment: Option[String] = None, txn: Option[MTxn] = None, txType: MTxnType = MTxnTypes.PaySysTxn): DBIOAction[MTxn, NoStream, RWT] = {
+    lazy val logPrefix = s"incrUserBalanceFromPaySys($psTxnUid, $contractId/${orderIdOpt.orNull}, $mprice):"
+    LOGGER.trace(s"$logPrefix Starting; comment=${comment.orNull}")
 
-      // Инициализировать/обновить баланс.
-      usrBalance2 <- {
-        usrBalance0Opt.fold[DBIOAction[MBalance, NoStream, Effect.Write]] {
-          val b = MBalance(
-            contractId = contractId,
-            price = mprice
-          )
-          mBalances.insertOne(b)
+    (for {
+      // Find/ensure user's balance for currency...
+      usrBalance0 <- ensureBalanceFor( contractId, mprice.currency )
 
-        } { usrBalance0 =>
-          mBalances.incrAmountBy(usrBalance0, mprice.amount)
-            .map(_.get)   // Этот баланс уже существует и передан в параметре, Option можно смело игнорировать.
-        }
+      // Search for already-create (opened and not yet paid) transaction in db:
+      txnOpt0 <- txn.fold [DBIOAction[Option[MTxn], NoStream, Effect.Read]] {
+        mTxns
+          .query
+          .filter( _.psTxnUidOpt === psTxnUid )
+          // ignoring datePaid.isEmpty and else: It will be checked below.
+          .take( 1 )
+          .result
+          .headOption
+      } { _ =>
+        DBIO.successful( txn )
       }
 
-      // Записать в БД транзакцию зачисления денег на баланс юзера.
+      if txnOpt0.fold {
+        LOGGER.trace(s"$logPrefix No previously-opened transaction found.")
+        true
+      } { txn0 =>
+        LOGGER.debug(s"$logPrefix Found previously-created transaction#${txn0.id.orNull} with amount=${txn0.amount} for balance#${txn0.balanceId}")
+        val r = {
+          txn0.datePaid.isEmpty &&
+          (txn0.amount ==* mprice.amount) &&
+          (usrBalance0.id contains[Gid_t] txn0.balanceId)
+        }
+        if (!r) LOGGER.error(s"$logPrefix Transaction#${txn0.id.orNull} re-payment with same id#${txn0.psTxnUidOpt.orNull}. WTF? Already processed tx @${txn0.datePaid} balance#${txn0.balanceId} amount[${txn0.amount} vs $mprice]")
+        r
+      }
+
+      // Increment balance with received money:
+      usrBalance2Opt <- mBalances.incrAmountBy( usrBalance0, mprice.amount )
+      usrBalance2 = usrBalance2Opt.get
+
+      // Insert/update database transaction about money received:
       balIncrTxn <- {
-        val txn0 = MTxn(
-          balanceId       = usrBalance2.id.get,
-          amount          = mprice.amount,
-          txType          = MTxnTypes.PaySysTxn,
-          orderIdOpt      = orderIdOpt,
-          paymentComment  = comment,
-          psTxnUidOpt     = Some(psTxnUid),
-          datePaid        = Some( OffsetDateTime.now() )
-        )
-        mTxns.insertOne(txn0)
+        LOGGER.trace(s"$logPrefix Incremented user balance#${usrBalance2.id.orNull}: ${usrBalance0.price} => ${usrBalance2.price}")
+        val datePaid = Some( OffsetDateTime.now() )
+
+        txnOpt0.fold {
+          LOGGER.trace(s"$logPrefix Creating/inserting new txn...")
+          val txn0 = MTxn(
+            balanceId       = usrBalance2.id.get,
+            amount          = mprice.amount,
+            txType          = txType,
+            orderIdOpt      = orderIdOpt,
+            paymentComment  = comment,
+            psTxnUidOpt     = Some( psTxnUid ),
+            datePaid        = datePaid,
+          )
+          mTxns.insertOne( txn0 )
+
+        } { txnExisting =>
+          LOGGER.trace(s"$logPrefix Updating exising txn#${txnExisting.id.orNull} with datePaid=$datePaid ...")
+          val txnFinal = txnExisting.copy(
+            datePaid        = datePaid,
+            paymentComment  = comment,
+          )
+          mTxns.updatePaidInfo( txnFinal )
+        }
       }
 
     } yield {
       LOGGER.debug(s"incrUserBalanceFromPaySys($contractId, $mprice, $psTxnUid, $orderIdOpt): done, comment=$comment")
       balIncrTxn
-    }
-    // Нужна транзакция, т.к. очень денежные тут дела.
-    a.transactionally
+    })
+      .transactionally
   }
 
 
@@ -2036,12 +2059,24 @@ final class Bill2Util @Inject() (
     }
   }
 
+
+  def openPaySystemTxn(balanceId: Gid_t, payAmount: Amount_t, orderIdOpt: Option[Gid_t], psTxnId: String): DBIOAction[MTxn, NoStream, Effect.Write] = {
+    mTxns insertOne MTxn(
+      balanceId   = balanceId,
+      amount      = payAmount,
+      txType      = MTxnTypes.Payment,
+      orderIdOpt  = orderIdOpt,
+      psTxnUidOpt = Some( psTxnId ),
+      datePaid    = None,
+    )
+  }
+
 }
 
 
 object Bill2Util {
 
-  sealed case class EnsuredNodeContract(mc: MContract, mnode: MNode)
+  sealed case class EnsuredNodeContract( contract: MContract, mnode: MNode )
 
   sealed case class ForceFinalizeOrderRes(
                                           closedOrder         : MOrder,

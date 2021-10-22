@@ -51,15 +51,14 @@ class PayButtonR(
           placeHolder,
 
           MuiFab {
-            val css = new MuiFabClasses {
-              override val root = orderCss.PayBtn.root.htmlClass
-            }
             new MuiFabProps {
-              override val classes    = css
               override val variant    = MuiFabVariants.extended
               override val color      = MuiColorTypes.secondary
               override val disabled   = !isEnabled
               override val onClick    = _onPayButtonClick
+              override val classes    = new MuiFabClasses {
+                override val root = orderCss.PayBtn.root.htmlClass
+              }
             }
           } (
             Mui.SvgIcons.Payment()(),

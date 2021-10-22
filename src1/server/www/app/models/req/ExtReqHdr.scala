@@ -1,7 +1,8 @@
 package models.req
 
-import java.net.InetAddress
+import inet.ipaddr.IPAddressString
 
+import java.net.InetAddress
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.proto.http.HttpConst
 import io.suggest.spa.SioPages
@@ -9,6 +10,8 @@ import io.suggest.util.logs.MacroLogsImpl
 import play.api.http.HeaderNames
 import play.api.mvc.{QueryStringBindable, RequestHeader}
 import play.core.parsers.FormUrlEncodedParser
+
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -113,6 +116,15 @@ trait ExtReqHdr extends RequestHeader {
       .map { firstForwardedAddr }
       .getOrElse { remoteAddress }
   }
+
+  /** Parsed IP-address from XFF-header's beginning. */
+  lazy val remoteClientIpTry = {
+    val ipTry = Try( new IPAddressString( remoteClientAddress ).toAddress )
+    for (ex <- ipTry.failed)
+      LOGGER.error(s"Failed to parse ip addr[${remoteClientAddress}] as ip-address.", ex)
+    ipTry
+  }
+
 
   /** Кравлеры при индексации !#-страниц используют ссылки, содержащие что-то типа "?_escaped_fragment_=...". */
   lazy val ajaxEscapedFragment: Option[String] = {

@@ -7,7 +7,11 @@ import play.api.libs.functional.syntax._
 case class MYkPaymentCancellationDetails(
                                           party: String,
                                           reason: String,
-                                        )
+                                        ) {
+  override def toString =
+    party + ": " + reason
+
+}
 
 object MYkPaymentCancellationDetails {
 

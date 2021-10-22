@@ -119,6 +119,8 @@ POST /lk/nai/:nodeId                    @controllers.LkBill2.nodeAdvInfo(nodeId,
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
 GET  /lk/order2                         @controllers.LkBill2.getOrder(orderId: Option[Gid_t] ?= None)
+POST /paysystem/:paySystem/event/*path  @controllers.LkBill2.paySystemEventPost(paySystem: io.suggest.pay.MPaySystem, path)
+GET  /paysystem/:paySystem/event/*path  @controllers.LkBill2.paySystemEventGet(paySystem: io.suggest.pay.MPaySystem, path)
 
 ## lk pay systems support.
 ## Yandex.Kassa backend:

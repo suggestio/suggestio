@@ -15,12 +15,12 @@ import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdConf
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
+import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.pay.MPaySystems
+import io.suggest.pay.{MPaySystem, MPaySystems}
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sec.util.Csrf
@@ -31,6 +31,7 @@ import models.mbill._
 import models.mctx.Context
 import models.mdr.MMdrNotifyMeta
 import models.req._
+import play.api.http.HttpVerbs
 import play.api.libs.json.Json
 import play.api.mvc.{ActionBuilder, AnyContent}
 import util.TplDataFormatUtil
@@ -80,13 +81,12 @@ final class LkBill2 @Inject() (
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
   private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
-  private lazy val mItems = injector.instanceOf[MItems]
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
-  private lazy val mOrders = injector.instanceOf[MOrders]
   private lazy val csrf = injector.instanceOf[Csrf]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val yooKassaUtil = injector.instanceOf[YooKassaUtil]
+  private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
   implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
@@ -330,7 +330,7 @@ final class LkBill2 @Inject() (
       val ordersTotalFut = contractIdOptFut.flatMap { contractIdOpt =>
         contractIdOpt.fold( Future.successful(0) ) { contractId =>
           slick.db.run {
-            mOrders.countByContractId(contractId)
+            bill2Util.mOrders.countByContractId(contractId)
           }
         }
       }
@@ -570,7 +570,7 @@ final class LkBill2 @Inject() (
         .flatMap(_.id)
         .fold [Future[Seq[MItem]]] ( Future.successful(Nil) ) { orderId =>
           slick.db.run {
-            mItems.findByOrderId( orderId )
+            bill2Util.mItems.findByOrderId( orderId )
           }
         }
     }
@@ -801,19 +801,20 @@ final class LkBill2 @Inject() (
     */
   def cartSubmit() = csrf.Check {
     isAuth().async { implicit request =>
+      import slick.profile.api._
+
       lazy val logPrefix = s"cartSubmit()#${System.currentTimeMillis()}:"
 
       // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
       // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
       for {
         personNode  <- request.user.personNodeFut
-        enc         <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
-        contractId  = enc.mc.id.get
+        userContract <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
+        contractId  = userContract.contract.id.get
 
         // Дальше надо бы делать транзакцию
         // Произвести чтение, анализ и обработку товарной корзины:
         (cartResolution, mdrNotifyCtx, cartWithItems0) <- slick.db.run {
-          import slick.profile.api._
           val dbAction = for {
             // Прочитать текущую корзину
             cart0   <- bill2Util.prepareCartTxn( contractId )
@@ -839,19 +840,39 @@ final class LkBill2 @Inject() (
             // Need to activate an external payment system:
             case MCartIdeas.NeedMoney =>
               val paySystem = MPaySystems.default
+              val cartOrder = cartResolution.newCart getOrElse cartWithItems0
               paySystem match {
                 case MPaySystems.YooKassa =>
                   val payPrices = cartResolution.needMoney.get
                   require(payPrices.lengthIs == 1, s"Only one currency allowed for $paySystem")
-                  // TODO payProfile: Detect test/prod using URL qs args, filtering by request.user.isSuper
-                  val payProfile = yooKassaUtil.firstProfile.get
+                  val Seq(payPrice) = payPrices
+
                   for {
                     paymentStarted <- yooKassaUtil.preparePayment(
-                      profile   = payProfile,
-                      orderItem = cartResolution.newCart getOrElse cartWithItems0,
-                      payPrice  = payPrices.head,
+                      // TODO payProfile: Detect test/prod using URL qs args, filtering by request.user.isSuper
+                      profile   = yooKassaUtil.firstProfile.get,
+                      orderItem = cartOrder,
+                      payPrice  = payPrice,
                       personOpt = Some( personNode ),
                     )(ctx)
+                    // Store started not-yet-completed transaction:
+                    _ <- slick.db.run {
+                      (for {
+                        userBalance0 <- bill2Util.ensureBalanceFor( contractId, payPrice.currency )
+                        txn <- bill2Util.openPaySystemTxn(
+                          balanceId   = userBalance0.id.get,
+                          payAmount   = payPrice.amount,
+                          orderIdOpt  = cartOrder.order.id,
+                          psTxnId     = paymentStarted.payment.id,
+                        )
+                        // Ensure, that cart order contract is same as user contractId.
+                        orderHold <- bill2Util.holdOrder( cartOrder.order )
+                      } yield {
+                        LOGGER.trace(s"$logPrefix Hold order#${orderHold.id.orNull}, hold pending txn#${txn.id}, will await payment confirmation.")
+                        None
+                      })
+                        .transactionally
+                    }
                   } yield {
                     MCartSubmitResult(
                       cartIdea  = cartResolution.idea,
@@ -862,7 +883,7 @@ final class LkBill2 @Inject() (
 
                 // Deprecated. Support will be removed and not implemented here.
                 case MPaySystems.YaKa =>
-                  ???
+                  throw new UnsupportedOperationException("Deprecated, won't be implemented.")
               }
 
             // Order was closed, using user's internal balance.
@@ -926,7 +947,7 @@ final class LkBill2 @Inject() (
       for {
         // Выполнить удаление item'ов
         deletedCount <- slick.db.run {
-          mItems.deleteById( itemIds.items: _* )
+          bill2Util.mItems.deleteById( itemIds.items: _* )
         }
 
         // Получить обновлённые данные ордера-корзины:
@@ -935,6 +956,24 @@ final class LkBill2 @Inject() (
       } yield {
         LOGGER.trace(s"cartDeleteItems(${itemIds.items.mkString(", ")}): Deleted $deletedCount items.")
         Ok( Json.toJson(orderContents) )
+      }
+    }
+  }
+
+
+  def paySystemEventGet(paySystem: MPaySystem, restPath: String) = _paySystemEvent(HttpVerbs.GET, paySystem, restPath)
+  def paySystemEventPost(paySystem: MPaySystem, restPath: String) = _paySystemEvent(HttpVerbs.POST, paySystem, restPath)
+
+  /** API REST-point for incoming notifications from external payment system. */
+  private def _paySystemEvent(method: String, paySystem: MPaySystem, restPath: String) = {
+    ignoreAuth().async { implicit request =>
+      paySystem match {
+        // YooKassa notifications:
+        case MPaySystems.YooKassa =>
+          yooKassaUtil.handleIncomingHttpRequest(method, restPath)
+
+        case other =>
+          NotFound("Payment System not supported: " + other)
       }
     }
   }

@@ -1,18 +1,20 @@
 package io.suggest.mbill2.m.txn
 
 import java.time.OffsetDateTime
-
 import javax.inject.Inject
 import io.suggest.mbill2.m.balance.{BalanceIdFkSlick, BalanceIdInxSlick, FindByBalanceId, MBalances}
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.gid.{GetById, GidSlick, Gid_t}
+import io.suggest.mbill2.m.gid.{DeleteById, GetById, GidSlick, Gid_t}
 import io.suggest.mbill2.m.item.{ItemIdOptFkSlick, ItemIdOptInxSlick, ItemIdOptSlick, MItems}
 import io.suggest.mbill2.m.order.{MOrders, OrderIdOptFkSlick, OrderIdOptInxSlick, OrderIdOptSlick}
 import io.suggest.mbill2.m.price.AmountSlick
 import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import play.api.inject.Injector
+import japgolly.univeq._
 import slick.lifted.ProvenShape
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -32,11 +34,13 @@ final class MTxns @Inject() (
   with OrderIdOptSlick with OrderIdOptFkSlick with OrderIdOptInxSlick
   with FindByBalanceId
   with ItemIdOptSlick with ItemIdOptFkSlick with ItemIdOptInxSlick
+  with DeleteById
 {
 
   override lazy val mBalances = injector.instanceOf[MBalances]
   override lazy val mOrders = injector.instanceOf[MOrders]
   override lazy val mItems = injector.instanceOf[MItems]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   import profile.api._
@@ -102,6 +106,33 @@ final class MTxns @Inject() (
       .take(limit)
       .sortBy(_.id.desc)
       .result
+  }
+
+  /** For multi-step payments, this DBIO-action can be used for closing not-yet-closed pending transaction. */
+  def updatePaidInfo( txn: MTxn ): DBIOAction[MTxn, NoStream, Effect.Write] = {
+    assert( txn.datePaid.nonEmpty, s"datePaid must be non-empty: $txn" )
+    for {
+      countUpdated <- query
+        .filter( _.id === txn.id.get )
+        .map { tx =>
+          (tx.datePaidOpt, tx.paymentComment)
+        }
+        .update(( txn.datePaid, txn.paymentComment ))
+      if countUpdated ==* 1
+    } yield {
+      txn
+    }
+  }
+
+
+  /** Mark transaction as cancelled without any checks. */
+  def cancelTxn(txnId: Gid_t, comment: Option[String], when: OffsetDateTime = OffsetDateTime.now()): DBIOAction[Int, NoStream, Effect.Write] = {
+    query
+      .filter( _.id === txnId )
+      .map { t =>
+        (t.txType, t.paymentComment, t.dateProcessed)
+      }
+      .update((MTxnTypes.Cancelled, comment, when))
   }
 
 }

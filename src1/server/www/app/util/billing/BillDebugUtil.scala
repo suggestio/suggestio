@@ -1,5 +1,7 @@
 package util.billing
 
+import io.suggest.bill.MPrice
+
 import java.nio.charset.Charset
 import java.time.{LocalDate, OffsetDateTime}
 import javax.inject.Inject
@@ -11,10 +13,11 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.mbill2.m.order.MOrders
+import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect.{RWT, WT}
 import io.suggest.model.SlickHolder
+import io.suggest.pay.MPaySystems
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import io.suggest.util.{CompressUtilJvm, JmxBase}
 import io.suggest.util.logs.MacroLogsImpl
@@ -41,9 +44,6 @@ final class BillDebugUtil @Inject() (
   private lazy val mDebugs = injector.instanceOf[MDebugs]
   private lazy val mItems = injector.instanceOf[MItems]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
-  private lazy val mOrders = injector.instanceOf[MOrders]
-  private lazy val mBalances = injector.instanceOf[MBalances]
-  private lazy val mTxns = injector.instanceOf[MTxns]
   private lazy val compressUtilJvm = injector.instanceOf[CompressUtilJvm]
   protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
@@ -51,6 +51,7 @@ final class BillDebugUtil @Inject() (
   import slickHolder.slick.profile.api._
 
   def STR_ENC_CHARSET = Charset.defaultCharset()
+  def ROLLBACKED_PAYMENT_UID_PREFIX = "!!!-"
 
   /** Сериализация инстанса PriceDSL в формат для хранения. */
   // TODO Добавить поддержку версий формата. Сюда или прямо в модель ключей.
@@ -165,7 +166,7 @@ final class BillDebugUtil @Inject() (
 
     for {
       // Получить прерываемый item из базы, максимально заблокировав его.
-      mitemOpt <- mItems.getById(itemId).forUpdate
+      mitemOpt <- bill2Util.mItems.getById(itemId).forUpdate
       mitem = mitemOpt.get
 
       // Прерывать можно только online-item'ы.
@@ -217,7 +218,7 @@ final class BillDebugUtil @Inject() (
       // Если None, значит цену пересчитывать не надо, просто закрыть item.
       // Some(term), значит надо вычислить новую цену, залить разницу в деньгах, закрыть item с новым ценником.
       res <- {
-        val currItemSql = mItems.query
+        val currItemSql = bill2Util.mItems.query
           .filter( _.withIds(itemId))
 
         priceDslOpt2.fold [DBIOAction[_, NoStream, RWT]] {
@@ -243,7 +244,7 @@ final class BillDebugUtil @Inject() (
 
           // Получить текущий баланс юзера по номеру контракта и валюте
           for {
-            contractIdOpt <- mOrders.getContractId( mitem.orderId )
+            contractIdOpt <- bill2Util.mOrders.getContractId( mitem.orderId )
             contractId    = contractIdOpt.get
             bal0          <- bill2Util.ensureBalanceFor( contractId, mitem.price.currency )  // forUpdate уже внутри там
 
@@ -256,7 +257,7 @@ final class BillDebugUtil @Inject() (
             }
 
             // Залить разницу юзеру на баланс.
-            bal2Opt <- mBalances.incrAmountBy( bal0, diffAmount )
+            bal2Opt <- bill2Util.mBalances.incrAmountBy( bal0, diffAmount )
             bal2 = bal2Opt.get
 
             // Сохранить транзакцию возврата денежных средств.
@@ -267,7 +268,7 @@ final class BillDebugUtil @Inject() (
                 txType          = MTxnTypes.InterruptPartialRefund,
                 itemId          = Some( itemId )
               )
-              mTxns.insertOne( mtxn0 )
+              bill2Util.mTxns.insertOne( mtxn0 )
             }
 
             // Наконец, обновить текущий item:
@@ -358,6 +359,40 @@ final class BillDebugUtil @Inject() (
     } yield {
       LOGGER.trace(s"$logPrefix Done, $itemsUpdated items udpated")
       itemsUpdated
+    }
+  }
+
+
+  def interruptOrder(orderId: Gid_t): DBIOAction[_, NoStream, RWT] = {
+    lazy val logPrefix = s"cancelClosedTxn(${}):"
+    LOGGER.trace(s"$logPrefix Starting")
+
+    for {
+      itemIds <- bill2Util.mItems.itemIdsForOrder( orderId )
+      dateEnd = OffsetDateTime.now()
+      // Close all items for order:
+      _ <- DBIO.sequence {
+        for (itemId <- itemIds) yield {
+          interruptItem( itemId, dateEnd )
+            // Ignore/suppress possible failures, if non-online item:
+            .asTry
+            .map { tryRes =>
+              tryRes.fold(
+                ex => LOGGER.debug(s"$logPrefix Cannot interrupt item#$itemId of order#$orderId", ex),
+                _  => LOGGER.info(s"$logPrefix Interrupted item#$itemId of order#$orderId")
+              )
+              tryRes
+            }
+        }
+      }
+      // Close related order (possibly, order is closed already):
+      ordersUpdated <- {
+        LOGGER.trace(s"$logPrefix Interrupted/closed ${itemIds.length} items of order#$orderId")
+        bill2Util.mOrders.saveStatus1( orderId, MOrderStatuses.Closed )
+      }
+    } yield {
+      LOGGER.trace(s"$logPrefix Done, ordersUpdated=$ordersUpdated")
+      None
     }
   }
 

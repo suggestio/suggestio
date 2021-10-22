@@ -62,10 +62,14 @@ libraryDependencies ++= Seq(
   // jsRevRouter используется специальный escaping:
   "org.apache.commons" % "commons-text" % Common.Vsn.COMMONS_TEXT,
 
+  // YooKassaUtil: ip-address validation
+  "com.github.seancfoley" % "ipaddress" % "5.+",
+
   // test
   "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % Test
     exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
+    exclude("org.w3c.css", "sac"),
+
 )
 
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.

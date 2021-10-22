@@ -30,6 +30,9 @@ object MTxnTypes extends StringEnum[MTxnType] {
   /** Частичный возврат средств за прерванный, отчасти уже потраченный, item. */
   case object InterruptPartialRefund extends MTxnType("a")
 
+  /** Cancelled and not paid transaction. */
+  case object Cancelled extends MTxnType("c")
+
   /** Возмещение денег за некачественно-оказанные услуги. */
   //val Refund   = new Val("e")
 
