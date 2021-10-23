@@ -1,6 +1,7 @@
 package util.adv.geo.tag
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Source
 
 import javax.inject.Inject
 import akka.stream.scaladsl.{Keep, Sink}
@@ -504,7 +505,29 @@ class GeoTagsUtil @Inject() (
     */
   def prepareUnInstall(itemsSql: Query[MItems#MItemsTable, MItem, Seq]): Future[MCtxOuter] = {
     LOGGER.trace("prepareUnInstall():")
-    _prepareTagsCtx( itemsSql, _.tagNodeIdOpt, mNodes.multiGetMapCache )
+    _prepareTagsCtx(
+      itemsSql        = itemsSql,
+      getTagIdOrFace  = _.tagNodeIdOpt,
+      tagsToNodes     = { nodeIds =>
+        mNodes
+          .multiGetCacheSrc( nodeIds )
+          .flatMapMerge(4, { mnode =>
+            Source.fromIterator { () =>
+              // Index by every edge tag-face:
+              (for {
+                tagEdge <- mnode.edges.withPredicateIter( MPredicates.TaggedBy )
+                tagFace <- tagEdge.info.tags
+              } yield {
+                tagFace -> mnode
+              }) ++
+              // Also, append original nodeId:
+              (for (id <- mnode.id.iterator) yield id -> mnode)
+            }
+          })
+          .toMat( Sink.collection[(String, MNode), Map[String, MNode]] )( Keep.right )
+          .run()
+      },
+    )
   }
 
 

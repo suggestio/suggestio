@@ -374,16 +374,16 @@ final class Bill2Util @Inject() (
   }
 
 
-  def prepareOpenedItems(orderId: Gid_t): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
+  def findDraftItems(orderId: Gid_t): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
     mItems.findByOrderIdBuilder(orderId)
       .filter(_.statusStr === MItemStatuses.Draft.value)
       .result
       .forUpdate
   }
-  def prepareCartOrderItems(order: MOrder): DBIOAction[MOrderWithItems, NoStream, Effect.Read] = {
-    val orderId       = order.id.get
+  def orderWithDraftItems(order: MOrder): DBIOAction[MOrderWithItems, NoStream, Effect.Read] = {
+    val orderId = order.id.get
     for {
-      mitems        <- prepareOpenedItems(orderId)
+      mitems        <- findDraftItems( orderId )
     } yield {
       LOGGER.trace(s"prepareCartItems($orderId): cart contains ${mitems.size} items.")
       MOrderWithItems(order, mitems)
@@ -395,7 +395,7 @@ final class Bill2Util @Inject() (
     for {
       cartOrderOpt  <- getCartOrder(contractId).forUpdate
       order         = cartOrderOpt.get
-      res           <- prepareCartOrderItems(order)
+      res           <- orderWithDraftItems(order)
     } yield {
       res
     }

@@ -24,6 +24,7 @@ import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.{AnyContent, Result, Results}
 import util.acl.SioControllerApi
 import util.billing.{Bill2Util, BillDebugUtil}
+import util.mdr.MdrUtil
 
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -46,6 +47,7 @@ final class YooKassaUtil @Inject() (
 
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val billDebugUtil = injector.instanceOf[BillDebugUtil]
+  private lazy val mdrUtil = injector.instanceOf[MdrUtil]
 
   /** Force time-based idempotence key rotation.
     * This is needed to prevent duplication for continious payment requests. */
@@ -429,6 +431,8 @@ final class YooKassaUtil @Inject() (
                   )
                 }
                 priceAmount = payment.amount.toSioPrice
+                // Ensure order: is hold or draft.
+                cartOrder0  <- bill2Util.getOpenedOrderForUpdate( txnOrderId, validContractId = contractId )
                 txn2 <- bill2Util.incrUserBalanceFromPaySys(
                   txn         = txnOpt,
                   contractId  = contractId,
@@ -436,8 +440,19 @@ final class YooKassaUtil @Inject() (
                   psTxnUid    = payment.id,
                   orderIdOpt  = txn.orderIdOpt,
                 )
+
+                // Collect cart order items before execution:
+                cartOrderWithItems <- bill2Util.orderWithDraftItems( cartOrder0 )
+
+                // Maybe, prepare to notify moderators about moderation tasks:
+                // TODO mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx( cartOrderWithItems )
+
+                // Process order items with spending money from user balances.
+                // Step-by-step items processing is fault-tolerant. May be replaced with not-so-safe fallback variant: bill2Util.maybeExecuteOrder( cartOrderWithItems ).
+                finalOrderResult <- bill2Util.forceFinalizeOrder( cartOrderWithItems )
+
               } yield {
-                LOGGER.info(s"$logPrefix Completed transaction #${txn2.id.orNull} psUid#${payment.id} with $priceAmount")
+                LOGGER.info(s"$logPrefix Completed transaction#${txn2.id.orNull} psUid#${payment.id} with $priceAmount, order#$txnOrderId with ${cartOrderWithItems.items.length} opened items => okItemsCount=>${finalOrderResult.okItemsCount}")
                 txn2
               }
 

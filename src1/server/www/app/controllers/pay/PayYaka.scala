@@ -506,7 +506,7 @@ final class PayYaka @Inject() (
                   )
 
                   // Подготовить ордер корзины к исполнению.
-                  owi <- bill2Util.prepareCartOrderItems(mOrder0)
+                  owi <- bill2Util.orderWithDraftItems(mOrder0)
 
                   // Узнать, потребуется ли уведомлять модеров по email при успешном завершении транзакции.
                   mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx(owi)
