@@ -5,6 +5,7 @@ import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MS
 import _root_.play.api.mvc.{PathBindable, QueryStringBindable}
 import io.suggest.common.empty.OptionUtil
 import OptionUtil.BoolOptOps
+import io.suggest.bill.cart.MCartSubmitArgs
 import io.suggest.ble.MUidBeacon
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MScreen}
@@ -207,6 +208,11 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def osPlatformQsb: CrossQsBindable[MOsFamily] =
     EnumeratumJvmUtil.valueEnumQsb( MOsFamilies )
 
+  implicit def cartSubmitArgsQsb: CrossQsBindable[MCartSubmitArgs] = {
+    MCartSubmitArgs.cartSubmitArgsQsB(
+      stringOptB = implicitly[QueryStringBindable[Option[String]]],
+    )
+  }
 
   /** Поддержка MScAppDlQs. */
   implicit def scAppDlQs(implicit

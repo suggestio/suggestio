@@ -73,6 +73,7 @@ abstract class CartCircuitBase
   private def cartPayAh: HandlerFunction = new CartPayAh(
     modelRW   = payRW,
     lkCartApi = lkCartApi,
+    confRO    = confRW,
   )
 
   override protected val actionHandler: HandlerFunction = { (mroot, action) =>

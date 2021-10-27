@@ -6,7 +6,6 @@ import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
-import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.n2.edge._
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
@@ -27,11 +26,17 @@ import views.html.sys1.mdr._mdrNeededEmailTpl
 import OptionUtil.BoolOptOps
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink}
+import io.suggest.bill.MPrice
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.SlickHolder
+import io.suggest.pay.MPaySystem
+import models.mbill.MEmailOrderPaidTplArgs
 import play.api.Configuration
-import play.api.i18n.{Lang, Langs, MessagesApi}
 import play.api.inject.Injector
+import util.adn.NodesUtil
+import util.ident.IdentUtil
+import util.xplay.LangUtil
+import views.html.lk.billing.order.OrderPaidEmailTpl
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Failure
@@ -55,9 +60,10 @@ final class MdrUtil @Inject() (
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
-  private lazy val langs = injector.instanceOf[Langs]
-  private lazy val messagesApi = injector.instanceOf[MessagesApi]
+  private lazy val langUtil = injector.instanceOf[LangUtil]
   private lazy val configuration = injector.instanceOf[Configuration]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val identUtil = injector.instanceOf[IdentUtil]
   protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
   implicit private lazy val mat = injector.instanceOf[Materializer]
@@ -113,7 +119,7 @@ final class MdrUtil @Inject() (
     *
     * @return true/false если требуется или нет.
     */
-  def mdrNotifyPrepareCtx(owi: MOrderWithItems): DBIOAction[MMdrNotifyCtx, NoStream, Effect.Read] = {
+  def mdrNotifyPrepareCtx: DBIOAction[MMdrNotifyCtx, NoStream, Effect.Read] = {
     // Уведомление юзеров по email: можно собрать rcrvId из данных ордера. Потом по ним определить, кого уведомлять.
     /*
     val notifyUserMdrRcvrIds = owi.mitems
@@ -143,7 +149,97 @@ final class MdrUtil @Inject() (
 
   lazy val USER_MDR_NOTIFY_ALSO_SU = configuration.getOptional[Boolean]("mdr.user.notify.su").getOrElseFalse
 
-  /** Модель аккамулятора данных внутри обхаживалки графа узлов.
+
+  /** After payment completed ok, maybe need to send moderation nofitifaction, if needed. */
+  def maybeSendMdrNotify(mdrNotifyCtx: MMdrNotifyCtx, orderId: Option[Gid_t], personNodeFut: => Future[Option[MNode]], paidTotal: => Option[MPrice])
+                        (implicit ctx: Context): Future[_] = {
+    if (isMdrNotifyNeeded( mdrNotifyCtx )) {
+      val personNameOptFut = nodesUtil.getPersonName( personNodeFut )
+      for {
+        personNodeOpt <- personNodeFut
+        personNameOpt <- personNameOptFut
+        tplArgs = MMdrNotifyMeta(
+          // Вычислить общую суммы обработанного заказа.
+          paidTotal   = paidTotal,
+          orderId     = orderId,
+          personId    = personNodeOpt.flatMap(_.id),
+          personName  = personNameOpt,
+        )
+        _ <- sendMdrNotify( mdrNotifyCtx, tplArgs )(ctx)
+      } yield {
+        // Do nothing
+        LOGGER.trace(s"maybeSendMdrNotify(): Mdr-notify done, personName=${personNameOpt.orNull}")
+      }
+    } else {
+      Future.successful(())
+    }
+  }
+
+
+  /** If bill2Util.forceFinalizeOrder() returned not-processed items with new cart order, send email to programmers. */
+  def maybeNotifyCartSkippedItems( paySystem: MPaySystem, paymentResult: Bill2Util.PaymentResult ): Future[_] = {
+    (for {
+      skippedCart <- paymentResult.result.skippedCartOpt
+    } yield {
+      val oldOrderId = paymentResult.draftOrder.order.id
+      LOGGER.trace(s"notifyCartSkippedItems(${oldOrderId.orNull}=>${skippedCart.id.orNull} +${paymentResult.result.okItemsCount}): Was not able to close order ${oldOrderId.orNull} clearly. There are skipped cart-order#${skippedCart.id.orNull}")
+      Future {
+        mailerWrapper.instance
+          .setSubject(s"[${paySystem}] Проблемы с завершением заказа ${oldOrderId.orNull}=>${skippedCart.id.orNull}")
+          .setText(s"order #${oldOrderId.orNull} => #${skippedCart.id.orNull}\n\nTxn = ${paymentResult.balanceTxn}\n\n${paymentResult.result}")
+          .setRecipients(mailerWrapper.EMAILS_PROGRAMMERS: _*)
+          .send()
+      }
+    })
+      .getOrElse( Future.successful(()) )
+  }
+
+
+  /** Notify user about money transaction success. */
+  def paymentNotifyPayer(personNodeOptFut: Future[Option[MNode]], orderId: Gid_t, onNodeId: Option[String] )(implicit ctx: Context): Future[_] = {
+    for {
+      personNodeOpt <- personNodeOptFut
+      personNode = personNodeOpt.get
+      userEmails <- nodesUtil.personEmailFut( personNodeOptFut )
+      if userEmails.nonEmpty
+      tplArgs = MEmailOrderPaidTplArgs(
+        asEmail     = true,
+        orderId     = orderId,
+        onNodeId    = onNodeId,
+        withHello   = Some( None )    // TODO Detect display-username somehow?
+      )
+      langCode2Messages = langUtil.langCode2MessagesMap( personNode :: Nil )
+      userCtx = ctx.maybeLocalizeToUser( personNodeOpt, langCode2Messages )
+      r <- mailerWrapper.instance
+        .setSubject( userCtx.messages( MsgCodes.`Order.0.is.paid`, tplArgs.orderIdStr ) )
+        .setHtml( OrderPaidEmailTpl(tplArgs)(userCtx).body )
+        .setRecipients( userEmails.toSeq: _* )
+        .send()
+    } yield {
+      r
+    }
+  }
+
+  /** Notify user about money txn success, but detect returning nodeId using identUtil. */
+  def paymentNotifyPayerDetect( personNodeOptFut: Future[Option[MNode]], orderId: Gid_t )(implicit ctx: Context): Future[_] = {
+    for {
+      personNodeOpt <- personNodeOptFut
+      personNode = personNodeOpt.get
+      personId = personNode.id.get
+      rdrNodeIds <- identUtil.getRdrNodeIds( personId )
+      rdrNodeId = rdrNodeIds.headOption
+      r <- paymentNotifyPayer(
+        personNodeOptFut,
+        orderId = orderId,
+        onNodeId = rdrNodeId,
+      )
+    } yield {
+      r
+    }
+  }
+
+
+    /** Модель аккамулятора данных внутри обхаживалки графа узлов.
     *
     * @param seenNodeIds id узлов, которые уже были запрошены.ю
     * @param child2ownGraph Аккамулятор графа id связей узлов.
@@ -260,21 +356,7 @@ final class MdrUtil @Inject() (
 
 
         // Пакетно готовим messages под языки найденных юзеров.
-        langCode2MessagesMap = {
-          val allLangCodes = personsMap
-            .valuesIterator
-            .flatMap(_.meta.basic.langs)
-            .toSet
-          val availLangs = langs.availables.toList
-          (for {
-            langCode   <- allLangCodes.iterator
-            lang       <- Lang.get( langCode )
-          } yield {
-            val msgs = messagesApi.preferred( lang :: availLangs )
-            langCode -> msgs
-          })
-            .toMap
-        }
+        langCode2MessagesMap = langUtil.langCode2MessagesMap( personsMap.valuesIterator )
 
         personId2EmailsMap <- personId2EmailsMapFut
 
@@ -303,18 +385,7 @@ final class MdrUtil @Inject() (
           val personNodeOpt = personsMap.get( personId )
 
           // Разобраться с языком для рендера контекста.
-          implicit val ctx2 = (for {
-            personNode    <- personNodeOpt.iterator
-            langCode      <- personNode.meta.basic.langs
-            langMessages  <- langCode2MessagesMap.get( langCode )
-          } yield {
-            ctx.withMessages( langMessages )
-          })
-            .nextOption()
-            .getOrElse {
-              LOGGER.warn( s"$logPrefix i18n failed for person#$personId, available langs = [${langCode2MessagesMap.keysIterator.mkString(", ")}]" )
-              ctx
-            }
+          implicit val ctx2 = ctx.maybeLocalizeToUser( personNodeOpt, langCode2MessagesMap )
 
           // Вычислить id узла, на который генерить ссылку для юзера.
           val mdrNodeId = own2ChildrenMap
@@ -707,7 +778,7 @@ final class MdrUtil @Inject() (
     import streamsUtil.Implicits._
 
     slick.db.stream {
-      mItems.query
+      bill2Util.mItems.query
         .filter { i =>
           (i.nodeId === nodeId) &&
           (i.statusStr === MItemStatuses.AwaitingMdr.value)

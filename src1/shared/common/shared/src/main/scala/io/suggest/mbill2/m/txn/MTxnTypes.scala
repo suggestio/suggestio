@@ -13,30 +13,25 @@ import play.api.libs.json.Format
   */
 object MTxnTypes extends StringEnum[MTxnType] {
 
-  /** Обычный платеж за что-то. От покупателя. */
+  /** Draft transaction information. Transaction is not paid yet, awaiting for changes and updates. */
+  case object Draft extends MTxnType("d")
+
+  /** Обычный платеж. Покупатель оплачивает через некую платёжную систему. */
   case object Payment extends MTxnType("p")
 
-  /** Откат платежа назад.
+  /** Частичная отмена платежа за что-либо назад на баланс.
     * Например, оплаченная услуга не прошла модерацию. */
-  case object Rollback extends MTxnType("r")
+  case object ReturnToBalance extends MTxnType("r")
 
-  /** Входящий профит. К продавку. */
+  /** Некий доход на баланс. Изначально - ручное рисование средств через SysBilling. */
   case object Income extends MTxnType("i")
 
-  /** Копия транзакции на стороне платежной системы.
-    * Юзер оплатил на счёт CBCA в ПС, и ему закидываются деньги на баланс в S.io. */
-  case object PaySysTxn extends MTxnType("s")
-
-  /** Частичный возврат средств за прерванный, отчасти уже потраченный, item. */
-  case object InterruptPartialRefund extends MTxnType("a")
-
-  /** Cancelled and not paid transaction. */
+  /** Draft is cancelled, and not paid.
+    * Stored to handle cases, when cancelled, but payment is received later after cancel. */
   case object Cancelled extends MTxnType("c")
 
-  /** Возмещение денег за некачественно-оказанные услуги. */
-  //val Refund   = new Val("e")
 
-  override val values = findValues
+  override def values = findValues
 
 }
 
@@ -53,5 +48,9 @@ object MTxnType {
   implicit def mTxnTypeFormat: Format[MTxnType] = (
     EnumeratumUtil.valueEnumEntryFormat( MTxnTypes )
   )
+
+  implicit final class TxnTypeExt( private val txnType: MTxnType ) extends AnyVal {
+    def i18nCode = "_transaction.type." + txnType.value
+  }
 
 }

@@ -31,28 +31,28 @@ final class IdentUtil @Inject() (
   private lazy val credentialsStorage = injector.instanceOf[ICredentialsStorage]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
+  def getRdrNodeIds(personId: String): Future[Seq[String]] = {
+    import esModel.api._
+    mNodes.dynSearchIds(
+      new MNodeSearch {
+        override val outEdges: MEsNestedSearch[Criteria] = {
+          val cr = Criteria(
+            nodeIds     = personId :: Nil,
+            predicates  = MPredicates.OwnedBy :: Nil
+          )
+          MEsNestedSearch.plain( cr )
+        }
+        override val nodeTypes = MNodeTypes.AdnNode :: Nil
+        // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
+        override def limit = 2
+      }
+    )
+  }
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
-  def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
-    import esModel.api._
-
+  def getRdrCallFor(personId: String): Future[Option[Call]] = {
     for {
-
-      mnodeIds <- mNodes.dynSearchIds(
-        new MNodeSearch {
-          override val outEdges: MEsNestedSearch[Criteria] = {
-            val cr = Criteria(
-              nodeIds     = personId :: Nil,
-              predicates  = MPredicates.OwnedBy :: Nil
-            )
-            MEsNestedSearch.plain( cr )
-          }
-          override val nodeTypes = MNodeTypes.AdnNode :: Nil
-          // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
-          override def limit = 2
-        }
-      )
-
+      mnodeIds <- getRdrNodeIds( personId )
     } yield {
 
       val rdrOrNull: Call = if (mnodeIds.isEmpty) {
@@ -81,7 +81,7 @@ final class IdentUtil @Inject() (
 
 
   def redirectCallUserSomewhere(personId: String): Future[Call] = {
-    getMarketRdrCallFor(personId).flatMap {
+    getRdrCallFor(personId).flatMap {
       // Уже ясно куда редиректить юзера
       case Some(rdr) =>
         Future.successful(rdr)

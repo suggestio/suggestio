@@ -9,9 +9,6 @@ import io.suggest.mbill2.m.gid.Gid_t
   * Description: Аргументы для рендера шаблона [[views.html.lk.billing.order.OrderPaidEmailTpl]].
   *
   * @param orderId Номер оплаченного заказа.
-  * @param orderIdStr Отрендеренный в строку номер заказа.
-  *                   Используется, т.к. рендер через messages() вызывает добавление нежелательного groupingSeparator.
-  *                   Без orderIdStr получается "Заказ №1 674", что выглядит очень убого.
   * @param withHello Рендерить преветствие?
   *                  None - нет.
   *                  Some(None) - обезличенное приветствие: Здравствуйте!
@@ -21,7 +18,13 @@ import io.suggest.mbill2.m.gid.Gid_t
 case class MEmailOrderPaidTplArgs(
                                    asEmail    : Boolean,
                                    orderId    : Gid_t,
-                                   orderIdStr : String,
-                                   onNodeId   : String,
+                                   onNodeId   : Option[String],
                                    withHello  : Option[Option[String]]
-                                 )
+                                 ) {
+
+  /** Internal constant to suppress rendering problems with messages().
+    * With orderId.toString, messages() will render something like "Order #1 674" -- it looks bad.
+    */
+  val orderIdStr = orderId.toString
+
+}

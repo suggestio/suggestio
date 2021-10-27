@@ -38,6 +38,7 @@ import io.suggest.util.JmxBase
 import japgolly.univeq._
 import play.api.Configuration
 import play.api.inject.Injector
+import play.api.libs.json.JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -266,7 +267,7 @@ final class Bill2Util @Inject() (
 
   /** Поиск id ордера-корзины. */
   def getCartOrderId(contractId: Gid_t): DBIOAction[Option[Gid_t], NoStream, Effect.Read] = {
-    _getLastOrderSql(contractId, MOrderStatuses.Draft)
+    _getLastOrderSql( contractId, MOrderStatuses.Draft, MOrderStatuses.Hold )
       .map(_.id)
       .result
       .headOption
@@ -282,10 +283,13 @@ final class Bill2Util @Inject() (
       .result
   }
 
-  private def _getLastOrderSql(contractId: Gid_t, status: MOrderStatus) = {
+  private def _getLastOrderSql(contractId: Gid_t, statuses: MOrderStatus*) = {
     mOrders.query
       .filter { q =>
-        (q.contractId === contractId) && (q.statusStr === status.value)
+        val query0 = (q.contractId === contractId)
+        // Append order-status filtering, if statuses non empty:
+        if (statuses.isEmpty) query0
+        else query0 && (q.statusStr inSet statuses.map(_.value))
       }
       .sortBy(_.id.desc.nullsLast)
       .take(1)
@@ -541,7 +545,7 @@ final class Bill2Util @Inject() (
                         balanceId   = mbalance2.id.get,
                         amount      = withdrawAmount,
                         txType      = MTxnTypes.Payment,
-                        orderIdOpt  = order.order.id
+                        orderIdOpt  = order.order.id,
                       )
                     }
                   } yield {
@@ -746,7 +750,8 @@ final class Bill2Util @Inject() (
                 // Переместить транзакции item'ов закрываемого ордера
                 txnsUpdated <- mTxns.query
                   .filter { t =>
-                    (t.itemIdOpt inSet skippedItemIds) && (t.orderIdOpt === orderId)
+                    (t.itemIdOpt inSet skippedItemIds) &&
+                    (t.orderIdOpt === orderId)
                   }
                   .map(_.orderIdOpt)
                   .update( Some(cartOrderId) )
@@ -1262,7 +1267,7 @@ final class Bill2Util @Inject() (
         val mtxn0 = MTxn(
           balanceId  = balance0.id.get,
           amount     = mitem0.price.amount,
-          txType     = MTxnTypes.Rollback,
+          txType     = MTxnTypes.ReturnToBalance,
           itemId     = Some(itemId)
         )
         mTxns.insertOne(mtxn0)
@@ -1803,8 +1808,8 @@ final class Bill2Util @Inject() (
     * @param comment Коммент к платежу. Например, название платёжной системы.
     * @return MTxn.
     */
-  def incrUserBalanceFromPaySys(contractId: Gid_t, mprice: MPrice, psTxnUid: String, orderIdOpt: Option[Gid_t] = None,
-                                comment: Option[String] = None, txn: Option[MTxn] = None, txType: MTxnType = MTxnTypes.PaySysTxn): DBIOAction[MTxn, NoStream, RWT] = {
+  def incrUserBalanceFromPaySys(contractId: Gid_t, mprice: MPrice, psTxnUid: String, orderIdOpt: Option[Gid_t] = None, paySystem: MPaySystem,
+                                txType: MTxnType, comment: Option[String] = None, txn: Option[MTxn] = None): DBIOAction[MTxn, NoStream, RWT] = {
     lazy val logPrefix = s"incrUserBalanceFromPaySys($psTxnUid, $contractId/${orderIdOpt.orNull}, $mprice):"
     LOGGER.trace(s"$logPrefix Starting; comment=${comment.orNull}")
 
@@ -1816,7 +1821,10 @@ final class Bill2Util @Inject() (
       txnOpt0 <- txn.fold [DBIOAction[Option[MTxn], NoStream, Effect.Read]] {
         mTxns
           .query
-          .filter( _.psTxnUidOpt === psTxnUid )
+          .filter { t =>
+            (t.psTxnUidOpt === psTxnUid) &&
+            (t.paySystemStr === paySystem.value)
+          }
           // ignoring datePaid.isEmpty and else: It will be checked below.
           .take( 1 )
           .result
@@ -1858,6 +1866,7 @@ final class Bill2Util @Inject() (
             paymentComment  = comment,
             psTxnUidOpt     = Some( psTxnUid ),
             datePaid        = datePaid,
+            paySystem       = Some( paySystem ),
           )
           mTxns.insertOne( txn0 )
 
@@ -1866,6 +1875,7 @@ final class Bill2Util @Inject() (
           val txnFinal = txnExisting.copy(
             datePaid        = datePaid,
             paymentComment  = comment,
+            txType          = txType,
           )
           mTxns.updatePaidInfo( txnFinal )
         }
@@ -1882,8 +1892,7 @@ final class Bill2Util @Inject() (
   private def _getOrderTxnsQuery(orderId: Gid_t) = {
     mTxns.query
       .filter { t =>
-        (t.orderIdOpt === orderId) &&
-          (t.txTypeStr === MTxnTypes.PaySysTxn.value)
+        (t.orderIdOpt === orderId)
       }
   }
 
@@ -1907,25 +1916,36 @@ final class Bill2Util @Inject() (
     * @param orderId id заказа, к которому относятся транзакции.
     * @return DB-экшен, возвращающий MTxn -> MCurrency.
     */
-  def getOrderTxnsWithCurrencies(orderId: Gid_t): DBIOAction[Seq[(MTxn, MCurrency)], NoStream /*Streaming[(MTxn, MCurrency)]*/, Effect.Read] = {
-    // TODO Надо все item'ы ордера тоже подцепить сюда.
-    _getOrderTxnsQuery( orderId )
-      .join(
-        mBalances.query
-      )
-      .on { case (mtxns, mbalances) =>
-        mtxns.balanceId === mbalances.id
+  def getOrderTxnsWithCurrencies(orderId: Gid_t): DBIOAction[(Seq[MTxn], Map[Gid_t, MCurrency]), NoStream, Effect.Read] = {
+    lazy val logPrefix = s"getOrderTxnsWithCurrencies($orderId):"
+    for {
+      // List transactions for order:
+      txns <- _getOrderTxnsQuery( orderId ).result
+
+      // List related balances:
+      balances2Currency: Map[Gid_t, MCurrency] <- {
+        if (txns.isEmpty) {
+          DBIO successful Map.empty[Gid_t, MCurrency]
+        } else {
+          // Collect currencies information. Usually, only one currency is here
+          val balanceIds = txns
+            .iterator
+            .map( _.balanceId )
+            .toSet
+
+          mBalances.query
+            .filter(_.id inSet balanceIds)
+            .map { b =>
+              (b.id, b.currency)
+            }
+            .result
+            .map(_.toMap)
+        }
       }
-      .map { case (mtxn, mbalance) =>
-        // TODO Надо currency, но почему-то slick неправильно отрабатывает mapped-projection.
-        (mtxn, mbalance.currencyCode)
-      }
-      .sortBy(_._1.id.asc)
-      .result
-      .map { mtxnCurrCodes =>
-        for ( (mtxn, currCode) <- mtxnCurrCodes ) yield
-          mtxn -> MCurrencies.withValue( currCode )
-      }
+    } yield {
+      LOGGER.trace(s"$logPrefix Found ${txns.length} transactions, ${balances2Currency.size} balances/currencies.")
+      txns -> balances2Currency
+    }
   }
 
 
@@ -2060,21 +2080,72 @@ final class Bill2Util @Inject() (
   }
 
 
-  def openPaySystemTxn(balanceId: Gid_t, payAmount: Amount_t, orderIdOpt: Option[Gid_t], psTxnId: String): DBIOAction[MTxn, NoStream, Effect.Write] = {
+  /** Open & save not-yet-paid transaction.
+    * Payment will be done in nearest future from pay-system, and this transaction will updated & closed.
+    */
+  def openPaySystemTxn(paySystem: MPaySystem, balanceId: Gid_t, payAmount: Amount_t, orderIdOpt: Option[Gid_t],
+                       psTxnId: String, txnMetadata: Option[JsValue] = None): DBIOAction[MTxn, NoStream, Effect.Write] = {
     mTxns insertOne MTxn(
       balanceId   = balanceId,
       amount      = payAmount,
-      txType      = MTxnTypes.Payment,
+      txType      = MTxnTypes.Draft,
       orderIdOpt  = orderIdOpt,
       psTxnUidOpt = Some( psTxnId ),
       datePaid    = None,
+      paySystem   = Some( paySystem ),
+      metadata    = txnMetadata,
     )
+  }
+
+
+  /** Hi-level DB-action for received money from pay-system.
+    * Process payment and process cart order.
+    * This db-action is used after pay-system payment is received. */
+  def handlePaymentReceived(orderId: Gid_t, contractId: Gid_t, payPrice: MPrice, paySysUid: String, paySystem: MPaySystem,
+                            comment: Option[String] = None, txn: Option[MTxn] = None): DBIOAction[PaymentResult, NoStream, RWT] = {
+    lazy val logPrefix = s"handlePaymentReceived($orderId, $payPrice, $paySysUid):"
+    LOGGER.trace(s"$logPrefix Starting, order#$orderId contract#$contractId payPrice=$payPrice paySysUid[$paySysUid]: ${comment.orNull}")
+
+    (for {
+      // Read currently draft/hold order for update:
+      mOrder0  <- getOpenedOrderForUpdate( orderId, validContractId = contractId )
+
+      // Save payment money on balance + transaction.
+      balanceTxn <- incrUserBalanceFromPaySys(
+        contractId  = contractId,
+        mprice      = payPrice,
+        orderIdOpt  = Some( orderId ),
+        psTxnUid    = paySysUid,
+        comment     = comment,
+        paySystem   = paySystem,
+        txn         = txn,
+        txType      = MTxnTypes.Payment,
+      )
+
+      // Read all draft order's items:
+      draftOrderWithItems <- orderWithDraftItems( mOrder0 )
+
+      // Process order items step-by-step. For each item, substract some money from balance, execute related actions.
+      // Here, complex-logic finalizer is used (for tolerating possible problems, if money received != order price).
+      // Fallback order finalizer can be used: maybeExecuteOrder(owi).
+      finOrderRes <- forceFinalizeOrder( draftOrderWithItems )
+    } yield {
+      LOGGER.trace(s"$logPrefix Completed, txn#${balanceTxn.id.orNull} order#$orderId=>${finOrderRes.closedOrder.status} items[${draftOrderWithItems.items.length}/${finOrderRes.okItemsCount}]")
+      PaymentResult( draftOrderWithItems, balanceTxn, finOrderRes )
+    })
+      .transactionally
   }
 
 }
 
 
 object Bill2Util {
+
+  sealed case class PaymentResult(
+                                   draftOrder     : MOrderWithItems,
+                                   balanceTxn     : MTxn,
+                                   result         : ForceFinalizeOrderRes,
+                                 )
 
   sealed case class EnsuredNodeContract( contract: MContract, mnode: MNode )
 

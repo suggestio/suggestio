@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
-import io.suggest.bill.cart.{MCartConf, MCartIdeas, MCartInit, MCartSubmitResult, MOrderContent}
+import io.suggest.bill.cart.{MCartConf, MCartIdeas, MCartInit, MCartSubmitArgs, MCartSubmitResult, MOrderContent}
 import io.suggest.bill.price.dsl.{MReasonType, MReasonTypes}
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.bill.{MCurrency, MPrice}
@@ -16,7 +16,7 @@ import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdConf
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
+import io.suggest.mbill2.m.order.MOrder
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -29,7 +29,6 @@ import io.suggest.xplay.qsb.QsbSeq
 import japgolly.univeq._
 import models.mbill._
 import models.mctx.Context
-import models.mdr.MMdrNotifyMeta
 import models.req._
 import play.api.http.HttpVerbs
 import play.api.libs.json.Json
@@ -577,26 +576,32 @@ final class LkBill2 @Inject() (
 
     // Собрать транзакции, если это НЕ ордер-корзина:
     val mTxnsCurFut = morderOpt
-      .filter(_.status !=* MOrderStatuses.Draft)
       .flatMap(_.id)
-      .fold [Future[Seq[(MTxn, MCurrency)]]] ( Future.successful(Nil) ) { orderId =>
-        slick.db.run {
-          bill2Util.getOrderTxnsWithCurrencies( orderId )
+      .fold [Future[(Seq[MTxn], Map[Gid_t, MCurrency])]]
+        { Future.successful((Nil, Map.empty)) }
+        { orderId =>
+          slick.db.run {
+            bill2Util.getOrderTxnsWithCurrencies( orderId )
+          }
         }
-      }
 
     val ctx = implicitly[Context]
 
     // Надо добавить ценники к найденным транзакциям.
     val mTxnsPricedFut = for {
-      txnsCur <- mTxnsCurFut
+      (txnsCur, balancesCurrency) <- mTxnsCurFut
     } yield {
       for {
-        (mtxn, mcurrency) <- txnsCur
+        mtxn <- txnsCur
+        mcurrency <- {
+          val currOpt = balancesCurrency.get( mtxn.balanceId )
+          LOGGER.trace(s"$logPrefix txn#${mtxn.id.orNull} balance#${mtxn.balanceId} => ${mtxn.amount} ${currOpt.orNull}")
+          currOpt
+        }
       } yield {
-        val price0 = MPrice(mtxn.amount, mcurrency)
+        val price0 = MPrice( mtxn.amount, mcurrency )
         MTxnPriced(
-          txn   = mtxn,
+          txn   = mtxn.toClientSide,
           price = TplDataFormatUtil.setFormatPrice( price0 )(ctx)
         )
       }
@@ -799,8 +804,13 @@ final class LkBill2 @Inject() (
     *
     * @return Редирект или страница оплаты.
     */
-  def cartSubmit() = csrf.Check {
-    isAuth().async { implicit request =>
+  def cartSubmit(qs: MCartSubmitArgs) = csrf.Check {
+    val actionBuilder = qs.onNodeId.fold[ActionBuilder[IReq, AnyContent]] {
+      isAuth()
+    } { onNodeId =>
+      isNodeAdmin( onNodeId, U.PersonNode, U.ContractId )
+    }
+    actionBuilder.async { implicit request =>
       import slick.profile.api._
 
       lazy val logPrefix = s"cartSubmit()#${System.currentTimeMillis()}:"
@@ -815,21 +825,20 @@ final class LkBill2 @Inject() (
         // Дальше надо бы делать транзакцию
         // Произвести чтение, анализ и обработку товарной корзины:
         (cartResolution, mdrNotifyCtx, cartWithItems0) <- slick.db.run {
-          val dbAction = for {
+          (for {
             // Прочитать текущую корзину
             cart0   <- bill2Util.prepareCartTxn( contractId )
 
             // Узнать, потребуется ли уведомлять модеров по email при успешном завершении транзакции.
-            mdrNotifyCtx0 <- mdrUtil.mdrNotifyPrepareCtx(cart0)
+            mdrNotifyCtx0 <- mdrUtil.mdrNotifyPrepareCtx
 
             // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
             cartIdea0 <- bill2Util.maybeExecuteOrder(cart0)
           } yield {
             // Сформировать результат работы экшена
             (cartIdea0, mdrNotifyCtx0, cart0)
-          }
-          // Форсировать весь этот экшен в транзакции:
-          dbAction.transactionally
+          })
+            .transactionally
         }
 
         resp <- {
@@ -864,6 +873,8 @@ final class LkBill2 @Inject() (
                           payAmount   = payPrice.amount,
                           orderIdOpt  = cartOrder.order.id,
                           psTxnId     = paymentStarted.payment.id,
+                          paySystem   = paySystem,
+                          txnMetadata = Option.when( qs.nonEmpty )( Json.toJsObject( qs ) ),
                         )
                         // Ensure, that cart order contract is same as user contractId.
                         orderHold <- bill2Util.holdOrder( cartOrder.order )
@@ -889,30 +900,21 @@ final class LkBill2 @Inject() (
             // Order was closed, using user's internal balance.
             case MCartIdeas.OrderClosed =>
               // In background, generate need-moderation notification to related moderators.
-              if (mdrUtil.isMdrNotifyNeeded( mdrNotifyCtx )) {
-                for {
-                  personNameOpt <- nodesUtil.getPersonName( request.user.personNodeOptFut )
-                  orderTotal = MPrice
-                    .toSumPricesByCurrency(
-                      cartResolution.newCart
-                        .iterator
-                        .flatMap(_.items)
-                    )
-                    .values
-                    .headOption
-                  tplArgs = MMdrNotifyMeta(
-                    // Вычислить общую суммы обработанного заказа.
-                    paidTotal   = orderTotal,
-                    orderId     = cartWithItems0.order.id,
-                    personId    = request.user.personIdOpt,
-                    personName  = personNameOpt
+              mdrUtil.maybeSendMdrNotify(
+                mdrNotifyCtx  = mdrNotifyCtx,
+                orderId       = cartWithItems0.order.id,
+                personNodeFut = request.user.personNodeOptFut,
+                paidTotal = MPrice
+                  .toSumPricesByCurrency(
+                    cartResolution.newCart
+                      .iterator
+                      .flatMap(_.items)
                   )
-                  _ <- mdrUtil.sendMdrNotify( mdrNotifyCtx, tplArgs )(ctx)
-                } {
-                  // Do nothing
-                  LOGGER.trace(s"$logPrefix Mdr-notify done, personName=${personNameOpt.orNull}, orderTotal=${orderTotal.orNull}")
-                }
-              }
+                  .values
+                  .headOption,
+              )(ctx)
+
+              // TODO mdrUtil.paymentNotifyPayer( request.user.personNodeOptFut, cartWithItems0.order.id, onNodeId??? )(ctx)
 
               // Response to client-side js.
               val resp = MCartSubmitResult(

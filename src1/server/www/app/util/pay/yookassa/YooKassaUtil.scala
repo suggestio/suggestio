@@ -2,12 +2,15 @@ package util.pay.yookassa
 
 import inet.ipaddr.IPAddressString
 import io.suggest.bill.MPrice
+import io.suggest.bill.cart.MCartSubmitArgs
 import io.suggest.err.HttpResultingException
+import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.mbill2.m.txn.MTxnTypes
 import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.node.MNode
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystems
 import io.suggest.pay.yookassa.{MYkAmount, MYkEventTypes, MYkObject, MYkObjectTypes, MYkPayment, MYkPaymentConfirmation, MYkPaymentConfirmationTypes, MYkPaymentCreate, MYkPaymentStatuses, YooKassaConst}
 import io.suggest.proto.http.HttpConst
@@ -48,6 +51,9 @@ final class YooKassaUtil @Inject() (
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val billDebugUtil = injector.instanceOf[BillDebugUtil]
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val esModel = injector.instanceOf[EsModel]
+
 
   /** Force time-based idempotence key rotation.
     * This is needed to prevent duplication for continious payment requests. */
@@ -238,7 +244,7 @@ final class YooKassaUtil @Inject() (
 
 
   /** Handle incoming HTTP-notifications from yookassa.ru. */
-  def handleHttpNotify()(implicit request: IReq[AnyContent]): Future[Result] = {
+  def handleHttpNotify()(implicit request: IReq[AnyContent], ctx: Context): Future[Result] = {
     lazy val logPrefix = s"handleHttpNotify()#${System.currentTimeMillis}:"
 
     (for {
@@ -394,7 +400,8 @@ final class YooKassaUtil @Inject() (
         txnOpt <- bill2Util.mTxns
           .query
           .filter { t =>
-            t.psTxnUidOpt === payment.id
+            (t.psTxnUidOpt === payment.id) &&
+            (t.paySystemStr === MPaySystems.YooKassa.value)
           }
           .take( 1 )
           .result
@@ -416,12 +423,15 @@ final class YooKassaUtil @Inject() (
         }
 
         // Make changes in database:
-        _ <- ykObj.event.get match {
+        actionRes: YkNotifyDbActionRes <- ykObj.event.get match {
           // Completed payment processing.
           case MYkEventTypes.PaymentSucceeded =>
             txn.datePaid.fold {
               LOGGER.debug(s"$logPrefix txn#${txn.id.orNull} pending => success, because payment#${payment.id} is completed.")
               for {
+                // Maybe, prepare to notify moderators about moderation tasks:
+                mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx
+                // Grab contractId for next changes:
                 contractIdOpt <- bill2Util.mOrders.getContractId( txnOrderId )
                 contractId = contractIdOpt getOrElse {
                   val msg = s"$logPrefix Not found order#${txnOrderId} for txn#${txn.id.orNull} paymentUid#${payment.id}. Should never happen."
@@ -431,29 +441,72 @@ final class YooKassaUtil @Inject() (
                   )
                 }
                 priceAmount = payment.amount.toSioPrice
+
                 // Ensure order: is hold or draft.
-                cartOrder0  <- bill2Util.getOpenedOrderForUpdate( txnOrderId, validContractId = contractId )
-                txn2 <- bill2Util.incrUserBalanceFromPaySys(
-                  txn         = txnOpt,
-                  contractId  = contractId,
-                  mprice      = priceAmount,
-                  psTxnUid    = payment.id,
-                  orderIdOpt  = txn.orderIdOpt,
+                payResult <- bill2Util.handlePaymentReceived(
+                  orderId    = txnOrderId,
+                  contractId = contractId,
+                  payPrice   = priceAmount,
+                  paySysUid  = payment.id,
+                  paySystem  = MPaySystems.YooKassa,
+                  txn        = txnOpt,
                 )
-
-                // Collect cart order items before execution:
-                cartOrderWithItems <- bill2Util.orderWithDraftItems( cartOrder0 )
-
-                // Maybe, prepare to notify moderators about moderation tasks:
-                // TODO mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx( cartOrderWithItems )
-
-                // Process order items with spending money from user balances.
-                // Step-by-step items processing is fault-tolerant. May be replaced with not-so-safe fallback variant: bill2Util.maybeExecuteOrder( cartOrderWithItems ).
-                finalOrderResult <- bill2Util.forceFinalizeOrder( cartOrderWithItems )
-
               } yield {
-                LOGGER.info(s"$logPrefix Completed transaction#${txn2.id.orNull} psUid#${payment.id} with $priceAmount, order#$txnOrderId with ${cartOrderWithItems.items.length} opened items => okItemsCount=>${finalOrderResult.okItemsCount}")
-                txn2
+                LOGGER.info(s"$logPrefix Completed transaction#${payResult.balanceTxn.id.orNull} psUid#${payment.id} with $priceAmount, order#$txnOrderId with ${payResult.draftOrder.items.length} opened items => okItemsCount=>${payResult.result.okItemsCount}")
+                // After db-transaction and outside it, do related activities: send moderation email, etc.
+                val afterF = { () =>
+                  import esModel.api._
+
+                  // Notify moderators about current user transaction and related events:
+                  val personNodeOptFut = mNodes.dynSearchOne(
+                    new MNodeSearch {
+                      override val contractIds = contractId :: Nil
+                      override def limit = 1
+                      override val nodeTypes = MNodeTypes.Person :: Nil
+                    }
+                  )
+                  val mdrNotifyFut = mdrUtil.maybeSendMdrNotify(
+                    mdrNotifyCtx  = mdrNotifyCtx1,
+                    orderId       = txn.orderIdOpt,
+                    personNodeFut = personNodeOptFut,
+                    paidTotal     = Some( priceAmount ),
+                  )(ctx)
+
+                  // May be, notify s.io staff about possible problems with order closing:
+                  val cartSkipsNotifyFut = mdrUtil.maybeNotifyCartSkippedItems( MPaySystems.YooKassa, payResult )
+
+                  // Notify payer about changes in money balance.
+                  // TODO Do not payer+detect. OnNodeId must be extracted from txn.metadata
+                  val userPaymentNotifyFut = (for {
+                    txnMeta <- txn.metadata
+                    cartSubmitQs <- txnMeta.asOpt[MCartSubmitArgs]
+                    onNodeId <- cartSubmitQs.onNodeId
+                  } yield {
+                    LOGGER.trace(s"$logPrefix Found onNodeId=$onNodeId for order#$txnOrderId in txn#${txn.id.orNull} metadata")
+                    mdrUtil.paymentNotifyPayer(
+                      personNodeOptFut,
+                      orderId = txnOrderId,
+                      onNodeId = Some( onNodeId ),
+                    )(ctx)
+                  })
+                    .getOrElse {
+                      // TODO In future, need to return into showcase-cart URL.
+                      LOGGER.debug(s"$logPrefix Detecting back-address into user's personal cabinet, because nodeId undefined in txn.metadata.")
+                      mdrUtil.paymentNotifyPayerDetect(
+                        personNodeOptFut,
+                        orderId = txnOrderId,
+                      )(ctx)
+                    }
+
+                  Future.sequence(
+                    mdrNotifyFut ::
+                    cartSkipsNotifyFut ::
+                    userPaymentNotifyFut ::
+                    Nil
+                  )
+                }
+
+                YkNotifyDbActionRes( Some(afterF) )
               }
 
             } { datePaid =>
@@ -488,11 +541,11 @@ final class YooKassaUtil @Inject() (
                 if countUpdated ==* 1
               } yield {
                 LOGGER.info(s"$logPrefix Successfully cancelled & removed txn#${txn.id.orNull} psUid#${payment.id}, and unholded order#$txnOrderId")
-                txn
+                YkNotifyDbActionRes()
               }
 
             } { datePaid =>
-              LOGGER.warn(s"$logPrefix Need to cancel already closed & paid (since $datePaid) transaction#${txn.id.orNull} psUid#${payment.id}.")
+              LOGGER.debug(s"$logPrefix Need to cancel already closed & paid (since $datePaid) transaction#${txn.id.orNull} psUid#${payment.id}.")
 
               for {
                 _ <- billDebugUtil.interruptOrder( txnOrderId )
@@ -501,35 +554,48 @@ final class YooKassaUtil @Inject() (
                   LOGGER.trace(s"$logPrefix Order#$txnOrderId marked as closed.")
                   bill2Util.mOrders.getContractId( txnOrderId )
                 }
-                txnOpt2 <- DBIO.sequenceOption(
+                _ <- DBIO.sequenceOption(
                   for (contractId <- contractIdOpt) yield {
                     val reducePriceBy = payment.amount.toSioPrice
                     LOGGER.trace(s"$logPrefix Reducing user's balance $reducePriceBy, contract#$contractId")
                     bill2Util.incrUserBalanceFromPaySys(
                       contractId = contractId,
-                      mprice     = MPrice.amount.modify( -_ )( reducePriceBy ),
+                      mprice     = MPrice.amount.modify { amount0 =>
+                        -Math.abs( amount0 )
+                      }( reducePriceBy ),
                       psTxnUid   = billDebugUtil.ROLLBACKED_PAYMENT_UID_PREFIX + payment.id,
+                      paySystem  = MPaySystems.YooKassa,
                       orderIdOpt = txn.orderIdOpt,
                       comment    = Some( s"${payment.cancellationDetails.fold(MPaySystems.YooKassa.toString)(_.party)} cancelled payment${payment.cancellationDetails.fold("")(cr => " (" + cr.reason + ")")}. Rollback transaction#${txn.id.orNull}." ),
-                      txType     = MTxnTypes.Rollback,
+                      txType     = MTxnTypes.ReturnToBalance,
                     )
                   }
                 )
               } yield {
-                LOGGER.trace(s"$logPrefix Done paid transaction rollback.")
-                txnOpt2 getOrElse txn
+                LOGGER.info(s"$logPrefix Cancel/refunded/rollbacked transaction#${txn.id.orNull} ($datePaid) psUid#${payment.id}")
+                // TODO Email notifications about refund/unpay.
+                YkNotifyDbActionRes()
               }
             }
         }
 
       } yield {
-        LOGGER.trace(s"$logPrefix Finished DB altering")
+        LOGGER.trace(s"$logPrefix Finished billing DB updates")
+        actionRes
       })
         .transactionally
 
       for {
-        _ <- slick.db.run( dbAction )
+        dbActionRes <- slick.db.run( dbAction )
         // AdvBuilder procedures will be done via billing timers in background.
+        _ <- dbActionRes
+          .afterAction
+          .fold [Future[_]]
+            { Future.successful(()) }
+            { afterAction =>
+              LOGGER.trace(s"$logPrefix Launching after-database actions...")
+              afterAction()
+            }
       } yield {
         Results.Ok("Saved OK.")
       }
@@ -560,3 +626,8 @@ protected case class YooKassaPaymentPrepareResult(
                                                    metadata  : JsObject,
                                                    payment   : MYkPayment,
                                                  )
+
+/** DB-action results container after completed DB-processing of yookassa notification. */
+protected case class YkNotifyDbActionRes(
+                                          afterAction     : Option[() => Future[_]]       = None,
+                                        )

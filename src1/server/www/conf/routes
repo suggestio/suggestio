@@ -113,7 +113,7 @@ GET  /lk/adn/pop/item/:itemId           @controllers.LkAdnMap.currentGeoItemPopu
 ## lk-bill2: Node billing 2nd-generation.
 GET  /lk/order/:nodeId                  @controllers.LkBill2.orderPage(nodeId, orderId: Option[Gid_t] ?= None, r: Option[String] ?= None)
 POST /lk/items/del                      @controllers.LkBill2.deleteItems( i: QsbSeq[Gid_t] )
-POST /lk/cart/pay                       @controllers.LkBill2.cartSubmit()
+POST /lk/cart/pay                       @controllers.LkBill2.cartSubmit( a: io.suggest.bill.cart.MCartSubmitArgs ?= io.suggest.bill.cart.MCartSubmitArgs.empty )
 GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
 POST /lk/nai/:nodeId                    @controllers.LkBill2.nodeAdvInfo(nodeId, adId: Option[String] ?= None)
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)

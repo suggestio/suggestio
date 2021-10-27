@@ -3,11 +3,10 @@ package io.suggest.bill.cart.v.txn
 import com.materialui
 import com.materialui.{MuiPropsBaseStatic, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableHead, MuiTableRow, MuiTableRowProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
-import io.suggest.common.html.HtmlConstants
 import io.suggest.dt.CommonDateTimeUtil
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.mbill2.m.txn.MTxnPriced
-import io.suggest.msg.{JsFormatUtil, Messages}
+import io.suggest.msg.JsFormatUtil
 import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -15,6 +14,9 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.YmdR
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import io.suggest.sjs.dom2.DomQuick
+import japgolly.univeq._
+
+import java.time.format.DateTimeFormatter
 
 /**
   * Suggest.io
@@ -22,7 +24,9 @@ import io.suggest.sjs.dom2.DomQuick
   * Created: 28.09.18 15:46
   * Description: Transactions list react-component.
   */
-class TxnsR {
+class TxnsR(
+             crCtxP                    : React.Context[MCommonReactCtx],
+           ) {
 
   type Props_t = Option[Seq[MTxnPriced]]
   type Props = ModelProxy[Props_t]
@@ -35,6 +39,7 @@ class TxnsR {
       val tzOffset = CommonDateTimeUtil.minutesOffset2TzOff( DomQuick.tzOffsetMinutes )
 
       propsOptProxy.value.whenDefinedEl { mtxns =>
+        crCtxP.consume { crCtx =>
         <.div(
 
           // Header:
@@ -43,7 +48,7 @@ class TxnsR {
               override val variant = MuiTypoGraphyVariants.h5
             }
           )(
-            Messages( MsgCodes.`Transactions` )
+            crCtx.messages( MsgCodes.`Transactions` ),
           ),
 
           MuiTable()(
@@ -53,19 +58,19 @@ class TxnsR {
               MuiTableRow()(
 
                 MuiTableCell()(
-                  Messages( MsgCodes.`Bill.id` )
+                  crCtx.messages( MsgCodes.`Bill.id` )
                 ),
 
                 MuiTableCell()(
-                  Messages( MsgCodes.`Bill.details` )
+                  crCtx.messages( MsgCodes.`Bill.details` )
                 ),
 
                 MuiTableCell()(
-                  Messages( MsgCodes.`Date` )
+                  crCtx.messages( MsgCodes.`Date` )
                 ),
 
                 MuiTableCell()(
-                  Messages( MsgCodes.`Sum` )
+                  crCtx.messages( MsgCodes.`Sum` )
                 )
 
               )
@@ -83,7 +88,7 @@ class TxnsR {
                       val colSpan = 4
                     }
                   )(
-                    Messages( MsgCodes.`No.transactions.found` )
+                    crCtx.messages( MsgCodes.`No.transactions.found` )
                   )
                 )
               },
@@ -99,32 +104,28 @@ class TxnsR {
                     ),
 
                     MuiTableCell()(
-                      mtxn.orderIdOpt.whenDefinedNode { orderId =>
-                        Messages( MsgCodes.`Payment.for.order.N`, orderId )
-                      },
-                      HtmlConstants.SPACE,
-                      mtxn.paymentComment
-                        .whenDefinedNode(identity(_))
+                      crCtx.messages( mtxn.txType.i18nCode ),
+                      mtxn.paymentComment.whenDefinedNode { pComment =>
+                        VdomArray(
+                          <.br,
+                          pComment,
+                        )
+                      }
                     ),
 
                     {
-                      val dtOff = mtxn.dateProcessed.withOffsetSameInstant( tzOffset )
+                      val dtOff = mtxn.datePaid
+                        .getOrElse( mtxn.dateProcessed )
+                        .withOffsetSameInstant( tzOffset )
+
                       MuiTableCell()(
                         YmdR(
                           dtOff.toLocalDate.toYmd
                         )(),
+                        " - ",
                         // Render time, raw time by now. Timezone implicitly "inlined" into browser's current time.
-                        {
-                          val time = dtOff.toLocalTime
-                          // It is possible to increment offset from js.Date, and local time will be here.
-                          VdomArray(
-                            time.getHour,
-                            HtmlConstants.COLON,
-                            time.getMinute,
-                            HtmlConstants.COLON,
-                            time.getSecond
-                          )
-                        }
+                        // It is possible to increment offset from js.Date, and local time will be here.
+                        DateTimeFormatter.ISO_LOCAL_TIME.format( dtOff.toLocalTime.withNano(0) )
                       )
                     },
 
@@ -139,6 +140,7 @@ class TxnsR {
 
           )
         )
+        }
       }
     }
 

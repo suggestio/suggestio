@@ -13,8 +13,8 @@ libraryDependencies ++= {
     "org.scala-lang"        % "scala-reflect"         % Common.SCALA_VSN,
     //"joda-time"           %  "joda-time"            % "2.8.+",
     "com.typesafe.slick"    %% "slick"                % Common.Vsn.SLICK,
-    "com.github.tminglei"   %% "slick-pg"             % Common.Vsn.SLICK_PG
-    //"com.github.tminglei" %% "slick-pg_joda-time"   % Common.Vsn.SLICK_PG
+    "com.github.tminglei"   %% "slick-pg"             % Common.Vsn.SLICK_PG,
+    "com.github.tminglei"   %% "slick-pg_play-json"   % Common.Vsn.SLICK_PG,
   )
 }
 

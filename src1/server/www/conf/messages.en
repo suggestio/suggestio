@@ -525,6 +525,12 @@ Color.of.text.and.icons=Color of{0} text and{0} icons
 Color.of.bg.and.caption=Color of{0} background{0} and caption
 Use.contrast.colors.hint=For maximum readability of your content{0} you should use contrast colors.
 
+_transaction.type.d=Awaiting payment
+_transaction.type.p=Payment
+_transaction.type.r=Refund
+_transaction.type.i=Income
+_transaction.type.c=Cancelled
+
 Pay=Pay
 Payment=Payment
 Payment.comment=Payment comment

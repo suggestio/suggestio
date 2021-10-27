@@ -15,6 +15,7 @@ import io.suggest.ext.svc.MExtServices
 import io.suggest.jd.tags.event.MJdActionTypes
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.mbill2.m.txn.MTxnTypes
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
@@ -453,6 +454,13 @@ final class JsMessagesUtil @Inject() (
       .toList
   }
 
+  private def TXN_TYPES_I18N: List[String] = {
+    MTxnTypes.values
+      .iterator
+      .map(_.i18nCode)
+      .toList
+  }
+
   private def NODE_TYPES_I18N: List[String] = {
     MNodeTypes.values
       .iterator
@@ -481,11 +489,14 @@ final class JsMessagesUtil @Inject() (
       MC.`Date` ::
       MC.`Sum` ::
       MC.`No.transactions.found` ::
-      MC.`Payment.for.order.N` ::
       MC.`Transactions` ::
       MC.`Check.your.internet.connection.and.retry` ::
       ErrorMsgs.CANNOT_CONNECT_TO_REMOTE_SYSTEM ::
-      (ORDER_STATUSES_I18N reverse_::: ITEM_STATUSES_I18N reverse_::: NODE_TYPES_I18N)
+      (ORDER_STATUSES_I18N reverse_:::
+       ITEM_STATUSES_I18N reverse_:::
+       NODE_TYPES_I18N reverse_:::
+       TXN_TYPES_I18N
+      )
   }
 
   private def SYS_MDR_MSGS: IterableOnce[String] = {

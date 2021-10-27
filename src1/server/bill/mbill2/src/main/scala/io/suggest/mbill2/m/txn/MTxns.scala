@@ -9,9 +9,11 @@ import io.suggest.mbill2.m.item.{ItemIdOptFkSlick, ItemIdOptInxSlick, ItemIdOptS
 import io.suggest.mbill2.m.order.{MOrders, OrderIdOptFkSlick, OrderIdOptInxSlick, OrderIdOptSlick}
 import io.suggest.mbill2.m.price.AmountSlick
 import io.suggest.mbill2.util.PgaNamesMaker
+import io.suggest.pay.{MPaySystem, MPaySystems}
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import play.api.inject.Injector
 import japgolly.univeq._
+import play.api.libs.json.JsValue
 import slick.lifted.ProvenShape
 
 import scala.concurrent.ExecutionContext
@@ -78,8 +80,18 @@ final class MTxns @Inject() (
     def txTypeStr       = column[String](TX_TYPE_FN)
     def txType          = txTypeStr <> (MTxnTypes.withValue, MTxnType.unapplyStrId)
 
+    def metadata        = column[Option[JsValue]]( MTxn.Fields.METADATA )
+
+    def paySystemStr    = column[Option[String]]( MTxn.Fields.PAY_SYSTEM )
+    def paySystem       = paySystemStr <> (
+      _.map(MPaySystems.withValue),
+      {paySystemOpt: Option[MPaySystem] =>
+        Some( paySystemOpt.map(_.value) )
+      },
+    )
+
     override def * : ProvenShape[MTxn] = {
-      (balanceId, amount, txType, orderIdOpt, itemIdOpt, paymentComment, psTxnUidOpt, datePaidOpt, dateProcessed, id.?) <> (
+      (balanceId, amount, txType, orderIdOpt, itemIdOpt, paymentComment, paySystem, psTxnUidOpt, datePaidOpt, dateProcessed, metadata, id.?) <> (
         (MTxn.apply _).tupled, MTxn.unapply
       )
     }
@@ -115,9 +127,9 @@ final class MTxns @Inject() (
       countUpdated <- query
         .filter( _.id === txn.id.get )
         .map { tx =>
-          (tx.datePaidOpt, tx.paymentComment)
+          (tx.datePaidOpt, tx.paymentComment, tx.txType)
         }
-        .update(( txn.datePaid, txn.paymentComment ))
+        .update(( txn.datePaid, txn.paymentComment, txn.txType ))
       if countUpdated ==* 1
     } yield {
       txn

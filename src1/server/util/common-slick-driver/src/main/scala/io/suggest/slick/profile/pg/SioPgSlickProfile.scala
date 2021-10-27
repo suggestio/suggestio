@@ -16,13 +16,17 @@ trait SioPgSlickProfileT
   extends ExPostgresProfile
   with PgArraySupport
   with PgDate2Support
+  with PgPlayJsonSupport
 {
+
+  override final def pgjson = "jsonb"
 
   /** Реализация API расширенного slick-pg-драйвера. */
   trait ExPgApiT
     extends API
     with SimpleArrayPlainImplicits
     with DateTimeImplicits
+    with JsonImplicits
   {
 
     /** Костыли для SqlAction */

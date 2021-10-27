@@ -387,22 +387,38 @@ final class NodesUtil @Inject() (
     * @return Фьючерс с найденным именем юзера.
     */
   def getPersonName(personNodeOptFut: Future[Option[MNode]],
-                    userEmailsFutOpt: => Option[Future[Seq[String]]] = None): Future[Option[String]] = {
+                    userEmailsFutOpt: => Option[Future[Iterable[String]]] = None): Future[Option[String]] = {
     personNodeOptFut.flatMap { personNodeOpt =>
       val nodeNameOpt = personNodeOpt.flatMap(_.guessDisplayName)
       FutureUtil.opt2futureOpt( nodeNameOpt ) {
-        val userEmailsFut = userEmailsFutOpt.getOrElse {
-          personNodeOpt.fold [Future[Seq[String]]] { Future successful Nil } {
-            credentialsStorage.findEmailsOfPerson( _ )
+        for {
+          usrEmails <- userEmailsFutOpt getOrElse {
+            personNodeOpt.fold [Future[Iterable[String]]]
+              { Future successful Nil }
+              { credentialsStorage.findEmailsOfPerson( _ ) }
           }
-        }
-        for (usrEmails <- userEmailsFut) yield {
+        } yield {
           usrEmails.headOption
         }
       }
     }
   }
 
+  /** @return Return all emails from node (unordered). */
+  def getPersonEmails(mnode: MNode): Set[String] = {
+    mnode.edges
+      .withPredicateIter( MPredicates.Ident.Email )
+      .foldLeft( Set.empty[String] ) { (acc, b) =>
+        acc ++ b.nodeIds
+      }
+  }
+  def personEmailFut(personOptFut: Future[Option[MNode]]): Future[Set[String]] = {
+    for {
+      usrNodeOpt <- personOptFut
+    } yield {
+      usrNodeOpt.fold( Set.empty[String] )( getPersonEmails )
+    }
+  }
 
   /** Сборка id узла, содержащего 404-карточки для указанного языка. */
   def noAdsFound404RcvrId(implicit ctx: Context): String =

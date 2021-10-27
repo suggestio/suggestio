@@ -1,7 +1,8 @@
 package io.suggest.bill.cart.c
 
 import diode.data.Pot
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
+import io.suggest.bill.cart.{MCartConf, MCartSubmitArgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.bill.cart.m.{CartSubmit, MCartPayS, PaySystemJsInit}
 import io.suggest.i18n.MMessageException
@@ -11,12 +12,12 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 
-import scala.scalajs.js.JavaScriptException
 import scala.util.Success
 
 final class CartPayAh[M](
                           modelRW          : ModelRW[M, MCartPayS],
                           lkCartApi        : => ILkCartApi,
+                          confRO           : ModelRO[MCartConf],
                         )
   extends ActionHandler( modelRW )
   with Log
@@ -31,7 +32,11 @@ final class CartPayAh[M](
       if (m.state ===* Pot.empty) {
         val fx = Effect {
           lkCartApi
-            .cartSubmit()
+            .cartSubmit(
+              args = MCartSubmitArgs(
+                onNodeId = confRO.value.onNodeId,
+              ),
+            )
             .transform { tryRes =>
               val action = m.copy(
                 state = m.state withTry tryRes,

@@ -1,23 +1,19 @@
 package util.billing
 
-import io.suggest.bill.MPrice
-
 import java.nio.charset.Charset
 import java.time.{LocalDate, OffsetDateTime}
 import javax.inject.Inject
 import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.di.ISlickDbConfig
-import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.dbg.{MDbgKeys, MDebug, MDebugs}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
-import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
+import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes}
 import io.suggest.mbill2.util.effect.{RWT, WT}
 import io.suggest.model.SlickHolder
-import io.suggest.pay.MPaySystems
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import io.suggest.util.{CompressUtilJvm, JmxBase}
 import io.suggest.util.logs.MacroLogsImpl
@@ -265,7 +261,7 @@ final class BillDebugUtil @Inject() (
               val mtxn0 = MTxn(
                 balanceId       = bal2.id.get,
                 amount          = diffAmount,
-                txType          = MTxnTypes.InterruptPartialRefund,
+                txType          = MTxnTypes.ReturnToBalance,
                 itemId          = Some( itemId )
               )
               bill2Util.mTxns.insertOne( mtxn0 )

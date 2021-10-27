@@ -288,6 +288,7 @@ object MsgCodes {
   val `Sum` = "Sum"
   val `No.transactions.found` = "No.transactions.found"
   val `Payment.for.order.N` = "Payment.for.order.N"
+  val `Payment` = "Payment"
   val `Transactions` = "Transactions"
   val `All` = "All"
 

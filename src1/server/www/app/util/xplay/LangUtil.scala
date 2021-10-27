@@ -2,7 +2,7 @@ package util.xplay
 
 import com.google.inject.Inject
 import io.suggest.n2.node.MNode
-import play.api.i18n.Lang
+import play.api.i18n.{Lang, Langs, Messages}
 import play.api.mvc.Result
 import util.acl.SioControllerApi
 
@@ -19,6 +19,8 @@ final class LangUtil @Inject()(
                               ) {
 
   import sioControllerApi._
+
+  private lazy val langs = injector.instanceOf[Langs]
 
   def setLangCookie2(resFut: Future[Result], mpersonOptFut: Future[Option[MNode]]): Future[Result] = {
     mpersonOptFut.flatMap { mpersonOpt =>
@@ -37,6 +39,27 @@ final class LangUtil @Inject()(
   def getLangFrom(mpersonOpt: Option[MNode]): Option[Lang] = {
     val langCodeOpt = mpersonOpt.map(_.meta.basic.lang)
     langCodeOpt.flatMap(Lang.get)
+  }
+
+
+  /** Collect localization data (messages) for many users.
+    * @return Map of ("LANG" -> Messages).
+    */
+  def langCode2MessagesMap(persons: IterableOnce[MNode]): Map[String, Messages] = {
+    val allLangCodes = persons
+      .iterator
+      .flatMap(_.meta.basic.langs)
+      .toSet
+    val availLangs = langs.availables.toList
+
+    (for {
+      langCode   <- allLangCodes.iterator
+      lang       <- Lang.get( langCode )
+    } yield {
+      val msgs = messagesApi.preferred( lang :: availLangs )
+      langCode -> msgs
+    })
+      .toMap
   }
 
 }

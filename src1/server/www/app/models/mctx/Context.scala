@@ -10,8 +10,10 @@ import io.suggest.playx._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
 import io.suggest.dev.{MScreen, MScreenJvm}
+import io.suggest.n2.node.MNode
 import io.suggest.proto.http.HttpConst
 import io.suggest.sc.ScConstants
+import io.suggest.util.logs.MacroLogsImpl
 import models.req.IReqHdr
 import models.usr.MSuperUsers
 import play.api.{Application, Configuration, Environment}
@@ -169,6 +171,28 @@ trait ContextT { this: ITargets =>
 }
 
 
+object Context extends MacroLogsImpl {
+
+  implicit final class ContextExt( private val ctx: Context ) extends AnyVal {
+
+    def maybeLocalizeToUser(personOpt: Option[MNode], langCode2MessagesMap: Map[String, Messages]): Context = {
+      (for {
+        personNode    <- personOpt.iterator
+        langCode      <- personNode.meta.basic.langs
+        langMessages  <- langCode2MessagesMap.get( langCode )
+      } yield {
+        ctx.withMessages( langMessages )
+      })
+        .nextOption()
+        .getOrElse {
+          LOGGER.warn( s"localizeToUser(${personOpt.flatMap(_.id).orNull}): i18n failed for person, available langs = [${langCode2MessagesMap.keysIterator.mkString(", ")}]" )
+          ctx
+        }
+    }
+
+  }
+
+}
 /** Базовый трейт контекста. Используется всеми шаблонами и везде. Переименовывать и менять нельзя.
   * Интерфейс можно только расширять и аккуратно рефакторить, иначе хана.
   */

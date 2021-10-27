@@ -530,6 +530,12 @@ Color.of.text.and.icons=Цвет текста{0} и иконок
 Color.of.bg.and.caption=Цвет фона{0} и шапки
 Use.contrast.colors.hint=Для более высокой читабельности вашего контента{0} выбирайте цвета контрастные друг от друга.
 
+_transaction.type.d=Ожидание оплаты
+_transaction.type.p=Платёж
+_transaction.type.r=Возврат средств
+_transaction.type.i=Доход
+_transaction.type.c=Отменено
+
 Pay=Оплатить
 Payment=Платеж
 Payment.comment=Комментарий к платежу

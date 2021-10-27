@@ -1,11 +1,13 @@
 package io.suggest.bill.cart.c
 
-import io.suggest.bill.cart.{MCartSubmitResult, MOrderContent}
+import io.suggest.bill.cart.{MCartSubmitArgs, MCartSubmitResult, MOrderContent}
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.routes.routes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.proto.http.model._
+import io.suggest.xplay.json.PlayJsonSjsUtil
+import play.api.libs.json.Json
 
 import scala.scalajs.js.JSConverters._
 import scala.concurrent.Future
@@ -36,7 +38,7 @@ trait ILkCartApi {
   /** Submit current cart into payment processing.
     * @return Future with cart submission result.
     */
-  def cartSubmit(): Future[MCartSubmitResult]
+  def cartSubmit( args: MCartSubmitArgs ): Future[MCartSubmitResult]
 
 }
 
@@ -72,10 +74,12 @@ final class LkCartApiHttpImpl extends ILkCartApi {
       .unJson[MOrderContent]
   }
 
-  override def cartSubmit(): Future[MCartSubmitResult] = {
+  override def cartSubmit( args: MCartSubmitArgs ): Future[MCartSubmitResult] = {
     HttpClient.execute(
       HttpReq.routed(
-        route = routes.controllers.LkBill2.cartSubmit(),
+        route = routes.controllers.LkBill2.cartSubmit(
+          args = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject( args ) ),
+        ),
       )
     )
       .respAuthFut

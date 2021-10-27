@@ -7,8 +7,8 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.pay.MPaySystems
 import io.suggest.playx.AppModeExt
 import io.suggest.sec.csp.CspPolicy
 import io.suggest.sec.util.Csrf
@@ -16,7 +16,6 @@ import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MEmailOrderPaidTplArgs
 import models.mctx.Context
-import models.mdr.MMdrNotifyMeta
 import models.mpay.yaka._
 import models.req.{INodeOrderReq, IReq, IReqHdr}
 import models.usr.MSuperUsers
@@ -473,16 +472,6 @@ final class PayYaka @Inject() (
             // Собрать начальные stat-экшены.
             val statMas0Fut = _statActions0(yReq, usrNodeOptFut)
 
-            // В фоне узнать все email'ы юзера-плательщика.
-            val userEmailsFut = for {
-              usrNodeOpt <- usrNodeOptFut
-            } yield {
-              usrNodeOpt
-                .iterator
-                .flatMap(_.edges.withPredicateIterIds( MPredicates.Ident.Email ))
-                .toSeq
-            }
-
             (for {
               // Дождаться данных по узлу юзера.
               usrNodeOpt <- usrNodeOptFut
@@ -490,33 +479,22 @@ final class PayYaka @Inject() (
               contractId = usrNode.billing.contractId.get
 
               // Выполнить действия в биллинге, связанные с проведением платежа.
-              (balTxn, mdrNotifyCtx, ffor) <- slick.db.run {
+              (paymentResult, mdrNotifyCtx) <- slick.db.run {
                 import slick.profile.api._
                 (for {
-                  // Проверить ордер, что он в статусе HOLD или DRAFT.
-                  mOrder0  <- bill2Util.getOpenedOrderForUpdate(yReq.orderId, validContractId = contractId)
-
-                  // Закинуть объем перечисленных денег на баланс указанного юзера.
-                  balTxn   <- bill2Util.incrUserBalanceFromPaySys(
-                    contractId  = contractId,
-                    mprice      = mprice,
-                    orderIdOpt  = Some(yReq.orderId),
-                    psTxnUid    = yReq.invoiceId.toString,
-                    comment     = Some( MsgCodes.`Yandex.Kassa` )
-                  )
-
-                  // Подготовить ордер корзины к исполнению.
-                  owi <- bill2Util.orderWithDraftItems(mOrder0)
-
                   // Узнать, потребуется ли уведомлять модеров по email при успешном завершении транзакции.
-                  mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx(owi)
+                  mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx
 
-                  // Запустить действия, связанные с вычитанием бабла с баланса юзера и реализацией MItem'ов заказа.
-                  // Здесь используется более сложный и толерантный вариант экзекуции ордера. Fallback-вариант -- это bill2Util.maybeExecuteOrder(owi).
-                  ffor1 <- bill2Util.forceFinalizeOrder(owi)
-
+                  // Проверить ордер, что он в статусе HOLD или DRAFT.
+                  payResult <- bill2Util.handlePaymentReceived(
+                    orderId = yReq.orderId,
+                    contractId = contractId,
+                    payPrice = mprice,
+                    paySysUid = yReq.invoiceId.toString,
+                    paySystem = MPaySystems.YaKa,
+                  )
                 } yield {
-                  (balTxn, mdrNotifyCtx1, ffor1)
+                  (payResult, mdrNotifyCtx1)
                 })
                   .transactionally
               }
@@ -525,30 +503,19 @@ final class PayYaka @Inject() (
               statMas0 <- statMas0Fut
 
             } yield {
+              implicit lazy val ctx = implicitly[Context]
               var statMasAcc = statMas0
 
               // Если есть успешно обработанные item'ы, то Success наверное.
-              if (ffor.okItemsCount > 0) {
+              if (paymentResult.result.okItemsCount > 0) {
                 LOGGER.info(s"$logPrefix Order ${yReq.orderId} closed successfully. Invoice ${yReq.invoiceId}")
                 // Уведомить модераторов, если необходимо.
-                if (mdrUtil.isMdrNotifyNeeded(mdrNotifyCtx)) {
-                  val usrDisplayNameOptFut = nodesUtil.getPersonName( usrNodeOptFut, Some(userEmailsFut) )
-                  val ctx = implicitly[Context]
-                  for {
-                    usrDisplayNameOpt <- usrDisplayNameOptFut
-
-                    tplArgs = MMdrNotifyMeta(
-                      paidTotal   = Some( mprice ),
-                      orderId     = Some( yReq.orderId ),
-                      txn         = Some( balTxn ),
-                      personId    = Some( yReq.personId ),
-                      personName  = usrDisplayNameOpt
-                    )
-                    _ <- mdrUtil.sendMdrNotify( mdrNotifyCtx, tplArgs )(ctx)
-                  } {
-                    LOGGER.trace(s"$logPrefix mdr notify finished ok")
-                  }
-                }
+                mdrUtil.maybeSendMdrNotify(
+                  mdrNotifyCtx  = mdrNotifyCtx,
+                  orderId       = Some( yReq.orderId ),
+                  personNodeFut = usrNodeOptFut,
+                  paidTotal     = Some( mprice ),
+                )(ctx)
 
                 // Собрать stat-экшен.
                 statMasAcc ::= MAction(
@@ -557,43 +524,10 @@ final class PayYaka @Inject() (
               }
 
               // Если были проблемы при закрытии заказа, то надо уведомить программистов о наличии проблемы.
-              for (skippedCart <- ffor.skippedCartOpt) {
-                LOGGER.trace(s"$logPrefix Was not able to close order ${yReq.orderId} clearly. There are skipped cart-order#${skippedCart.id.orNull}")
-                val fforStr = ffor.toString
-                Future {
-                  mailerWrapper.instance
-                    .setSubject(s"[YaKa] Проблемы с завершением заказа ${yReq.invoiceId}")
-                    .setText(s"order ${yReq.orderId}\n\ninvoice ${yReq.invoiceId}\n\n\n${request.method} ${request.uri}\n\n$yReq\n\n$fforStr")
-                    .setRecipients(mailerWrapper.EMAILS_PROGRAMMERS: _*)
-                    .send()
-                }
-                statMasAcc ::= MAction(
-                  actions = MActionTypes.PayBadBalance :: Nil,
-                  textNi  = fforStr :: Nil
-                )
-              }
+              mdrUtil.maybeNotifyCartSkippedItems( MPaySystems.YaKa, paymentResult )
 
               // Надо уведомить юзера о поступившем платеже.
-              for {
-                userEmails <- userEmailsFut
-                if userEmails.nonEmpty
-              } {
-                // TODO Нужно определять messages в контексте текущего юзера по yReq.*, а не из автоматического HTTP-реквеста яндекс-кассы.
-                implicit val uCtx = implicitly[Context]
-                val orderIdStr = yReq.orderId.toString
-                val tplArgs = MEmailOrderPaidTplArgs(
-                  asEmail     = true,
-                  orderId     = yReq.orderId,
-                  orderIdStr  = orderIdStr,
-                  onNodeId    = yReq.onNodeId,
-                  withHello   = Some( None )    // TODO Поискать имя юзера надо как-то?,
-                )
-                mailerWrapper.instance
-                  .setSubject( uCtx.messages( MsgCodes.`Order.0.is.paid`, orderIdStr ) )
-                  .setHtml( OrderPaidEmailTpl(tplArgs)(uCtx).body )
-                  .setRecipients( userEmails: _* )
-                  .send()
-              }
+              mdrUtil.paymentNotifyPayer( usrNodeOptFut, yReq.orderId, Some(yReq.onNodeId) )(ctx)
 
               // Рендер XML-ответа яндекс-кассе.
               val xml = _successXml(profile, yakaAction, yReq.invoiceId)
