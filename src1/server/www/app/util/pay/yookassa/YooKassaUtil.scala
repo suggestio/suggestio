@@ -3,16 +3,17 @@ package util.pay.yookassa
 import inet.ipaddr.IPAddressString
 import io.suggest.bill.MPrice
 import io.suggest.bill.cart.MCartSubmitArgs
+import io.suggest.common.empty.OptionUtil
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.mbill2.m.txn.MTxnTypes
-import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystems
-import io.suggest.pay.yookassa.{MYkAmount, MYkEventTypes, MYkObject, MYkObjectTypes, MYkPayment, MYkPaymentConfirmation, MYkPaymentConfirmationTypes, MYkPaymentCreate, MYkPaymentStatuses, YooKassaConst}
+import io.suggest.pay.yookassa.{MYkAmount, MYkCustomer, MYkEventTypes, MYkItem, MYkObject, MYkObjectTypes, MYkPayment, MYkPaymentConfirmation, MYkPaymentConfirmationTypes, MYkPaymentCreate, MYkPaymentStatuses, MYkPaymentSubjects, MYkReceipt, MYkVatCodes, YooKassaConst}
 import io.suggest.proto.http.HttpConst
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -114,33 +115,43 @@ final class YooKassaUtil @Inject() (
   def preparePayment(profile: YooKassaProfile, orderItem: MOrderWithItems, payPrice: MPrice, personOpt: Option[MNode])
                     (implicit ctx: Context): Future[YooKassaPaymentPrepareResult] = {
     val orderId = orderItem.order.id.get
+
     lazy val logPrefix = s"startPayment(order#$orderId/+${orderItem.items.length}, U#${ctx.user.personIdOpt.orNull}):"
     LOGGER.trace(s"$logPrefix Starting, $profile, price=$payPrice")
 
-    // Assemble request body for new payment start:
-    val payCreate = MYkPaymentCreate(
-      amount = MYkAmount(
-        value     = TplDataFormatUtil.formatPriceAmountPlain( payPrice ),
-        currency  = payPrice.currency,
-      ),
-      description = Some( ctx.messages( MsgCodes.`Payment.for.order.N`, orderId ) ),
-      capture = Some(true),
+    val ykAmountTotal = MYkAmount(
+      value     = TplDataFormatUtil.formatPriceAmountPlain( payPrice ),
+      currency  = payPrice.currency,
+    )
 
-      // merchantCustomerId: Use readable phone number here or unreadable nodeId.
-      merchantCustomerId = (for {
+    def _getFirstEdgeNodeId( pred: MPredicate ): Option[String] = {
+      (for {
         mnode <- personOpt.iterator
-        phoneEdge <- mnode.edges.withPredicateIter( MPredicates.Ident.Phone )
+        phoneEdge <- mnode.edges.withPredicateIter( pred )
         if phoneEdge.info.flag getOrElse true
         phoneNumber <- phoneEdge.nodeIds
       } yield {
         phoneNumber
       })
         .nextOption()
+    }
+
+    val personPhoneNumberOpt = _getFirstEdgeNodeId( MPredicates.Ident.Phone )
+
+    // Assemble request body for new payment start:
+    val payCreate = MYkPaymentCreate(
+      amount = ykAmountTotal,
+      description = Some( ctx.messages( MsgCodes.`Payment.for.order.N`, orderId ) ),
+      capture = OptionUtil.SomeBool.someTrue,
+
+      // merchantCustomerId: Use readable phone number here or unreadable nodeId.
+      merchantCustomerId = personPhoneNumberOpt
         // TODO Don't using email here, because we need to debug email validation.
         .orElse {
           // Return person node ID, because no phone number found.
           ctx.user.personIdOpt
         },
+
       // Embedded: returns embedded web-widget for sio-payment page.
       confirmation = Some {
         MYkPaymentConfirmation(
@@ -148,6 +159,25 @@ final class YooKassaUtil @Inject() (
           pcType = MYkPaymentConfirmationTypes.Embedded,
         )
       },
+
+      receipt = Some( MYkReceipt(
+        items = MYkItem(
+          description     = ctx.messages( MsgCodes.`Advertising.services` ),
+          quantity        = "1",
+          amount          = ykAmountTotal,
+          vatCode         = MYkVatCodes.NoVat,
+          paymentSubject  = Some( MYkPaymentSubjects.Service ),
+        ) :: Nil,
+        customer = {
+          val personEmailOpt = _getFirstEdgeNodeId( MPredicates.Ident.Email )
+          Option.when( personPhoneNumberOpt.nonEmpty || personEmailOpt.nonEmpty ) {
+            MYkCustomer(
+              email = personEmailOpt,
+              phone = personPhoneNumberOpt,
+            )
+          }
+        },
+      ))
     )
 
     // Generate idempotence key via hashing some data from. Use base64 to minify length (instead of HEX-encoding):

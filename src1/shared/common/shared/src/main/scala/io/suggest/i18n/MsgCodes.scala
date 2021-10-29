@@ -539,5 +539,6 @@ object MsgCodes {
   val `Continue` = "Continue"
 
   val `Check.your.internet.connection.and.retry` = "Check.your.internet.connection.and.retry"
+  val `Advertising.services` = "Advertising.services"
 
 }
