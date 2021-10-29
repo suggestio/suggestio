@@ -111,7 +111,7 @@ GET  /lk/adn/current/:nodeId            @controllers.LkAdnMap.currentNodeGeoGj(n
 GET  /lk/adn/pop/item/:itemId           @controllers.LkAdnMap.currentGeoItemPopup( itemId: Gid_t )
 
 ## lk-bill2: Node billing 2nd-generation.
-GET  /lk/order/:nodeId                  @controllers.LkBill2.orderPage(nodeId, orderId: Option[Gid_t] ?= None, r: Option[String] ?= None)
+GET  /lk/order/view                     @controllers.LkBill2.orderPage(nodeId: String, orderId: Option[Gid_t] ?= None, r: Option[String] ?= None)
 POST /lk/items/del                      @controllers.LkBill2.deleteItems( i: QsbSeq[Gid_t] )
 POST /lk/cart/pay                       @controllers.LkBill2.cartSubmit( a: io.suggest.bill.cart.MCartSubmitArgs ?= io.suggest.bill.cart.MCartSubmitArgs.empty )
 GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
@@ -121,6 +121,7 @@ GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: ME
 GET  /lk/order2                         @controllers.LkBill2.getOrder(orderId: Option[Gid_t] ?= None)
 POST /paysystem/:paySystem/event/*path  @controllers.LkBill2.paySystemEventPost(paySystem: io.suggest.pay.MPaySystem, path)
 GET  /paysystem/:paySystem/event/*path  @controllers.LkBill2.paySystemEventGet(paySystem: io.suggest.pay.MPaySystem, path)
+POST /lk/order/unhold/:orderId          @controllers.LkBill2.unHoldOrder( orderId: Gid_t )
 
 ## lk pay systems support.
 ## Yandex.Kassa backend:

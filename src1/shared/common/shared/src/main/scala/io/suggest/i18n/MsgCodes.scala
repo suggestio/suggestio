@@ -32,6 +32,7 @@ object MsgCodes {
   val `Something.gone.wrong` = "Something.gone.wrong"
   val `Identifier` = "Identifier"
   val `Cancel` = "Cancel"
+  val `Cancel.order...` = "Cancel.order..."
   val `Save` = "Save"
   val `Saving` = "Saving"
   val `Saved` = "Saved"

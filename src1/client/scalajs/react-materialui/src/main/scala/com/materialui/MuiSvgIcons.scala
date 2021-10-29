@@ -17,8 +17,8 @@ object MuiSvgIcons {
   object ActionAccountBox extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/account-circle", JSImport.Default)
   object ActionAccountCircle extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/add-shopping-cart", JSImport.Default)
-  object ActionAddShoppingCart extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AddShoppingCart", JSImport.Default)
+  object AddShoppingCart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/alarm-add", JSImport.Default)
   object ActionAlarmAdd extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/alarm-off", JSImport.Default)
@@ -289,8 +289,8 @@ object MuiSvgIcons {
   object ActionRecordVoiceOver extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/redeem", JSImport.Default)
   object ActionRedeem extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/remove-shopping-cart", JSImport.Default)
-  object ActionRemoveShoppingCart extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/RemoveShoppingCart", JSImport.Default)
+  object RemoveShoppingCart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/reorder", JSImport.Default)
   object ActionReorder extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/report-problem", JSImport.Default)
@@ -349,8 +349,8 @@ object MuiSvgIcons {
   object Shop extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/shopping-basket", JSImport.Default)
   object ActionShoppingBasket extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/shopping-cart", JSImport.Default)
-  object ActionShoppingCart extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ShoppingCart", JSImport.Default)
+  object ShoppingCart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/speaker-notes-off", JSImport.Default)
   object ActionSpeakerNotesOff extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/speaker-notes", JSImport.Default)

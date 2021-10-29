@@ -1521,15 +1521,15 @@ final class Bill2Util @Inject() (
     * @return Ордер.
     *         NSEE, если ордер не найден или не является корректным.
     */
-  def getOpenedOrderForUpdate(orderId: Gid_t, validContractId: Gid_t): DBIOAction[MOrder, NoStream, Effect.Read] = {
+  def getPayableOrderForUpdate(orderId: Gid_t, validContractId: Gid_t): DBIOAction[MOrder, NoStream, Effect.Read] = {
     for {
       // Прочитать запрошенный ордер, одновременно проверяя необходимые поля.
       mOrderOpt <- {
         mOrders.query
           .filter { o =>
             (o.id === orderId) &&
-              (o.contractId === validContractId) &&
-              (o.statusStr inSet MOrderStatuses.canGoToPaySys.onlyIds.to(Iterable))
+            (o.contractId === validContractId) &&
+            (o.statusStr inSet MOrderStatuses.canGoToPaySys.onlyIds.to(Iterable))
           }
           .result
           .headOption
@@ -1561,7 +1561,7 @@ final class Bill2Util @Inject() (
     (for {
 
       // Прочитать и проверить запрошенный ордер.
-      mOrder <- getOpenedOrderForUpdate(orderId, validContractId = validContractId)
+      mOrder <- getPayableOrderForUpdate(orderId, validContractId = validContractId)
 
       // Прочитать балансы юзера по контракту, завернув их в мапу по валютам.
       uBals <- mBalances.findByContractId( validContractId )
@@ -1650,19 +1650,35 @@ final class Bill2Util @Inject() (
             ordersUpdated <- mOrders.saveStatus( morder22 )
             if ordersUpdated ==* 1
 
+            // Mark all pending order transactions as cancelled:
+            txnsUpdated <- mTxns.query
+              .filter { txn =>
+                (txn.orderIdOpt === orderId) &&
+                  (txn.txTypeStr === MTxnTypes.Draft.value)
+              }
+              .map { txn =>
+                txn.txType
+              }
+              .update( MTxnTypes.Cancelled )
+
             // Текущий ордер теперь снова стал корзиной.
             // Но возможно, что уже существует ещё одна корзина? Их надо объеденить в пользу текущего ордера.
-            _ <- cartOrderOpt.fold [DBIOAction[Int, NoStream, WT]] {
+            _ <- cartOrderOpt.fold [DBIOAction[_, NoStream, WT]] {
               // Нет внезапной корзины, всё ок.
               LOGGER.trace(s"$logPrefix All ok, no duplicating cart-orders found.")
-              DBIO.successful(0)
+              DBIO.successful( None )
             } { suddenCartOrder =>
               // Обнаружена внезапная корзина. Переместить все item'ы из неё в текущий ордер, и удалить внезапную корзину.
               val suddenCartOrderId = suddenCartOrder.id.get
+              val orderDepsMovedCountAction = mergeOrders( suddenCartOrderId, toOrderId = orderId )
               LOGGER.info(s"$logPrefix Will merge cart orders $suddenCartOrderId => ${morder.id.orNull}, because new cart already exists.")
-              mergeOrders(suddenCartOrderId, toOrderId = orderId)
+              for (movedCount <- orderDepsMovedCountAction) yield {
+                LOGGER.debug(s"$logPrefix Moved $movedCount order deps from sudden cart#$suddenCartOrderId into cancelled order#$orderId")
+              }
             }
+
           } yield {
+            LOGGER.trace(s"$logPrefix $txnsUpdated draft txns marked as cancelled.")
             // Вернуть обновлённый инстанс.
             morder22
           }
@@ -1737,7 +1753,7 @@ final class Bill2Util @Inject() (
         .update(Some(toOrderId))
 
     } yield {
-      LOGGER.debug(s"moveOrderDeps($fromOrderId => $toOrderId): ")
+      LOGGER.debug(s"moveOrderDeps($fromOrderId => $toOrderId): itemsUpdated=${itemsUpdated} txnsUpdated=$txnsUpdated")
       itemsUpdated + txnsUpdated
     }
   }
@@ -1809,7 +1825,7 @@ final class Bill2Util @Inject() (
     * @return MTxn.
     */
   def incrUserBalanceFromPaySys(contractId: Gid_t, mprice: MPrice, psTxnUid: String, orderIdOpt: Option[Gid_t] = None, paySystem: MPaySystem,
-                                txType: MTxnType, comment: Option[String] = None, txn: Option[MTxn] = None): DBIOAction[MTxn, NoStream, RWT] = {
+                                txType: MTxnType, comment: Option[String] = None, txn: Option[MTxn] = None): DBIOAction[(MBalance, MTxn), NoStream, RWT] = {
     lazy val logPrefix = s"incrUserBalanceFromPaySys($psTxnUid, $contractId/${orderIdOpt.orNull}, $mprice):"
     LOGGER.trace(s"$logPrefix Starting; comment=${comment.orNull}")
 
@@ -1883,7 +1899,7 @@ final class Bill2Util @Inject() (
 
     } yield {
       LOGGER.debug(s"incrUserBalanceFromPaySys($contractId, $mprice, $psTxnUid, $orderIdOpt): done, comment=$comment")
-      balIncrTxn
+      (usrBalance2, balIncrTxn)
     })
       .transactionally
   }
@@ -2108,10 +2124,10 @@ final class Bill2Util @Inject() (
 
     (for {
       // Read currently draft/hold order for update:
-      mOrder0  <- getOpenedOrderForUpdate( orderId, validContractId = contractId )
+      mOrder0  <- getPayableOrderForUpdate( orderId, validContractId = contractId )
 
       // Save payment money on balance + transaction.
-      balanceTxn <- incrUserBalanceFromPaySys(
+      (balance2, balanceTxn) <- incrUserBalanceFromPaySys(
         contractId  = contractId,
         mprice      = payPrice,
         orderIdOpt  = Some( orderId ),
@@ -2122,16 +2138,38 @@ final class Bill2Util @Inject() (
         txType      = MTxnTypes.Payment,
       )
 
-      // Read all draft order's items:
-      draftOrderWithItems <- orderWithDraftItems( mOrder0 )
+      // If order is hold, it's items must be processed:
+      r <- if (mOrder0.status ==* MOrderStatuses.Hold) {
+        for {
+          // Read all draft order's items:
+          draftOrderWithItems <- orderWithDraftItems( mOrder0 )
 
-      // Process order items step-by-step. For each item, substract some money from balance, execute related actions.
-      // Here, complex-logic finalizer is used (for tolerating possible problems, if money received != order price).
-      // Fallback order finalizer can be used: maybeExecuteOrder(owi).
-      finOrderRes <- forceFinalizeOrder( draftOrderWithItems )
+          // Process order items step-by-step. For each item, substract some money from balance, execute related actions.
+          // Here, complex-logic finalizer is used (for tolerating possible problems, if money received != order price).
+          // Fallback order finalizer can be used: maybeExecuteOrder(owi).
+          finOrderRes <- forceFinalizeOrder( draftOrderWithItems )
+        } yield {
+          LOGGER.trace(s"$logPrefix Completed, txn#${balanceTxn.id.orNull} order#$orderId=>${finOrderRes.closedOrder.status} items[${draftOrderWithItems.items.length}/${finOrderRes.okItemsCount}]")
+          PaymentResult( draftOrderWithItems, balanceTxn, finOrderRes )
+        }
+
+      } else {
+        LOGGER.trace(s"$logPrefix Order#${mOrder0.id.orNull} status#${mOrder0.status} is not HOLD. Do NOT processing any of order items.")
+        val payRes = PaymentResult(
+          MOrderWithItems( mOrder0, Nil ),
+          balanceTxn,
+          ForceFinalizeOrderRes(
+            mOrder0,
+            skippedCartOpt = Option.when( mOrder0.status ==* MOrderStatuses.Draft )(mOrder0),
+            newBalances = Map.empty + (balance2.currency -> balance2),
+            okItemsCount = 0,
+          )
+        )
+        DBIO successful payRes
+      }
+
     } yield {
-      LOGGER.trace(s"$logPrefix Completed, txn#${balanceTxn.id.orNull} order#$orderId=>${finOrderRes.closedOrder.status} items[${draftOrderWithItems.items.length}/${finOrderRes.okItemsCount}]")
-      PaymentResult( draftOrderWithItems, balanceTxn, finOrderRes )
+      r
     })
       .transactionally
   }

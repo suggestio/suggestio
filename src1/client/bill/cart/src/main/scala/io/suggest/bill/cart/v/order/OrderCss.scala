@@ -31,7 +31,6 @@ class OrderCss extends StyleSheet.Inline {
           padding(fivePx, fivePx),
           verticalAlign.middle,
           textAlign.center,
-          display.flex,
         )
       }
 

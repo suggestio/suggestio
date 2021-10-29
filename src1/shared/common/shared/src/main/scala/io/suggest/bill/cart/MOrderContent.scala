@@ -10,6 +10,7 @@ import io.suggest.mbill2.m.txn.MTxnPriced
 import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -67,6 +68,8 @@ object MOrderContent {
 
   @inline implicit def univEq: UnivEq[MOrderContent] = UnivEq.derive
 
+  def order = GenLens[MOrderContent](_.order)
+
 }
 
 
@@ -80,9 +83,9 @@ object MOrderContent {
   */
 case class MOrderContent(
                           order       : Option[MOrder],
-                          items       : Seq[MItem],
-                          txns        : Seq[MTxnPriced],
-                          adnNodes    : Iterable[MSc3IndexResp],
-                          adsJdDatas  : Iterable[MJdData],
-                          orderPrices : Iterable[MPrice]
+                          items       : Seq[MItem]                = Nil,
+                          txns        : Seq[MTxnPriced]           = Nil,
+                          adnNodes    : Iterable[MSc3IndexResp]   = Nil,
+                          adsJdDatas  : Iterable[MJdData]         = Nil,
+                          orderPrices : Iterable[MPrice]          = Nil,
                         )

@@ -40,6 +40,9 @@ trait ILkCartApi {
     */
   def cartSubmit( args: MCartSubmitArgs ): Future[MCartSubmitResult]
 
+  /** Undo order hold status (interrupt order payment flow). */
+  def unHoldOrder(orderId: Gid_t): Future[MOrderContent]
+
 }
 
 
@@ -85,6 +88,17 @@ final class LkCartApiHttpImpl extends ILkCartApi {
       .respAuthFut
       .successIf200
       .unJson[MCartSubmitResult]
+  }
+
+  override def unHoldOrder(orderId: Gid_t): Future[MOrderContent] = {
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkBill2.unHoldOrder( orderId ),
+      )
+    )
+      .respAuthFut
+      .successIf200
+      .unJson[MOrderContent]
   }
 
 }

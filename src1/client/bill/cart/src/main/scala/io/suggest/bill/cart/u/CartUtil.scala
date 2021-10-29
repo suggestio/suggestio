@@ -30,6 +30,7 @@ object CartUtil {
     JdUtil
       .prepareJdRuntime(JD_CONF)
       .docs(templates)
+      .cssRelBlocks
       .make
   }
 

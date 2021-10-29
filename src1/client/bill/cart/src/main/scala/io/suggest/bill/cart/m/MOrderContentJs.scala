@@ -8,6 +8,7 @@ import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -24,6 +25,8 @@ object MOrderContentJs {
   }
 
   implicit def univEq: UnivEq[MOrderContentJs] = UnivEq.derive
+
+  def content = GenLens[MOrderContentJs]( _.content )
 
 }
 

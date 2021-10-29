@@ -16,7 +16,7 @@ import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdConf
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.order.MOrder
+import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -32,7 +32,7 @@ import models.mctx.Context
 import models.req._
 import play.api.http.HttpVerbs
 import play.api.libs.json.Json
-import play.api.mvc.{ActionBuilder, AnyContent}
+import play.api.mvc.{ActionBuilder, ActionFilter, AnyContent, Result}
 import util.TplDataFormatUtil
 import util.acl._
 import util.ad.JdAdUtil
@@ -86,6 +86,7 @@ final class LkBill2 @Inject() (
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val yooKassaUtil = injector.instanceOf[YooKassaUtil]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
+  private lazy val errorHandler = injector.instanceOf[ErrorHandler]
   implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
@@ -595,11 +596,12 @@ final class LkBill2 @Inject() (
         mtxn <- txnsCur
         mcurrency <- {
           val currOpt = balancesCurrency.get( mtxn.balanceId )
-          LOGGER.trace(s"$logPrefix txn#${mtxn.id.orNull} balance#${mtxn.balanceId} => ${mtxn.amount} ${currOpt.orNull}")
+          if (currOpt.isEmpty) LOGGER.error(s"$logPrefix Cannot find currency for txn#${mtxn.id.orNull} balance#${mtxn.balanceId}")
           currOpt
         }
       } yield {
         val price0 = MPrice( mtxn.amount, mcurrency )
+        LOGGER.trace(s"$logPrefix ${mtxn.txType} txn#${mtxn.id.orNull} balance#${mtxn.balanceId} => $price0")
         MTxnPriced(
           txn   = mtxn.toClientSide,
           price = TplDataFormatUtil.setFormatPrice( price0 )(ctx)
@@ -795,6 +797,50 @@ final class LkBill2 @Inject() (
         adsJdDatas  = jdAdDatas,
         orderPrices = orderPrices
       )
+    }
+  }
+
+
+  /** Unholding order action. */
+  def unHoldOrder( orderId: Gid_t ) = csrf.Check {
+    lazy val logPrefix = s"unHoldOrder($orderId):"
+
+    val actionBuilder = canViewOrder( orderId, onNodeId = None )
+      .andThen {
+        new ActionFilter[MNodeOptOrderReq] {
+          override protected def filter[A](request: MNodeOptOrderReq[A]): Future[Option[Result]] = {
+            val isHold = (request.morder.status ==* MOrderStatuses.Hold)
+            if (isHold) {
+              // Continue processing, as expected...
+              Future successful None
+
+            } else {
+              LOGGER.warn( s"$logPrefix Can't do it, because order status is ${request.morder.status} since ${request.morder.dateStatus}" )
+              for {
+                result <- errorHandler.onClientError(request, PRECONDITION_FAILED, s"Order#${orderId} is not hold.")
+              } yield {
+                Some( result )
+              }
+            }
+          }
+          override protected def executionContext = ec
+        }
+      }
+
+    actionBuilder.async { implicit request =>
+      for {
+        order2 <- slick.db.run {
+          // TODO Opt bypass full MOrder instance instead of orderId?
+          bill2Util.unholdOrder( orderId )
+        }
+        // Return updated order:
+        orderContents2 <- {
+          LOGGER.debug(s"$logPrefix Unholded order#$orderId per user#${request.user.personIdOpt.orNull} request. New order status is ${order2.status}.")
+          _getOrderContents( Some(order2) )
+        }
+      } yield {
+        Ok( Json.toJson( orderContents2 ) )
+      }
     }
   }
 

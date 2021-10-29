@@ -342,7 +342,9 @@ sealed trait LkBill2CtlRoutes extends js.Object {
 
   def cartSubmit( args: js.Dictionary[js.Any] = js.native ): PlayRoute = js.native
 
-  def thanksForBuy(onNodeId: String): PlayRoute = js.native
+  def unHoldOrder( orderId: Double ): PlayRoute = js.native
+
+  def orderPage(nodeId: String, orderId: js.UndefOr[Double]): PlayRoute = js.native
 
   /** Получить бинарь с данными размещения по узлу. */
   def nodeAdvInfo(nodeId: String, forAdId: String = null): PlayRoute = js.native

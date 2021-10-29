@@ -5,9 +5,7 @@ import io.suggest.bill.cart.{MCartSubmitResult, MOrderContent}
 import io.suggest.i18n.MMessage
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.spa.DAction
-import org.scalajs.dom
 
-import scala.scalajs.js
 import scala.util.Try
 
 /**
@@ -38,6 +36,19 @@ case object CartDeleteBtnClick extends IOrderItemsAction
   *                None - Cart order.
   */
 case class GetOrderContent(orderId: Option[Gid_t]) extends IOrderItemsAction
+
+
+case class UnHoldOrderDialogOpen( isOpen: Boolean ) extends IOrderItemsAction
+
+/** Cancel order hold status steps.
+  * No request timestamp here, because response describes altering server state.
+  */
+case class UnHoldOrderRequest(
+                               timestampMs     : Long                        = System.currentTimeMillis(),
+                               tryRespOpt      : Option[Try[MOrderContent]]  = None,
+                             )
+  extends IOrderItemsAction
+
 
 sealed trait IBillConfAction extends ICartAction
 /** Load current order. Current, means, according to Cart Form configuration. */

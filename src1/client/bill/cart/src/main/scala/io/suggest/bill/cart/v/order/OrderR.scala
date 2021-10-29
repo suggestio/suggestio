@@ -32,6 +32,7 @@ class OrderR(
               val orderInfoR         : OrderInfoR,
               val txnsR              : TxnsR,
               val payButtonR         : PayButtonR,
+              unholdOrderDiaR        : UnholdOrderDiaR,
             ) {
 
   type Props_t = MCartRootS
@@ -53,11 +54,13 @@ class OrderR(
 
     def render(propsProxy: Props, s: State): VdomElement = {
       val collapsable = List[VdomElement](
+        propsProxy.wrap(_.order.unHoldOrder)( unholdOrderDiaR.component.apply ),
+
         // Short order description, if any.
         s.orderOptC { orderInfoR.component.apply },
 
         // Static cart form CSS styles:
-        propsProxy.wrap(_ => orderCss)( CssR.compProxied.apply ),
+        CssR.component( orderCss ),
 
         // Static jd-css styles:
         propsProxy.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),

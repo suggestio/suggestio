@@ -1,15 +1,18 @@
 package io.suggest.bill.cart.v.order
 
-import com.materialui.{MuiCard, MuiCardContent, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiCard, MuiCardHeader, MuiIconButton, MuiIconButtonProps, MuiToolTip, MuiToolTipProps}
 import diode.react.ModelProxy
+import io.suggest.bill.cart.m.UnHoldOrderDialogOpen
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.mbill2.m.order.MOrder
+import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.YmdR
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -28,46 +31,67 @@ class OrderInfoR(
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
+    private lazy val _onCancelOrderClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, UnHoldOrderDialogOpen( true ) )
+    }
+
     def render(propsOptProxy: Props): VdomElement = {
       propsOptProxy.value.whenDefinedEl { morder =>
         MuiCard()(
-          MuiCardContent()(
+          MuiCardHeader(
+            new MuiCardHeader.Props {
 
-            // Header: - Order #3343 | or Cart | or ...
-            MuiTypoGraphy(
-              new MuiTypoGraphyProps {
-                override val variant = MuiTypoGraphyVariants.h5
+              override val action = {
+                val _actionBtnMaybe: VdomElement = if (morder.status ==* MOrderStatuses.Hold) {
+                  // Show cancel/unholding button.
+                  MuiToolTip(
+                    new MuiToolTipProps {
+                      override val title = crCtxP.message( MsgCodes.`Cancel.order...` ).rawNode
+                    }
+                  )(
+                    MuiIconButton(
+                      new MuiIconButtonProps {
+                        override val onClick = _onCancelOrderClick
+                        // TODO override val disabled =
+                      }
+                    )(
+                      Mui.SvgIcons.Cancel()()
+                    )
+                  )
+                } else {
+                  ReactCommonUtil.VdomNullElement
+                }
+                _actionBtnMaybe.rawNode
               }
-            )(
-              crCtxP.consume { crCtx =>
-                morder.id
-                  .fold {
-                    crCtx.messages( MsgCodes.`Cart` )
-                  } { orderId =>
-                    crCtx.messages( MsgCodes.`Order.N`, orderId )
-                  }
-              }
-            ),
 
-            // Order status with date of last status change.
-            MuiTypoGraphy(
-              new MuiTypoGraphyProps {
-                override val variant = MuiTypoGraphyVariants.caption
-              }
-            )(
-              crCtxP.message( morder.status.singular ),
+              // Header: - Order #3343 | or Cart | or ...
+              override val title = crCtxP
+                .consume { crCtx =>
+                  morder.id
+                    .fold {
+                      crCtx.messages( MsgCodes.`Cart` )
+                    } { orderId =>
+                      crCtx.messages( MsgCodes.`Order.N`, orderId )
+                    }
+                }
+                .rawNode
 
-              HtmlConstants.SPACE,
-              HtmlConstants.PIPE,
-              HtmlConstants.SPACE,
+              // Order status with date of last status change.
+              override val subheader = React.Fragment(
+                crCtxP.message( morder.status.singular ),
 
-              // Date of order's status change.
-              YmdR(
-                morder.dateStatus.toLocalDate.toYmd
-              )(),
-            )
+                HtmlConstants.SPACE,
+                HtmlConstants.PIPE,
+                HtmlConstants.SPACE,
 
-          )
+                // Date of order's status change.
+                YmdR(
+                  morder.dateStatus.toLocalDate.toYmd
+                )(),
+              )
+                .rawNode
+            }
+          ),
         )
       }
     }
@@ -76,7 +100,7 @@ class OrderInfoR(
 
 
   val component = ScalaComponent
-    .builder[Props]( getClass.getSimpleName )
+    .builder[Props]
     .stateless
     .renderBackend[Backend]
     .build

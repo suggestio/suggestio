@@ -63,7 +63,8 @@ abstract class CartCircuitBase
   // Controllers
   private def orderItemsAh: HandlerFunction = new OrderItemsAh(
     lkCartApi   = lkCartApi,
-    modelRW     = orderRW
+    modelRW     = orderRW,
+    confRO      = confRW,
   )
 
   private def billConfAh: HandlerFunction = new BillConfAh(

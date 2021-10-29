@@ -1,7 +1,8 @@
 package io.suggest.bill.cart.c
 
 import diode.data.{PendingBase, Pot}
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
+import io.suggest.bill.cart.MCartConf
 import io.suggest.bill.cart.m._
 import io.suggest.bill.cart.u.CartUtil
 import io.suggest.mbill2.m.gid.Gid_t
@@ -9,6 +10,9 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
+import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.util.Success
 
@@ -20,6 +24,7 @@ import scala.util.Success
   */
 class OrderItemsAh[M](
                        lkCartApi        : => ILkCartApi,
+                       confRO           : => ModelRO[MCartConf],
                        modelRW          : ModelRW[M, MOrderItemsS]
                      )
   extends ActionHandler(modelRW)
@@ -109,8 +114,7 @@ class OrderItemsAh[M](
     case m: HandleOrderContentResp =>
       val v0 = value
       if (v0.orderContents isPendingWithStartTime m.timestampMs) {
-        val req2 = v0.orderContents
-          .withTry( m.tryResp.map(MOrderContentJs.apply) )
+        val req2 = v0.orderContents withTry m.tryResp.map(MOrderContentJs.apply)
 
         val v2 = v0.copy(
           orderContents = req2,
@@ -133,6 +137,70 @@ class OrderItemsAh[M](
       } else {
         logger.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
+      }
+
+
+    // Unhold dialog open-close action:
+    case m: UnHoldOrderDialogOpen =>
+      val v0 = value
+
+      if (m.isOpen && v0.unHoldOrder.isEmpty) {
+        // Just open confirmation dialog
+        val v2 = (
+          MOrderItemsS.unHoldOrder.modify( _.ready(false) )
+        )(v0)
+        updated( v2 )
+      } else if (!m.isOpen) {
+        // Close opened dialog
+        val v2 = (MOrderItemsS.unHoldOrder set Pot.empty)(v0)
+        updated( v2 )
+      } else {
+        logger.log( ErrorMsgs.INACTUAL_NOTIFICATION, msg = (m, v0.unHoldOrder) )
+        noChange
+      }
+
+
+    // Processing steps for unholding order: open/close dialog, request/response server, etc.
+    case m: UnHoldOrderRequest =>
+      val v0 = value
+
+      m.tryRespOpt.fold[ActionResult[M]] {
+        // HTTP request effect:
+        val fx = Effect {
+          val orderId = confRO.value.orderId.get
+          lkCartApi
+            .unHoldOrder( orderId )
+            .transform { tryRes =>
+              val action = m.copy( tryRespOpt = Some(tryRes) )
+              Success( action )
+            }
+        }
+
+        val v2 = MOrderItemsS.unHoldOrder.modify( _.pending(m.timestampMs) )(v0)
+        updated( v2, fx )
+
+      } { tryResp =>
+        tryResp.fold(
+          {ex =>
+            // Request error occured. Display error inside dialog.
+            logger.error( ErrorMsgs.SRV_REQUEST_FAILED, ex, (m, v0.unHoldOrder) )
+            if (v0.unHoldOrder.isEmpty) {
+              // dialog already closed. Nothing to do
+              noChange
+            } else {
+              val v2 = MOrderItemsS.unHoldOrder.modify(_ fail ex)(v0)
+              updated( v2 )
+            }
+          },
+          {response =>
+            // Update order with instance received.
+            val v2 = (
+              MOrderItemsS.unHoldOrder.set( Pot.empty ) andThen
+              MOrderItemsS.orderContents.modify( _.ready( MOrderContentJs(response) ) )
+            )(v0)
+            updated(v2)
+          }
+        )
       }
 
   }

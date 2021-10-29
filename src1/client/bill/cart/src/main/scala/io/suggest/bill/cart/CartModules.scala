@@ -30,6 +30,8 @@ class CartModules {
   lazy val itemTableBodyR = wire[ItemsTableBodyR]
   lazy val itemsToolBarR = wire[ItemsDeleteSelectedR]
   lazy val orderInfoR = wire[OrderInfoR]
+  lazy val unholdOrderDiaR = wire[UnholdOrderDiaR]
+
   lazy val txnsR = wire[TxnsR]
 
   lazy val goToPayBtnR = wire[PayButtonR]

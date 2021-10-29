@@ -13,6 +13,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import play.api.libs.json.JsObject
 import ru.yookassa.checkout.widget.YkCheckoutWidget
+import scalajs.js.JSConverters._
 
 import scala.scalajs.js
 
@@ -51,7 +52,12 @@ class YooKassaCartR {
           routes.controllers.sc.ScSite.geoSite()
         } { onNodeId =>
           // Return URL inside personal cabinet.
-          routes.controllers.LkBill2.thanksForBuy( onNodeId )
+          routes.controllers.LkBill2.orderPage(
+            nodeId = onNodeId,
+            orderId = mroot.conf.orderId
+              .map(_.toDouble)
+              .orUndefined,
+          )
         }
 
         val args = new YkCheckoutWidget.Props {

@@ -173,7 +173,8 @@ trait MuiSx extends js.Object {
     fontWeight,
     letterSpacing,
     lineHeight,
-    textAlign
+    textAlign,
+    visibility
     : js.UndefOr[js.Any] = js.undefined
 
 }
