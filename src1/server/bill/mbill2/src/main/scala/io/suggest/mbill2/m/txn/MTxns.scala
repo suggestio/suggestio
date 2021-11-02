@@ -138,14 +138,17 @@ final class MTxns @Inject() (
 
 
   /** Mark transaction as cancelled without any checks. */
-  def cancelTxn(txnId: Gid_t, comment: Option[String], when: OffsetDateTime = OffsetDateTime.now()): DBIOAction[Int, NoStream, Effect.Write] = {
+  def updateTypeAndComment(txnId: Gid_t, newTxType: MTxnType, comment: Option[String], when: OffsetDateTime = OffsetDateTime.now()): DBIOAction[Int, NoStream, Effect.Write] = {
     query
       .filter( _.id === txnId )
       .map { t =>
         (t.txType, t.paymentComment, t.dateProcessed)
       }
-      .update((MTxnTypes.Cancelled, comment, when))
+      .update((newTxType, comment, when))
   }
+
+  def saveTypeAndComment(mtxn: MTxn): DBIOAction[Int, NoStream, Effect.Write] =
+    updateTypeAndComment( mtxn.id.get, mtxn.txType, mtxn.paymentComment, mtxn.dateProcessed )
 
 }
 

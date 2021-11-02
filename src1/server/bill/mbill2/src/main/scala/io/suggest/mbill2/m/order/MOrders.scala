@@ -80,9 +80,9 @@ final class MOrders @Inject() (
   }
 
 
-  def saveStatus(morder2: MOrder) = {
-    saveStatus1(morder2.id.get, morder2.status)
-  }
+  def saveStatus(morder2: MOrder, now: OffsetDateTime = OffsetDateTime.now()): DBIOAction[Int, NoStream, Effect.Write] =
+    saveStatus1( morder2.id.get, morder2.status, now )
+
   /**
     * Обновить статус ордера вместе с датой статуса.
     *
@@ -90,11 +90,11 @@ final class MOrders @Inject() (
     * @param status новый статус ордера.
     * @return Экшен update, возвращающий кол-во обновлённых рядов.
     */
-  def saveStatus1(id: Gid_t, status: MOrderStatus) = {
+  def saveStatus1(id: Gid_t, status: MOrderStatus, now: OffsetDateTime = OffsetDateTime.now()): DBIOAction[Int, NoStream, Effect.Write] = {
     query
       .filter { _.id === id }
       .map { o => (o.status, o.dateStatus) }
-      .update { (status, OffsetDateTime.now()) }
+      .update { (status, now) }
   }
 
   /**

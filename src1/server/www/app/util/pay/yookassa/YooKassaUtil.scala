@@ -116,6 +116,19 @@ final class YooKassaUtil @Inject() (
   }
 
 
+  def mkIdemptKeyHash(f: MessageDigest => Unit): String = {
+    new Base64(0, Array.empty, true)
+      .encodeToString {
+        // idempotence key to mark duplicate requests.
+        val sha1 = MessageDigest.getInstance("SHA-1")
+        f( sha1 )
+        sha1.digest()
+      }
+  }
+
+  def REST_API_ENDPOINT = "https://api.yookassa.ru/v3/"
+
+
   /** Zero-step of payment procedure: seed remote PaySystem with payment data.
     *
     * @param profile Payment system profile.
@@ -195,31 +208,27 @@ final class YooKassaUtil @Inject() (
 
     // Generate idempotence key via hashing some data from. Use base64 to minify length (instead of HEX-encoding):
     // LineLen=0, SEP=[], because do not add CR-LF at the end here.
-    val hashStr = new Base64(0, Array.empty, true)
-      .encodeToString {
-        // idempotence key to mark duplicate requests.
-        val sha1 = MessageDigest.getInstance("SHA-1")
-        // Append current cart-order metadata:
-        sha1.update( s"$orderId ${System.currentTimeMillis() / IDEMPOTENCE_KEY_ROTATE_EVERY_SECONDS}\n".getBytes() )
-        for {
-          itm <- orderItem.items
-            .sortBy( _.id getOrElse -1L )
-        } {
-          val itmStr = s"${itm.id.getOrElse("")} ${itm.price} ${itm.geoShape.getOrElse("")} ${itm.nodeId} ${itm.rcvrIdOpt.getOrElse("")} ${itm.tagFaceOpt.getOrElse("")}\n"
-          sha1.update( itmStr.getBytes )
-        }
-        sha1.update( payPrice.toString.getBytes )
-
-        // Append person node id to original hash:
-        personOpt
-          .flatMap( _.id )
-          .orElse( ctx.user.personIdOpt )
-          .foreach { personId =>
-            sha1.update( personId.getBytes )
-          }
-
-        sha1.digest()
+    val hashStr = mkIdemptKeyHash { sha1 =>
+      // Append current cart-order metadata:
+      sha1.update( s"$orderId ${System.currentTimeMillis() / IDEMPOTENCE_KEY_ROTATE_EVERY_SECONDS}\n".getBytes() )
+      for {
+        itm <- orderItem.items
+          .sortBy( _.id getOrElse -1L )
+      } {
+        val itmStr = s"${itm.id.getOrElse("")} ${itm.price} ${itm.geoShape.getOrElse("")} ${itm.nodeId} ${itm.rcvrIdOpt.getOrElse("")} ${itm.tagFaceOpt.getOrElse("")}\n"
+        sha1.update( itmStr.getBytes )
       }
+      sha1.update( payPrice.toString.getBytes )
+
+      // Append person node id to original hash:
+      personOpt
+        .flatMap( _.id )
+        .orElse( ctx.user.personIdOpt )
+        .foreach { personId =>
+          sha1.update( personId.getBytes )
+        }
+    }
+
     // Append order id to original hash (outside the hash):
     val idemptKey = hashStr + "/" + orderId
     val requestBodyJson = Json.toJsObject(payCreate)
@@ -229,7 +238,7 @@ final class YooKassaUtil @Inject() (
     for {
       // Start HTTP-request:
       resp <- wsClient
-        .url( "https://api.yookassa.ru/v3/payments" )
+        .url( s"$REST_API_ENDPOINT/payments" )
         .withAuth(
           username = profile.shopId,
           password = profile.secretKey,
@@ -575,13 +584,10 @@ final class YooKassaUtil @Inject() (
             txn.datePaid.fold {
               LOGGER.trace(s"$logPrefix Cancelling of pending transaction#${txn.id.orNull} psUid#${payment.id}.")
               for {
-                _ <- bill2Util.unholdOrder( txnOrderId )
-                // TODO Deleting transaction? Maybe just to reset transaction comment?
-                countUpdated <- bill2Util.mTxns.cancelTxn(
-                  txnId = txn.id.get,
+                _ <- bill2Util.unholdOrder(
+                  orderId = txnOrderId,
                   comment = payment.cancellationDetails.map(_.toString),
                 )
-                if countUpdated ==* 1
               } yield {
                 LOGGER.info(s"$logPrefix Successfully cancelled & removed txn#${txn.id.orNull} psUid#${payment.id}, and unholded order#$txnOrderId")
                 YkNotifyDbActionRes()
@@ -646,6 +652,40 @@ final class YooKassaUtil @Inject() (
       .getOrElse {
         LOGGER.debug(s"$logPrefix Some checks has been failed.")
         httpErrorHandler.onClientError( request, FORBIDDEN, "Request cannot be processed: some check failed." )
+      }
+  }
+
+  /** Non-captured money transaction cancelling. Do not usable for already-success transactions.
+    *
+    * @param profile YooKassa profile.
+    * @param paymentId YooKassa payment uuid.
+    * @return Updated payment data, if cancelled.
+    *         Failed future, if cancellation not possible.
+    */
+  def earlyCancelPayment(profile: YooKassaProfile, paymentId: String): Future[MYkPayment] = {
+    lazy val logPrefix = s"earlyCancelPayment($paymentId):"
+    LOGGER.trace(s"$logPrefix Will cancelling payment on YooKassa...")
+    val idemptKey = mkIdemptKeyHash( _.update( paymentId.getBytes ) )
+    wsClient
+      .url( s"$REST_API_ENDPOINT/payments/$paymentId/cancel" )
+      .addHttpHeaders(
+        HttpConst.Headers.IDEMPOTENCE_KEY -> idemptKey,
+      )
+      .withAuth(
+        username = profile.shopId,
+        password = profile.secretKey,
+        scheme   = WSAuthScheme.BASIC,
+      )
+      .post( Json.toJsObject( Json.obj() ) )
+      .map { resp =>
+        if (resp.status ==* 200) {
+          LOGGER.trace(s"$logPrefix Successfully cancelled payment on YooKassa")
+          resp.json.as[MYkPayment]
+        } else {
+          val msg = s"Failed to cancel payment: ${resp.status} ${resp.statusText}\n${resp.body}"
+          LOGGER.warn(s"$logPrefix $msg")
+          throw new RuntimeException( msg )
+        }
       }
   }
 

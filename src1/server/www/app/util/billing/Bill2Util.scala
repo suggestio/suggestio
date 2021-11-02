@@ -1630,7 +1630,7 @@ final class Bill2Util @Inject() (
     * @param orderId id ордера, подлежащего разморозке назад в корзину.
     * @return DB-экшен, возвращающий инстанс размороженного ордера.
     */
-  def unholdOrder(orderId: Gid_t): DBIOAction[MOrder, NoStream, RWT] = {
+  def unholdOrder(orderId: Gid_t, comment: Option[String] = None): DBIOAction[(MOrder, Seq[MTxn]), NoStream, RWT] = {
     lazy val logPrefix = s"unHoldOrder($orderId)[${System.currentTimeMillis()}]:"
 
     (for {
@@ -1639,7 +1639,7 @@ final class Bill2Util @Inject() (
       morder = morderOpt.get
 
       // Выполнять какие-то действия, только если позволяет текущий статус ордера.
-      morder2 <- {
+      res <- {
         if (morder.status ==* MOrderStatuses.Hold) {
           val morder22 = morder.withStatus( MOrderStatuses.Draft )
           for {
@@ -1647,45 +1647,65 @@ final class Bill2Util @Inject() (
             cartOrderOpt    <- getCartOrder(morder.contractId)
               .forUpdate
 
-            ordersUpdated <- mOrders.saveStatus( morder22 )
+            now = OffsetDateTime.now()
+            ordersUpdated <- mOrders.saveStatus( morder22, now )
             if ordersUpdated ==* 1
 
-            // Mark all pending order transactions as cancelled:
-            txnsUpdated <- mTxns.query
+            txns0 <- mTxns.query
               .filter { txn =>
                 (txn.orderIdOpt === orderId) &&
-                  (txn.txTypeStr === MTxnTypes.Draft.value)
+                (txn.txTypeStr === MTxnTypes.Draft.value)
               }
-              .map { txn =>
-                txn.txType
+              .result
+
+            // Mark all pending order transactions as cancelled:
+            // Updating one-by-one txn, because only 1 txn here (at maximum), so it is not a performance fail here.
+            txnsUpdated <- DBIO.sequence {
+              for {
+                txn <- txns0
+                txn2 = txn.copy(
+                  txType          = MTxnTypes.Cancelled,
+                  dateProcessed   = now,
+                  paymentComment  = comment,
+                )
+              } yield {
+                mTxns
+                  .saveTypeAndComment( txn2 )
+                  .map { countUpdated =>
+                    if (countUpdated !=* 1)
+                      LOGGER.warn(s"$logPrefix txn#${txn.id} => Unexpected updated rows count [$countUpdated], must be 1. Txn: $txn2")
+                    txn2
+                  }
               }
-              .update( MTxnTypes.Cancelled )
+            }
 
             // Текущий ордер теперь снова стал корзиной.
             // Но возможно, что уже существует ещё одна корзина? Их надо объеденить в пользу текущего ордера.
-            _ <- cartOrderOpt.fold [DBIOAction[_, NoStream, WT]] {
-              // Нет внезапной корзины, всё ок.
-              LOGGER.trace(s"$logPrefix All ok, no duplicating cart-orders found.")
-              DBIO.successful( None )
-            } { suddenCartOrder =>
-              // Обнаружена внезапная корзина. Переместить все item'ы из неё в текущий ордер, и удалить внезапную корзину.
-              val suddenCartOrderId = suddenCartOrder.id.get
-              val orderDepsMovedCountAction = mergeOrders( suddenCartOrderId, toOrderId = orderId )
-              LOGGER.info(s"$logPrefix Will merge cart orders $suddenCartOrderId => ${morder.id.orNull}, because new cart already exists.")
-              for (movedCount <- orderDepsMovedCountAction) yield {
-                LOGGER.debug(s"$logPrefix Moved $movedCount order deps from sudden cart#$suddenCartOrderId into cancelled order#$orderId")
+            _ <- {
+              LOGGER.trace(s"$logPrefix ${txnsUpdated.size} draft txns#[${txnsUpdated.iterator.map(_.id.fold("?")(_.toString)).mkString(",")}] marked as cancelled.")
+              cartOrderOpt.fold [DBIOAction[_, NoStream, WT]] {
+                // Нет внезапной корзины, всё ок.
+                LOGGER.trace(s"$logPrefix All ok, no duplicating cart-orders found.")
+                DBIO.successful(())
+              } { suddenCartOrder =>
+                // Обнаружена внезапная корзина. Переместить все item'ы из неё в текущий ордер, и удалить внезапную корзину.
+                val suddenCartOrderId = suddenCartOrder.id.get
+                val orderDepsMovedCountAction = mergeOrders( suddenCartOrderId, toOrderId = orderId )
+                LOGGER.info(s"$logPrefix Will merge cart orders $suddenCartOrderId => ${morder.id.orNull}, because new cart already exists.")
+                for (movedCount <- orderDepsMovedCountAction) yield {
+                  LOGGER.debug(s"$logPrefix Moved $movedCount order deps from sudden cart#$suddenCartOrderId into cancelled order#$orderId")
+                }
               }
             }
 
           } yield {
-            LOGGER.trace(s"$logPrefix $txnsUpdated draft txns marked as cancelled.")
             // Вернуть обновлённый инстанс.
-            morder22
+            morder22 -> txnsUpdated
           }
 
         } else if (morder.status ==* MOrderStatuses.Draft) {
           LOGGER.debug(s"$logPrefix Already draft since ${morder.dateStatus}. Nothing to do, skipped.")
-          DBIO.successful( morder )
+          DBIO.successful( morder -> Nil )
         } else {
           val msg = s"$logPrefix Order status is ${morder.status}, so cannot unhold. Only holded orders or drafts are allowed."
           LOGGER.error(msg)
@@ -1695,7 +1715,7 @@ final class Bill2Util @Inject() (
 
     } yield {
       LOGGER.debug(s"$logPrefix Order now draft. Was HOLD.")
-      morder2
+      res
     })
       .transactionally
   }

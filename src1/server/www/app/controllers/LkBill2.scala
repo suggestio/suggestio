@@ -49,6 +49,7 @@ import views.html.lk.billing.order._
 
 import javax.inject.Inject
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -812,16 +813,55 @@ final class LkBill2 @Inject() (
   }
 
 
-
   /** Unholding order action. */
   def unHoldOrder( orderId: Gid_t ) = csrf.Check {
     canSubmitCart.canUnholdOrder( orderId ).async { implicit request =>
       lazy val logPrefix = s"unHoldOrder($orderId):"
       for {
-        order2 <- slick.db.run {
-          // TODO Opt bypass full MOrder instance instead of orderId?
+        (order2, txnsCancelled) <- slick.db.run {
           bill2Util.unholdOrder( orderId )
         }
+
+        // Cancel remote pending/opened transaction in background
+        _ = Future.sequence {
+          (for {
+            txn <- txnsCancelled.iterator
+            paySystem <- txn.paySystem.iterator
+            paySysUid <- txn.psTxnUidOpt.iterator
+            // Decode transaction metadata into valid query-string args for cartSubmit() action:
+            submitQsOpt = txn.metadata
+              .flatMap( _.asOpt[MCartSubmitQs] )
+              .iterator
+            cancelFs = {
+              paySystem match {
+                case MPaySystems.YooKassa =>
+                  (for {
+                    submitQs <- submitQsOpt
+                    ykProfile <- yooKassaUtil.findProfile( submitQs.payVia )
+                  } yield {
+                    LOGGER.debug(s"$logPrefix Txn#${txn.id.orNull} paySystem#$paySystem#$paySysUid => cartSubmit qs=$submitQs => profile#$ykProfile")
+                    yooKassaUtil.earlyCancelPayment( ykProfile, paySysUid )
+                  })
+                    .to( List )
+                case _ =>
+                  LOGGER.trace(s"$logPrefix Non-cancelable txn#${txn.id.orNull} because paySystem#$paySystem#$paySysUid")
+                  Nil
+              }
+            }
+            cancelFut <- cancelFs
+          } yield {
+            cancelFut.transform {
+              case Success(_) =>
+                LOGGER.trace(s"$logPrefix Cancelled ok remote txn#${txn.id.orNull} paySys#$paySystem#$paySysUid")
+                Success( 1 )
+              case Failure(_) =>
+                LOGGER.warn(s"$logPrefix Failed to cancel remote payment: txn#${txn.id.orNull} => paySys#$paySystem#$paySysUid. See pay-system related logs.")
+                Success( 0 )
+            }
+          })
+            .to( List )
+        }
+
         // Return updated order:
         orderContents2 <- {
           LOGGER.debug(s"$logPrefix Unholded order#$orderId per user#${request.user.personIdOpt.orNull} request. New order status is ${order2.status}.")
