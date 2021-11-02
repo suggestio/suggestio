@@ -31,10 +31,12 @@ object MCartSubmitResult {
 /** Payment system init.data container.
   * @param paySystem Payment system, if need to pay (cartIdea == NeedMoney).
   * @param metadata Payment system metadata JSON (options, settings, props, etc) - depends on implementation.
+  * @param prefmtFooter Preformatted optional text for footer. Used for technical hint bank-card requisites for payment-testing by staff.
   */
 final case class MCartPayInfo(
                                paySystem    : MPaySystem,
                                metadata     : Option[JsObject]    = None,
+                               prefmtFooter : Option[String]      = None,
                              )
 object MCartPayInfo {
 
@@ -43,7 +45,8 @@ object MCartPayInfo {
   implicit def cartPayInfo: OFormat[MCartPayInfo] = {
     (
       (__ \ "pay_system").format[MPaySystem] and
-      (__ \ "metadata").formatNullable[JsObject]
+      (__ \ "metadata").formatNullable[JsObject] and
+      (__ \ "prefmt_footer").formatNullable[String]
     )(apply, unlift(unapply))
   }
 

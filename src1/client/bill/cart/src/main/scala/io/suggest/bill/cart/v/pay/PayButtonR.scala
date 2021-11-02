@@ -8,6 +8,7 @@ import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.r.FlexCenteredR
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -47,26 +48,18 @@ class PayButtonR(
     def render(s: State): VdomElement = {
       s.isVisibleEnabledOptC { isVisibleEnabledOptProxy =>
         isVisibleEnabledOptProxy.value.whenDefinedEl { isEnabled =>
-
-          // For centering inside flex toolbar, use this as left/right placeholders:
-          val placeHolder = MuiBox.component(
-            new MuiBox.Props {
-              override val sx = new MuiSx {
-                override val flexGrow = 1: js.Any
-              }
-            }
-          )()
           val payMsg = crCtxP.message( MsgCodes.`Pay` )
           val payBtnCss = new MuiFabClasses {
             override val root = orderCss.PayBtn.root.htmlClass
           }
 
-          React.Fragment(
-            placeHolder,
-
+          FlexCenteredR.component(false)(
             s.payableViasC { payableViasProxy =>
+              val payableVias = payableViasProxy.value
+
+              // TODO Render info, if payableVias is empty, but order have items?
               React.Fragment(
-                payableViasProxy.value.toVdomArray { payableVia =>
+                payableVias.toVdomArray { payableVia =>
                   MuiFab.component.withKey( payableVia.toString ) {
                     new MuiFabProps {
                       override val variant    = MuiFabVariants.extended
@@ -89,11 +82,9 @@ class PayButtonR(
                       NBSP_STR, `(`, MsgCodes.`Test`, `)`,
                     )),
                   )
-                }
+                },
               )
             },
-
-            placeHolder,
           )
         }
       }

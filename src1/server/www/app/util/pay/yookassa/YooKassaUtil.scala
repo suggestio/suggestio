@@ -129,6 +129,18 @@ final class YooKassaUtil @Inject() (
   def REST_API_ENDPOINT = "https://api.yookassa.ru/v3/"
 
 
+  def prefmtFooter(profile: YooKassaProfile): Option[String] = {
+    Option.when( profile.isTest ) {
+      // Bank-card testing credentials: https://yookassa.ru/developers/payment-forms/widget/quick-start#process-enter-test-data-test-store
+      """Номер карты — 5555 5555 5555 4477
+        |Срок действия — 01/30 (или другая дата, больше текущей)
+        |CVC — 123 (или три любые цифры)
+        |Код 3-D Secure — 123 (или три любые цифры)
+        |""".stripMargin
+    }
+  }
+
+
   /** Zero-step of payment procedure: seed remote PaySystem with payment data.
     *
     * @param profile Payment system profile.

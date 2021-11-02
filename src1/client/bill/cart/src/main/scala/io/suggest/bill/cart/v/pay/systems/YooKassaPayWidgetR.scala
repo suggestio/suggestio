@@ -18,7 +18,7 @@ import scalajs.js.JSConverters._
 import scala.scalajs.js
 
 /** YooKassa widget wrapper. */
-class YooKassaCartR {
+class YooKassaPayWidgetR {
 
   type Props_t = MCartRootS
   type Props = ModelProxy[Props_t]

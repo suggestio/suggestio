@@ -582,8 +582,11 @@ final class LkBill2 @Inject() (
       .filter(_.status !=* MOrderStatuses.Draft)
       .flatMap(_.id)
       .fold [Future[(Seq[MTxn], Map[Gid_t, MCurrency])]]
-        { Future.successful((Nil, Map.empty)) }
-        { orderId =>
+        {
+          LOGGER.trace(s"$logPrefix Txns skipping, because of order_id#${morderOpt.flatMap(_.id).orNull} or order_status#${morderOpt.map(_.status).orNull}")
+          Future.successful((Nil, Map.empty))
+        }
+        {orderId =>
           slick.db.run {
             bill2Util.getOrderTxnsWithCurrencies( orderId )
           }
@@ -595,8 +598,8 @@ final class LkBill2 @Inject() (
     val mTxnsPricedFut = for {
       (txnsCur, balancesCurrency) <- mTxnsCurFut
     } yield {
-      for {
-        mtxn <- txnsCur
+      val txnsPriced = (for {
+        mtxn <- txnsCur.iterator
         mcurrency <- {
           val currOpt = balancesCurrency.get( mtxn.balanceId )
           if (currOpt.isEmpty) LOGGER.error(s"$logPrefix Cannot find currency for txn#${mtxn.id.orNull} balance#${mtxn.balanceId}")
@@ -604,12 +607,15 @@ final class LkBill2 @Inject() (
         }
       } yield {
         val price0 = MPrice( mtxn.amount, mcurrency )
-        LOGGER.trace(s"$logPrefix ${mtxn.txType} txn#${mtxn.id.orNull} balance#${mtxn.balanceId} => $price0")
         MTxnPriced(
           txn   = mtxn.toClientSide,
           price = TplDataFormatUtil.setFormatPrice( price0 )(ctx)
         )
-      }
+      })
+        .to( List )
+
+      LOGGER.trace(s"$logPrefix Found ${txnsPriced.length} txns: [${txnsPriced.iterator.flatMap(_.txn.id).mkString(",")}]")
+      txnsPriced
     }
 
     // Рассчёт полной стоимости заказа.
@@ -925,13 +931,14 @@ final class LkBill2 @Inject() (
                   val payPrices = cartResolution.needMoney.get
                   require(payPrices.lengthIs == 1, s"Only one currency allowed for $paySystem")
                   val Seq(payPrice) = payPrices
+                  val ykProfile = yooKassaUtil
+                    .findProfile( qs.payVia )
+                    .get
 
                   for {
                     paymentStarted <- yooKassaUtil.preparePayment(
                       // TODO payProfile: Detect test/prod using URL qs args, filtering by request.user.isSuper
-                      profile   = yooKassaUtil
-                        .findProfile( qs.payVia )
-                        .get,
+                      profile   = ykProfile,
                       orderItem = cartOrder,
                       payPrice  = payPrice,
                       personOpt = Some( personNode ),
@@ -961,7 +968,8 @@ final class LkBill2 @Inject() (
                       cartIdea  = cartResolution.idea,
                       pay = Some( MCartPayInfo(
                         paySystem,
-                        metadata  = Some( paymentStarted.metadata ),
+                        metadata = Some( paymentStarted.metadata ),
+                        prefmtFooter = yooKassaUtil.prefmtFooter( ykProfile ),
                       )),
                     )
                   }
