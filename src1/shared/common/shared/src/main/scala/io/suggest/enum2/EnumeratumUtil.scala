@@ -3,7 +3,6 @@ package io.suggest.enum2
 import enumeratum._
 import enumeratum.values.{StringEnum, StringEnumEntry, ValueEnum, ValueEnumEntry}
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.lk.nodes.{MLknOpKey, MLknOpKeys}
 import io.suggest.url.bind.{QsBindable, QsBinderF, QsUnbinderF}
 import play.api.libs.json._
 
@@ -18,8 +17,8 @@ import scala.language.implicitConversions
   */
 object EnumeratumUtil {
 
-  class ValueEnumEntryKeyReadsWrites[ValueType, EntryType <: ValueEnumEntry[ValueType]]
-                                    (model: ValueEnum[ValueType, EntryType])(fromStringKey: String => ValueType)
+  case class ValueEnumEntryKeyReadsWrites[ValueType, EntryType <: ValueEnumEntry[ValueType]]
+                                         (model: ValueEnum[ValueType, EntryType])(fromStringKey: String => ValueType)
     extends KeyWrites[EntryType]
     with KeyReads[EntryType]
   {

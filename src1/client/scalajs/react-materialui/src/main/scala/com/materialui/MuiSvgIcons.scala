@@ -1086,8 +1086,8 @@ object MuiSvgIcons {
   object EditorModeEdit extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/monetization-on", JSImport.Default)
   object EditorMonetizationOn extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/money-off", JSImport.Default)
-  object EditorMoneyOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/MoneyOff", JSImport.Default)
+  object MoneyOff extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/multiline-chart", JSImport.Default)
   object EditorMultilineChart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/pie-chart-outlined", JSImport.Default)

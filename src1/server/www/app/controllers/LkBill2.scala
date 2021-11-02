@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
-import io.suggest.bill.cart.{MCartConf, MCartIdeas, MCartInit, MCartSubmitArgs, MCartSubmitResult, MOrderContent}
+import io.suggest.bill.cart.{MCartConf, MCartIdeas, MCartInit, MCartPayInfo, MCartSubmitQs, MCartSubmitResult, MOrderContent}
 import io.suggest.bill.price.dsl.{MReasonType, MReasonTypes}
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.bill.{MCurrency, MPrice}
@@ -32,7 +32,7 @@ import models.mctx.Context
 import models.req._
 import play.api.http.HttpVerbs
 import play.api.libs.json.Json
-import play.api.mvc.{ActionBuilder, ActionFilter, AnyContent, Result}
+import play.api.mvc.{ActionBuilder, AnyContent}
 import util.TplDataFormatUtil
 import util.acl._
 import util.ad.JdAdUtil
@@ -86,7 +86,7 @@ final class LkBill2 @Inject() (
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val yooKassaUtil = injector.instanceOf[YooKassaUtil]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
-  private lazy val errorHandler = injector.instanceOf[ErrorHandler]
+  private lazy val canSubmitCart = injector.instanceOf[CanSubmitCart]
   implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
@@ -577,6 +577,8 @@ final class LkBill2 @Inject() (
 
     // Собрать транзакции, если это НЕ ордер-корзина:
     val mTxnsCurFut = morderOpt
+      // Do not return possible cancelled txns for cart-order, because this is NOT rendered on client.
+      .filter(_.status !=* MOrderStatuses.Draft)
       .flatMap(_.id)
       .fold [Future[(Seq[MTxn], Map[Gid_t, MCurrency])]]
         { Future.successful((Nil, Map.empty)) }
@@ -779,6 +781,13 @@ final class LkBill2 @Inject() (
       adnNodesPropsShapes ++ rcvrs
     }
 
+    // Detect possible pay methods:
+    val payableViasFut = for {
+      morderOpt     <- morderOptFut
+    } yield {
+      canSubmitCart.getPayableVias( morderOpt )
+    }
+
     // Наконец, сборка результата:
     for {
       morderOpt     <- morderOptFut
@@ -787,47 +796,27 @@ final class LkBill2 @Inject() (
       itemAdnNodes  <- itemAdnNodesFut
       jdAdDatas     <- jdAdDatasFut
       orderPrices   <- orderPricesFut
+      payableVias   <- payableViasFut
     } yield {
-      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxnsPriced.length} txns, ${itemAdnNodes.length} adn-nodes, ${jdAdDatas.size} jd-ads")
+      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxnsPriced.length} txns, ${itemAdnNodes.length} adn-nodes, ${jdAdDatas.size} jd-ads, payable via ${payableVias.size} methods")
       MOrderContent(
         order       = morderOpt,
         items       = mitems,
         txns        = mTxnsPriced,
         adnNodes    = itemAdnNodes,
         adsJdDatas  = jdAdDatas,
-        orderPrices = orderPrices
+        orderPrices = orderPrices,
+        payableVia  = payableVias,
       )
     }
   }
 
 
+
   /** Unholding order action. */
   def unHoldOrder( orderId: Gid_t ) = csrf.Check {
-    lazy val logPrefix = s"unHoldOrder($orderId):"
-
-    val actionBuilder = canViewOrder( orderId, onNodeId = None )
-      .andThen {
-        new ActionFilter[MNodeOptOrderReq] {
-          override protected def filter[A](request: MNodeOptOrderReq[A]): Future[Option[Result]] = {
-            val isHold = (request.morder.status ==* MOrderStatuses.Hold)
-            if (isHold) {
-              // Continue processing, as expected...
-              Future successful None
-
-            } else {
-              LOGGER.warn( s"$logPrefix Can't do it, because order status is ${request.morder.status} since ${request.morder.dateStatus}" )
-              for {
-                result <- errorHandler.onClientError(request, PRECONDITION_FAILED, s"Order#${orderId} is not hold.")
-              } yield {
-                Some( result )
-              }
-            }
-          }
-          override protected def executionContext = ec
-        }
-      }
-
-    actionBuilder.async { implicit request =>
+    canSubmitCart.canUnholdOrder( orderId ).async { implicit request =>
+      lazy val logPrefix = s"unHoldOrder($orderId):"
       for {
         order2 <- slick.db.run {
           // TODO Opt bypass full MOrder instance instead of orderId?
@@ -850,13 +839,8 @@ final class LkBill2 @Inject() (
     *
     * @return Редирект или страница оплаты.
     */
-  def cartSubmit(qs: MCartSubmitArgs) = csrf.Check {
-    val actionBuilder = qs.onNodeId.fold[ActionBuilder[IReq, AnyContent]] {
-      isAuth()
-    } { onNodeId =>
-      isNodeAdmin( onNodeId, U.PersonNode, U.ContractId )
-    }
-    actionBuilder.async { implicit request =>
+  def cartSubmit(qs: MCartSubmitQs) = csrf.Check {
+    canSubmitCart( qs, U.PersonNode, U.ContractId ).async { implicit request =>
       import slick.profile.api._
 
       lazy val logPrefix = s"cartSubmit()#${System.currentTimeMillis()}:"
@@ -905,7 +889,9 @@ final class LkBill2 @Inject() (
                   for {
                     paymentStarted <- yooKassaUtil.preparePayment(
                       // TODO payProfile: Detect test/prod using URL qs args, filtering by request.user.isSuper
-                      profile   = yooKassaUtil.firstProfile.get,
+                      profile   = yooKassaUtil
+                        .findProfile( qs.payVia )
+                        .get,
                       orderItem = cartOrder,
                       payPrice  = payPrice,
                       personOpt = Some( personNode ),
@@ -933,8 +919,10 @@ final class LkBill2 @Inject() (
                   } yield {
                     MCartSubmitResult(
                       cartIdea  = cartResolution.idea,
-                      paySystem = Some( paySystem ),
-                      metadata  = Some( paymentStarted.metadata ),
+                      pay = Some( MCartPayInfo(
+                        paySystem,
+                        metadata  = Some( paymentStarted.metadata ),
+                      )),
                     )
                   }
 

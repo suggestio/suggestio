@@ -22,7 +22,7 @@ object MCartPayS {
 /** State container for payments subsystems.
   *
   * @param cartSubmit First request: preparing for pay using s.io server.
-  * @param paySystemInit PaySystem widget init.
+  * @param paySystemInit Client-side PaySystem widget init steps.
   *                      Ready+Pending => js-script tag added, waiting for loading.
   *                      Ready => add pay-system react-component (with js-code related) into vdom.
   *                      Error => remove script tag and render error.

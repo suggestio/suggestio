@@ -62,6 +62,11 @@ object MOrderContent {
         .inmap[Iterable[MPrice]](
           EmptyUtil.opt2ImplEmpty1F( Nil ),
           { prices => if (prices.isEmpty) None else Some(prices) }
+        ) and
+      (__ \ "pay").formatNullable[Seq[MPayableVia]]
+        .inmap[Seq[MPayableVia]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          { payableVias => Option.when( payableVias.nonEmpty )( payableVias ) }
         )
     )(apply, unlift(unapply))
   }
@@ -80,6 +85,7 @@ object MOrderContent {
   * @param txns Денежные транзакции по ордеру.
   * @param orderPrices Стоимость заказа.
   * @param adnNodes ADN-узлы из item.nodeId, item.rcvrId и проч.
+  * @param payableVia Pay methods.
   */
 case class MOrderContent(
                           order       : Option[MOrder],
@@ -88,4 +94,5 @@ case class MOrderContent(
                           adnNodes    : Iterable[MSc3IndexResp]   = Nil,
                           adsJdDatas  : Iterable[MJdData]         = Nil,
                           orderPrices : Iterable[MPrice]          = Nil,
+                          payableVia  : Seq[MPayableVia]          = Nil,
                         )

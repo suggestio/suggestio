@@ -2,7 +2,7 @@ package util.pay.yookassa
 
 import inet.ipaddr.IPAddressString
 import io.suggest.bill.MPrice
-import io.suggest.bill.cart.MCartSubmitArgs
+import io.suggest.bill.cart.{MCartSubmitQs, MPayableVia}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
@@ -101,6 +101,19 @@ final class YooKassaUtil @Inject() (
     yooProfiles.find(_.isTest ==* isTest)
   def firstProfile: Option[YooKassaProfile] =
     yooProfiles.headOption
+
+  def findProfile(mpv: MPayableVia): Option[YooKassaProfile] =
+    yooProfiles.find( _.isTest ==* mpv.isTest )
+
+
+  def payableVias: Seq[MPayableVia] = {
+    yooProfiles
+      .map { ykProfile =>
+        MPayableVia(
+          isTest = ykProfile.isTest,
+        )
+      }
+  }
 
 
   /** Zero-step of payment procedure: seed remote PaySystem with payment data.
@@ -509,7 +522,7 @@ final class YooKassaUtil @Inject() (
                   // TODO Do not payer+detect. OnNodeId must be extracted from txn.metadata
                   val userPaymentNotifyFut = (for {
                     txnMeta <- txn.metadata
-                    cartSubmitQs <- txnMeta.asOpt[MCartSubmitArgs]
+                    cartSubmitQs <- txnMeta.asOpt[MCartSubmitQs]
                     onNodeId <- cartSubmitQs.onNodeId
                   } yield {
                     LOGGER.trace(s"$logPrefix Found onNodeId=$onNodeId for order#$txnOrderId in txn#${txn.id.orNull} metadata")

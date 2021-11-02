@@ -39,10 +39,12 @@ class YooKassaCartR {
       $.props >>= { propsProxy: Props =>
         val mroot = propsProxy.value
         val cartSubmitResult = mroot.pay.cartSubmit.get
-        val metaObj = cartSubmitResult.metadata
-          .get
-          .value( YooKassaConst.Metadata.WEB_WIDGET_ARGS )
+
+        val metaObj = cartSubmitResult.pay
+          .get.metadata
+          .get.value( YooKassaConst.Metadata.WEB_WIDGET_ARGS )
           .as[JsObject]
+
         val metaProps = PlayJsonSjsUtil
           .toNativeJsonObj( metaObj )
           .asInstanceOf[YkCheckoutWidget.Props]
@@ -50,6 +52,7 @@ class YooKassaCartR {
         val returnRoute = mroot.conf.onNodeId.fold {
           // TODO Return URL inside showcase? Make an URL
           routes.controllers.sc.ScSite.geoSite()
+
         } { onNodeId =>
           // Return URL inside personal cabinet.
           routes.controllers.LkBill2.orderPage(

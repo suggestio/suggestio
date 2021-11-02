@@ -540,5 +540,6 @@ object MsgCodes {
 
   val `Check.your.internet.connection.and.retry` = "Check.your.internet.connection.and.retry"
   val `Advertising.services` = "Advertising.services"
+  val `Test` = "Test"
 
 }

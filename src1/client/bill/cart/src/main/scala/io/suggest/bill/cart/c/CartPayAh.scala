@@ -2,7 +2,7 @@ package io.suggest.bill.cart.c
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
-import io.suggest.bill.cart.{MCartConf, MCartSubmitArgs}
+import io.suggest.bill.cart.{MCartConf, MCartSubmitQs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.bill.cart.m.{CartSubmit, MCartPayS, PaySystemJsInit}
 import io.suggest.i18n.MMessageException
@@ -33,7 +33,8 @@ final class CartPayAh[M](
         val fx = Effect {
           lkCartApi
             .cartSubmit(
-              args = MCartSubmitArgs(
+              qs = MCartSubmitQs(
+                payVia   = m.payVia,
                 onNodeId = confRO.value.onNodeId,
               ),
             )
@@ -54,10 +55,10 @@ final class CartPayAh[M](
         // Also, if ready and cart is need to pay, lets start paySystem-widget initialization:
         for {
           cartSubmitResult <- m.state
-          paySystem <- cartSubmitResult.paySystem
-          if paySystem.payWidgetJsScriptUrl.nonEmpty
+          payInfo <- cartSubmitResult.pay
+          if payInfo.paySystem.payWidgetJsScriptUrl.nonEmpty
         } {
-          modsAcc = modsAcc andThen MCartPayS.paySystemInit.modify( _.ready(paySystem).pending() )
+          modsAcc = modsAcc andThen MCartPayS.paySystemInit.modify( _.ready(payInfo.paySystem).pending() )
         }
 
         val v2 = modsAcc(v0)

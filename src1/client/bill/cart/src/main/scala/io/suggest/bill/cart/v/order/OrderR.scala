@@ -31,7 +31,7 @@ class OrderR(
               val itemsDeleteSelectedR  : ItemsDeleteSelectedR,
               val orderInfoR         : OrderInfoR,
               val txnsR              : TxnsR,
-              val payButtonR         : PayButtonR,
+              payButtonR             : PayButtonR,
               unholdOrderDiaR        : UnholdOrderDiaR,
             ) {
 
@@ -45,7 +45,6 @@ class OrderR(
                     deleteSelectedC : ReactConnectProxy[itemsDeleteSelectedR.Props_t],
                     orderOptC       : ReactConnectProxy[orderInfoR.Props_t],
                     txnsPricedOptC  : ReactConnectProxy[txnsR.Props_t],
-                    payButtonOptC   : ReactConnectProxy[payButtonR.Props_t],
                     isOrderVisibleSomeC: ReactConnectProxy[Some[Boolean]],
                   )
 
@@ -90,7 +89,7 @@ class OrderR(
           s.deleteSelectedC { itemsDeleteSelectedR.component.apply },
 
           // PAY button, when payment is possible (non-empty cart-order).
-          s.payButtonOptC { payButtonR.component.apply },
+          payButtonR.component( propsProxy ),
         ),
 
         // Transactions list, if any:
@@ -183,27 +182,6 @@ class OrderR(
             oc.txns
           }
         }( OptFastEq.Plain ),
-
-        payButtonOptC = propsProxy.connect { props =>
-          OptionUtil.maybeOpt(
-            props.order.orderContents.exists { ocJs =>
-              val oc = ocJs.content
-              oc.items.nonEmpty &&
-                oc.order.exists(_.status ==* MOrderStatuses.Draft)
-            } && {
-              val psIni = props.pay.paySystemInit
-              psIni.isEmpty || psIni.isFailed
-            } && {
-              props.order.itemsSelected.isEmpty
-            }
-          ) (
-            OptionUtil.SomeBool {
-              !props.order.orderContents.isPending &&
-              !props.pay.cartSubmit.isPending &&
-              !props.pay.paySystemInit.isPending
-            }
-          )
-        },
 
         isOrderVisibleSomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool {

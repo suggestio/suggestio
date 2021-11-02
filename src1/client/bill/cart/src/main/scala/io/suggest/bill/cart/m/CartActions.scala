@@ -1,7 +1,7 @@
 package io.suggest.bill.cart.m
 
 import diode.data.Pot
-import io.suggest.bill.cart.{MCartSubmitResult, MOrderContent}
+import io.suggest.bill.cart.{MCartSubmitResult, MOrderContent, MPayableVia}
 import io.suggest.i18n.MMessage
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.spa.DAction
@@ -67,6 +67,7 @@ sealed trait ICartPayAction extends ICartAction
 
 /** Start payment procedure (request to server). */
 case class CartSubmit(
+                       payVia       : MPayableVia,
                        state        : Pot[MCartSubmitResult]          = Pot.empty,
                        timestampMs  : Long                            = System.currentTimeMillis(),
                      )

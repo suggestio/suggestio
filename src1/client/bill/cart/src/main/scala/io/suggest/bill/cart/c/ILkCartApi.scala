@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.c
 
-import io.suggest.bill.cart.{MCartSubmitArgs, MCartSubmitResult, MOrderContent}
+import io.suggest.bill.cart.{MCartSubmitQs, MCartSubmitResult, MOrderContent}
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.routes.routes
@@ -38,7 +38,7 @@ trait ILkCartApi {
   /** Submit current cart into payment processing.
     * @return Future with cart submission result.
     */
-  def cartSubmit( args: MCartSubmitArgs ): Future[MCartSubmitResult]
+  def cartSubmit( qs: MCartSubmitQs ): Future[MCartSubmitResult]
 
   /** Undo order hold status (interrupt order payment flow). */
   def unHoldOrder(orderId: Gid_t): Future[MOrderContent]
@@ -77,11 +77,11 @@ final class LkCartApiHttpImpl extends ILkCartApi {
       .unJson[MOrderContent]
   }
 
-  override def cartSubmit( args: MCartSubmitArgs ): Future[MCartSubmitResult] = {
+  override def cartSubmit(qs: MCartSubmitQs ): Future[MCartSubmitResult] = {
     HttpClient.execute(
       HttpReq.routed(
         route = routes.controllers.LkBill2.cartSubmit(
-          args = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject( args ) ),
+          qs = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject( qs ) ),
         ),
       )
     )

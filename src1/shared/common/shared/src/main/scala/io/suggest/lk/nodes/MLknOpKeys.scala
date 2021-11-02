@@ -46,7 +46,7 @@ object MLknOpKey {
   implicit def lknOpKeyJson: Format[MLknOpKey] =
     EnumeratumUtil.valueEnumEntryFormat( MLknOpKeys )
 
-  implicit def OpKeyJson = new EnumeratumUtil.ValueEnumEntryKeyReadsWrites( MLknOpKeys )( identity )
+  implicit def OpKeyJson = EnumeratumUtil.ValueEnumEntryKeyReadsWrites( MLknOpKeys )( identity )
 
 
   implicit final class OptionsKeyExt( private val ok: MLknOpKey ) extends AnyVal {
