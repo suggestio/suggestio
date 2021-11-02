@@ -41,9 +41,9 @@ final class JsMessagesUtil @Inject() (
       MC.`Date.choosing` ::
       MC.`Advertising.period` ::
       "Your.ad.will.adv" ::
-      "From._date" ::
+      MC.`From._date` ::
       "from._date" ::
-      "till._date" ::
+      MC.`till._date` ::
       "Date.start" ::
       "Date.end" ::
       "locale.momentjs" ::
@@ -83,7 +83,7 @@ final class JsMessagesUtil @Inject() (
     }
   }
 
-  private def DATE_TIME_ABBREVATIONS: IterableOnce[String] = {
+  private def DATE_TIME_ABBREVATIONS: List[String] = {
     "year_abbrevated" ::
       Nil
   }
@@ -520,7 +520,15 @@ final class JsMessagesUtil @Inject() (
       MC.`Moderate.all.nodes` ::
       MC.`Moderate.requests.from.all.nodes` ::
       MC.`_N` ::
-      ITEM_TYPES
+      MC.`till._date` ::
+      MC.`in.radius.of.0.from.1` ::
+      MC.`From._date` ::
+      MC.`Node` ::
+      MC.`Edit` ::
+      (ITEM_TYPES reverse_:::
+        DATE_TIME_ABBREVATIONS reverse_:::
+        OF_MONTHS_OF_YEAR.toList
+      )
   }
 
 

@@ -583,7 +583,7 @@ final class LkBill2 @Inject() (
       .flatMap(_.id)
       .fold [Future[(Seq[MTxn], Map[Gid_t, MCurrency])]]
         {
-          LOGGER.trace(s"$logPrefix Txns skipping, because of order_id#${morderOpt.flatMap(_.id).orNull} or order_status#${morderOpt.map(_.status).orNull}")
+          LOGGER.trace(s"$logPrefix Txns skipping, because of order.id#${morderOpt.flatMap(_.id).orNull} or .status#${morderOpt.map(_.status).orNull}")
           Future.successful((Nil, Map.empty))
         }
         {orderId =>
@@ -838,23 +838,20 @@ final class LkBill2 @Inject() (
             submitQsOpt = txn.metadata
               .flatMap( _.asOpt[MCartSubmitQs] )
               .iterator
-            cancelFs = {
-              paySystem match {
-                case MPaySystems.YooKassa =>
-                  (for {
-                    submitQs <- submitQsOpt
-                    ykProfile <- yooKassaUtil.findProfile( submitQs.payVia )
-                  } yield {
-                    LOGGER.debug(s"$logPrefix Txn#${txn.id.orNull} paySystem#$paySystem#$paySysUid => cartSubmit qs=$submitQs => profile#$ykProfile")
-                    yooKassaUtil.earlyCancelPayment( ykProfile, paySysUid )
-                  })
-                    .to( List )
-                case _ =>
-                  LOGGER.trace(s"$logPrefix Non-cancelable txn#${txn.id.orNull} because paySystem#$paySystem#$paySysUid")
-                  Nil
-              }
+            cancelFut <- paySystem match {
+              case MPaySystems.YooKassa =>
+                (for {
+                  submitQs <- submitQsOpt
+                  ykProfile <- yooKassaUtil.findProfile( submitQs.payVia )
+                } yield {
+                  LOGGER.debug(s"$logPrefix Txn#${txn.id.orNull} paySystem#$paySystem#$paySysUid => cartSubmit.qs=$submitQs => profile#$ykProfile")
+                  yooKassaUtil.earlyCancelPayment( ykProfile, paySysUid )
+                })
+                  .to( List )
+              case _ =>
+                LOGGER.trace(s"$logPrefix Non-cancelable txn#${txn.id.orNull} because paySystem#$paySystem#$paySysUid")
+                Nil
             }
-            cancelFut <- cancelFs
           } yield {
             cancelFut.transform {
               case Success(_) =>

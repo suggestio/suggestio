@@ -3,6 +3,7 @@ package io.suggest.react.r
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.dt.MYmd
+import io.suggest.i18n.MsgCodes
 import io.suggest.msg.{JsFormatUtil, Messages}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -60,7 +61,7 @@ object RangeYmdR {
         v.dateEndOpt.whenDefined { dateEnd =>
           <.span(
             // до [дата окончания]
-            Messages("till._date"),
+            Messages( MsgCodes.`till._date` ),
             SPACE,
             YmdR( dateEnd )()
           )
@@ -68,7 +69,7 @@ object RangeYmdR {
 
         // г.
         SPACE,
-        Messages("year_abbrevated")
+        Messages( MsgCodes.`year_abbrevated` )
       )
     }
 
