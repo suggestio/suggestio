@@ -9,6 +9,7 @@ import io.suggest.bill.price.dsl.{MReasonType, MReasonTypes}
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.color.MColors
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
@@ -966,7 +967,9 @@ final class LkBill2 @Inject() (
                       pay = Some( MCartPayInfo(
                         paySystem,
                         metadata = Some( paymentStarted.metadata ),
-                        prefmtFooter = yooKassaUtil.prefmtFooter( ykProfile ),
+                        prefmtFooter = OptionUtil.maybeOpt( request.user.isSuper ) {
+                          yooKassaUtil.prefmtFooter( ykProfile )
+                        },
                       )),
                     )
                   }

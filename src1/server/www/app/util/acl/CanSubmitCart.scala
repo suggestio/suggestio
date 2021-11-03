@@ -1,13 +1,14 @@
 package util.acl
 
 import io.suggest.bill.cart.{MCartSubmitQs, MPayableVia}
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
 import io.suggest.pay.MPaySystems
 import io.suggest.playx.AppModeExt
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReq, IReqHdr, MNodeOptOrderReq, MUserInit}
-import play.api.Environment
+import play.api.Application
 import play.api.inject.Injector
 import util.pay.yookassa.YooKassaUtil
 import japgolly.univeq._
@@ -26,19 +27,23 @@ class CanSubmitCart @Inject()(
 
   private lazy val canViewOrder = injector.instanceOf[CanViewOrder]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
-  private lazy val env = injector.instanceOf[Environment]
+  private lazy val current = injector.instanceOf[Application]
   private lazy val yooKassaUtil = injector.instanceOf[YooKassaUtil]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
 
 
+  private lazy val testPayForAll = current.configuration.getOptional[Boolean]("pay.test4all").getOrElseFalse
+
   /** ACL function for filtering user for allowed pay-methods. */
   def isPayableViaUser(payVia: MPayableVia)(implicit request: IReqHdr): Boolean = {
     if (payVia.isTest) {
       val isSuperUser = request.user.isSuper
-      val r = isSuperUser || (request.user.isAuth && !env.mode.isProd)
-      LOGGER.trace(s"_isPayableViaUser(${request.user.personIdOpt.orNull}): allow test?$r, because user.isSuper?$isSuperUser and appMode.isProd?${env.mode.isProd}")
+      val r = isSuperUser ||
+        (request.user.isAuth && (!current.mode.isProd || testPayForAll))
+
+      LOGGER.trace(s"_isPayableViaUser(${request.user.personIdOpt.orNull}): allow test?$r, because user.isSuper?$isSuperUser and appMode.isProd?${current.mode.isProd} testPay4All?$testPayForAll")
       r
     } else {
       true

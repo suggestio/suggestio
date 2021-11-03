@@ -30,6 +30,8 @@
 
   <table class="@Css.Table.TABLE @Css.Table.Width.XL">
 
+    @ctx.api.current.configuration.getOptional[Seq[play.api.Configuration]]("company.about").fold {
+
     <tr>
       @__key() {
         @messages( MsgCodes.`Organization.name` )
@@ -121,6 +123,29 @@
         044030653
       }
     </tr>
+
+    } { confs =>
+      @for(rowConf <- confs; key <- rowConf.keys; keyFixed = key.replace("\"", "")) {
+        <tr>
+          @__key() {
+            @messages( keyFixed )
+          }
+          @__value() {
+            @for(value <- rowConf.getOptional[String](key)) {
+              @if( keyFixed == "Phone" ) {
+                 <a href="tel:@value">@value</a>
+              } else {
+                @if( keyFixed == "Email" ) {
+                  <a href="mailto:@value">@value</a>
+                } else {
+                  @value
+                }
+              }
+            }
+          }
+        </tr>
+      }
+    }
 
   </table>
 
