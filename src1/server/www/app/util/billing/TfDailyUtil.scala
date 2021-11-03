@@ -18,7 +18,7 @@ import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
 import akka.stream.Materializer
-import io.suggest.es.model.{BulkProcessorListener, EsModel}
+import io.suggest.es.model.EsModel
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.bill.tariff.MNodeTariffs
 import io.suggest.n2.node.search.MNodeSearch

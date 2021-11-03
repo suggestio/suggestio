@@ -311,8 +311,3 @@ final class AdvUtil @Inject() (
   }
 
 }
-
-
-trait IAdvUtilDi {
-  protected def advUtil: AdvUtil
-}
