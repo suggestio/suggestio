@@ -193,7 +193,7 @@ final class SysMdr @Inject() (
           throw new IllegalArgumentException(s"$logPrefix Too may retries, too many invalid nodes.")
 
         // Поискать в биллинге узел, который надо модерировать:
-        val mnodeFut = for {
+        (for {
           // По идее, paidNodesSql надо дожидаться вне этой функции-цикла, но тут не особо важно:
           // в норме эта функция вызывает максимум 1 раз, а при ошибках - оверхед низкий.
           paidNodesSql <- paidNodesSqlFut
@@ -218,18 +218,17 @@ final class SysMdr @Inject() (
             LOGGER.trace(s"$logPrefix mdr node => ${mnodeOpt.flatMap(_.id)} (${nodeIds.length})")
             mnode
           }
-        }
-
-        mnodeFut.recoverWith { case ex: IllegalStateException =>
-          val offset2 = args0.offset + 1
-          LOGGER.trace(s"$logPrefix Will retry one more node [$offset2]")
-          val nodeId = ex.getMessage
-          val args2 = args0.copy(
-            offsetOpt = Some( offset2 )
-          )
-          errNodeIdsAcc ::= nodeId
-          _findBillNode4MdrOrNseeFut( args2 )
-        }
+        })
+          .recoverWith { case ex: IllegalStateException =>
+            val offset2 = args0.offset + 1
+            LOGGER.trace(s"$logPrefix Will retry one more node [$offset2]")
+            val nodeId = ex.getMessage
+            val args2 = args0.copy(
+              offsetOpt = Some( offset2 )
+            )
+            errNodeIdsAcc ::= nodeId
+            _findBillNode4MdrOrNseeFut( args2 )
+          }
       }
 
       // Поискать в биллинге узел, который надо модерировать:
@@ -266,6 +265,7 @@ final class SysMdr @Inject() (
             // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
             res <- mNodes.dynSearchOne( freeMdrsSearch )
           } yield {
+            LOGGER.trace(s"$logPrefix Free mdr search => ${res.map(_.id.orNull)}")
             res.get
           }
         }
@@ -294,7 +294,8 @@ final class SysMdr @Inject() (
         mdrNode <- billedOrFreeNodeOrExFut
         nodeId = mdrNode.id.get
         items <- slick.db.run {
-          mdrUtil.itemsQueryAwaiting( nodeId )
+          mdrUtil
+            .itemsQueryAwaiting( nodeId )
             // Ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
             .take(50)
             // Тяжелая сортировка тут скорее всего не важна, поэтому опускаем её.
@@ -309,7 +310,7 @@ final class SysMdr @Inject() (
       val jdAdDataSomeOrExFut = for {
         mad <- billedOrFreeNodeOrExFut
         if {
-          LOGGER.trace( s"$logPrefix is jd ad? ntype=${mad.common.ntype} doc=${mad.extras.doc}" )
+          LOGGER.trace( s"$logPrefix ntype#${mad.common.ntype} jd.doc?${mad.extras.doc}" )
           (mad.common.ntype ==* MNodeTypes.Ad) && mad.extras.doc.nonEmpty
         }
 
@@ -335,7 +336,7 @@ final class SysMdr @Inject() (
 
       // Сбор данных по бесплатным self-ресиверам
       val selfRcvrsNeedMdrFut = for {
-        mad <- billedNodeOrExFut
+        mad <- billedOrFreeNodeOrExFut
       } yield {
         val selfEdgesIter = mad.edges
           .withPredicateIter( MPredicates.Receiver.Self )
@@ -430,8 +431,8 @@ final class SysMdr @Inject() (
         }
       )
         // Не найдено узла? Это нормально, бывает.
-        .recover { case _: NoSuchElementException =>
-          LOGGER.trace(s"$logPrefix No more nodes for moderation.")
+        .recover { case ex: NoSuchElementException =>
+          LOGGER.trace(s"$logPrefix No more nodes for moderation.", ex)
           None
         }
 
