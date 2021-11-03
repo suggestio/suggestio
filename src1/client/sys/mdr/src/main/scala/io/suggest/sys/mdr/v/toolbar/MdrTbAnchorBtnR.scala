@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.toolbar
 
-import com.materialui.{Mui, MuiIconButton, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLink, MuiLinkProps, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
@@ -24,14 +24,15 @@ class MdrTbAnchorBtnR {
                        hintCode   : String,
                        route      : PlayRoute,
                        icon       : MuiSvgIcon,
+                       disabled   : Boolean,
                      )
   object PropsVal {
-    def SysNodeShow(nodeId: String) =
-      PropsVal( MsgCodes.`Node`, routes.controllers.SysMarket.showAdnNode( nodeId ), Mui.SvgIcons.Settings )
+    def SysNodeShow(nodeId: String, disabled: Boolean) =
+      PropsVal( MsgCodes.`Node`, routes.controllers.SysMarket.showAdnNode( nodeId ), Mui.SvgIcons.Settings, disabled )
 
-    def Edit(route: PlayRoute ) = PropsVal(MsgCodes.`Edit`, route, Mui.SvgIcons.Edit)
-    def LkAdEdit(nodeId: String) = Edit( routes.controllers.LkAdEdit.editAd( nodeId ) )
-    def LkAdnEdit(nodeId: String) = Edit( routes.controllers.LkAdnEdit.editNodePage( nodeId ) )
+    def Edit(route: PlayRoute, disabled: Boolean) = PropsVal(MsgCodes.`Edit`, route, Mui.SvgIcons.Edit, disabled)
+    def LkAdEdit(nodeId: String, disabled: Boolean) = Edit( routes.controllers.LkAdEdit.editAd( nodeId ), disabled )
+    def LkAdnEdit(nodeId: String, disabled: Boolean) = Edit( routes.controllers.LkAdnEdit.editNodePage( nodeId ), disabled )
 
     @inline implicit def univEq: UnivEq[PropsVal] = UnivEq.force
   }
@@ -57,13 +58,20 @@ class MdrTbAnchorBtnR {
           override val title: React.Node = Messages( p.hintCode )
         }
       )(
-        <.a(
-          ^.href := p.route.url,
-          ^.target.blank,
-          MuiIconButton()(
-            p.icon()()
-          )
-        )
+        MuiLink(
+          new MuiLinkProps {
+            val href = p.route.url
+            val target = "_blank"
+          }
+        )(
+          MuiIconButton(
+            new MuiIconButtonProps {
+              override val disabled = p.disabled
+            }
+          )(
+            p.icon()(),
+          ),
+        ),
       )
     }
 

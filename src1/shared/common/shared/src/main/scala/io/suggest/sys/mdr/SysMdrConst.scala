@@ -15,4 +15,7 @@ object SysMdrConst {
 
   def JD_CONF = MJdConf.simpleMinimal
 
+  /** Max steps right for skip previous nodes. */
+  def MAX_OFFSET = 500
+
 }

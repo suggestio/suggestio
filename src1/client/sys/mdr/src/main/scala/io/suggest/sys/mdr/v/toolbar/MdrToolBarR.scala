@@ -6,7 +6,7 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.OptFastEq
-import io.suggest.sys.mdr.MMdrQueueReport
+import io.suggest.sys.mdr.{MMdrQueueReport, SysMdrConst}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
@@ -72,7 +72,7 @@ class MdrToolBarR(
             override val variant = MuiChip.Variant.OUTLINED
             override val label: js.UndefOr[React.Node] = {
               <.span(
-                (props.nodeOffset + props.errorsCount).toString,
+                (props.nodeOffset + 1 + props.errorsCount).toString,
                 NBSP_STR, SLASH, NBSP_STR,
                 props.queueReportOpt.fold(QUESTION_MARK) { _.toHumanReadableString }
               )
@@ -87,9 +87,25 @@ class MdrToolBarR(
         __stepBtn( S.PreviousNode(canNotGoToPrevious) ),
         __stepBtn( S.Refresh(props.nodePending) ),
         __stepBtn( S.NextNode(
-          isDisabled = props.nodeIdOpt.isEmpty || props.queueReportOpt.exists(qr => !qr.hasMore && qr.len >= props.nodeOffset)
+          isDisabled = {
+            props.nodeIdOpt.isEmpty ||
+            !props.queueReportOpt.exists { qr =>
+              !qr.hasMore &&
+              qr.len - 1 > props.nodeOffset &&
+              props.nodeOffset < SysMdrConst.MAX_OFFSET
+            }
+          },
         )),
-        __stepBtn( S.ToEnd( props.queueReportOpt.map(_.len).filter(_ < props.nodeOffset) )),
+        __stepBtn( S.ToEnd(
+          offsetDelta = for {
+            queueReport <- props.queueReportOpt
+            len2Offset = queueReport.len - 1
+            if (len2Offset > props.nodeOffset) &&
+               (props.nodeOffset < SysMdrConst.MAX_OFFSET)
+          } yield {
+            Math.min( len2Offset - props.nodeOffset, SysMdrConst.MAX_OFFSET )
+          }
+        )),
 
         // Если есть узел, то надо ссылку на редактор сделать:
         props.nodeIdOpt.whenDefined { nodeId =>
@@ -97,7 +113,7 @@ class MdrToolBarR(
             PIPE,
 
             // Ссылка на sys-страницу узла:
-            __anchorBtn( A.SysNodeShow(nodeId) ),
+            __anchorBtn( A.SysNodeShow(nodeId, props.nodePending) ),
 
             // Ссылка на лк-редактор узла в зависимости от типа узла.
             props
@@ -107,7 +123,7 @@ class MdrToolBarR(
                 case MNodeTypes.AdnNode => A.LkAdnEdit _
               }
               .whenDefined { propsF =>
-                __anchorBtn( propsF(nodeId) )
+                __anchorBtn( propsF(nodeId, props.nodePending) )
               }
           )
         },

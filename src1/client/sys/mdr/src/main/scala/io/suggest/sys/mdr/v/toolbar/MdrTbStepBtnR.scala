@@ -36,8 +36,8 @@ final class MdrTbStepBtnR {
       PropsVal(MsgCodes.`Reload`, Mui.SvgIcons.Refresh, isDisabled, 0)
     def NextNode(isDisabled: Boolean): PropsVal =
       PropsVal(MsgCodes.`Next.node`, Mui.SvgIcons.SkipNext, isDisabled, +1)
-    def ToEnd(queueLen: Option[Int]): PropsVal =
-      PropsVal(MsgCodes.`To.end`, Mui.SvgIcons.FastForward, queueLen.isEmpty, queueLen.getOrElse(0))
+    def ToEnd(offsetDelta: Option[Int]): PropsVal =
+      PropsVal(MsgCodes.`To.end`, Mui.SvgIcons.FastForward, offsetDelta.isEmpty, offsetDelta.getOrElse(0))
 
     @inline implicit def univEq: UnivEq[PropsVal] = UnivEq.force
   }

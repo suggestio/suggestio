@@ -189,8 +189,8 @@ final class SysMdr @Inject() (
       /** Цикл поиска id узла, который требуется промодерировать.
         * Появился для отработки ситуации, когда база нарушена, и узел из nodeid уже удалён. */
       def _findBillNode4MdrOrNseeFut(args0: MdrSearchArgs = args): Future[MNode] = {
-        if (args0.offset > 50)
-          throw new IllegalArgumentException(s"$logPrefix Too may retries, too many invalid nodes.")
+        if (args0.offset > SysMdrConst.MAX_OFFSET)
+          throw new IllegalArgumentException(s"$logPrefix Too may retries, too many offset.")
 
         // Поискать в биллинге узел, который надо модерировать:
         (for {
