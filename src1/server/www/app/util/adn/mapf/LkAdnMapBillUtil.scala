@@ -200,7 +200,7 @@ final class LkAdnMapBillUtil @Inject() (
         ))
       ),
       // Рассчитать исходную финансовую нагрузку на основе посуточного тарифа.
-      p0 ##:: EphemeralStream.emptyEphemeralStream[Tree[PriceDsl]],
+      p0 ##:: EphemeralStream[Tree[PriceDsl]],
     )
 
     // Маппер по площади на карте - снаружи, чтобы можно было внутрь него пихать иные мапперы.

@@ -12,14 +12,15 @@ import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.media.MFileMeta
 import io.suggest.pick.ContentTypeCheck
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
-import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.up.UploadConstants
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import models.mctx.Context
 import play.api.{Environment, Mode}
 import io.suggest.primo.id._
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.text.StringUtil
+import io.suggest.text.StringUtil.StringCollUtil
 
 import scala.concurrent.Future
 import scalaz.{EphemeralStream, NonEmptyList, Tree, Validation, ValidationNel}
@@ -181,13 +182,11 @@ final class LkAdEdFormUtil @Inject() (
 
   def mkTechName(tpl: Tree[JdTag], edgeTextsMap: Map[EdgeUid_t, String]): Option[String] = {
     val delim = " | "
+
     val techName = (for {
-      (qdTree, i) <- EphemeralStream.toIterable(
-        tpl
-          .deepSubtrees
-          .zipWithIndex
-      )
-        .iterator
+      (qdTree, i) <- tpl
+        .deepSubtrees
+        .zipWithIndex
 
       if qdTree.rootLabel.name ==* MJdTagNames.QD_CONTENT
 
@@ -195,7 +194,7 @@ final class LkAdEdFormUtil @Inject() (
         // Внутри одного qd-тега склеить все тексты без разделителей
         val edgeTexts0 = for {
           s <- qdTree.deepEdgesUids
-          et <- edgeTextsMap.get(s)
+          et <- edgeTextsMap.get(s).toEphemeralStream
           trimmed = et.trim
           if trimmed.nonEmpty && trimmed.length >= 3
         } yield {
@@ -203,11 +202,12 @@ final class LkAdEdFormUtil @Inject() (
         }
         // Добавить разделитель, если требутся.
         if (i > 0 && delim.nonEmpty)
-          delim #:: edgeTexts0
+          delim ##:: edgeTexts0
         else
           edgeTexts0
       }
     } yield str)
+      .iterator
       .mkStringLimitLen(40)
       .trim
 

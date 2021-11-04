@@ -11,7 +11,7 @@ import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.jd.tags.event.MJdtEvents
 import io.suggest.jd.tags.html.MJdHtmlTag
-import io.suggest.scalaz.ScalazUtil.Implicits.{EphStreamExt, SciLazyListExt}
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -119,42 +119,36 @@ object JdTag {
   /** Утиль для поддержки z.Tree с jd-тегами. */
   implicit final class JdTagTreeOps[From: IJdTagGetter](private val tree: Tree[From]) {
 
-    def qdOps: LazyList[MQdOp] = {
+    def qdOps: EphemeralStream[MQdOp] = {
       tree
         .flatten
         .tailOption
-        .fold[Iterable[From]]( Nil )( EphemeralStream.toIterable )
-        .iterator
-        .flatMap(_.qdProps)
-        .to( LazyList )
+        .getOrElse( EphemeralStream[From] )
+        .flatMap( _.qdProps.toEphemeralStream )
     }
 
-    def deepEdgesUids: LazyList[EdgeUid_t] = {
+    def deepEdgesUids: EphemeralStream[EdgeUid_t] = {
       (
         (
           tree
             .qdOps
-            .flatMap(_.edgeInfo) #:::
+            .flatMap( _.edgeInfo.toEphemeralStream ) ##::
           tree
             .rootLabel
             .props1
             .bgImg
-            .to(LazyList)
-            .appendedAll(
-              tree.rootLabel.events.events
-                .iterator
-                .flatMap(_.actions)
-                .flatMap(_.jdEdgeIds)
-            )
+            .toEphemeralStream ##::
+          tree.rootLabel.events.events.toEphemeralStream
+            .flatMap(_.actions.toEphemeralStream)
+            .flatMap(_.jdEdgeIds.toEphemeralStream) ##::
+          EphemeralStream[EphemeralStream[MJdEdgeId]]
         )
-        .map(_.edgeUid)
-      ) #::: {
-        EphemeralStream
-          .toIterable( tree.subForest )
-          .iterator
-          .flatMap(_.deepEdgesUids)
-          .to(LazyList)
-      }
+          .flatten
+          .map( _.edgeUid )
+      ) ++
+      tree
+        .subForest
+        .flatMap( _.deepEdgesUids )
     }
 
 
@@ -303,10 +297,14 @@ object JdTag {
     * @return Прочищенная карта эджей.
     */
   def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
-    val neededEdgesUids = tpl.deepEdgesUids.toSet
-    if (neededEdgesUids.isEmpty) {
+    val deepEdgesUidsEph = tpl.deepEdgesUids
+    if (deepEdgesUidsEph.isEmpty) {
       Map.empty
     } else {
+      val neededEdgesUids = deepEdgesUidsEph
+        .iterator
+        .toSet
+
       val keys2del = edgesMap.keySet -- neededEdgesUids
       if (keys2del.isEmpty) {
         edgesMap

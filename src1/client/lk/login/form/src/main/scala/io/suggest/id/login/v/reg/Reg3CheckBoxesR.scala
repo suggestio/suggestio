@@ -36,22 +36,18 @@ class Reg3CheckBoxesR(
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
-    private val _onPrivacyPolicyLinkClick = {
-      ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
-        ReactCommonUtil.stopPropagationCB(e) >> {
-          $.props >>= { props: Props =>
-            loginFormDiConfig
-              .showInfoPage
-              .fold {
-                Callback.empty
-              } { openUrlF =>
-                openUrlF(
-                  HttpClient.mkAbsUrl(
-                    HttpClient.route2url(
-                      _privacyPolicyRoute() ) ) )
-              }
+    private val _onPrivacyPolicyLinkClick = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+      ReactCommonUtil.stopPropagationCB(e) >> {
+        loginFormDiConfig
+          .showInfoPage
+          .fold {
+            Callback.empty
+          } { openUrlF =>
+            openUrlF(
+              HttpClient.mkAbsUrl(
+                HttpClient.route2url(
+                  _privacyPolicyRoute() ) ) )
           }
-        }
       }
     }
 
@@ -89,7 +85,7 @@ class Reg3CheckBoxesR(
                 checked   = props.tos.isChecked,
                 onChange  = RegTosSetAccepted,
               )
-            }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
+            }(checkBoxR.component.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
             new MuiFormControlLabelProps {
               override val control = cbx.rawElement
               override val label   = acceptTosText.rawNode
@@ -105,7 +101,7 @@ class Reg3CheckBoxesR(
                 checked   = props.pdn.isChecked,
                 onChange  = RegPdnSetAccepted,
               )
-            }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
+            }(checkBoxR.component.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
             new MuiFormControlLabelProps {
               override val control = cbx.rawElement
               override val label   = pdnText.rawNode

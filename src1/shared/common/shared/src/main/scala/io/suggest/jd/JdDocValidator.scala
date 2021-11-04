@@ -171,7 +171,7 @@ final class JdDocValidator(
           for (bm <- jdTree.rootLabel.props1.bm) yield {
             jdTree
               .validateNode(validateStrip)( validateContents(_, bm) )
-              .map( _ ##:: EphemeralStream.emptyEphemeralStream[Tree[JdTag]] )
+              .map( _ ##:: EphemeralStream[Tree[JdTag]] )
           }
         case MJdTagNames.QD_CONTENT =>
           Some( validateQdTree(jdTree, contSz = None) )
@@ -272,7 +272,7 @@ final class JdDocValidator(
           qdTagValidationRes |@|
           validateQdTagContents( qdTree.subForest )
         ) { (jdt, nodes) =>
-          Tree.Node(jdt, nodes) ##:: EphemeralStream.emptyEphemeralStream[Tree[JdTag]]
+          Tree.Node(jdt, nodes) ##:: EphemeralStream[Tree[JdTag]]
         }
       }
   }

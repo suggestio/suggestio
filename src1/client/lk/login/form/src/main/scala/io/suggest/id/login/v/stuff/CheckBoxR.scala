@@ -88,6 +88,4 @@ class CheckBoxR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsProxy: Props) = component( propsProxy )
-
 }

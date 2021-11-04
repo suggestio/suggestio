@@ -70,7 +70,7 @@ object ZTreeUtil {
       tree
         .flatten
         .tailOption
-        .getOrElse( EphemeralStream.emptyEphemeralStream )
+        .getOrElse( EphemeralStream[A] )
     }
 
     def deepSubtrees: EphemeralStream[Tree[A]] = {

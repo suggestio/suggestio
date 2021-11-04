@@ -66,7 +66,7 @@
     </strong>
 
     @for(vsn <- mnode.versioning.version) {
-      <span class="ft-XS" title="Версия: @vsn">
+      <span class="ft-XS" title="Версия: @mnode.versioning">
         v@vsn
       </span>
     }
@@ -144,7 +144,7 @@
     }
   }
 
-@lkBlock("Связанные домены") {
+  @lkBlock("Связанные домены") {
     @_nodeDomainsTpl(mnode)
   }
 

@@ -16,6 +16,7 @@ import io.suggest.n2.media.MPictureMeta
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.sc.MScApiVsn
 import io.suggest.scalaz.NodePath_t
+import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
@@ -918,10 +919,11 @@ final class JdAdUtil @Inject()(
     * @return Облегчённый контейнер эджей узла.
     */
   def filterEdgesForTpl(tpl: Tree[JdTag], edges: MNodeEdges): MNodeEdges = {
-    val tplEdgeUids = tpl.deepEdgesUids.toSet
-    if (tplEdgeUids.isEmpty) {
+    val deepEdgesUidsEph = tpl.deepEdgesUids
+    if (deepEdgesUidsEph.isEmpty) {
       edges
     } else {
+      val tplEdgeUids = deepEdgesUidsEph.iterator.toSet
       MNodeEdges.out.modify { out0 =>
         out0.filter { medge =>
           medge.doc.id

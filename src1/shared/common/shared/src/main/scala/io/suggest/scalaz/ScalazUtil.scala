@@ -257,9 +257,30 @@ object ScalazUtil {
 
 
     implicit final class EphStreamExt[A]( private val eph: EphemeralStream[A] ) extends AnyVal {
+
       def toIterable = EphemeralStream.toIterable( eph )
       def iterator = toIterable.iterator
+
+      def toLazyList: LazyList[A] = {
+        eph.headOption.fold {
+          LazyList.empty[A]
+        } { head =>
+          LazyList.cons(
+            head,
+            eph.tailOption.get.toLazyList
+          )
+        }
+      }
+
+      /** withFilter() is used for for-yield comprehension syntax. */
+      def withFilter(predicate: A => Boolean) = eph.filter(predicate)
+
     }
+
+    implicit final class EStreamOfStreamsExt[A]( private val eph: EphemeralStream[EphemeralStream[A]] ) extends AnyVal {
+      def flatten: EphemeralStream[A] = eph.flatMap(identity)
+    }
+
 
     /** Доп.API к статическому EphemeralStream. */
     implicit final class EphStreamStaticExt( private val ephSt: EphemeralStream.type ) extends AnyVal {
@@ -274,24 +295,15 @@ object ScalazUtil {
       def fromLazyList[A](s: LazyList[A]): EphemeralStream[A] = {
         s match {
           case h #:: t      => ephSt.cons(h, fromLazyList(t))
-          case _            => ephSt.emptyEphemeralStream
+          case _            => ephSt[A]
         }
       }
 
       def fromList[A](s: List[A]): EphemeralStream[A] = {
         s match {
           case h :: t       => ephSt.cons(h, fromList(t))
-          case Nil          => ephSt.emptyEphemeralStream
+          case Nil          => ephSt[A]
         }
-      }
-
-      /** Не быстрая и неэффективная разборка абстрактного множества в ephemeral-список.
-        * Это добро следует использовать только для небольших множеств. */
-      def fromSet[A](s: Set[A]): EphemeralStream[A] = {
-        if (s.isEmpty)
-          ephSt.emptyEphemeralStream
-        else
-          ephSt.cons( s.head, fromSet(s.tail) )
       }
 
       def fromOption[A](s: Option[A]): EphemeralStream[A] = {
@@ -308,11 +320,6 @@ object ScalazUtil {
     implicit final class SciListExt[T]( private val l: List[T]) extends AnyVal {
       def toEphemeralStream: EphemeralStream[T] =
         EphemeralStream.fromList(l)
-    }
-
-    implicit final class SciSetExt[T]( private val s: Set[T]) extends AnyVal {
-      def toEphemeralStream: EphemeralStream[T] =
-        EphemeralStream.fromSet( s )
     }
 
     implicit final class OptionExt[T]( private val o: Option[T] ) extends AnyVal {

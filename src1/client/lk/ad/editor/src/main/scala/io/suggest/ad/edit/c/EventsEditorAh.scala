@@ -79,7 +79,7 @@ final class EventsEditorAh[M](
                   event   = MJdtEventInfo( m.eventType ),
                   // Тут сразу добавляется единственный экшен.
                   actions = action :: Nil,
-                ) +: events0
+                ) :: events0
               }
             )
             .toTree

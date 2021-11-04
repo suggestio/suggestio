@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import io.suggest.text.StringUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 import org.elasticsearch.index.seqno.SequenceNumbers
@@ -39,4 +40,10 @@ final case class EsDocVersion(
                                version          : Option[Long]          = None,
                                seqNo            : Option[Long]          = None,
                                primaryTerm      : Option[Long]          = None,
-                             )
+                             ) {
+
+  override def toString = StringUtil.toStringHelper(null, 64) {
+    StringUtil.toStringRenderProduct(this)
+  }
+
+}

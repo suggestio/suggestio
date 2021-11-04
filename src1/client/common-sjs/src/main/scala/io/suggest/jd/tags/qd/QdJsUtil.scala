@@ -3,6 +3,7 @@ package io.suggest.jd.tags.qd
 import io.suggest.jd.tags.JdTag
 import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import scalaz.Tree
 
 import scala.util.matching.Regex
@@ -32,6 +33,7 @@ object QdJsUtil {
       val emptyTextRE = EMPTY_TEXT_PATTERN_RE
       qdTree
         .deepEdgesUids
+        .iterator
         .flatMap { edgesMap.get }
         // Допускаем, что любая пустая дельта может состоять из прозрачного мусора.
         .forall( isEdgeDataEmpty(_, emptyTextRE) )

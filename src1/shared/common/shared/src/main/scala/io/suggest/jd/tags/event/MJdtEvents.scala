@@ -32,8 +32,8 @@ object MJdtEvents extends IEmpty {
   implicit def jdtEventsJson: OFormat[MJdtEvents] = {
     val F = Fields
     (__ \ F.EVENTS)
-      .formatNullable[Seq[MJdtEventActions]]
-      .inmap[Seq[MJdtEventActions]](
+      .formatNullable[List[MJdtEventActions]]
+      .inmap[List[MJdtEventActions]](
         EmptyUtil.opt2ImplEmptyF(Nil),
         events => Option.when(events.nonEmpty)(events)
       )
@@ -43,7 +43,7 @@ object MJdtEvents extends IEmpty {
 }
 /** Общий контейнер данных по обработке событий. */
 final case class MJdtEvents(
-                             events: Seq[MJdtEventActions] = Nil,
+                             events: List[MJdtEventActions] = Nil,
                            )
   extends EmptyProduct
 

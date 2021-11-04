@@ -128,7 +128,7 @@ class EpwFormR(
                       onChange  = EpwSetForeignPc,
                       disabled  = p.loginReq.isPending,
                     )
-                  }( checkBoxR.apply )(implicitly, checkBoxR.CheckBoxRFastEq)
+                  }( checkBoxR.component.apply )(implicitly, checkBoxR.CheckBoxRFastEq)
                   new MuiFormControlLabelProps {
                     override val control = cbx.rawElement
                     override val label   = labelText.rawNode

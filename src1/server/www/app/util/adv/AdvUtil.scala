@@ -214,7 +214,7 @@ final class AdvUtil @Inject() (
               )
             ),
           ),
-          amount1 ##:: EphemeralStream.emptyEphemeralStream[Tree[PriceDsl]],
+          amount1 ##:: EphemeralStream[Tree[PriceDsl]],
         )
 
       }

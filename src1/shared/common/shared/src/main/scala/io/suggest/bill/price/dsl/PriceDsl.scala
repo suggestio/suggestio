@@ -299,7 +299,7 @@ object PriceDsl {
 
         case _ =>
           // Фильтрануть дочерние элементы.
-          val eph0 = EphemeralStream.emptyEphemeralStream[Tree[PriceDsl]]
+          val eph0 = EphemeralStream[Tree[PriceDsl]]
           val subForest2 = priceDslTree
             .subForest
             .flatMap { r =>

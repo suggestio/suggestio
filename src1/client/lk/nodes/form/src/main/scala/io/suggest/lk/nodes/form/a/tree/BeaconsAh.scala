@@ -145,9 +145,10 @@ class BeaconsAh[M](
         val tree1 = Tree.Node(
           root = bcnsGroupLoc1.getLabel,
           forest = bcnsGroupLoc1.tree.subForest ++ appendBcns
-            .keySet
-            .toEphemeralStream
-            .map( Tree.Leaf(_) ),
+            .keysIterator
+            .map( Tree.Leaf(_) )
+            .to( LazyList )
+            .toEphemeralStream,
         )
         bcnsGroupLoc1.setTree( tree1 )
       }

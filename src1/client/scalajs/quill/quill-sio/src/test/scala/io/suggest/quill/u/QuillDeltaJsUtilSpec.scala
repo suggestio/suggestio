@@ -53,7 +53,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     val qdOps2 = qdTagTree2.qdOps
 
-    assertEquals( qdOps2.size, 1 )
+    assertEquals( qdOps2.length, 1 )
     assertEquals( edges2.size, 1 )
     assert(
       edges2.head._2.jdEdge.edgeDoc.text contains theString,
@@ -61,7 +61,10 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
     // Проверить совпадение id'шников
     assertEquals(
-      qdOps2.head.edgeInfo.get.edgeUid,
+      qdOps2
+        .headOption
+        .get.edgeInfo
+        .get.edgeUid,
       edges2.head._1
     )
   }
@@ -89,7 +92,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     assertEquals( qdTagTree2.qdOps.length, 1 )
     assertEquals( edges2.size, 1 )
-    assertEquals( edges2.head._1, qdTagTree2.deepEdgesUids.head )
+    assertEquals( edges2.head._1, qdTagTree2.deepEdgesUids.headOption.get )
     assertEquals(
       edges2.head._2.jdEdge.edgeDoc.text.get,
       newString
