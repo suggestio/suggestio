@@ -1205,3 +1205,4 @@ Cannot.connect.to.remote.system=Нет связи с удалённой сист
 Check.your.internet.connection.and.retry=Проверьте ваше интернет-соединение и повторите попытку.
 Cancel.order...=Отменить заказ...
 Advertising.services=Рекламные услуги
+User.agreement=Пользовательское соглашение

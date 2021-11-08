@@ -1,0 +1,14 @@
+@this()
+@(nodeOpt: Option[MNode] = None)(implicit ctx: Context)
+
+@import io.suggest.i18n.MsgCodes
+
+@lk.support.supportBase(
+  title = ctx.messages( MsgCodes.`User.agreement` ),
+  rightLink = mhelp.MRightLinks.UserAgreement,
+  nodeOpt = nodeOpt,
+) {
+
+  @market.contract._inviteWidgetTpl()
+
+}

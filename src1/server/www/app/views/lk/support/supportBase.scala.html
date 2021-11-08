@@ -20,6 +20,13 @@
         css   = classesAct( rightLink == MRightLinks.Support )
       )()
 
+      @* User agreement link *@
+      @_navItemTpl(
+        title = messages( MsgCodes.`User.agreement` ),
+        href  = Some( routes.LkHelp.userAgreement( nodeIdOpt ) ),
+        css   = classesAct( rightLink == MRightLinks.UserAgreement ),
+      )()
+
       @* Ссылка на страницу "О компании" *@
       @_navItemTpl(
         title = messages( MsgCodes.`Company.about` ),

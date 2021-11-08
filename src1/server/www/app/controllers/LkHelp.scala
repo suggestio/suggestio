@@ -17,6 +17,7 @@ import util.mail.IMailerWrapper
 import util.support.SupportUtil
 import util.tpl.HtmlCompressUtil
 import views.html.lk.support._
+import views.html.lk.support.agreement._
 import views.txt.lk.support.emailSupportRequestedTpl
 
 import scala.concurrent.Future
@@ -40,10 +41,12 @@ final class LkHelp @Inject()(
   private lazy val supportUtil = injector.instanceOf[SupportUtil]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val maybeAuthMaybeNode = injector.instanceOf[MaybeAuthMaybeNode]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val userAgreementTpl = injector.instanceOf[UserAgreementTpl]
 
   // TODO Объеденить node и не-node вызовы в единые экшены.
   // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.
@@ -184,8 +187,8 @@ final class LkHelp @Inject()(
     * @return Страница с инфой о компании.
     */
   def companyAbout(onNodeId: Option[String]) = csrf.AddToken {
-    val actionBuilder = onNodeId.fold[ActionBuilder[IReq, AnyContent]]( maybeAuth() )( isNodeAdmin(_) )
-    actionBuilder { implicit request =>
+    val actionBuilder = onNodeId.fold[ActionBuilder[IReq, AnyContent]]( maybeAuth(U.Lk) )( isNodeAdmin(_, U.Lk) )
+    actionBuilder.async { implicit request =>
       val mnodeOpt = request match {
         case nreq: INodeReq[_] =>
           Some(nreq.mnode)
@@ -193,11 +196,24 @@ final class LkHelp @Inject()(
           None
       }
 
-      val html = companyAboutTpl(
-        nodeOpt = mnodeOpt
-      )
-      Ok(html)
-        .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
+      request.user.lkCtxDataFut.map { implicit ctxData =>
+        val html = companyAboutTpl(
+          nodeOpt = mnodeOpt
+        )
+        Ok(html)
+          .cacheControl( 3600 )
+      }
+    }
+  }
+
+
+  /** User agreement page. */
+  def userAgreement(onNodeId: Option[String]) = csrf.AddToken {
+    maybeAuthMaybeNode( onNodeId, U.Lk ).async { implicit request =>
+      request.user.lkCtxDataFut.map { implicit ctxData =>
+        Ok( userAgreementTpl( request.mnodeOpt ) )
+          .cacheControl(3600)
+      }
     }
   }
 

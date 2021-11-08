@@ -1,4 +1,4 @@
-@(ff: Form[_])(implicit ctx: Context)
+@(acceptFormOpt: Option[Form[_]] = None)(implicit ctx: Context)
 
 @* Барахло для встраивания в invite-формы. *@
 
@@ -19,6 +19,7 @@
 
   </div>
 
+  @for(ff <- acceptFormOpt) {
   <table cellpadding="0" cellspacing="0" class="input-wrap">
     @checkbox(
       ff("contractAgreed"),
@@ -26,6 +27,8 @@
       Symbol("class")  -> "contract-widget__input"
     )
   </table>
+  }
+
 </div>
 
 

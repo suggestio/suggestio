@@ -591,8 +591,9 @@ final class DynImgUtil @Inject() (
               .flatMap(_.resView.edgeUids)
 
           // Should never happen.
-          case _ =>
-            ???
+          case other =>
+            LOGGER.error(s"$logPrefix2 Unexpected ntype#$other. Skipping. Should never happen here.")
+            Nil
         }
 
         val mediaId2edgeUid = (for {

@@ -547,4 +547,6 @@ object MsgCodes {
   val `from._date` = "from._date"
   val `year_abbrevated` = "year_abbrevated"
 
+  val `User.agreement` = "User.agreement"
+
 }
