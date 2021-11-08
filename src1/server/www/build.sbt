@@ -30,7 +30,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
   "com.typesafe.play" %% "play-mailer-guice" % Common.playMailerVsn,
 
-  "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
+  "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % Common.Vsn.OWASP_JAVA_HTML_SANITIZER,
   "com.github.fkoehler" %% "play-html-compressor" % "1.0.0",
   // io.suggest stuff
   Common.ORG %% "util" % "2.0.1"

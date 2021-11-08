@@ -36,6 +36,7 @@ import io.suggest.img.MImgFormats
 import io.suggest.n2.media.MFileMeta
 import io.suggest.proto.http.HttpConst
 import io.suggest.scalaz.NodePath_t
+import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
@@ -1338,8 +1339,10 @@ class DocEditAh[M](
             el1 <- v0.jdDoc.jdArgs.data.doc.template
           } yield {
             el1
-              .imgEdgeUids
+              // allEdgeIds: It is possible to use only img edgeUids here, replacing with treeLoc.allImgEdgeUids().
+              .allEdgeIds
               .map(_.edgeUid)
+              .iterator
               .find(edgeUids4mod.contains)
               .fold(el1) { _ =>
                 el1.qdProps.fold {

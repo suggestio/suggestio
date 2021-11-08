@@ -23,6 +23,8 @@ import io.suggest.n2.media.storage.IMediaStorages
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.playx.CacheApiUtil
+import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.scalaz.ZTreeUtil.ZTreeOps
 import io.suggest.url.MHostInfo
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
@@ -34,7 +36,6 @@ import japgolly.univeq._
 import monocle.Traversal
 import play.api.cache.AsyncCacheApi
 import play.api.inject.Injector
-import scalaz.EphemeralStream
 import scalaz.std.option._
 
 import scala.jdk.CollectionConverters._
@@ -572,13 +573,15 @@ final class DynImgUtil @Inject() (
         val jdImgEdgeIdsIter: IterableOnce[MJdEdgeId] = mnode.common.ntype match {
           // Рекламная карточка. Растрясти шаблон документа карточки:
           case MNodeTypes.Ad =>
-            for {
-              doc <- mnode.extras.doc.iterator
-              jdTag <- EphemeralStream.toIterable( doc.template.flatten ).iterator
-              imgEdge <- jdTag.imgEdgeUids
+            (for {
+              doc <- mnode.extras.doc.toEphemeralStream
+              imgEdgeUidsCache = new JdTag.HtmlImgEdgeUidsCache
+              jdtLoc <- doc.template.cobindTreeLoc.flatten
+              imgEdge <- jdtLoc.allImgEdgeUids( imgEdgeUidsCache )
             } yield {
               imgEdge
-            }
+            })
+              .iterator
 
           // Adn-узел. Проверить MAdnResView:
           case MNodeTypes.AdnNode =>

@@ -276,6 +276,9 @@ object Common {
     /** @see [[https://github.com/siriwatknp/mui-treasury]] */
     val MUI_TREASURY = "2.0.0-alpha.1"
 
+    /** @see [[https://github.com/OWASP/java-html-sanitizer/releases]] */
+    val OWASP_JAVA_HTML_SANITIZER = "20211018.2"
+
   }
 
 

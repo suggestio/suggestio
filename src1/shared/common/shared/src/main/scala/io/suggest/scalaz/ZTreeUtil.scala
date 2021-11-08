@@ -147,6 +147,11 @@ object ZTreeUtil {
       )
     }
 
+
+    /** Short alias for cobinding tree items against its TreeLoc. */
+    def cobindTreeLoc: Tree[TreeLoc[A]] =
+      tree.cobind(_.loc)
+
   }
 
   def toIterator[A](ztree: Tree[A]): Iterator[A] =

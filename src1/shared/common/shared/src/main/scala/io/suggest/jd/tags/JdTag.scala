@@ -9,8 +9,9 @@ import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.css.Css
 import io.suggest.jd.tags.event.MJdtEvents
-import io.suggest.jd.tags.html.MJdHtmlTag
+import io.suggest.jd.tags.html.{MJdHtml, MJdHtmlTypes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -34,7 +35,7 @@ object JdTag {
     val PROPS_FN = "p"
     val QD_PROPS_FN = "q"
     val EVENTS_FN = "e"
-    val HTML_FN = "h"
+    val HTML_FN = "html"
   }
 
 
@@ -52,7 +53,7 @@ object JdTag {
         EmptyUtil.opt2ImplMEmptyF(MJdtEvents),
         jdtEvents => Option.when( jdtEvents.nonEmpty )( jdtEvents ),
       ) and
-    (__ \ Fields.HTML_FN).formatNullable[MJdHtmlTag]
+    (__ \ Fields.HTML_FN).formatNullable[MJdHtml]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[JdTag] = UnivEq.derive
@@ -227,15 +228,12 @@ object JdTag {
     }
 
     def edgesUidsMap: Map[EdgeUid_t, MJdEdgeId] = {
-      EphemeralStream.toIterable(
-        tree
-          .flatten
-          .flatMap { m =>
-            (m: JdTag)
-              .imgEdgeUids
-              .toEphemeralStream
-          }
-      )
+      tree
+        .flatten
+        .flatMap { m =>
+          val jdt = m: JdTag
+          jdt.allEdgeIds
+        }
         .iterator
         .zipWithIdIter[EdgeUid_t]
         .to( Map )
@@ -250,6 +248,24 @@ object JdTag {
       }
     }
 
+    def allImgEdgeUids: EphemeralStream[MJdEdgeId] = {
+      val htmlImgEdgeUidsCache = new HtmlImgEdgeUidsCache
+      tree
+        .cobindTreeLoc
+        .flatten
+        .flatMap { treeLoc =>
+          (treeLoc.getLabel: JdTag).legacyEdgeUids ++
+          treeLoc.htmlImgEdgeUids( htmlImgEdgeUidsCache )
+        }
+    }
+
+  }
+
+
+  /** Several cached instances for calling treeLoc.htmlImgEdgeUids() inside loop. */
+  final class HtmlImgEdgeUidsCache {
+    val EMPTY_ESTREAM = EphemeralStream[MJdEdgeId]
+    lazy val CSS_IMAGE_ATTRS = Css.Images.IMAGE_ATTR_NAMES_SET
   }
 
 
@@ -270,6 +286,64 @@ object JdTag {
           _.edgeInfo.exists(
             _.edgeUid ==* edgeUid))
       }
+    }
+
+
+    /** All image edges in current html tag or attr.
+      * HTML-tag attributes and style attributes are stored in JD-tree as jd-subtags with html prop.
+      * To properly detect for only-images-related edgeUids, we need to walk parent tree.
+      *
+      * Note: this method does not look into child nodes. For example, if calling this method on 'img' tag
+      * with child attributes will return no results []. Method only may look up to parent tag (tags).
+      */
+    def htmlImgEdgeUids(cache: HtmlImgEdgeUidsCache = new HtmlImgEdgeUidsCache): EphemeralStream[MJdEdgeId] = {
+      val jdt = treeLoc.getLabel
+      (for {
+        jdHtml <- jdt.html.toEphemeralStream
+        if jdHtml.edgeUid.nonEmpty
+        r <- (jdHtml.htmlType match {
+          // We only process here current tree node with possible information from parent nodes.
+          case MJdHtmlTypes.Attribute =>
+            if (
+              // Check for img.src HTML-attribute:
+              (
+                (jdHtml.key contains[String] "src") &&
+                // 'src' attribute here. Is it related to img tag?
+                treeLoc.parent.exists(
+                  _.getLabel.html.exists { parentJdHtml =>
+                    (parentJdHtml.key contains[String] "img") &&
+                    (parentJdHtml.htmlType ==* MJdHtmlTypes.Tag)
+                  }
+                )
+              ) || (
+                // Check for image-related CSS styles names:
+                jdHtml.key.exists( cache.CSS_IMAGE_ATTRS.contains ) &&
+                treeLoc.parent.exists(
+                  _.getLabel.html.exists { parentJdHtml =>
+                    (parentJdHtml.htmlType ==* MJdHtmlTypes.Attribute) &&
+                    (parentJdHtml.key contains[String] "style")
+                  }
+                )
+              )
+            ) {
+              // Return all edgeUids here.
+              jdHtml.edgeUid.toEphemeralStream
+
+            } else {
+              // All current edgeUids here are unrelated to images.
+              cache.EMPTY_ESTREAM
+            }
+
+          // Do not touch html-tag's child attributes here: tree-walk cycle should be run somewhere outside.
+          case _ => cache.EMPTY_ESTREAM
+        })
+      } yield {
+        r
+      })
+    }
+
+    def allImgEdgeUids(cache: HtmlImgEdgeUidsCache = new HtmlImgEdgeUidsCache): EphemeralStream[MJdEdgeId] = {
+      htmlImgEdgeUids(cache) ++ (treeLoc.getLabel: JdTag).legacyEdgeUids
     }
 
   }
@@ -322,29 +396,34 @@ object JdTag {
   def html = GenLens[JdTag](_.html)
 
 
+  /** JdTag API extensions. */
   implicit final class JdTagExt( private val jdt: JdTag ) extends AnyVal {
 
     /** Все эджи картинок, упомянутых в этом теге. */
-    def imgEdgeUids: LazyList[MJdEdgeId] = {
+    def legacyEdgeUids: EphemeralStream[MJdEdgeId] = {
       (
-        // Ищем в фоновой картинке jd-тега:
-        jdt.props1.bgImg #::
-        // Ищем в html-теге:
-        (for {
-          htmlTag <- jdt.html
-          // Ищем в аттрибуте <img.src> инфу по edgeUid. Возможно, есть какие-либо ещё варианты тегом-аттрибутов?
-          if htmlTag.tagName ==* "img"
-          imgSrcAV <- htmlTag.attrs.get( "src" )
-          ei <- imgSrcAV.edgeUid
-        } yield {
-          ei
-        }) #::
-        // Ищем в quill-delta:
-        jdt.qdProps.flatMap(_.edgeInfo) #::
-        LazyList.empty
+        jdt.props1.bgImg ##::
+        // Inspect quill-delta:
+        jdt.qdProps.flatMap(_.edgeInfo) ##::
+        EphemeralStream[Option[MJdEdgeId]]
       )
-        .flatten
+        .flatMap(_.toEphemeralStream)
     }
+
+    /** Return any html edges, defined inside current tag. */
+    def htmlEdgeIds: List[MJdEdgeId] = {
+      (for {
+        jdHtml <- jdt.html
+      } yield {
+        jdHtml.edgeUid
+      })
+        .getOrElse( Nil )
+    }
+
+
+    /** Return all edges uids. */
+    def allEdgeIds: EphemeralStream[MJdEdgeId] =
+      legacyEdgeUids ++ htmlEdgeIds.toEphemeralStream
 
   }
 
@@ -368,7 +447,7 @@ final case class JdTag(
                         props1    : MJdProps1     = MJdProps1.empty,
                         qdProps   : Option[MQdOp] = None,
                         events    : MJdtEvents    = MJdtEvents.empty,
-                        html      : Option[MJdHtmlTag] = None,
+                        html      : Option[MJdHtml] = None,
                       )
   // lazy val hashCode: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
   // TODO После ввода MJdTagId становится не ясно, надо ли *val* hashCode. Может теперь def достаточно?

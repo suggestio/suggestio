@@ -3,7 +3,7 @@ package io.suggest.jd
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.img.MImgFormat
-import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.scalaz.StringValidationNel
 import scalaz.Validation
 
@@ -20,11 +20,19 @@ object MJdEdgeVldInfo {
     * Implemented for jd-events.
     * @param m Additional validation info about current jd-edge.
     */
-  def validateForAd(m: MJdEdgeVldInfo): StringValidationNel[MJdEdgeVldInfo] = {
+  def validateForAd(m: MJdEdgeVldInfo): StringValidationNel[MJdEdgeVldInfo] =
+    validateForNodePredicate( MPredicates.JdContent.Ad, m )
+
+  def validateForFrame(m: MJdEdgeVldInfo): StringValidationNel[MJdEdgeVldInfo] =
+    validateForNodePredicate( MPredicates.JdContent.Frame, m )
+
+
+  /** Validate against expected edge predicate with expected defined nodeId, and without any file. */
+  def validateForNodePredicate(expectedPredicate: MPredicate, m: MJdEdgeVldInfo): StringValidationNel[MJdEdgeVldInfo] = {
     Validation
       .liftNel( m.jdEdge.predicate )(
         {pred =>
-          !(pred eqOrHasParent MPredicates.JdContent.Ad)
+          !(pred eqOrHasParent expectedPredicate)
         },
         "jd-pred " + ErrorConstants.Words.INVALID
       )

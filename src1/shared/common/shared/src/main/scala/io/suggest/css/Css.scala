@@ -1,5 +1,6 @@
 package io.suggest.css
 
+import io.suggest.common.coll.Lists.Implicits.IterableOnceListsOps
 import io.suggest.common.html.HtmlConstants._
 
 /**
@@ -561,6 +562,16 @@ object Css {
 
     def LOGO = _PREFIX + "logo"
     def ESIA_TITLE  = _PREFIX + "esia_title"
+  }
+
+
+  object Images {
+
+    /** CSS Attributes names, which may contain link to image. */
+    def IMAGE_ATTR_NAMES: Seq[String] =
+      "background-image" :: "background" :: "list-style-image" :: "border-image" :: Nil
+    def IMAGE_ATTR_NAMES_SET: Set[String] = IMAGE_ATTR_NAMES.toSmallSet
+
   }
 
 }

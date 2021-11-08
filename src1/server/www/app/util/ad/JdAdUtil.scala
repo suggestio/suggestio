@@ -713,12 +713,13 @@ final class JdAdUtil @Inject()(
         val edgedImgTags: Seq[EdgeImgTag] = (for {
           (medge, mimg) <- origImgsEdges.iterator
           edgeUid       <- medge.doc.id
+          imgEdgeSearchCache = new JdTag.HtmlImgEdgeUidsCache
           jdLoc         <- tpl
             .loc
-            .find { jdTagTree =>
-              jdTagTree
-                .getLabel
-                .imgEdgeUids
+            .find { jdtLoc =>
+              jdtLoc
+                .allImgEdgeUids( imgEdgeSearchCache )
+                .iterator
                 .exists(_.edgeUid ==* edgeUid)
             }
         } yield {

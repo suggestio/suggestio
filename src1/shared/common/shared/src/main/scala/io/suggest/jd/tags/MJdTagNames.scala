@@ -38,11 +38,12 @@ object MJdTagNames extends StringEnum[MJdTagName] {
   case object QD_OP extends MJdTagName("o")
 
   // TODO HTML, когда поддержка реализуется.
+  // TODO HtmlTag (key == tag name), HtmlAttr (key (attr) + children | key + value), HtmlContent (no key, raw value),
 
   // ------------------------------------------------------------------------------
 
   /** Все элементы модели. */
-  override val values = findValues
+  override def values = findValues
 
 }
 

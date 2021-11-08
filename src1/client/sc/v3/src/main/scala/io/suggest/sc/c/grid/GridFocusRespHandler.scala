@@ -305,7 +305,7 @@ final class GridFocusRespHandler
                               },
                           )
                         }
-                        )( focAdResp )
+                      )( focAdResp )
                       val unFocJdDataJs = MJdDataJs.fromJdData( unFocAd.jd, unFocAd.info )
                       MScAdData(
                         Pot.empty.ready( unFocJdDataJs ),

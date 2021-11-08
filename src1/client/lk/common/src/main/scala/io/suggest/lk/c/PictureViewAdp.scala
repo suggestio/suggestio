@@ -5,10 +5,11 @@ import io.suggest.err.ErrorConstants
 import io.suggest.form.MFormResourceKey
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdProps1}
+import io.suggest.jd.tags.{JdTag, MJdProps1, MJdTagNames}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.n2.edge.EdgeUid_t
-import scalaz.Tree
+import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
+import scalaz.{EphemeralStream, Tree}
 import scalaz.std.option._
 import japgolly.univeq._
 import monocle.Traversal
@@ -65,10 +66,10 @@ object IJdEdgeIdViewAdp {
   /** Поддержка управления представлением картинок, которые хранятся в дереве jd-тегов. */
   implicit object JdTagTreeBgImgAdp extends IJdEdgeIdViewAdp[Tree[JdTag]] {
 
-    private def _cmpEdgeUid(keyEdgeUid: Option[EdgeUid_t], edgeUids: Iterable[MJdEdgeId]): Boolean = {
+    private def _cmpEdgeUid(keyEdgeUid: Option[EdgeUid_t], edgeUids: EphemeralStream[MJdEdgeId]): Boolean = {
       (keyEdgeUid.isEmpty && edgeUids.isEmpty) ||
       keyEdgeUid.exists { ei =>
-        edgeUids.exists(_.edgeUid ==* ei)
+        edgeUids.iterator.exists(_.edgeUid ==* ei)
       }
     }
 
@@ -78,9 +79,9 @@ object IJdEdgeIdViewAdp {
         jdtLoc <- view
           .loc
           .pathToNode( nodePath )
-        jdt = jdtLoc.getLabel
         // Само-контроль: убедится, что данные тега содержат или НЕ содержат эдж, указанный в resKey:
-        if _cmpEdgeUid(resKey.edgeUid, jdt.imgEdgeUids)
+        if _cmpEdgeUid(resKey.edgeUid, jdtLoc.allImgEdgeUids())
+        jdt = jdtLoc.getLabel
         // Извлечь или собрать инстанс MImgEdgeWithOps.
         imgEdgeWithOps <- jdt.props1
           .bgImg
@@ -105,7 +106,7 @@ object IJdEdgeIdViewAdp {
         .pathToNode(nodePath)
         .get
       val jdt = jdtLoc.getLabel
-      ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.imgEdgeUids), s"edgeUID#${resKey.edgeUid}? ![${jdt.imgEdgeUids.mkString(",")}]" )
+      ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdtLoc.allImgEdgeUids()), s"edgeUID#${resKey.edgeUid}? ![${jdt.legacyEdgeUids.iterator.mkString(",")}]" )
 
       jdtLoc
         .setLabel {

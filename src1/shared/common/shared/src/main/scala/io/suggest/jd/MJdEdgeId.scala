@@ -127,6 +127,10 @@ object MJdEdgeId {
     _pureEdgeIdVld( m, edges )( MJdEdgeVldInfo.validateText )
   }
 
+  def validateFrame(m: MJdEdgeId, edges: Map[EdgeUid_t, MJdEdgeVldInfo]): StringValidationNel[MJdEdgeId] =
+    _pureEdgeIdVld( m, edges )( MJdEdgeVldInfo.validateForFrame )
+
+
   def edgeUid       = GenLens[MJdEdgeId](_.edgeUid)
   def outImgFormat  = GenLens[MJdEdgeId](_.outImgFormat)
   def crop          = GenLens[MJdEdgeId](_.crop)

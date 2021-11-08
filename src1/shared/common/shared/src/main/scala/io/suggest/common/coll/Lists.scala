@@ -434,6 +434,13 @@ object Lists {
         toListRev(source, list)
       }
 
+      /** Sub-optimal set creating, oriented to very small sets (~ 0-4 elements). */
+      def toSmallSet: Set[T] = {
+        source
+          .iterator
+          .foldLeft( Set.empty[T] )( _ + _ )
+      }
+
     }
 
 

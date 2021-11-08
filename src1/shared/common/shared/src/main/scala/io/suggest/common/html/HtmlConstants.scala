@@ -130,4 +130,10 @@ object HtmlConstants {
     final def LABELLED_BY = ARIA_ + "labelledby"
   }
 
+
+  def FRAME_TAG_NAMES_LC: List[String] = {
+    val FRAME = "frame"
+    FRAME :: ("i" + FRAME) :: Nil
+  }
+
 }
