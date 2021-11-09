@@ -1,7 +1,7 @@
 @(title: String, leftCurrEl: Option[mlk.LkLeftPanelLink] = None, nodeOpt: Option[MNode] = None,
   headAfter:Option[Html] = None, rightBar: Option[Html] = None,
   popupContent:Option[Html] = None, adIdOpt: Option[String] = None,
-  showSwitchNodeBtn: Boolean = true)(content: Html)(implicit ctx: Context)
+  showSwitchNodeBtn: Boolean = true, withTitle: Boolean = true)(content: Html)(implicit ctx: Context)
 
 @lkBase(
   title         = title,
@@ -20,7 +20,7 @@
   <div class="viewport">
 
     <article class="page_cnt">
-      @if(title.nonEmpty) {
+      @if(withTitle && title.nonEmpty) {
         <h1 class="page_title">@title</h1>
       }
       @content

@@ -1,4 +1,5 @@
-@(title: String, rightLink: mhelp.MRightLink, nodeOpt: Option[MNode] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, rightLink: mhelp.MRightLink, nodeOpt: Option[MNode] = None, headAfter: Option[Html] = None,
+  withTitle: Boolean = true)(content: Html)(implicit ctx: Context)
 
 @* Шаблон-подложка для шаблонов саппорта в ЛК. *@
 
@@ -44,5 +45,6 @@
   headAfter     = headAfter,
   nodeOpt       = nodeOpt,
   leftCurrEl    = Some( mlk.LkLeftPanelLinks.LPL_SUPPORT ),
-  rightBar      = Some( rightBar )
+  rightBar      = Some( rightBar ),
+  withTitle     = withTitle,
 )(content)
