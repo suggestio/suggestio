@@ -4,13 +4,13 @@ import com.materialui.{MuiFormControlLabel, MuiFormControlLabelProps, MuiFormGro
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.id.login.m.{LoginFormDiConfig, RegPdnSetAccepted, RegTosSetAccepted}
-import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
+import io.suggest.id.login.m.{LoginFormDiConfig, Reg3CheckBoxChange}
+import io.suggest.id.login.m.reg.step3.{MReg3CheckBoxTypes, MReg3CheckBoxes}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.CheckBoxR
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.react.ReactCommonUtil
-import io.suggest.routes.routes
+import io.suggest.routes.{PlayRoute, routes}
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -23,7 +23,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 class Reg3CheckBoxesR(
                        checkBoxR           : CheckBoxR,
                        loginFormDiConfig   : LoginFormDiConfig,
-                       crCtx               : React.Context[MCommonReactCtx],
+                       crCtxP              : React.Context[MCommonReactCtx],
                        loginFormCssCtxP    : React.Context[LoginFormCss],
                      ) {
 
@@ -33,10 +33,12 @@ class Reg3CheckBoxesR(
   private def _privacyPolicyRoute() =
     routes.controllers.Static.privacyPolicy()
 
+  private def _userAgreementRoute() =
+    routes.controllers.Static.userAgreement()
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
-    private val _onPrivacyPolicyLinkClick = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private def _onLinkClick(route: () => PlayRoute) = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactCommonUtil.stopPropagationCB(e) >> {
         loginFormDiConfig
           .showInfoPage
@@ -45,11 +47,13 @@ class Reg3CheckBoxesR(
           } { openUrlF =>
             openUrlF(
               HttpClient.mkAbsUrl(
-                HttpClient.route2url(
-                  _privacyPolicyRoute() ) ) )
+                HttpClient.route2url( route() ) ) )
           }
       }
     }
+
+    private val _onUserAgreementLinkClick = _onLinkClick( _userAgreementRoute )
+    private val _onPrivacyPolicyLinkClick = _onLinkClick( _privacyPolicyRoute )
 
     def render(p: Props): VdomElement = {
       loginFormCssCtxP.consume { loginFormCss =>
@@ -63,49 +67,84 @@ class Reg3CheckBoxesR(
           }
         } (
 
-          // Галочка согласия с офертой suggest.io:
-          MuiFormControlLabel {
-            val acceptTosText = crCtx.consume { crCtx =>
-              <.span(
-                crCtx.messages( MsgCodes.`I.accept` ),
-                HtmlConstants.SPACE,
-                MuiLink(
-                  new MuiLinkProps {
-                    val href = HttpClient.route2url( _privacyPolicyRoute() )
-                    override val onClick = _onPrivacyPolicyLinkClick
-                    val target = HtmlConstants.Target.blank
-                  }
-                )(
-                  crCtx.messages( MsgCodes.`terms.of.service` ),
-                ),
-              )
-            }
-            val cbx = p.wrap { props =>
-              checkBoxR.PropsVal(
-                checked   = props.tos.isChecked,
-                onChange  = RegTosSetAccepted,
-              )
-            }(checkBoxR.component.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
-            new MuiFormControlLabelProps {
-              override val control = cbx.rawElement
-              override val label   = acceptTosText.rawNode
-            }
-          },
+          // Acceptance checkbox of user-agreement of Suggest.io:
+          crCtxP.consume { crCtx =>
+            val iAcceptMsg = crCtx.messages( MsgCodes.`I.accept` )
+            React.Fragment(
+              MuiFormControlLabel {
 
-          // Галочка разрешения на обработку ПДн:
-          MuiFormControlLabel {
-            val pdnText = crCtx.message( MsgCodes.`I.allow.personal.data.processing` )
+                val acceptTosText = <.span(
+                  iAcceptMsg,
+                  HtmlConstants.SPACE,
+                  MuiLink(
+                    new MuiLinkProps {
+                      val href = HttpClient.route2url( _userAgreementRoute() )
+                      override val onClick = _onUserAgreementLinkClick
+                      val target = HtmlConstants.Target.blank
+                    }
+                  )(
+                    crCtx.messages( MsgCodes.`terms.of.service` ),
+                  ),
+                )
+                val checkBoxType = MReg3CheckBoxTypes.UserAgreement
+                val cbx = p.wrap { props =>
+                  checkBoxR.PropsVal(
+                    checked   = props.cbStates( checkBoxType ).isChecked,
+                    onChange  = Reg3CheckBoxChange( checkBoxType, _ ),
+                  )
+                }( checkBoxR.component.apply )(implicitly, checkBoxR.CheckBoxRFastEq)
+                new MuiFormControlLabelProps {
+                  override val control = cbx.rawElement
+                  override val label   = acceptTosText.rawNode
+                }
+              },
 
-            val cbx = p.wrap { props =>
-              checkBoxR.PropsVal(
-                checked   = props.pdn.isChecked,
-                onChange  = RegPdnSetAccepted,
-              )
-            }(checkBoxR.component.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
-            new MuiFormControlLabelProps {
-              override val control = cbx.rawElement
-              override val label   = pdnText.rawNode
-            }
+              // Acceptance checkbox of privacy policy of Suggest.io:
+              MuiFormControlLabel {
+                val acceptTosText = <.span(
+                  crCtx.messages( MsgCodes.`I.accept` ),
+                  HtmlConstants.SPACE,
+                  MuiLink(
+                    new MuiLinkProps {
+                      val href = HttpClient.route2url( _privacyPolicyRoute() )
+                      override val onClick = _onPrivacyPolicyLinkClick
+                      val target = HtmlConstants.Target.blank
+                    }
+                  )(
+                    crCtx.messages( MsgCodes.`_accept.privacy.policy` ),
+                  ),
+                )
+                val checkBoxType = MReg3CheckBoxTypes.PrivacyPolicy
+                val cbx = p.wrap { props =>
+                  checkBoxR.PropsVal(
+                    checked   = props.cbStates( checkBoxType ).isChecked,
+                    onChange  = Reg3CheckBoxChange( checkBoxType, _ ),
+                  )
+                }(checkBoxR.component.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
+                new MuiFormControlLabelProps {
+                  override val control = cbx.rawElement
+                  override val label   = acceptTosText.rawNode
+                }
+              },
+
+              // Галочка разрешения на обработку ПДн:
+              MuiFormControlLabel {
+                val pdnText = crCtx.messages( MsgCodes.`I.allow.personal.data.processing` )
+
+                val checkBoxType = MReg3CheckBoxTypes.PersonalData
+                val cbx = p.wrap { props =>
+                  checkBoxR.PropsVal(
+                    checked   = props.cbStates( checkBoxType ).isChecked,
+                    onChange  = Reg3CheckBoxChange( checkBoxType, _ ),
+                  )
+                }(checkBoxR.component.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
+                new MuiFormControlLabelProps {
+                  override val control = cbx.rawElement
+                  override val label   = pdnText.rawNode
+                }
+              },
+
+            )
           },
 
         )

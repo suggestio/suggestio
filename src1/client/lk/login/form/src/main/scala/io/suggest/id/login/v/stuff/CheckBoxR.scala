@@ -3,7 +3,7 @@ package io.suggest.id.login.v.stuff
 import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiColorTypes}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.id.login.m.ICheckBoxActionStatic
+import io.suggest.id.login.m.ILoginFormAction
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.UnivEqUtil._
@@ -26,7 +26,7 @@ class CheckBoxR(
 
   case class PropsVal(
                        checked    : Boolean,
-                       onChange   : ICheckBoxActionStatic,
+                       onChange   : Boolean => ILoginFormAction,
                        disabled   : Boolean                 = false,
                      )
   implicit object CheckBoxRFastEq extends FastEq[PropsVal] {

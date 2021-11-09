@@ -566,6 +566,7 @@ final class JsMessagesUtil @Inject() (
     MC.`Logout.account` :: MC.`Logout` ::
     MC.`Are.you.sure.to.logout.account` ::
     MC.`Input.text.from.picture` ::
+    MC.`_accept.privacy.policy` ::
     Nil
   }
 

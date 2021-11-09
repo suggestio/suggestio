@@ -3,10 +3,9 @@ package io.suggest.id.login.m
 import diode.data.Pot
 import io.suggest.ext.svc.MExtService
 import io.suggest.id.login.MLoginTab
+import io.suggest.id.login.m.reg.step3.MReg3CheckBoxType
 import io.suggest.id.reg.MRegTokenResp
-import io.suggest.primo.IApply1
 import io.suggest.spa.DAction
-import japgolly.univeq.UnivEq
 
 import scala.util.Try
 
@@ -42,20 +41,8 @@ case object EpwDoLogin extends ILoginFormAction
 case class EpwLoginResp( timestampMs: Long, tryRes: Try[String] ) extends ILoginFormAction
 
 
-/** Трейт, описывающий компаньоны для экшенов, которые управляют состоянием чек-бокса. */
-sealed trait ICheckBoxActionStatic extends IApply1 {
-  override type ApplyArg_t = Boolean
-  override type T <: ILoginFormAction
-}
-object ICheckBoxActionStatic {
-  @inline implicit def univEq: UnivEq[ICheckBoxActionStatic] = UnivEq.derive
-}
-
 /** Выставление галочки "Чужой компьютер?" */
-case class EpwSetForeignPc(isForeign: Boolean ) extends ILoginFormAction
-case object EpwSetForeignPc extends ICheckBoxActionStatic {
-  override type T = EpwSetForeignPc
-}
+case class EpwSetForeignPc( isForeign: Boolean ) extends ILoginFormAction
 
 
 /** Логин через внешний сервис. */
@@ -64,16 +51,7 @@ case class ExtLoginViaTimeout(tstamp: Long) extends ILoginFormAction
 
 
 /** Рега: Управления галочкой согласия с условиями сервиса. */
-case class RegTosSetAccepted( isAccepted: Boolean ) extends ILoginFormAction
-case object RegTosSetAccepted extends ICheckBoxActionStatic {
-  override type T = RegTosSetAccepted
-}
-
-/** Рега: Управление галочкой разрешения на обработку перс.данных. */
-case class RegPdnSetAccepted( isAccepted: Boolean ) extends ILoginFormAction
-case object RegPdnSetAccepted extends ICheckBoxActionStatic {
-  override type T = RegPdnSetAccepted
-}
+case class Reg3CheckBoxChange(checkBox: MReg3CheckBoxType, isAccepted: Boolean ) extends ILoginFormAction
 
 case object RegAccept extends ILoginFormAction
 

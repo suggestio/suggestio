@@ -548,5 +548,6 @@ object MsgCodes {
   val `year_abbrevated` = "year_abbrevated"
 
   val `User.agreement` = "User.agreement"
+  val `_accept.privacy.policy` = "_accept.privacy.policy"
 
 }

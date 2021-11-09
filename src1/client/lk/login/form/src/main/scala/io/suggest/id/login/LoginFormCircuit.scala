@@ -63,7 +63,7 @@ final class LoginFormCircuit(
   private[login] val reg2SmsCodeRW  = mkLensZoomRW( regRW, MRegS.s2SmsCode )( MReg2SmsCode.MReg2SmsCodeFastEq )
   private[login] val smsCodeFormRW  = mkLensZoomRW( reg2SmsCodeRW, MReg2SmsCode.smsCode )( OptFastEq.Wrapped(MSmsCodeS.MSmsCodeSFastEq) )
 
-  private[login] val reg3CheckBoxesRW   = mkLensZoomRW(regRW, MRegS.s3CheckBoxes)( MReg3CheckBoxes.MReg3CheckBoxesFastEq )
+  private[login] val reg3CheckBoxesRW   = mkLensZoomRW(regRW, MRegS.s3CheckBoxes)( MReg3CheckBoxes.reg3CheckboxesFeq )
   private[login] val reg4SetPasswordRW  = mkLensZoomRW(regRW, MRegS.s4SetPassword)( MReg4SetPassword.MReg4SetPasswordFastEq )
 
 

@@ -1,0 +1,32 @@
+@this()
+@()(implicit ctx: Context)
+
+@import io.suggest.i18n.MsgCodes
+@import ctx.api.cdn
+
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk_new-design/lk.css")'/>
+}
+
+@market.marketBase(
+  title = ctx.messages( MsgCodes.`User.agreement` ),
+  headAfter = Some(headAfter)
+) {
+
+<div class="body __responsive index-page_cnt">
+
+  <div class="body_cnt __responsive">
+
+    <div class="privacy-policy">
+      @market.contract.textRuTpl()
+
+      <div class="btn-w __size-M">
+        <a class="btn __size-M1 __major" href="@routes.Ident.loginFormPage()">Вход в suggest.io</a>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+}

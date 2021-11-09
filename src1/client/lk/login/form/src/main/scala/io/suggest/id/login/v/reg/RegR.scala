@@ -22,7 +22,6 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -75,9 +74,9 @@ class RegR(
     private def _onFormSubmit(e: ReactEvent): Callback =
       ReactCommonUtil.preventDefaultCB(e) >> _onNextClick
 
-    private def _onBackClick(e: ReactEvent): Callback =
+    private val _onBackClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, RegBackClick )
-    private val _onBackClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onBackClick )
+    }
 
 
     def render(pRoot: Props, s: State): VdomElement = {
@@ -94,7 +93,7 @@ class RegR(
       lazy val stepSmsCode = reg2SmsCodeR.component( p )
 
       // Шаг галочек соглашений и окончания регистрации
-      lazy val stepCheckBoxes = p.wrap(_.s3CheckBoxes)(reg3CheckBoxesR.component.apply)(implicitly, MReg3CheckBoxes.MReg3CheckBoxesFastEq)
+      lazy val stepCheckBoxes = p.wrap(_.s3CheckBoxes)(reg3CheckBoxesR.component.apply)(implicitly, MReg3CheckBoxes.reg3CheckboxesFeq )
 
       // финальный шаг выставления пароля.
       lazy val stepSetPassword = reg4SetPasswordR.component( pRoot )

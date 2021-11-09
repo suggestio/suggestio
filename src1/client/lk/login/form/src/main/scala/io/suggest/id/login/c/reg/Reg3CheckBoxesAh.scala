@@ -2,7 +2,7 @@ package io.suggest.id.login.c.reg
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.id.login.m.reg.step3.{MReg3CheckBoxes, MRegCheckBoxS}
-import io.suggest.id.login.m.{RegPdnSetAccepted, RegTosSetAccepted}
+import io.suggest.id.login.m.Reg3CheckBoxChange
 import japgolly.univeq._
 
 /**
@@ -19,31 +19,17 @@ class Reg3CheckBoxesAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Сигнал от галочкой правил пользования сервисом.
-    case m: RegTosSetAccepted =>
+    // Update one checkbox state.
+    case m: Reg3CheckBoxChange =>
       val v0 = value
-      if (v0.tos.isChecked ==* m.isAccepted) {
+      val cbState0 = v0.cbStates(m.checkBox)
+
+      if ( cbState0.isChecked ==* m.isAccepted) {
         noChange
-
       } else {
-        val v2 = MReg3CheckBoxes.tos
-          .composeLens( MRegCheckBoxS.isChecked )
-          .set(m.isAccepted)(v0)
-        updated( v2 )
-      }
-
-
-    // Сигнал от галочки согласия на обработку персональных данных.
-    case m: RegPdnSetAccepted =>
-      val v0 = value
-
-      if (v0.pdn.isChecked ==* m.isAccepted) {
-        noChange
-
-      } else {
-        val v2 = MReg3CheckBoxes.pdn
-          .composeLens( MRegCheckBoxS.isChecked )
-          .set( m.isAccepted )(v0)
+        val cbState1 = (MRegCheckBoxS.isChecked set m.isAccepted)(cbState0)
+        val v2 = MReg3CheckBoxes.cbStates
+          .modify { _ + (m.checkBox -> cbState1) }(v0)
         updated( v2 )
       }
 

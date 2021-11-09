@@ -335,6 +335,7 @@ GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm()
 ## compat. TODO keepalive - Not used?
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession()
 GET  /privacy                           @controllers.Static.privacyPolicy()
+GET  /user-agreement                    @controllers.Static.userAgreement()
 GET  /st/popup/check                    @controllers.Static.popupCheckContent()
 POST /_/csp/report                      @controllers.Static.handleCspReport()
 

@@ -43,6 +43,7 @@ final class JsRoutesUtil {
     routes.javascript.Ident.logout #::
     routes.javascript.Captcha.getCaptcha #::
     routes.javascript.Static.privacyPolicy #::
+    routes.javascript.Static.userAgreement #::
     LazyList.empty
   }
 

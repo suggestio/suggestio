@@ -17,8 +17,7 @@ import util.mail.IMailerWrapper
 import util.support.SupportUtil
 import util.tpl.HtmlCompressUtil
 import views.html.lk.support._
-import views.html.lk.support.agreement._
-import views.txt.lk.support.emailSupportRequestedTpl
+import views.txt.lk.support._
 
 import scala.concurrent.Future
 
@@ -46,7 +45,7 @@ final class LkHelp @Inject()(
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
-  private lazy val userAgreementTpl = injector.instanceOf[UserAgreementTpl]
+  private lazy val lkUserAgreementTpl = injector.instanceOf[LkUserAgreementTpl]
 
   // TODO Объеденить node и не-node вызовы в единые экшены.
   // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.
@@ -211,7 +210,7 @@ final class LkHelp @Inject()(
   def userAgreement(onNodeId: Option[String]) = csrf.AddToken {
     maybeAuthMaybeNode( onNodeId, U.Lk ).async { implicit request =>
       request.user.lkCtxDataFut.map { implicit ctxData =>
-        Ok( userAgreementTpl( request.mnodeOpt ) )
+        Ok( lkUserAgreementTpl( request.mnodeOpt ) )
           .cacheControl(3600)
       }
     }
