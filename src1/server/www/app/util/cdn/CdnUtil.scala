@@ -62,12 +62,24 @@ final class CdnUtil @Inject() (
 
   /** Генератор вызовов к CDN или внутренних. */
   def forCall(c: Call)(implicit ctx: Context): Call = {
-    if (c.isInstanceOf[ExternalCall]) {
+    if (cdnConf.isNoCdnHosts) {
+      // CDN сейчас не задана, но она обычно есть на продакшене. Поэтому используем текущий хост в качестве CDN-хоста.
+      val backendCdnHost = ctx.api.ctxUtil.HOST_PORT
+      if (ctx.request.host equalsIgnoreCase backendCdnHost) {
+        // Same host, no cdn - return fully-relative URL as-is.
+        c
+      } else {
+        // 3rd-party host. Return proto-less URL with primary/backend HOST. So, cbca.ru site.html will contain CSS-links to suggest.io/.../x.css
+        val nextUrlPrefix = ctx.protoUrlPrefix(
+          host = backendCdnHost,
+        )
+        new ExternalCall( nextUrlPrefix + c.url )
+      }
+
+    } else if (c.isInstanceOf[ExternalCall]) {
       // Уже внешний Call, там уже хост должен быть прописан.
       c
-    } else if (!cdnConf.hasAnyCdn) {
-      // CDN сейчас не задана, но она обычно есть на продакшене. Поэтому используем текущий хост в качестве CDN-хоста.
-      new ExternalCall( ctx.relUrlPrefix + c.url )
+
     } else {
       val reqHost = ctx.request.host
       val urlPrefixOpt = OptionUtil.maybeOpt(!(cdnConf.DISABLED_ON_HOSTS contains reqHost)) {
@@ -422,7 +434,7 @@ final class CdnConf @Inject()(
       .fold (Set.empty[String]) (_.toSet)
   }
 
-  def hasAnyCdn = CDN_PROTO_HOSTS.nonEmpty
+  def isNoCdnHosts = CDN_PROTO_HOSTS.isEmpty
 
   /** Правила перезаписи хостнеймов. */
   val REWRITE_FROM_TO: Option[(String, String)] = {

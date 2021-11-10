@@ -14,9 +14,9 @@ trait IEsSettingsMake[S] extends (S => Settings) {
 object IEsSettingsMake {
 
   /** Convert sio MappinDsl IndexSettings to Elasticsearch Settings. */
-  implicit def indexDslToEsSettings(implicit dsl: MappingDsl): IEsSettingsMake[dsl.IndexSettings] = {
-    new IEsSettingsMake[dsl.IndexSettings] {
-      override def apply(from: dsl.IndexSettings): Settings = {
+  implicit def indexDslToEsSettings(implicit dsl: MappingDsl): IEsSettingsMake[dsl.OverallSettings] = {
+    new IEsSettingsMake[dsl.OverallSettings] {
+      override def apply(from: dsl.OverallSettings): Settings = {
         Settings
           .builder()
           .loadFromSource(

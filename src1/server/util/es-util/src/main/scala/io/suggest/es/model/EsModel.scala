@@ -28,6 +28,7 @@ import org.elasticsearch.ResourceNotFoundException
 import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionResponse, DocWriteRequest}
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
+import org.elasticsearch.action.support.ActiveShardCount
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy
 import org.elasticsearch.cluster.metadata.{IndexMetadata, MappingMetadata}
 import org.elasticsearch.common.settings.Settings
@@ -45,7 +46,7 @@ import play.api.inject.Injector
 import play.api.libs.json.{JsObject, Json}
 import scalaz.Need
 
-import scala.collection.immutable.HashMap
+import scala.collection.immutable.{AbstractMap, HashMap}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
@@ -127,7 +128,7 @@ final class EsModel @Inject()(
 
       /** Отправить маппинг в elasticsearch. */
       def putMapping(indexName: String = model.ES_INDEX_NAME)(implicit dsl: MappingDsl): Future[Boolean] = {
-        lazy val logPrefix = s"$model.putMapping($indexName)[${System.currentTimeMillis()}]:"
+        lazy val logPrefix = s"putMapping($indexName)[${System.currentTimeMillis()}]:"
         val mappingJson = model.generateMapping()
         val mappingJsonMin = mappingJson.toString()
         LOGGER.trace( s"$logPrefix Will PUT mapping:\n $mappingJsonMin" )
@@ -747,7 +748,7 @@ final class EsModel @Inject()(
        * @param keepAliveMs Время жизни scroll-курсора на стороне from-сервера.
        * @return Фьючерс для синхронизации.
        */
-      def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
+      def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 100, keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
         model
           .prepareScroll( new TimeValue(keepAliveMs), srb = model.prepareSearchViaClient(fromClient))
           .setSize(reqSize)
@@ -1614,7 +1615,7 @@ final class EsModel @Inject()(
   }
 
   /** Собрать новый индекс для заливки туда моделей ipgeobase. */
-  def createIndex(newIndexName: String, settings: Settings): Future[_] = {
+  def createIndex(newIndexName: String, settings: Settings): Future[Boolean] = {
     lazy val logPrefix = s"createIndex($newIndexName):"
 
     esClient.admin().indices()
@@ -1626,8 +1627,9 @@ final class EsModel @Inject()(
         case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
         case Failure(ex)  => LOGGER.error(s"$logPrefix failed, settings was:\n${settings.toDelimitedString('\n')}", ex)
       }
-      .map(_.isShardsAcknowledged)
+      .map(_.isAcknowledged)
   }
+
 
   /** Логика удаления старого ненужного индекса. */
   def deleteIndex( indexNames: String* ): Future[Boolean] = {
@@ -1658,6 +1660,61 @@ final class EsModel @Inject()(
       .map( _.isExists )
   }
 
+  def closeIndex(indexNames: String*): Future[Boolean] = {
+    require( indexNames.nonEmpty )
+    esClient.admin().indices()
+      .prepareClose( indexNames: _* )
+      .setWaitForActiveShards( ActiveShardCount.ALL )
+      .executeFut()
+      .map( _.isAcknowledged )
+  }
+
+  def openIndex(indexNames: String*): Future[Boolean] = {
+    require(indexNames.nonEmpty)
+    esClient.admin().indices()
+      .prepareOpen( indexNames: _* )
+      .setWaitForActiveShards( ActiveShardCount.ALL )
+      .executeFut()
+      .map( _.isAcknowledged )
+  }
+
+
+  def getIndexSettings(indexNames: String*): Future[Map[String, Settings]] = {
+    require(indexNames.nonEmpty)
+    esClient.admin().indices()
+      .prepareGetSettings( indexNames: _* )
+      .executeFut()
+      .map { gsResp =>
+        val index2settings = gsResp.getIndexToSettings
+        new AbstractMap[String, Settings] {
+          lazy val index2SettingsS = index2settings.asScala
+
+          override def removed(key: String): Map[String, Settings] = {
+            this
+              .iterator
+              .filter(_._1 !=* key)
+              .toMap
+          }
+
+          override def updated[V1 >: Settings](key: String, value: V1): Map[String, V1] = {
+            this
+              .iterator
+              .++( Iterator.single(key, value) )
+              .toMap
+          }
+
+          override def get(key: String): Option[Settings] =
+            Option( index2settings.get( key ) )
+
+          override def iterator: Iterator[(String, Settings)] = {
+            index2SettingsS
+              .iterator
+              .map { kv => (kv.key, kv.value) }
+          }
+
+        }
+      }
+  }
 
   /**
     * Убедиться, что индекс существует.
@@ -1665,7 +1722,7 @@ final class EsModel @Inject()(
     * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
     *         Если индекс уже существует, то false.
     */
-  def ensureIndex[S](indexName: String, settings: => S)
+  def ensureIndex[S](indexName: String, settings: S)
                     (implicit toSettings: IEsSettingsMake[S]): Future[Boolean] = {
     lazy val logPrefix = s"ensureIndex($indexName):"
 
@@ -1673,9 +1730,51 @@ final class EsModel @Inject()(
       isMainIndexExists <- isIndexExists( indexName )
 
       res <- if (isMainIndexExists) {
-        LOGGER.debug(s"$logPrefix Index exists.")
-        Future.successful(false)
-      } else {
+        LOGGER.trace(s"$logPrefix Index exists. Updating index settings...")
+        for {
+          inx2settings <- getIndexSettings( indexName )
+          oldSettings = inx2settings( indexName )
+          newSettings = toSettings( settings )
+          // compare old and new settings:
+          isSettingsChanged = !(oldSettings equals newSettings)
+          _ <- if (isSettingsChanged) {
+            val settingsPatch = newSettings.filter { settingsKey =>
+              // TODO Skip key [number of replicas], possible other totally immutable settings.
+              val oldValue = Option( oldSettings.get( settingsKey ) )
+              val newValue = Option( newSettings.get( settingsKey ) )
+              val r = (oldValue !=* newValue)
+              if (r) LOGGER.trace(s"$logPrefix settingsCompare: [$settingsKey]: ${oldValue.orNull} => ${newValue.orNull} => keep?$r")
+              r
+            }
+
+            if (settingsPatch.isEmpty) {
+              LOGGER.debug(s"$logPrefix Empty settings diff for update index settings.")
+              Future successful false
+
+            } else {
+              LOGGER.info(s"$logPrefix New and old settings differs. Need to update index settings using settings diff.")
+              (for {
+                isClosed <- closeIndex( indexName )
+                if isClosed
+                settingsUpdated <- updateIndexSettings( indexName, settingsPatch )
+              } yield {
+                LOGGER.info(s"$logPrefix open-updateSettings-close done, settingsUpdated?$settingsUpdated")
+              })
+                .transformWith { tryRes =>
+                  openIndex( indexName )
+                    .transform( _ => tryRes )
+                }
+            }
+          } else {
+            LOGGER.debug(s"$logPrefix Settings not changed.")
+            Future successful ()
+          }
+        } yield {
+          // false is mandatory here: nothing created (but may be modified - doesn't matter).
+          false
+        }
+
+      } else if (!isMainIndexExists) {
         for {
           _ <- createIndex(
             newIndexName = indexName,
@@ -1685,6 +1784,10 @@ final class EsModel @Inject()(
           LOGGER.info(s"$logPrefix Created new index.")
           true
         }
+
+      } else {
+        LOGGER.trace(s"$logPrefix Nothing to do: indexExist?$isMainIndexExists")
+        Future.successful(false)
       }
 
     } yield {
@@ -1758,6 +1861,7 @@ final class EsModel @Inject()(
       }
   }
 
+
   def updateIndexSettings[S](indexName: String, settings: S)(implicit settingsMaker: IEsSettingsMake[S]): Future[Boolean] = {
     lazy val logPrefix = s"updateIndexSettings($indexName):"
 
@@ -1770,7 +1874,11 @@ final class EsModel @Inject()(
       .executeFut()
       .map { response =>
         val res = response.isAcknowledged
-        LOGGER.trace(s"updateIndexSettings($indexName): Done")
+
+        def logMsg = s"updateIndexSettings($indexName): Done => $res"
+        if (res) LOGGER.trace( logMsg )
+        else LOGGER.warn( logMsg )
+
         res
       }
   }
@@ -1929,7 +2037,7 @@ final class EsModel @Inject()(
                          (f: (A, SearchHits) => Future[A]): Future[A] = {
     val hits = searchResp.getHits
     val scrollId = searchResp.getScrollId
-    lazy val logPrefix = s"foldSearchScroll($scrollId, 1st=$firstReq):"
+    lazy val logPrefix = s"foldSearchScroll(${scrollId.hashCode}, 1st=$firstReq):"
     if (!firstReq  &&  hits.getHits.isEmpty) {
       LOGGER.trace(s"$logPrefix no more hits.")
       Future.successful(acc0)

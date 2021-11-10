@@ -261,8 +261,15 @@ final class IpgbImporter @Inject() (
 
         // If exception occured, also delete newly created ES-index:
         for (ex <- tryRes.failed) {
-          LOGGER.error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
-          esModel.deleteIndex( newIndexName )
+          esModel
+            .isIndexExists( newIndexName )
+            .foreach {
+              case true =>
+                LOGGER.error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
+                esModel.deleteIndex( newIndexName )
+              case false =>
+                // Nothing to do
+            }
         }
       }
   }

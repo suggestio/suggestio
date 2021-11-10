@@ -38,8 +38,12 @@ final class SiowebEsModel @Inject() (
   {
     val ck = "es.mapping.install_on_start"
     val r = configuration.getOptional[Boolean](ck).getOrElseTrue
-    if (r) initializeEsModels()
-    else LOGGER.warn(s"NOT installing ES-mappings, because $ck = $r")
+    if (r) {
+      for (ex <- initializeEsModels().failed)
+        LOGGER.error("Failed to initialize es models", ex)
+    } else {
+      LOGGER.warn(s"NOT installing ES-mappings, because $ck = $r")
+    }
   }
 
 
@@ -90,6 +94,7 @@ final class SiowebEsModel @Inject() (
     implicit val dsl = MappingDsl.Implicits.mkNewDsl
 
     val _sioMainEsIndex = mainEsIndex
+    lazy val _configuration = configuration
     for {
       // Do main index initialization:
       isIndexCreated <- _sioMainEsIndex.doInit()
@@ -101,16 +106,28 @@ final class SiowebEsModel @Inject() (
             indexName = _sioMainEsIndex.CURR_INDEX_NAME,
           )
           _ <- {
-            if (isIndexCreated)
+            lazy val willReindex = _configuration.getOptional[Boolean]("es.index.main.reindex.oninit").getOrElseTrue
+            if ( isIndexCreated && willReindex ) {
               _sioMainEsIndex.doReindex()
-            else
+            } else if (isIndexCreated) {
+              LOGGER.info(s"$logPrefix Not reindex, but created fresh index. Need to reset index alias...")
+              esModel.resetAliasToIndex(
+                aliasName = MainEsIndex.getMainIndexAliasName(),
+                indexName = mainEsIndex.CURR_INDEX_NAME,
+              )
+            } else {
+              LOGGER.trace(s"$logPrefix Not reindexed. indexCreated?$isIndexCreated reindexEnabled?$willReindex")
               Future.successful(())
+            }
           }
         } yield {
           isIndexCreated
         }
 
-        if (isIndexCreated) {
+        if (
+          isIndexCreated &&
+          _configuration.getOptional[Boolean]("es.index.main.new.delete_on_fail").getOrElseFalse
+        ) {
           for (_ <- processDataFut.failed) {
             val createdIndexName = _sioMainEsIndex.CURR_INDEX_NAME
             LOGGER.warn(s"$logPrefix Failed to init es models. Will delete newly-created index $createdIndexName")

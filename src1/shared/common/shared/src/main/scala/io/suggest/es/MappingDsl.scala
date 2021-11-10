@@ -337,6 +337,18 @@ final class MappingDsl { dsl =>
                           )
 
 
+  case class OverallSettings(
+                              index: IndexSettings
+                            )
+  object OverallSettings {
+    implicit lazy val overallSettingsJson: OFormat[OverallSettings] = {
+      (__ \ "index")
+        .format[IndexSettings]
+        .inmap[OverallSettings](apply, _.index)
+    }
+  }
+
+
   object IndexSettingsAnalysis {
     implicit lazy val indexSettingsAnalysisJson: OFormat[IndexSettingsAnalysis] = (
       (__ \ "char_filter").formatNullable[Map[String, CharFilter]]

@@ -33,6 +33,9 @@ object EsConstants {
   /** Minimal analyzer without any luxury (no stemmers, no word-delimiters, etc). */
   def MINIMAL_ANALYZER = "a_minimal"
 
+  /** Build-in char filter for stripping html tags. */
+  def HTML_STRIP_CHAR_FILTER = "html_strip"
+
   /** Analyzer name for produce ngrams from first letter. */
   def ENGRAM_1LETTER_ANALYZER = "a_engram1"
 
@@ -56,6 +59,9 @@ object EsConstants {
 
   /** default analyzer name. */
   def DEFAULT_ANALYZER = "a_default"
+
+  /** Index-time FTS analyzer for storing ads HTML-content (```MNodeDoc().html``` string). */
+  def CONTENT_FTS_INDEX_ANALYZER = "content_fts_inx_an"
 
   /** Starting version value for saved ES documents, created at first with no updates.
     *

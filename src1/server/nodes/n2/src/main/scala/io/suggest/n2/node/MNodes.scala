@@ -72,7 +72,7 @@ final class MNodes @Inject() (
   override type T = MNode
 
   override def ES_TYPE_NAME = "n2"
-  override def ES_INDEX_NAME = MainEsIndex.getMainIndexName()
+  override def ES_INDEX_NAME = MainEsIndex.getMainIndexAliasName()
 
   @inline def Fields = MNodeFields
 

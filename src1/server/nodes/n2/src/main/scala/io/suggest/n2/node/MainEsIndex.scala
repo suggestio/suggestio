@@ -43,7 +43,7 @@ object MainEsIndex {
     *
     * @return Currently in-use index name.
     */
-  def getMainIndexName(): String = CURR_INDEX_ALIAS
+  def getMainIndexAliasName(): String = CURR_INDEX_ALIAS
 
 }
 
@@ -182,7 +182,7 @@ final class MainEsIndex @Inject()(
     * @return true, if index has been created now.
     */
   def doInit(force: Boolean = false)(implicit dsl: MappingDsl): Future[Boolean] = {
-    lazy val loggerInst = LOGGER
+    lazy val logPrefix = s"doInit($force):"
 
     // Check about currently used settings.
     // is old sio-main index upgrade enabled?
@@ -192,12 +192,16 @@ final class MainEsIndex @Inject()(
 
     // Return isIndexCreated result.
     if (!isUpdateOldIndex) {
-      loggerInst.trace("Old sio-main index migrate is disabled in config.")
+      LOGGER.debug(s"$logPrefix Old sio-main index migrate is disabled in config.")
       Future.successful( false )
 
     } else {
       // Ensure, if current sio-main index exists:
-      esModel.ensureIndex( CURR_INDEX_NAME, getIndexSettings() )
+      LOGGER.trace(s"$logPrefix Ensuring $CURR_INDEX_NAME (create/migrate/update settings) ...")
+      esModel.ensureIndex(
+        indexName = CURR_INDEX_NAME,
+        settings = getIndexSettings(),
+      )
     }
   }
 
@@ -236,7 +240,7 @@ final class MainEsIndex @Inject()(
       currIndexAlias = MainEsIndex.CURR_INDEX_ALIAS
       _ <- esModel.resetAliasToIndex(
         indexName = currentIndexName,
-        aliasName = currIndexAlias ,
+        aliasName = currIndexAlias,
       )
 
     } yield {
@@ -252,7 +256,7 @@ final class MainEsIndex @Inject()(
     *
     * @return IndexSettings (internal dsl representation).
     */
-  def getIndexSettings()(implicit dsl: MappingDsl): dsl.IndexSettings = {
+  def getIndexSettings()(implicit dsl: MappingDsl): dsl.OverallSettings = {
     import dsl.{TokenCharTypes => TCT, _}
     import io.suggest.es.EsConstants._
 
@@ -263,7 +267,7 @@ final class MainEsIndex @Inject()(
     // Without this settings, deprecation warning will be emitted: too much difference.
     val MAX_NGRAM_LEN = 10
 
-    dsl.IndexSettings(
+    val indexSettings = dsl.IndexSettings(
       shards = Some( SHARDS_COUNT ),
       replicas = Some( REPLICAS_COUNT ),
       maxNGramDiff = Some(MAX_NGRAM_LEN),
@@ -325,10 +329,21 @@ final class MainEsIndex @Inject()(
           /*ENGRAM1_NOSTOP_AN -> Analyzer.custom(
             tokenizer = STD_TN,
             filters   = WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
-          )*/
+          ),*/
+
+          // 2021-11-10: Added for FTS-indexing for stored html-version of ads.
+          // No synonim-filter here: synonimising only in query-time.
+          //CONTENT_FTS_INDEX_ANALYZER -> Analyzer.custom(
+          //  charFilters = HTML_STRIP_CHAR_FILTER :: Nil,
+          //  tokenizer = STD_TN,
+          //  filters = WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
+          //),
+
         ),
       )
     )
+
+    dsl.OverallSettings( indexSettings )
   }
 
 }

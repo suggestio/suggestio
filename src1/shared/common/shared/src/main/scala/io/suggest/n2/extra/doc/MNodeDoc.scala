@@ -28,7 +28,8 @@ object MNodeDoc
   /** Модель названий полей модели [[MNodeDoc]]. */
   object Fields {
 
-    val TEMPLATE_FN = "t"
+    final def TEMPLATE_FN = "t"
+    final def HTML_FN = "html"
 
   }
 
@@ -44,10 +45,12 @@ object MNodeDoc
     val F = Fields
     Json.obj(
       F.TEMPLATE_FN -> FObject.disabled,
+      //F.HTML_FN -> FText(  ),
     )
   }
 
   def template = GenLens[MNodeDoc](_.template)
+  //def html = GenLens[MNodeDoc](_.html)
 
 }
 
@@ -59,5 +62,6 @@ object MNodeDoc
   *                 В узле контент представлен эджами, которые слинкованы с документом по предикатам и/или edge-uid'ам.
   */
 case class MNodeDoc(
-                     template: Tree[JdTag]
+                     template   : Tree[JdTag],
+                     //html       : Option[String],
                    )

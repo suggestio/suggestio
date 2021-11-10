@@ -266,12 +266,9 @@ trait Context {
 
 
   def relUrlPrefix: String =
-    _protoUrlPrefix( None )
+    protoUrlPrefix( None )
 
-  def protoUrlPrefix(proto: String): String =
-    _protoUrlPrefix( Some(proto) )
-
-  private def _protoUrlPrefix(protoOpt: Option[String]): String = {
+  def protoUrlPrefix(protoOpt: Option[String] = None, host: String = request.host): String = {
     val sb = new StringBuilder(16)
 
     val P = HttpConst.Proto
@@ -288,7 +285,7 @@ trait Context {
   }
 
   /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
-  def wsUrlPrefix: String = protoUrlPrefix( HttpConst.Proto.WS )
+  def wsUrlPrefix: String = protoUrlPrefix( Some(HttpConst.Proto.WS) )
 
 
   /** Пользователю может потребоваться помощь на любой странице. Нужны генератор ссылок в зависимости от обстоятельств. */
