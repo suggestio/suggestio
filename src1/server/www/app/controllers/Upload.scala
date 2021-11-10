@@ -47,6 +47,7 @@ import monocle.Traversal
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
+import models.mctx.Context
 import play.api.http.HttpErrorHandler
 import play.api.inject.Injector
 import play.api.libs.Files.TemporaryFile
@@ -1270,6 +1271,7 @@ final class Upload @Inject()(
       .async( parse.raw(maxLength = chunkQs.chunkSizeGeneral.value * 2) ) { implicit request =>
         lazy val logPrefix = s"hasChunk(${uploadArgs.info.existNodeId.orNull} ${chunkQs.chunkNumber}/${chunkQs.chunkSizeGeneral}):"
         LOGGER.trace( s"$logPrefix searching for hashes: ${chunkQs.hashesHex.mkString("\n ")}" )
+        implicit val ctx = implicitly[Context]
 
         val localImg = MLocalImg( MDynImgId(request.mnode.id.get) )
         val localImgFile = mLocalImgs.fileOf( localImg )
@@ -1340,7 +1342,7 @@ final class Upload @Inject()(
         corsUtil.withCorsIfNeeded(
           if (isChunkLoadedOk) Ok
           else NoContent
-        )
+        )(ctx)
       }
   }
 

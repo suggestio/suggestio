@@ -363,7 +363,7 @@ final class ScUniApi @Inject()(
         corsUtil.withCorsIfNeeded(
           Ok( Json.toJson(scResp) )
             .cacheControl( 20 )
-        )
+        )(logic.ctx)
       }
 
     } else {

@@ -371,7 +371,7 @@ class Sc3Module extends Log { outer =>
       override def onRedirect(onAction: ILoginFormAction, external: Boolean, rdrUrl: => String): Effect = {
         // TODO external=true: Нужно фрейм открывать поверх выдачи. Возможно, задействовать cordova-plugin-inappbrowser .
         Effect.action {
-          if (CordovaConstants.isCordovaPlatform()) {
+          if (CordovaConstants.isCordovaPlatform() || sc3SpaRouter.state.isCanonicalRouteHasNodeId) {
             // В текущей форме cordova: тихо перезагрузить текущий Index с сервера без welcome, выставив в состояние залогиненность.
             val act = ReGetIndex()
             sc3Circuit.dispatch( act )

@@ -5,7 +5,7 @@ import play.api.Configuration
 import play.api.mvc._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.mctx.ContextUtil
+import models.mctx.{Context, ContextUtil}
 
 import scala.concurrent.ExecutionContext
 import play.api.http.HeaderNames._
@@ -94,34 +94,38 @@ final class CorsUtil @Inject() (
     // Для GET-запросов достаточно коротких хидеров. Остальное требует указать allow-method и всё остальное.
     val corsHeaders = rh.method match {
       case HttpVerbs.GET  => GET_CORS_HEADERS
+      // TODO POST from 3p-domains to suggest.io suffering from CORS: X-Requested-with header is not in Access-Control-Allow-Headers.
       case _              => PREFLIGHT_CORS_HEADERS
     }
     resp.withHeaders( corsHeaders: _* )
   }
 
 
-  def withCorsIfNeeded(result: Result)(implicit rh: RequestHeader): Result = {
-    val reqOriginOpt = rh.headers.get( ORIGIN )
+  def withCorsIfNeeded(result: Result)(implicit ctx: Context): Result = {
+    val reqOriginOpt = ctx.request.headers.get( ORIGIN )
     lazy val logPrefix = s"withCorsIfNeeded(${reqOriginOpt.getOrElse("")}):"
 
     (for {
       reqOrigin <- reqOriginOpt
       sioUrlPrefix = contextUtil.URL_PREFIX
       if {
-        val r =
+        val r = {
+          // TODO origin == sioUrlPrefix? 3p-domains support is needed here. Allowed 3p-domain should be checked/passed here.
           (reqOrigin ==* sioUrlPrefix) ||   // Стандартное поведение браузеров - слать proto+host внутри Origin.
           (reqOrigin ==* "null") ||         // iOS 13.2.2 WKWebView шлёт очень необычное значение заголовка Origin.
-          (reqOrigin startsWith "file://")  // Нельзя исключать внезапных чудес с изменением iOS null-значения в будущем.
+          (reqOrigin startsWith "file://")
+        } // Нельзя исключать внезапных чудес с изменением iOS null-значения в будущем.
         if (!r) LOGGER.warn(s"$logPrefix Invalid/unexpected CORS Origin\n Origin: $reqOrigin\n Expected prefix: $sioUrlPrefix")
         r
       }
     } yield {
       // На продакшене - аплоад идёт на sX.nodes.suggest.io, а реквест из suggest.io - поэтому CORS тут участвует всегда.
       LOGGER.trace(s"$logPrefix Adding CORS-headers")
-      withCorsHeaders( result )
+      // TODO 3p-domain: need to allow X-Requested-with header here.
+      withCorsHeaders( result )( ctx.request )
     }) getOrElse {
       // В dev-режиме - отсутствие CORS - это норма. т.к. same-origin и для страницы, и для этого экшена.
-      LOGGER.trace( s"Not adding CORS headers, missing/invalid Origin: ${rh.headers.get(ORIGIN).orNull}" )
+      LOGGER.trace( s"Not adding CORS headers, missing/invalid Origin: ${reqOriginOpt.orNull}" )
       result
     }
   }

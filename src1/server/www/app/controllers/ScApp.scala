@@ -76,6 +76,7 @@ final class ScApp @Inject()(
     maybeAuth(U.PersonNode).async { implicit request =>
       // TODO Нужна локализация? И если нужна, то на уровне URL, или на уровне user-сессии?
       val sio = MsgCodes.`Suggest.io`
+      implicit val ctx = implicitly[Context]
       val manifest = MWebManifest(
         name      = sio,
         // TODO Полное и короткое названия должны различаться.
@@ -87,7 +88,6 @@ final class ScApp @Inject()(
           if (iconsRel.isEmpty) {
             Nil
           } else {
-            implicit val ctx = implicitly[Context]
             val iconInfo_src_LENS = MIconInfo.src
             (for {
               relIcon <- iconsRel.iterator
@@ -109,7 +109,7 @@ final class ScApp @Inject()(
           .as( MimeConst.WEB_APP_MANIFEST )
           // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
           .cacheControl(86400)
-      )
+      )(ctx)
     }
   }
 

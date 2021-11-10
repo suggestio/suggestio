@@ -54,16 +54,25 @@ object HttpClient extends Log {
     * Для браузера хватает относительных ссылок, а вот cordova держит webview в локальном контексте. */
   val PREFER_ABS_URLS: Boolean = {
     // Подготовить Xhr к работе. Если cordova-приложение или какой-то локальный запуск, то нужно использовать absoluter urls для реквестов.
-    val lOpt = Option( dom.window.location )
+    val domLocationOpt = Option( dom.window.location )
       .filterNot(js.isUndefined)
 
     val isHttp = myHttpProto.nonEmpty
 
     // Если это не http/https или hostname пустоват, то активировать предпочтетение абсолютных URL.
-    val relUrlsOk = isHttp && lOpt
-      .flatMap(l => Option(l.hostname))
-      .exists(_.nonEmpty)
-    !relUrlsOk
+    val relUrlsOk = isHttp && domLocationOpt
+      .flatMap { domLocation =>
+        Option( domLocation.hostname )
+      }
+      .exists { hostname =>
+        hostname.nonEmpty // && (hostname equalsIgnoreCase "suggest.io")
+        // TODO#2 "suggest.io" - localhost:9000 for dev workstation?
+        // TODO#1 Uncomment, when CORS will be ready. Currently, POST causes X-Requested-With header failure on showcase requests to different APIs.
+      }
+
+    val r = !relUrlsOk
+    //println( getClass.getSimpleName + ".PREFER_ABS_URLS = " + r )
+    r
   }
 
   def mkAbsUrl(url: String): String = {

@@ -13,6 +13,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.{MScRoot, ScLoginFormShowHide}
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import org.scalajs.dom
@@ -29,6 +30,7 @@ class EnterLkRowR(
                    scCssP        : React.Context[ScCss],
                    crCtxProv     : React.Context[MCommonReactCtx],
                    jsRouterOptP  : React.Context[Option[IJsRouter]],
+                   spaRouterState: MSpaRouterState,
                  )
   extends Log
 {
@@ -104,7 +106,12 @@ class EnterLkRowR(
                   case Modes._LOGGED_IN         => jsRouter.controllers.Ident.rdrUserSomewhere()
                   case Some( nodeId )           => jsRouter.controllers.LkAds.adsPage( nodeId )
                 }
-                ^.href := HttpClient.mkAbsUrlIfPreferred( route.url )
+                ^.href := {
+                  if (HttpClient.PREFER_ABS_URLS || spaRouterState.isCanonicalRouteHasNodeId)
+                    route.absoluteURL( HttpClient.PREFER_SECURE_URLS )
+                  else
+                    route.url
+                }
               }
               linkAcc(
                 hrefTm,
@@ -140,12 +147,15 @@ class EnterLkRowR(
 
         internalLogin = {
           val isAvail = try {
-            (dom.window.location.protocol startsWith HttpConst.Proto.HTTPS) ||
-            scalajs.LinkingInfo.developmentMode
+            // isCanonicalRouteHasNodeId: For 3p-domains - do not use internal form here.
+            !spaRouterState.isCanonicalRouteHasNodeId && (
+              (dom.window.location.protocol startsWith HttpConst.Proto.HTTPS) ||
+              scalajs.LinkingInfo.developmentMode
+            )
           } catch {
             case ex: Throwable =>
               logger.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, ex )
-              true
+              false
           }
 
           propsProxy.connect { props =>

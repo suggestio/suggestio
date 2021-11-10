@@ -35,6 +35,7 @@
 
   @* Render canonical URL for all 3p domain, with possible inclusion of *@
   @for( jsState <- args.jsStateOpt.iterator;  urlSuffix = controllers.sc.routes.ScSite.geoSite(jsState).url;  urlPrefix <- (args.nodeOpt.iterator.flatMap(n2NodesUtil.urlPrefixOf).toSet + ctxUtil.SC_URL_PREFIX) ) {
+    @* TODO attr data-3p-domain="the-domain.com" *@
     <link rel="canonical" href="@urlPrefix@urlSuffix" />
   }
 

@@ -14,3 +14,15 @@ case class MSpaRouterState(
                             routerCtl        : RouterCtl[SioPages.Sc3],
                             canonicalRoute   : Option[SioPages.Sc3],
                           )
+
+
+object MSpaRouterState {
+
+  implicit final class SpaRouterStateExt( private val spaRouterState: MSpaRouterState ) extends AnyVal {
+
+    def isCanonicalRouteHasNodeId: Boolean =
+      spaRouterState.canonicalRoute.exists(_.nodeId.nonEmpty)
+
+  }
+
+}

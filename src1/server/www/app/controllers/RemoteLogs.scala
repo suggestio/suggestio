@@ -111,7 +111,7 @@ final class RemoteLogs @Inject() (
             // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
             // ошибку, что нет root тега в ответе /sc/error.
             .as( MimeTypes.TEXT )
-        )
+        )(_ctx)
       }
     }
   }
