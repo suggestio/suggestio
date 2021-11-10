@@ -482,7 +482,7 @@ final class LkBill2 @Inject() (
         .iterator
         .flatMap( _.orderPageCsp )
         .reduceLeftOption( _ andThen _ )
-        .flatMap( cspUtil.mkCustomPolicyHdr )
+        .flatMap( cspUtil.mkCustomPolicyHdr() )
 
       // Данные формы для инициализации.
       for {

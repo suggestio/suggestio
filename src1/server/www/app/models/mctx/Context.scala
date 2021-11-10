@@ -280,7 +280,7 @@ trait Context {
     }
 
     sb.append( P.CURR_PROTO )
-      .append( request.host )
+      .append( host )
       .toString()
   }
 

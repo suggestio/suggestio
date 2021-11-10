@@ -42,7 +42,7 @@ class CspUtil @Inject() (
   private def CSP_REPORT_ONLY = false
 
   /** Заголовок CSP, который можно модификацировать в контроллерах для разных нужд. */
-  val CSP_DFLT_OPT: Option[CspHeader] = {
+  def mkCspPolicy(commonSourcesAppend: List[String] = Nil): Option[CspHeader] = {
     OptionUtil.maybe( IS_ENABLED ) {
       // TODO На ноды балансируются только картинки, возможно ещё видео. И websocket'ы, связанные с ними. Надо ли их в common запихивать всё?
       val nodesWildcard = s"*.nodes.${contextUtil.HOST_PORT}"
@@ -52,7 +52,9 @@ class CspUtil @Inject() (
         val selfHosts = Csp.Sources.SELF :: Nil
         val selfNodes = nodesWildcard :: Nil
         // TODO Добавить cdn-nodes-домены сюда же.
-        (cdnHostsIter ++ selfHosts ++ selfNodes)
+        (cdnHostsIter :: selfHosts :: selfNodes :: commonSourcesAppend :: Nil)
+          .iterator
+          .flatten
           .toSet
       }
 
@@ -92,6 +94,7 @@ class CspUtil @Inject() (
       )
     }
   }
+  val CSP_DFLT_OPT: Option[CspHeader] = mkCspPolicy()
 
   /** Отрендеренные название и значение HTTP-заголовка CSP. */
   val CSP_KV_DFLT_OPT: Option[(String, String)] = {
@@ -100,8 +103,9 @@ class CspUtil @Inject() (
   }
 
   /** Отрендерить хидер для модифицировнной недефолтовой политики. */
-  def mkCustomPolicyHdr(updatePolicyF: CspPolicy => CspPolicy): Option[(String, String)] = {
-    CSP_DFLT_OPT
+  def mkCustomPolicyHdr(policyBase: Option[CspHeader] = CSP_DFLT_OPT)
+                       (updatePolicyF: CspPolicy => CspPolicy): Option[(String, String)] = {
+    policyBase
       .flatMap { csp0 =>
         val csp1 = CspHeader.policy.modify(updatePolicyF)(csp0)
         csp1.headerOpt
@@ -113,20 +117,20 @@ class CspUtil @Inject() (
   /** Готовые кастомные CSP-политики. */
   object CustomPolicies {
 
-    def Captcha = mkCustomPolicyHdr(
+    def Captcha = mkCustomPolicyHdr()(
       CspPolicy.imgSrc.modify( _ + Csp.Sources.BLOB )
     )
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
-    def PageWithOsmLeaflet = mkCustomPolicyHdr( CspPolicy.allowOsmLeaflet )
+    def PageWithOsmLeaflet = mkCustomPolicyHdr()( CspPolicy.allowOsmLeaflet )
 
     /** Страницы содержат Umap-карту на базе Leaflet. */
-    def Umap = mkCustomPolicyHdr(
+    def Umap = mkCustomPolicyHdr()(
       CspPolicy.allowUmap
     )
 
     /** Редактор карточек активно работает с "blob:", а quill-editor - ещё и с "data:" . */
-    def AdEdit = mkCustomPolicyHdr {
+    def AdEdit = mkCustomPolicyHdr() {
       val data = Csp.Sources.DATA
       val addDataF = { s: Set[String] => s + data }
       (
@@ -138,7 +142,7 @@ class CspUtil @Inject() (
       )
     }
 
-    def AdnEdit = mkCustomPolicyHdr {
+    def AdnEdit = mkCustomPolicyHdr() {
       CspPolicy.imgSrc.modify(_ + Csp.Sources.BLOB)
     }
 

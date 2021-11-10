@@ -77,9 +77,10 @@ final class N2NodesUtil {
     * @param mnode Узел N2.
     * @return Опциональный результат работы вида: http://site.com
     */
-  def urlPrefixOf(mnode: MNode): Option[String] = {
+  def urlPrefixOf(mnode: MNode): Iterator[String] = {
     mnode.extras.domains
-      .find(_.mode == MDomainModes.ScServeIncomingRequests)
+      .iterator
+      .filter(_.mode == MDomainModes.ScServeIncomingRequests)
       .map { mdx =>
         mdx.proto + "://" + mdx.dkey
       }

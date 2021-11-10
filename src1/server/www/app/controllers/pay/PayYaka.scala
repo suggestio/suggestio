@@ -152,7 +152,7 @@ final class PayYaka @Inject() (
   }
 
   private def _payOrderFormCsp(profile: IYakaProfile) = {
-    cspUtil.mkCustomPolicyHdr {
+    cspUtil.mkCustomPolicyHdr() {
       CspPolicy.formAction.modify {
         _ + "https://yoomoney.ru/*"
       }

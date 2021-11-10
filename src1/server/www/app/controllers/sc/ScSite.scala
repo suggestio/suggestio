@@ -97,12 +97,16 @@ final class ScSite @Inject() (
     /** Исходный http-реквест. */
     implicit def _request: IReq[_]
 
+    lazy val _requestHost = ctx.request.host
+      .replaceFirst(":.+$", "")
+
+    lazy val _isSioHost = contextUtil.isMyHostSio( _requestHost )
+
     // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
     lazy val domainNodeOptFut: Future[Option[MNode]] = {
-      val myHost = ctx.request.host
-        .replaceFirst(":.+$", "")
+      OptionUtil.maybeFut( !_isSioHost ) {
+        val myHost = _requestHost
 
-      OptionUtil.maybeFut( !contextUtil.isMyHostSio(myHost) ) {
         // Логгируем этот этап работы.
         lazy val logPrefix = s"${classOf[SiteLogic].getSimpleName}.nodeOptFut(myHost=$myHost):"
 
@@ -286,16 +290,6 @@ final class ScSite @Inject() (
   }
 
 
-  private val cspV3 = cspUtil.mkCustomPolicyHdr(
-    CspPolicy.allowOsmLeaflet andThen
-    CspPolicy.jsUnsafeInline andThen
-    CspPolicy.styleUnsafeInline andThen
-    // data: для fonts. Почему-то валятся csp-отчёты о необходимости этого в выдаче.
-    CspPolicy.fontSrc.modify(_ + Csp.Sources.DATA) andThen
-    // Captcha требует blob'а. TODO Дедублицировать строку ниже с CspUtil.CustomPolicies.Captcha
-    CspPolicy.imgSrc.modify(_ + Csp.Sources.BLOB)
-  )
-
 
 
   /** Реализация SiteLogic для v3-выдачи на базе react с client-side рендером. */
@@ -303,8 +297,27 @@ final class ScSite @Inject() (
 
     import views.html.sc.site.v3._
 
+
+    private def cspMainV3ModF = (
+      CspPolicy.allowOsmLeaflet andThen
+      CspPolicy.jsUnsafeInline andThen
+      CspPolicy.styleUnsafeInline andThen
+      // data: для fonts. Почему-то валятся csp-отчёты о необходимости этого в выдаче.
+      CspPolicy.fontSrc.modify(_ + Csp.Sources.DATA) andThen
+      // Captcha требует blob'а. TODO Дедублицировать строку ниже с CspUtil.CustomPolicies.Captcha
+      CspPolicy.imgSrc.modify(_ + Csp.Sources.BLOB)
+    )
+
     override def customCspPolicyOpt: Option[(String, String)] = {
-      cspV3
+      val cspBase = if (_isSioHost) {
+        cspUtil.CSP_DFLT_OPT
+      } else {
+        cspUtil.mkCspPolicy(
+          commonSourcesAppend = contextUtil.SC_HOST_PORT :: Nil,
+        )
+      }
+
+      cspUtil.mkCustomPolicyHdr(cspBase)( cspMainV3ModF )
     }
 
     /** Добавки к тегу head в siteTpl. */
