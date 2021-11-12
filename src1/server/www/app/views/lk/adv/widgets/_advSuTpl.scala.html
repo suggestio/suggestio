@@ -5,7 +5,7 @@
 @import io.suggest.adv.AdvConstants.Su._
 @import io.suggest.i18n.MsgCodes
 
-@if(ctx.user.isSuper) {
+@if(ctx.request.user.isSuper) {
   <div class="adv-su-inputs-wrap">
     <label>
       @_checkBoxTpl(

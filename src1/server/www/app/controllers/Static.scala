@@ -250,7 +250,7 @@ final class Static @Inject() (
 
               // Check, if CSP report host related.
               val reportedHostname = URI.create(cspViol.documentUri).getHost.toLowerCase
-              val isPossiblyUnrelated = contextUtil.SIO_HOSTS contains reportedHostname
+              val isPossiblyUnrelated = contextUtil.SUGGESTIO_DOMAINS contains reportedHostname
 
               // Принудительно НЕ сохраняем статистику, т.к. это требует системы фильтрации и дедубликации мегатонн статистики.
               //r <- statUtil.maybeSaveGarbageStat( stat2, logTail =  )
@@ -567,14 +567,15 @@ final class Static @Inject() (
     * @return
     */
   def corsPreflight(path: String) = maybeAuth().async { implicit request =>
-    val isEnabled = corsUtil.CORS_PREFLIGHT_ALLOWED
+    val isEnabled = corsUtil.IS_ENABLED
 
-    if (isEnabled && request.headers.get( HeaderNames.ACCESS_CONTROL_REQUEST_METHOD ).nonEmpty) {
+    if (
+      isEnabled &&
+      request.headers.get( HeaderNames.ACCESS_CONTROL_REQUEST_METHOD ).nonEmpty
+    ) {
       // Кэшировать ответ на клиенте для ускорения работы системы. TODO Увеличить значение на неск.порядков:
-      val cache = CACHE_CONTROL -> "public, max-age=300"
-      val headers2 = cache :: corsUtil.PREFLIGHT_CORS_HEADERS
       LOGGER.trace( s"corsPreflight($path): 200 OK to ${request.remoteClientAddress}\n UA: ${request.headers.get(USER_AGENT)}\n X-Requested-With: ${request.headers.get(X_REQUESTED_WITH)}" )
-      Ok.withHeaders( headers2 : _* )
+      Ok.cacheControl( 300 )
 
     } else {
       val body = if (isEnabled) "Missing nessesary CORS headers" else "CORS is disabled"

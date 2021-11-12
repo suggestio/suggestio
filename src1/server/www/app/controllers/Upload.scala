@@ -542,6 +542,7 @@ final class Upload @Inject()(
 
     } else canUpload.file(uploadArgs, ctxIdOpt).async( _uploadFileBp(uploadArgs) ) { implicit request =>
       LOGGER.trace(s"$logPrefix Starting w/args: $uploadArgs")
+      implicit val ctx = implicitly[Context]
 
       lazy val errSb = new StringBuilder()
       def __appendErr(msg: String): Unit = {
@@ -1096,7 +1097,6 @@ final class Upload @Inject()(
             LOGGER.error(s"$logPrefix Async exception occured, possible reasons:\n$errMsg", ex)
             NotAcceptable( s"Errors:\n\n$errMsg" )
           }
-          .map( corsUtil.withCorsHeaders )
       }
     }
   }
@@ -1123,6 +1123,7 @@ final class Upload @Inject()(
         )
       } { implicit request =>
         lazy val logPrefix = s"chunk(${uploadArgs.info.existNodeId.orNull} ${chunkQs.chunkNumber}/${chunkQs.chunkSizeGeneral}):"
+        implicit val ctx = implicitly[Context]
 
         // Сразу забрать временный файл с req.body на руки, чтобы точно удалить его по итогу работы.
         val reqBodyFile = request.body.asFile
@@ -1258,7 +1259,6 @@ final class Upload @Inject()(
           Ok
         })
           .recoverHttpResEx
-          .map( corsUtil.withCorsHeaders )
       }
   }
 
@@ -1337,12 +1337,7 @@ final class Upload @Inject()(
           }
 
         LOGGER.trace(s"$logPrefix isOk?$isChunkLoadedOk")
-
-        // Вернуть инфу по сверке:
-        corsUtil.withCorsIfNeeded(
-          if (isChunkLoadedOk) Ok
-          else NoContent
-        )(ctx)
+        if (isChunkLoadedOk) Ok else NoContent
       }
   }
 

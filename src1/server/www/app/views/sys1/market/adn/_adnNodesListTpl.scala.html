@@ -72,7 +72,7 @@
               @if(adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
               @if(adn.isUser) {<span title="Этот узел создан пользователем, НЕ администратором.">&#x2692;</span>}
             }
-            @if( ctx.user.personIdOpt == mnode.id ) {
+            @if( ctx.request.user.personIdOpt == mnode.id ) {
               <strong>(Я)</strong>
             }
           }

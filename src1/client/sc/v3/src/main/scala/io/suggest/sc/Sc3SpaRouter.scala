@@ -110,6 +110,11 @@ class Sc3SpaRouter(
 }
 
 
+/** Interface for URL-processing in different usage scenarious.
+  * - Browser can alter URL query string directly.
+  * - Cordova uses single-page WebView on local html-file, and altering URL query string will cause reloads and 404-file failures,
+  *   so only urlhash (#!?) navigation is possible in cordova.
+  */
 trait ScRouterUrlHelper {
   def baseUrl: BaseUrl
   def getUrlHash(url: String): Option[String]
@@ -117,7 +122,8 @@ trait ScRouterUrlHelper {
 
 object ScRouterUrlHelper {
 
-  /** В кордове URL начинается с file, поэтому любые переменные части должны быть после #. */
+  /** URL-hash (#!?...) location altering for cordova, because file-URLs cannot use [[PlainUrl]] method.
+    * Previosly, was also used in browsers. */
   class UrlHash extends ScRouterUrlHelper {
     override def baseUrl = BaseUrl.until_# + UrlUtil2.URL_HASH_PREFIX_NOQS
     override def getUrlHash(url: String): Option[String] = {
@@ -130,7 +136,7 @@ object ScRouterUrlHelper {
     }
   }
 
-  /** URL-адресация без #, когда напрямую редактируется серверная ссылка. */
+  /** URL-addressing WITHOUT #. URL queryString altering directly (web-browser). */
   class PlainUrl extends ScRouterUrlHelper {
     override def baseUrl = BaseUrl.fromWindowOrigin_/
     override def getUrlHash(url: String): Option[String] = {

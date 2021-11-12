@@ -371,7 +371,7 @@ final class StatUtil @Inject()(
       }
       def ifNotSio: Option[String] = {
         currentHost
-          .filterNot { contextUtil.SIO_HOSTS.contains }
+          .filterNot { contextUtil.SUGGESTIO_DOMAINS.contains }
       }
       def maybeCurrent(useCurrentHost: Boolean): Option[String] = {
         if (useCurrentHost)

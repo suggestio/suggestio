@@ -357,13 +357,12 @@ final class ScUniApi @Inject()(
     if (apiVsnMj ==* MScApiVsns.ReactSjs3.majorVsn) {
       // Скомпилировать все ответы воедино.
       val logic = ScPubApiLogicHttpV3( qs )(request)
+      val logicRespFut = logic.scRespFut
       for {
-        scResp <- logic.scRespFut
+        scResp <- logicRespFut
       } yield {
-        corsUtil.withCorsIfNeeded(
-          Ok( Json.toJson(scResp) )
-            .cacheControl( 20 )
-        )(logic.ctx)
+        Ok( Json.toJson(scResp) )
+          .cacheControl( 20 )
       }
 
     } else {

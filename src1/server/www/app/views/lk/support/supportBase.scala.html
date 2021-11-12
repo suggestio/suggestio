@@ -17,7 +17,7 @@
       @* Ссылка на страницу с криком о помощи. *@
       @_navItemTpl(
         title = messages( MsgCodes.`Support.request` ),
-        href  = Some( ctx.supportFormCall( nodeIdOpt ) ),
+        href  = Some( routes.LkHelp.supportForm(nodeIdOpt, ctx.r) ),
         css   = classesAct( rightLink == MRightLinks.Support )
       )()
 

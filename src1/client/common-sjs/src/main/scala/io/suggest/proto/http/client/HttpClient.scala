@@ -65,9 +65,8 @@ object HttpClient extends Log {
         Option( domLocation.hostname )
       }
       .exists { hostname =>
-        hostname.nonEmpty // && (hostname equalsIgnoreCase "suggest.io")
-        // TODO#2 "suggest.io" - localhost:9000 for dev workstation?
-        // TODO#1 Uncomment, when CORS will be ready. Currently, POST causes X-Requested-With header failure on showcase requests to different APIs.
+        hostname.nonEmpty //&& (hostname equalsIgnoreCase "suggest.io")
+        // TODO "suggest.io" - localhost:9000 for dev workstation?
       }
 
     val r = !relUrlsOk

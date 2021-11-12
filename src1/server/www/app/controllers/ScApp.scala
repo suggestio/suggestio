@@ -31,7 +31,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Call, RequestHeader}
 import util.acl.{MaybeAuth, MaybeAuthMaybeNode, SioControllerApi}
 import util.billing.Bill2Conf
-import util.cdn.{CdnUtil, CorsUtil}
+import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
 import util.up.UploadUtil
 
@@ -54,7 +54,6 @@ final class ScApp @Inject()(
 
   private lazy val maybeAuthMaybeNode = injector.instanceOf[MaybeAuthMaybeNode]
   private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
-  private lazy val corsUtil = injector.instanceOf[CorsUtil]
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
@@ -73,10 +72,11 @@ final class ScApp @Inject()(
     * @return 200 + JSON
     */
   def webAppManifest(qs: MPwaManifestQs) = {
-    maybeAuth(U.PersonNode).async { implicit request =>
+    maybeAuth(U.PersonNode) { implicit request =>
+      implicit val ctx = implicitly[Context]
+
       // TODO Нужна локализация? И если нужна, то на уровне URL, или на уровне user-сессии?
       val sio = MsgCodes.`Suggest.io`
-      implicit val ctx = implicitly[Context]
       val manifest = MWebManifest(
         name      = sio,
         // TODO Полное и короткое названия должны различаться.
@@ -104,12 +104,10 @@ final class ScApp @Inject()(
         },
       )
 
-      corsUtil.withCorsIfNeeded(
-        Ok( Json.toJson( manifest ) )
-          .as( MimeConst.WEB_APP_MANIFEST )
-          // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
-          .cacheControl(86400)
-      )(ctx)
+      Ok( Json.toJson( manifest ) )
+        .as( MimeConst.WEB_APP_MANIFEST )
+        // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
+        .cacheControl(86400)
     }
   }
 

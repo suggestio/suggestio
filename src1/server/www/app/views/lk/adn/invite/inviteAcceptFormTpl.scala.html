@@ -58,7 +58,7 @@
       }
 
       @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
-      @if(!ctx.user.isAuth) {
+      @if(!ctx.request.user.isAuth) {
 
         @table_fieldset(messages("Password"), ""){
           <input type="password" name="password.pw1"/>

@@ -13,7 +13,6 @@ import util.geo.GeoIpUtil
 import util.stat.StatUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import play.api.inject.Injector
-import util.cdn.CorsUtil
 
 /**
   * Suggest.io
@@ -31,7 +30,6 @@ final class RemoteLogs @Inject() (
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val statUtil = injector.instanceOf[StatUtil]
   private lazy val geoIpUtil = injector.instanceOf[GeoIpUtil]
-  private lazy val corsUtil = injector.instanceOf[CorsUtil]
 
   /** To be tolerant to validation errors. */
   private def ALLOW_INVALID = true
@@ -69,7 +67,7 @@ final class RemoteLogs @Inject() (
       val geoLocOptFut = geoIpUtil.findIpCached( remoteAddrFixed.remoteAddr )
       // Запустить получение инфы о юзере. Без https тут всегда None.
       val userSaOptFut = statUtil.userSaOptFutFromRequest()
-      val _ctx = implicitly[Context]
+      implicit val _ctx = implicitly[Context]
 
       val diagMsg = request.body.msgs.mkString("\n")
 
@@ -106,12 +104,10 @@ final class RemoteLogs @Inject() (
           logTail = diagMsg,
         )
       } yield {
-        corsUtil.withCorsIfNeeded(
-          NoContent
-            // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
-            // ошибку, что нет root тега в ответе /sc/error.
-            .as( MimeTypes.TEXT )
-        )(_ctx)
+        // text/plain: Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ,
+        // и выкидывает в логах ошибку, что нет root тега в ответе /sc/error.
+        NoContent
+          .as( MimeTypes.TEXT )
       }
     }
   }

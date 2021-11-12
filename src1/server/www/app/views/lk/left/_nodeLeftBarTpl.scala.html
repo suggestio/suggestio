@@ -9,7 +9,7 @@
 
 @* Кнопка вызова системной панели. *@
 @__sysBtn( call: Call ) = {
-  @if(ctx.user.isSuper) {
+  @if(ctx.request.user.isSuper) {
     @_leftBarItemTpl(
       title = "System",
       href  = call,
@@ -73,12 +73,12 @@
   @* Кнопки внизу bar'а. *@
   <div class="left-bar_bottom">
 
-    @if(ctx.user.isAuth) {
+    @if(ctx.request.user.isAuth) {
       <a class="left-bar_exit js-btn" href="#logoutPopup">@messages("Logout")</a>
       <hr class="delimiter"/>
     }
 
-    <a href="@ctx.supportFormCall(nodeIdOpt)"
+    <a href="@routes.LkHelp.supportForm(nodeIdOpt, ctx.r)"
        class="@classesPreSpaced( classesAct(leftCurrEl.contains(LPL_SUPPORT), "left-bar_help") )">
       @messages("Help")
     </a>

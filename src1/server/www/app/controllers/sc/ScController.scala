@@ -13,7 +13,7 @@ import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.adv.geo.AdvGeoRcvrsUtil
 import util.ble.BleUtil
-import util.cdn.{CdnUtil, CorsUtil}
+import util.cdn.CdnUtil
 import util.geo.GeoIpUtil
 import util.img.{DynImgUtil, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
@@ -56,7 +56,6 @@ final class ScCtlUtil @Inject()(
   lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
   lazy val logoUtil = injector.instanceOf[LogoUtil]
   lazy val maybeAuth = injector.instanceOf[MaybeAuth]
-  lazy val corsUtil = injector.instanceOf[CorsUtil]
 
   implicit lazy val mat = injector.instanceOf[Materializer]
 

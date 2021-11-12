@@ -4,13 +4,16 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.mvc._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mctx.{Context, ContextUtil}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.http.HeaderNames._
 import japgolly.univeq._
 import play.api.http.HttpVerbs
+import util.acl.AclUtil
+import util.domain.Domains3pUtil
 
 /**
  * Suggest.io
@@ -24,7 +27,9 @@ import play.api.http.HttpVerbs
 @Singleton
 final class CorsUtil @Inject() (
                                  configuration: Configuration,
-                                 contextUtil: ContextUtil
+                                 contextUtil: ContextUtil,
+                                 domains3pUtil: Domains3pUtil,
+                                 implicit private val ec: ExecutionContext,
                                )
   extends MacroLogsImplLazy
 {
@@ -32,51 +37,41 @@ final class CorsUtil @Inject() (
   /** Активен ли механизм CORS вообще? */
   val IS_ENABLED: Boolean = configuration.getOptional[Boolean]("cors.enabled").getOrElseTrue
 
-  /** Включен ли доступ к preflight-запросам? */
-  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getOptional[Boolean]("cors.preflight.allowed").getOrElseTrue
+  private val ALL = "*"
+  private val VALUES_DELIM = ", "
 
-  def allowOrigins: String = {
-    // Макс один домен. Чтобы не трахаться с доменами, обычно достаточно "*".
-    configuration.getOptional[String]("cors.allow.origin").getOrElse("*")
-  }
-
-  def allowMethods = {
-    configuration.getOptional[Seq[String]]("cors.allow.methods")
-      .fold("*") { _.mkString(", ") }
-  }
-
-  def allowHeaders: Option[String] = {
-    val hdrs0 = Set.empty + CONTENT_TYPE + ACCEPT
-    val v = configuration.getOptional[Seq[String]]("cors.allow.headers")
-      .fold( hdrs0 ) { hdrs0 ++ _ }
-      .mkString(", ")
-    Some(v)
-  }
-
-  def allowCreds = configuration.getOptional[Boolean]("cors.allow.credentials")
-
+  /** Simple GET requests CORS headers are minimal. */
   val GET_CORS_HEADERS: List[(String, String)] = {
-    var acc: List[(String, String)] = Nil
-    val ao = allowOrigins
-    if (!ao.isEmpty)
-      acc ::= ACCESS_CONTROL_ALLOW_ORIGIN -> ao
-    acc
+    (ACCESS_CONTROL_ALLOW_ORIGIN -> ALL) ::  // TODO ALL -- Use Origin: value???
+    Nil
   }
 
-  lazy val PREFLIGHT_CORS_HEADERS: List[(String, String)] = {
-    var acc: List[(String, String)] = GET_CORS_HEADERS
-    if (acc.nonEmpty) {
-      val am = allowMethods
-      if (am.nonEmpty)
-        acc ::= ACCESS_CONTROL_ALLOW_METHODS -> am
+  private val POST_HEADERS_ALLOWED_ALWAYS = CONTENT_TYPE :: ACCEPT :: Nil
 
-      for (ah <- allowHeaders )
-        acc ::= ACCESS_CONTROL_ALLOW_HEADERS -> ah
+  /** Render one header tuple: Access-Control-Allow-Headers: ...
+    *
+    * @param allowXRequestedWith Only for valid 3p-domains.
+    * @return
+    */
+  private def accessControlAllowHeaders_hdr(allowXRequestedWith: Boolean = false): (String, String) = {
+    var hdrsAcc = POST_HEADERS_ALLOWED_ALWAYS
 
-      for (ac <- allowCreds)
-        acc ::= ACCESS_CONTROL_ALLOW_CREDENTIALS -> ac.toString
-    }
-    acc
+    if (allowXRequestedWith)
+      hdrsAcc ::= X_REQUESTED_WITH
+
+    ACCESS_CONTROL_ALLOW_HEADERS -> hdrsAcc.mkString(VALUES_DELIM)
+  }
+
+  private val PREFLIGHT_CORS_HEADERS_ALWAYS = {
+    //(ACCESS_CONTROL_ALLOW_CREDENTIALS -> ALL) ::  // Need credentials access here?
+    (ACCESS_CONTROL_ALLOW_METHODS -> ALL) ::
+    GET_CORS_HEADERS
+  }
+
+
+  def preflightCorsHeaders(allowXRequestedWith: Boolean = false): List[(String, String)] = {
+    accessControlAllowHeaders_hdr( allowXRequestedWith ) ::
+    PREFLIGHT_CORS_HEADERS_ALWAYS
   }
 
   /** На какие запросы всегда навешивать CORS-allow хидеры? */
@@ -85,48 +80,66 @@ final class CorsUtil @Inject() (
 
   /** Проверка хидеров на необходимость добавления CORS в ответ. */
   def isAppendAllowHdrsForRequest(rh: RequestHeader): Boolean = {
-    GET_CORS_HEADERS.nonEmpty &&
-    ADD_HEADERS_URL_RE.pattern.matcher(rh.uri).find
+    ADD_HEADERS_URL_RE.pattern.matcher(rh.uri).find ||
+    rh.headers.get( ORIGIN ).nonEmpty
   }
 
 
-  def withCorsHeaders(resp: Result)(implicit rh: RequestHeader) = {
+  def prepareCorsHeadersNo3p(allowXRequestedWith: Boolean = false)(implicit reqHdr: RequestHeader): List[(String, String)] = {
     // Для GET-запросов достаточно коротких хидеров. Остальное требует указать allow-method и всё остальное.
-    val corsHeaders = rh.method match {
+    reqHdr.method match {
       case HttpVerbs.GET  => GET_CORS_HEADERS
       // TODO POST from 3p-domains to suggest.io suffering from CORS: X-Requested-with header is not in Access-Control-Allow-Headers.
-      case _              => PREFLIGHT_CORS_HEADERS
+      case _              => preflightCorsHeaders( allowXRequestedWith )
     }
-    resp.withHeaders( corsHeaders: _* )
   }
 
+  def prepareCorsHeaders(force: Boolean = false)(implicit ctx: Context): Future[List[(String, String)]] = {
+    for (domainNode3pOpt <- ctx.domainNode3pOptFut) yield {
+      prepareCorsHeadersForDomainOpt( domainNode3pOpt, force )(ctx.request)
+    }
+  }
+  /** Async.prepare CORS headers for HTTP-request.
+    * @return Nil if no cors headers is needed. */
+  def prepareCorsHeadersForDomainOpt(domainNode3pOpt: Option[MNode], force: Boolean = false)
+                                    (implicit request: RequestHeader): List[(String, String)] = {
+    val reqOriginOpt = request.headers.get( ORIGIN )
+    lazy val logPrefix = s"withCorsIfNeeded($force, ${reqOriginOpt.getOrElse("")}>${request.host}):"
+    reqOriginOpt.fold {
+      // No Origin: header - no CORS response-headers needed.
+      List.empty[(String, String)]
 
-  def withCorsIfNeeded(result: Result)(implicit ctx: Context): Result = {
-    val reqOriginOpt = ctx.request.headers.get( ORIGIN )
-    lazy val logPrefix = s"withCorsIfNeeded(${reqOriginOpt.getOrElse("")}):"
+    } { reqOrigin =>
+      // Detect possible 3p-domain, if any.
+        LOGGER.trace(s"$logPrefix domainNode3p=>${domainNode3pOpt.map(_.idOrNull).orNull}")
+        if ({
+          val r = {
+            force ||
+            (
+              if (domainNode3pOpt.isEmpty)
+                contextUtil.URL_PREFIX ==* reqOrigin
+              else
+                true // reqOrigin allowed because of known 3p-domain.
+            ) ||
+            (reqOrigin ==* "null") ||         // iOS 13.2.2 WKWebView шлёт очень необычное значение заголовка Origin.
+            (reqOrigin startsWith "file://")
+          } // Нельзя исключать внезапных чудес с изменением iOS null-значения в будущем.
+          if (!r) LOGGER.warn(s"$logPrefix Invalid/unexpected CORS Origin\n Origin: $reqOrigin\n Expected prefix: ${domainNode3pOpt.fold(contextUtil.URL_PREFIX)(_ => reqOrigin)} force?$force")
+          r
+        }) {
+          // На продакшене - аплоад идёт на sX.nodes.suggest.io, а реквест из suggest.io - поэтому CORS тут участвует всегда.
+          // TODO 3p-domain: need to allow X-Requested-with header here.
+          val corsHeaders = prepareCorsHeadersNo3p(
+            allowXRequestedWith = domainNode3pOpt.nonEmpty,
+          )
+          LOGGER.trace(s"$logPrefix Will add ${corsHeaders.length} CORS-headers:\n ${corsHeaders.mkString("\n ")}")
+          corsHeaders
 
-    (for {
-      reqOrigin <- reqOriginOpt
-      sioUrlPrefix = contextUtil.URL_PREFIX
-      if {
-        val r = {
-          // TODO origin == sioUrlPrefix? 3p-domains support is needed here. Allowed 3p-domain should be checked/passed here.
-          (reqOrigin ==* sioUrlPrefix) ||   // Стандартное поведение браузеров - слать proto+host внутри Origin.
-          (reqOrigin ==* "null") ||         // iOS 13.2.2 WKWebView шлёт очень необычное значение заголовка Origin.
-          (reqOrigin startsWith "file://")
-        } // Нельзя исключать внезапных чудес с изменением iOS null-значения в будущем.
-        if (!r) LOGGER.warn(s"$logPrefix Invalid/unexpected CORS Origin\n Origin: $reqOrigin\n Expected prefix: $sioUrlPrefix")
-        r
-      }
-    } yield {
-      // На продакшене - аплоад идёт на sX.nodes.suggest.io, а реквест из suggest.io - поэтому CORS тут участвует всегда.
-      LOGGER.trace(s"$logPrefix Adding CORS-headers")
-      // TODO 3p-domain: need to allow X-Requested-with header here.
-      withCorsHeaders( result )( ctx.request )
-    }) getOrElse {
-      // В dev-режиме - отсутствие CORS - это норма. т.к. same-origin и для страницы, и для этого экшена.
-      LOGGER.trace( s"Not adding CORS headers, missing/invalid Origin: ${reqOriginOpt.orNull}" )
-      result
+        } else {
+          // В dev-режиме - отсутствие CORS - это норма. т.к. same-origin и для страницы, и для этого экшена.
+          LOGGER.trace( s"Not adding CORS headers, missing/invalid Origin: ${reqOriginOpt.orNull}" )
+          Nil
+        }
     }
   }
 
@@ -136,6 +149,8 @@ final class CorsUtil @Inject() (
 /** Фильтр. Должен без проблем инициализироваться, когда application not started. */
 final class CorsFilter @Inject() (
                                    corsUtil                  : CorsUtil,
+                                   aclUtil                   : AclUtil,
+                                   contextUtil               : ContextUtil,
                                    implicit val ec           : ExecutionContext,
                                  )
   extends EssentialFilter
@@ -143,12 +158,24 @@ final class CorsFilter @Inject() (
 
   override def apply(next: EssentialAction): EssentialAction = {
     EssentialAction { implicit rh =>
-      val respFut0 = next(rh)
+      val reqHdr = aclUtil.reqHdrFromRequestHdr( rh )
+      val respFut0 = next( reqHdr )
+
       // Надо ли добавлять CORS-заголовки?
-      if ( corsUtil.IS_ENABLED && corsUtil.isAppendAllowHdrsForRequest(rh) ) {
-        for (resp <- respFut0) yield {
-          corsUtil.withCorsHeaders( resp )
+      if (
+        corsUtil.IS_ENABLED &&
+        corsUtil.isAppendAllowHdrsForRequest(rh)
+      ) {
+        respFut0.mapFuture { result =>
+          // TODO Ensure if no CORS headers already presents in response?
+          for {
+            domain3pOpt <- contextUtil.domainNode3pOptFut( reqHdr )
+          } yield {
+            val corsHeaders = corsUtil.prepareCorsHeadersForDomainOpt( domain3pOpt )( reqHdr )
+            result.withHeaders( corsHeaders: _* )
+          }
         }
+
       } else {
         // CORS-хидеры в ответе не требуются.
         respFut0

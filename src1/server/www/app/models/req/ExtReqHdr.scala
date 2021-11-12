@@ -6,6 +6,7 @@ import java.net.InetAddress
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.proto.http.HttpConst
 import io.suggest.spa.SioPages
+import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.http.HeaderNames
 import play.api.mvc.{QueryStringBindable, RequestHeader}
@@ -25,7 +26,6 @@ object ExtReqHdr extends MacroLogsImpl {
 
   /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
   val X_FW_FOR_SPLITTER_RE = ",\\s*".r
-
 
   val BACKEND_HOST_RE = "^backend\\.".r
 
@@ -190,6 +190,7 @@ trait ExtReqHdr extends RequestHeader {
       }
   }
 
+  override lazy val domain = UrlUtil.urlHostStripPort( host )
 
   /** Какие алгоритмы сжатия готов принять клиент в качестве Content-Encoding? */
   lazy val acceptCompressEncodings: Seq[MCompressAlgo] = {

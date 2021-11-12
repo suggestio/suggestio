@@ -45,7 +45,7 @@
       Создать узел...
     </a>
 
-    @for(personId <- ctx.user.personIdOpt) {
+    @for(personId <- ctx.request.user.personIdOpt) {
       <a class="siom-ac-btn __color-3 __size-S __ft-XM f-right" href="@routes.SysMarket.showAdnNode(personId)">
         @messages("I")...
       </a>

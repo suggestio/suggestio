@@ -147,7 +147,7 @@ final class ScStuff @Inject()(
             // TODO Implement aggressive caching (with cache key inside URL). See previous TODO for possible implementation.
             .cacheControl( 3600 )
             .withHeaders(
-              CONTENT_DISPOSITION -> s"""inline; filename="messages${langOpt.fold("")("-" + _)}.json"""",
+              CONTENT_DISPOSITION -> s"""inline; filename="messages${langOpt.fold("")("-" + _)}.json""""
             )
         }
     }

@@ -154,7 +154,7 @@ final class YooKassaUtil @Inject() (
                     (implicit ctx: Context): Future[YooKassaPaymentPrepareResult] = {
     val orderId = orderItem.order.id.get
 
-    lazy val logPrefix = s"startPayment(order#$orderId/+${orderItem.items.length}, U#${ctx.user.personIdOpt.orNull}):"
+    lazy val logPrefix = s"startPayment(order#$orderId/+${orderItem.items.length}, U#${ctx.request.user.personIdOpt.orNull}):"
     LOGGER.trace(s"$logPrefix Starting, $profile, price=$payPrice")
 
     val ykAmountTotal = MYkAmount(
@@ -187,7 +187,7 @@ final class YooKassaUtil @Inject() (
         // TODO Don't using email here, because we need to debug email validation.
         .orElse {
           // Return person node ID, because no phone number found.
-          ctx.user.personIdOpt
+          ctx.request.user.personIdOpt
         },
 
       // Embedded: returns embedded web-widget for sio-payment page.
@@ -235,7 +235,7 @@ final class YooKassaUtil @Inject() (
       // Append person node id to original hash:
       personOpt
         .flatMap( _.id )
-        .orElse( ctx.user.personIdOpt )
+        .orElse( ctx.request.user.personIdOpt )
         .foreach { personId =>
           sha1.update( personId.getBytes )
         }

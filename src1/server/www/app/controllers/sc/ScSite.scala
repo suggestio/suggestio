@@ -1,19 +1,15 @@
 package controllers.sc
 
-import io.suggest.adn.MAdnRights
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.{I18nConst, MLanguages, MsgCodes}
 import io.suggest.maps.MMapProps
 import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.n2.node.{MNode, MNodes}
-import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.spa.SioPages
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
-import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.ContextUtil
 import models.msc._
@@ -38,10 +34,10 @@ import views.html.sc.SiteTpl
 import japgolly.univeq._
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
+import util.domain.Domains3pUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -77,6 +73,7 @@ final class ScSite @Inject() (
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val assets = injector.instanceOf[Assets]
+  private lazy val domains3pUtil = injector.instanceOf[Domains3pUtil]
 
   import esModel.api._
   import cspUtil.Implicits._
@@ -97,55 +94,12 @@ final class ScSite @Inject() (
     /** Исходный http-реквест. */
     implicit def _request: IReq[_]
 
-    lazy val _requestHost = ctx.request.host
-      .replaceFirst(":.+$", "")
+    def _requestHost = ctx.request.domain
 
-    lazy val _isSioHost = contextUtil.isMyHostSio( _requestHost )
-
-    // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
-    lazy val domainNodeOptFut: Future[Option[MNode]] = {
-      OptionUtil.maybeFut( !_isSioHost ) {
-        val myHost = _requestHost
-
-        // Логгируем этот этап работы.
-        lazy val logPrefix = s"${classOf[SiteLogic].getSimpleName}.nodeOptFut(myHost=$myHost):"
-
-        val dkey = try {
-          UrlUtil.host2dkey(myHost)
-        } catch {
-          case ex: Throwable =>
-            LOGGER.warn(s"$logPrefix Failed to normalize host '$myHost' into dkey", ex)
-            myHost
-        }
-
-        val msearch = new MNodeSearch {
-          override def domains: Seq[DomainCriteria] = {
-            val cr = DomainCriteria(
-              dkeys = dkey :: Nil,
-              modes = MDomainModes.ScServeIncomingRequests :: Nil
-            )
-            cr :: Nil
-          }
-          override def limit          = 1
-          override def isEnabled      = Some(true)
-          override def withAdnRights  = MAdnRights.RECEIVER :: Nil
-        }
-        val fut = mNodes.dynSearchOne(msearch)
-
-        fut.onComplete {
-          case Success(None)    => LOGGER.debug(s"$logPrefix No linked nodes not found. Request from ${_request.remoteClientAddress}")
-          case Success(Some(r)) => LOGGER.trace(s"$logPrefix Found node[${r.idOrNull}] ${r.guessDisplayNameOrIdOrEmpty}")
-          case Failure(ex)      => LOGGER.warn(s"$logPrefix Unable to make nodes search request:\n $msearch", ex)
-        }
-
-        // Вернуть основной фьючерс поиска подходящего под домен узла.
-        fut
-      }
-    }
 
     /** Опциональный экземпляр текущего узла. */
     def nodeOptFut: Future[Option[MNode]] = {
-      val _domainNodeOptFut = domainNodeOptFut
+      val _domainNodeOptFut = ctx.domainNode3pOptFut
 
       // Поиска id узла среди параметров URL QS.
       val qsNodeOptFut = mNodes.maybeGetByIdCached( _siteQsArgs.adnId )
@@ -247,7 +201,7 @@ final class ScSite @Inject() (
     override def scStat: Future[Stat2] = {
       val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
       val _nodeOptFut       = nodeOptFutVal
-      val _domainNodeOptFut = domainNodeOptFut
+      val _domainNodeOptFut = ctx.domainNode3pOptFut
       for {
         _userSaOpt        <- _userSaOptFut
         _nodeOpt          <- _nodeOptFut
@@ -309,7 +263,7 @@ final class ScSite @Inject() (
     )
 
     override def customCspPolicyOpt: Option[(String, String)] = {
-      val cspBase = if (_isSioHost) {
+      val cspBase = if ( ctx.isSuggestioDomain ) {
         cspUtil.CSP_DFLT_OPT
       } else {
         cspUtil.mkCspPolicy(
@@ -372,7 +326,7 @@ final class ScSite @Inject() (
       val _scriptCacheHashCodeFut = scriptCacheHashCodeFut
 
       // Рендерить скрипт ServiceWorker'а только для домена suggest.io
-      val _withServiceWorkerFut = domainNodeOptFut.map(_.isEmpty)
+      val _withServiceWorkerFut = ctx.domainNode3pOptFut.map(_.isEmpty)
 
       // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.

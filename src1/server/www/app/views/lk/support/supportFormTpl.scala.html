@@ -15,7 +15,7 @@
   nodeOpt   = nodeOpt
 ) {
 
-  @form(CSRF( nodeOpt.flatMap(_.id).fold( routes.LkHelp.supportFormSubmit(r) )(routes.LkHelp.supportFormNodeSubmit(_, r)) )) {
+  @form(CSRF( routes.LkHelp.supportFormSubmit(nodeOpt.flatMap(_.id), r) )) {
 
     <table class="input-w __size-L">
       @inputText(

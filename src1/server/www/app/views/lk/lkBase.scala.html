@@ -79,7 +79,7 @@
       @ctx.messages.lang.language
     </a>
 
-    @if(showSwitchNodeBtn && ctx.user.isAuth) {
+    @if(showSwitchNodeBtn && ctx.request.user.isAuth) {
       <a class="btn __size-M __major header_change-node"
          href="@routes.MarketLkAdn.lkList(fromNode = nodeIdOpt)">
         @messages( MsgCodes.`Switch.node` )
@@ -127,7 +127,10 @@
   <script src="@cdn.asset("javascripts/jquery-ui.custom.min.js")"></script>
   *@
 
-  <script src="@ctx.api.cdn.forCall( ctx.lkMessagesJs )"></script>
+  <script src="@ctx.api.cdn.forCall( routes.LkLang.lkMessagesJs(
+    lang = ctx.messages.lang.code.toLowerCase,
+    hash = ctx.api.jsMessagesUtil.lk.hash,
+  ))"></script>
 
   @* Основной управляющий скрипт для личного кабинета. *@
   @_sjsScript("lk-sjs")

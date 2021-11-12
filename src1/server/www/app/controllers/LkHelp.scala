@@ -7,10 +7,10 @@ import io.suggest.n2.node.MNode
 import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
-import models.req.{INodeReq, IReq, IReqHdr}
+import models.req.{INodeOptReq, INodeReq, IReq, IReqHdr, MNodeOptReq, MNodeReq, MReq}
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc.{ActionBuilder, AnyContent, Result}
+import play.api.mvc.{ActionBuilder, ActionTransformer, AnyContent, Result}
 import util.acl._
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -67,16 +67,23 @@ final class LkHelp @Inject()(
   }
 
 
-  /**
-   * Отрендерить форму с запросом помощи с узла.
-    *
-    * @return 200 Ок и страница с формой.
-   */
-  def supportFormNode(adnId: String, r: Option[String]) = csrf.AddToken {
-    isNodeAdmin(adnId, U.PersonNode, U.Lk).async { implicit request =>
-      val mnodeOpt = Some(request.mnode)
-      _supportForm(mnodeOpt, r)
-    }
+  private def _nodeIdOptActionBuilder(nodeIdOpt: Option[String]) = {
+    nodeIdOpt
+      .fold[ActionBuilder[INodeOptReq, AnyContent]] {
+        isAuth() andThen new ActionTransformer[MReq, MNodeOptReq] {
+          override protected def transform[A](request: MReq[A]): Future[MNodeOptReq[A]] = {
+            Future successful MNodeOptReq( None, request, request.user )
+          }
+          override protected def executionContext = ec
+        }
+      } { nodeId =>
+        isNodeAdmin(nodeId, U.PersonNode, U.Lk) andThen new ActionTransformer[MNodeReq, MNodeOptReq] {
+          override protected def transform[A](request: MNodeReq[A]): Future[MNodeOptReq[A]] = {
+            Future successful MNodeOptReq( Some(request.mnode), request, request.user )
+          }
+          override protected def executionContext = ec
+        }
+      }
   }
 
   /**
@@ -85,9 +92,18 @@ final class LkHelp @Inject()(
     * @param r Адрес для возврата.
    * @return 200 Ok и страница с формой.
    */
-  def supportForm(r: Option[String]) = csrf.AddToken {
-    isAuth().async { implicit request =>
-      _supportForm(None, r)
+  def supportForm(nodeIdOpt: Option[String], r: Option[String]) = csrf.AddToken {
+    _nodeIdOptActionBuilder( nodeIdOpt ).async { implicit request =>
+      // Взять дефолтовое значение email'а по сессии
+      val emailsDfltFut = getEmails( request.user.personNodeOptFut )
+
+      emailsDfltFut.flatMap { emailsDflt =>
+        val emailDflt = emailsDflt.headOption.getOrElse("")
+        val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
+        val form = supportFormM.fill(lsr)
+
+        _supportForm2( request.mnodeOpt, form, r, Ok )
+      }
     }
   }
 
@@ -102,18 +118,6 @@ final class LkHelp @Inject()(
     }
   }
 
-  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
-    // Взять дефолтовое значение email'а по сессии
-    val emailsDfltFut = getEmails( request.user.personNodeOptFut )
-
-    emailsDfltFut.flatMap { emailsDflt =>
-      val emailDflt = emailsDflt.headOption.getOrElse("")
-      val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
-      val form = supportFormM.fill(lsr)
-
-      _supportForm2(nodeOpt, form, r, Ok)
-    }
-  }
 
   private def _supportForm2(nodeOpt: Option[MNode], form: Form[MLkSupportRequest], r: Option[String], rs: Status)
                            (implicit request: IReqHdr): Future[Result] = {
@@ -122,62 +126,49 @@ final class LkHelp @Inject()(
     }
   }
 
-  /** Сабмит формы обращения за помощью по узлу, которым управляем. */
-  def supportFormNodeSubmit(adnId: String, r: Option[String]) = csrf.Check {
-    bruteForceProtect {
-      isNodeAdmin(adnId).async { implicit request =>
-        val mnodeOpt = Some(request.mnode)
-        _supportFormSubmit(mnodeOpt, r)
-      }
-    }
-  }
 
   /** Сабмит формы обращения за помощью вне узла. */
-  def supportFormSubmit(r: Option[String]) = csrf.Check {
+  def supportFormSubmit(nodeIdOpt: Option[String], r: Option[String]) = csrf.Check {
     bruteForceProtect {
-      isAuth().async { implicit request =>
-        _supportFormSubmit(None, r)
+      _nodeIdOptActionBuilder( nodeIdOpt ).async { implicit request =>
+        val adnIdOpt = request.mnodeOpt.flatMap(_.id)
+        lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
+        supportFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            LOGGER.debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
+            _supportForm2( request.mnodeOpt, formWithErrors, r, NotAcceptable)
+          },
+
+          {lsr =>
+            val personId = request.user.personIdOpt.get
+            val userEmailsFut = getEmails( request.user.personNodeOptFut )
+
+            val msg = mailer.instance
+            msg.setReplyTo(lsr.replyEmail)
+            msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
+
+            for {
+              ues <- userEmailsFut
+              rdrFut = RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
+              rdr <- {
+                val username = ues.headOption.getOrElse( personId )
+                msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
+                msg.setText {
+                  htmlCompressUtil.txt2str {
+                    emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
+                  }
+                }
+                msg.send()
+
+                rdrFut
+              }
+            } yield {
+              rdr.flashing(FLASH.SUCCESS -> "Your.msg.sent")
+            }
+          }
+        )
       }
     }
-  }
-
-  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
-    val adnIdOpt = nodeOpt.flatMap(_.id)
-    lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
-    supportFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
-        _supportForm2(nodeOpt, formWithErrors, r, NotAcceptable)
-      },
-
-      {lsr =>
-        val personId = request.user.personIdOpt.get
-        val userEmailsFut = getEmails( request.user.personNodeOptFut )
-
-        val msg = mailer.instance
-        msg.setReplyTo(lsr.replyEmail)
-        msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
-
-        for {
-          ues <- userEmailsFut
-          rdrFut = RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
-          rdr <- {
-            val username = ues.headOption.getOrElse( personId )
-            msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
-            msg.setText {
-              htmlCompressUtil.txt2str {
-                emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
-              }
-            }
-            msg.send()
-
-            rdrFut
-          }
-        } yield {
-          rdr.flashing(FLASH.SUCCESS -> "Your.msg.sent")
-        }
-      }
-    )
   }
 
 

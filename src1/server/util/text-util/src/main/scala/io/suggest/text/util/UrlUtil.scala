@@ -2,7 +2,6 @@ package io.suggest.text.util
 
 import java.io.UnsupportedEncodingException
 import java.net.{MalformedURLException, URL, URLDecoder}
-
 import gnu.inet.encoding.IDNA
 import io.suggest.util.logs.MacroLogsImplLazy
 
@@ -24,7 +23,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
   import LOGGER._
 
   // Ссылки, которые не должны преобразовываться при абсолютизации ссылки.
-  private val IGNORED_PROTOCOL_PATTERN = "(?i)^\\s*(javascript|mailto|about|ftp|feed|news):".r.pattern
+  private lazy val IGNORED_PROTOCOL_PATTERN = "(?i)^\\s*(javascript|mailto|about|ftp|feed|news):".r.pattern
 
   // Тут какие-то костыли для percent-encoding http://en.wikipedia.org/wiki/Percent-encoding
   private val RESERVED_QUERY_CHARS = "%&;=:?#"
@@ -45,7 +44,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
 
 
   // Регэксп для отсеивания нежелательных хостов.
-  private val INVALID_HOSTNAME_RE = {
+  private lazy val INVALID_HOSTNAME_RE = {
     // TODO вынести reList в файл и сделать возможность периодического перечитывания файла.
     val reList = List(
       // запрещаем ip-адреса
@@ -74,10 +73,10 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
   }
 
   // Регэксп для отсеивания ссылок/линков на картинки.
-  private val INVALID_IMAGE_RE = "\\.(bmp|raw)$".r
+  private lazy val INVALID_IMAGE_RE = "\\.(bmp|raw)$".r
 
   // Список регэкспов для отсеивания нежелателньых и мусорных ссылок.
-  private val INVALID_URL_PATTERNS : List[Regex] = {
+  private lazy val INVALID_URL_PATTERNS : List[Regex] = {
     val reStrList = List(
       // есть много сайтов, которые комменты делают отдельными страницами (news2.ru, snob.ru и другие).
       "://[^/]+/.+comment(([.a-z]{4,6})?\\?.+=[0-9]+|/?[0-9]+/?$)",
@@ -127,6 +126,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     reStrList.map(reStr => ("(?i)" + reStr).r)
   }
 
+  val PORT_NUMBER_RE = ":[0-9]+$".r
 
 
   /**
@@ -500,6 +500,18 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     !INVALID_HOSTNAME_RE.pattern.matcher(hostname).matches()
   }
 
+  /** Remove port number (including colon) from hostname:
+    * "suggest.io:443" => "suggest.io"
+    */
+  def urlHostStripPort(host: String): String = {
+    var host2 = host
+    val portRe = PORT_NUMBER_RE
+
+    if ( portRe.pattern.matcher(host2).find() )
+      host2 = portRe.replaceFirstIn( host2, "" )
+
+    host2
+  }
 
   /**
    * Является ли указанная ссылка/линк на картинку валидным?
@@ -539,7 +551,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @return Строка dkey.
    */
   def url2dkey(url: String): String = url2dkey(new URL(url))
-  def url2dkey(url: URL): String    = host2dkey(url.getHost)
+  def url2dkey(url: URL): String    = host2dkey( url.getHost )
 
   /**
    * Срезать все www. в начале хостнейма.
