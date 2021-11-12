@@ -65,7 +65,8 @@ object HttpClient extends Log {
         Option( domLocation.hostname )
       }
       .exists { hostname =>
-        hostname.nonEmpty //&& (hostname equalsIgnoreCase "suggest.io")
+        hostname.nonEmpty &&
+        (hostname equalsIgnoreCase "suggest.io")
         // TODO "suggest.io" - localhost:9000 for dev workstation?
       }
 
