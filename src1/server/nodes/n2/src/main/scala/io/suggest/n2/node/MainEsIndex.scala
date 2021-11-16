@@ -332,12 +332,11 @@ final class MainEsIndex @Inject()(
           ),*/
 
           // 2021-11-10: Added for FTS-indexing for stored html-version of ads.
-          // No synonim-filter here: synonimising only in query-time.
-          //CONTENT_FTS_INDEX_ANALYZER -> Analyzer.custom(
-          //  charFilters = HTML_STRIP_CHAR_FILTER :: Nil,
-          //  tokenizer = STD_TN,
-          //  filters = WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
-          //),
+          CONTENT_FTS_INDEX_ANALYZER -> Analyzer.custom(
+            charFilters = HTML_STRIP_CHAR_FILTER :: Nil,
+            tokenizer = STD_TN,
+            filters = WORD_DELIM_FN :: LOWERCASE_FN :: STEM_RU_FN :: STEM_EN_FN :: Nil,
+          ),
 
         ),
       )

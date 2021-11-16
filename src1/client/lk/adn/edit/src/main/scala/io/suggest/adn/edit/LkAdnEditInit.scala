@@ -35,21 +35,21 @@ trait LkAdnEditInit extends InitRouter {
 
     // Рендерим основную форму:
     circuit
-      .wrap(identityRootF)( module.lkAdnEditFormR.apply )
+      .wrap(identityRootF)( module.lkAdnEditFormR.component.apply )
       .renderIntoDOM(
         VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.FORM_CONTAINER_ID )
       )
 
     // Рендерить компонент сохранения в правый div.
     circuit
-      .wrap(identityRootF)( module.rightBarR.apply )
+      .wrap(identityRootF)( module.rightBarR.component.apply )
       .renderIntoDOM(
         VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.SAVE_BTN_CONTAINER_ID )
       )
 
     // Рендерить компонент попапов формы.
     circuit
-      .wrap(identityRootF)( module.lkAdnEditPopupsR.apply )
+      .wrap(identityRootF)( module.lkAdnEditPopupsR.component.apply )
       .renderIntoDOM( PopupsContR.initDocBody() )
 
   }

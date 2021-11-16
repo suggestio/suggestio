@@ -402,6 +402,4 @@ class LkAdnEditFormR(
     .renderBackend[Backend]
     .build
 
-  def apply(rootProps: Props) = component(rootProps)
-
 }

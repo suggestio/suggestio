@@ -559,13 +559,6 @@ lazy val secAvUtil = {
     .dependsOn(util, streamsUtil, logsMacro)
 }
 
-/** Some nodes-related stuff for server-side. */
-lazy val nodesWww = {
-  val id = "nodes-www"
-  Project(id = id, base = file(DIR0 + "server/nodes/" + id))
-    .dependsOn(commonWww, n2)
-}
-
 /** ElasticSearch utilities. */
 lazy val esUtil = {
   val id = "es-util"
@@ -617,7 +610,7 @@ lazy val www = project
   .dependsOn(
     securesocial, secAvUtil,
     esUtil, mgeo, n2, mbill2,
-    nodesWww,
+    commonWww,
     streamsUtil, brotliUtil,
     textUtil,
     svgUtil, ipgeobase, stat
@@ -702,7 +695,7 @@ lazy val server = project
     streamsUtil, brotliUtil,
     util, esUtil, textUtil, swfs, n2, securesocial,
     ipgeobase, stat,
-    mgeo, commonWww, nodesWww,
+    mgeo, commonWww,
     commonSlickDriver, mbill2,
     secWwwUtil, secAvUtil, svgUtil,
     www

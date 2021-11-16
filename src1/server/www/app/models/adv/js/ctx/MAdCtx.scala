@@ -16,7 +16,6 @@ object MAdCtx {
   /** json-маппинг сериализованного элемента MAdCtx. */
   implicit def madCtxReads: Reads[MAdCtx] = (
     (__ \ ID_FN).read[String] and
-    (__ \ CONTENT_FN).read[MAdContentCtx] and
     (__ \ PICTURE_FN).readNullable[MPictureCtx] and
     (__ \ SC_URL_FN).readNullable[String]
   )(apply _)
@@ -25,7 +24,6 @@ object MAdCtx {
   /** json-unmapping для сериализации экземпляров MAdCtx. */
   implicit def madCtxWrites: Writes[MAdCtx] = (
     (__ \ ID_FN).write[String] and
-    (__ \ CONTENT_FN).write[MAdContentCtx] and
     (__ \ PICTURE_FN).writeNullable[MPictureCtx] and
     (__ \ SC_URL_FN).writeNullable[String]
   )(unlift(MAdCtx.unapply))
@@ -35,7 +33,6 @@ object MAdCtx {
 
 case class MAdCtx(
   id      : String,
-  content : MAdContentCtx,
   picture : Option[MPictureCtx] = None,
   scUrl   : Option[String] = None
 )

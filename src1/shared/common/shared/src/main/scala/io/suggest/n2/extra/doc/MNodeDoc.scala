@@ -1,10 +1,11 @@
 package io.suggest.n2.extra.doc
 
-import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.es.{EsConstants, IEsMappingProps, MappingDsl}
 import io.suggest.jd.tags.JdTag
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
+import io.suggest.scalaz.ZTreeUtil.{ZTREE_FORMAT, zTreeUnivEq}
+import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import scalaz.Tree
 
@@ -25,6 +26,8 @@ object MNodeDoc
   extends IEsMappingProps
 {
 
+  @inline implicit def univEq: UnivEq[MNodeDoc] = UnivEq.derive
+
   /** Модель названий полей модели [[MNodeDoc]]. */
   object Fields {
 
@@ -36,8 +39,10 @@ object MNodeDoc
 
   /** Поддержка play-json. */
   implicit val nodeDocJson: OFormat[MNodeDoc] = {
-    (__ \ Fields.TEMPLATE_FN).format[Tree[JdTag]]
-      .inmap[MNodeDoc](apply, _.template)
+    (
+      (__ \ Fields.TEMPLATE_FN).format[Tree[JdTag]] and
+      (__ \ Fields.HTML_FN).formatNullable[String]
+    )(apply, unlift(unapply))
   }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
@@ -45,12 +50,14 @@ object MNodeDoc
     val F = Fields
     Json.obj(
       F.TEMPLATE_FN -> FObject.disabled,
-      //F.HTML_FN -> FText(  ),
+      F.HTML_FN -> FText(
+        analyzer = Some( EsConstants.CONTENT_FTS_INDEX_ANALYZER ),
+      ),
     )
   }
 
   def template = GenLens[MNodeDoc](_.template)
-  //def html = GenLens[MNodeDoc](_.html)
+  def html = GenLens[MNodeDoc](_.html)
 
 }
 
@@ -60,8 +67,10 @@ object MNodeDoc
   * @param template JSON-Document, т.е. шаблон, описывающий рендер какого-то внешнего контента.
   *                 Сам контент является внешним по отношению к шаблону.
   *                 В узле контент представлен эджами, которые слинкованы с документом по предикатам и/или edge-uid'ам.
+  * @param html HTML-version of document.
+  *             For ad-editor, rendered on editor client-side and POSTed from client.
   */
 case class MNodeDoc(
                      template   : Tree[JdTag],
-                     //html       : Option[String],
+                     html       : Option[String] = None,
                    )

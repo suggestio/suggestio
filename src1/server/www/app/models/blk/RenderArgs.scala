@@ -1,13 +1,9 @@
 package models.blk
 
-import io.suggest.ad.blk.ent.MEntity
 import io.suggest.common.css.ITopLeft
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.n2.node.MNode
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import models.blk
 import models.im.make.MakeResult
-import util.blocks.{BlockConf, BlocksConf}
 
 /**
  * Suggest.io
@@ -17,10 +13,6 @@ import util.blocks.{BlockConf, BlocksConf}
  */
 
 trait IRenderArgs {
-
-  /** conf блока */
-  // TODO Удалить следом за любым кодом поддержки старых карточек.
-  final def bc         : BlockConf = BlocksConf.Block20
 
   /** Рекламная карточка, которую надо отрендерить. */
   def mad             : MNode
@@ -65,22 +57,6 @@ trait IRenderArgs {
 
 }
 
-/** Неполный враппер для [[IRenderArgs]]. Нужен, т.к. не везде допустимо враппать поле cssClasses. */
-sealed trait IRenderArgsWrapper0 extends IRenderArgs {
-  def brArgs: IRenderArgs
-
-  override def mad          = brArgs.mad
-  override def withEdit     = brArgs.withEdit
-  override def szMult       = brArgs.szMult
-  override def topLeft      = brArgs.topLeft
-  override def bgImg        = brArgs.bgImg
-  override def inlineStyles = brArgs.inlineStyles
-
-  override def cssClasses   = brArgs.cssClasses
-  override def indexOpt     = brArgs.indexOpt
-  override def apiVsn       = brArgs.apiVsn
-}
-
 
 /** Параметры рендера блока. Дефолтовая реализация [[IRenderArgs]]. */
 case class RenderArgs(
@@ -97,28 +73,3 @@ case class RenderArgs(
   override val apiVsn         : MScApiVsn               = MScApiVsns.unknownVsn
 )
   extends IRenderArgs
-
-
-
-
-/**
- * Контейнер параметров рендера css-стиля блока.
- * @param entity Текущее поле карточки.
- * @param yoff Сдвиг по оси y.
- */
-case class FieldCssRenderArgs(
-                               brArgs      : blk.IRenderArgs,
-                               entity      : MEntity,
-                               yoff        : Int,
-                               override val isFocused : Boolean     = false,
-                               override val cssClasses: Seq[String] = Nil
-)
-  extends IRenderArgsWrapper0
-{
-  override def indexOpt: Option[Int] = None
-
-  def aovfCoords = entity.coords
-
-  def xy = MCoords2di(38, 70*( entity.id + 1) + yoff)
-
-}

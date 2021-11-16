@@ -1,3 +1,0 @@
-@(args: blk.IRenderArgs)(implicit ctx: Context)
-
-@* Стили для блока в общем. *@

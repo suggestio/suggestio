@@ -5,7 +5,6 @@ import diode.data.PendingBase
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.save.MSaveS
 import io.suggest.ad.edit.srv.ILkAdEditApi
-import io.suggest.lk.m.Save
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -32,7 +31,7 @@ class SaveAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопке сохранения карточки.
-    case Save =>
+    case m: Save =>
       val v0 = modelRW.value
       if (v0.save.saveReq.isPending) {
         // Уже сейчас есть какой-то запущенный реквест сохранения.
@@ -40,21 +39,22 @@ class SaveAh[M](
         noChange
 
       } else {
-      // TODO Проверить текущие upload-запросы.
+        // TODO Проверить текущие upload-запросы.
         // Реквест сохранения можно отправить на сервер прямо сейчас. Подготовить данные для сохранения:
-        val form = v0.toForm
-        val conf = confRO.value
-
         val pot2 = v0.save.saveReq
           .pending()
         val pot2p = pot2.asInstanceOf[PendingBase]
         val ts = pot2p.startTime
 
         val fx = Effect {
-          val saveFut = lkAdEditApi.saveAdSubmit( conf.producerId, form )
-          saveFut.transform { tryRes =>
-            Success( SaveAdResp(ts, tryRes) )
-          }
+          // TODO sumbit non-edit HTML version of
+          val form = v0.toForm( m.innerHtml() )
+          val conf = confRO.value
+          lkAdEditApi
+            .saveAdSubmit( conf.producerId, form )
+            .transform { tryRes =>
+              Success( SaveAdResp(ts, tryRes) )
+            }
         }
 
         val v2 = _save_saveReq_LENS.set( pot2 )( v0 )

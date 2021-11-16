@@ -138,3 +138,6 @@ case class EventNodeIdSet( eventPtr: MEventEditPtr, nodeId: String ) extends IEv
 case class EventAskMoreAds( resp: Pot[Seq[MLkAdsOneAdResp]] = Pot.empty ) extends IEventAction
 /** Добавить или удалить карточку из действия. */
 case class EventActionAdAddRemove( eventPtr: MEventEditPtr, isAdd: Boolean ) extends IEventAction
+
+/** Экшен сохранения документа. */
+case class Save(innerHtml: () => Option[String]) extends ILkEditAction

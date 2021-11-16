@@ -5,8 +5,9 @@ import io.suggest.ad.edit.m.edit.MDocS
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.save.MSaveS
-import io.suggest.jd.{MJdData, MJdEdge}
+import io.suggest.jd.MJdEdge
 import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.extra.doc.MNodeDoc
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ws.pool.m.MWsPoolS
 import japgolly.univeq._
@@ -61,11 +62,14 @@ case class MAeRoot(
                   ) {
 
   /** Экспорт данных формы для отправки на сервер. */
-  def toForm: MJdData = {
+  def toForm(innerHtml: Option[String]): MAdEditSave = {
     val jdArgs = doc.jdDoc.jdArgs
-    MJdData(
+    MAdEditSave(
       // id карточки здесь не имеет никакого значения, т.к. он передаётся в URL.
-      doc = jdArgs.data.doc,
+      doc = MNodeDoc(
+        template = jdArgs.data.doc.template,
+        html = innerHtml,
+      ),
       edges = {
         val videoPred = MPredicates.JdContent.Frame
         val resetUrlF = MJdEdge.url set None

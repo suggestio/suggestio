@@ -5,7 +5,6 @@ import io.suggest.adn.edit.m.MAdnResView
 import io.suggest.cal.m.MCalType
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.n2.ad.MNodeAd
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.n2.extra.{MNodeCalendar, MNodeExtras}
@@ -259,10 +258,6 @@ final case class MNode(
                       )
   extends EsModelT
 {
-
-  // TODO ad - Delete. Rest parts of ancient rendering format, not used anymore.
-  @deprecated("Use extras.doc with jd-format", "2019")
-  def ad = MNodeAd.empty
 
   lazy val guessDisplayName: Option[String] = {
     meta.basic

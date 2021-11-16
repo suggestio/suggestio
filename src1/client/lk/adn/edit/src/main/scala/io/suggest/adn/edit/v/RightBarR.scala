@@ -1,11 +1,12 @@
 package io.suggest.adn.edit.v
 
+import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.adn.edit.m.MLkAdnEditRoot
+import io.suggest.adn.edit.m.{MAdnEditForm, MLkAdnEditRoot, Save}
 import io.suggest.lk.r.SaveR
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, CallbackTo, ScalaComponent}
 
 /**
   * Suggest.io
@@ -15,7 +16,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Изначально содержал только кнопку "Сохранить" с сопутствующим обвесом.
   */
 class RightBarR(
-                 val saveR: SaveR
+                 saveR: SaveR
                ) {
 
   type Props_t = MLkAdnEditRoot
@@ -23,33 +24,39 @@ class RightBarR(
 
 
   case class State(
-                    savePotC      : ReactConnectProxy[saveR.PropsVal]
+                    savePotC      : ReactConnectProxy[Pot[MAdnEditForm]]
                   )
 
   class Backend($: BackendScope[Props, State]) {
 
     def render(s: State): VdomElement = {
       <.div(
-        s.savePotC { saveR.apply }
+        s.savePotC { reqPotProxy =>
+          saveR.component(
+            reqPotProxy.zoom { reqPot =>
+              saveR.PropsVal(
+                currentReq = reqPot,
+                onClick = CallbackTo.pure( Save ),
+              )
+            }
+          )
+        },
       )
     }
 
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mrootProxy =>
       State(
         savePotC = mrootProxy.connect { mroot =>
-          saveR.PropsVal(
-            currentReq = mroot.internals.saving
-          )
+          mroot.internals.saving
         }
       )
     }
     .renderBackend[Backend]
     .build
-
-  def apply(mrootProxy: Props) = component( mrootProxy )
 
 }

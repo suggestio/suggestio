@@ -87,11 +87,11 @@ final class SysAd @Inject()(
         szMult  = 1.0F,
         vsnOpt  = request.mad.versioning.version,
         imgFmt  = MImgFormats.JPEG,
-        wideOpt = for (bm <- request.mad.ad.blockMeta) yield {
+        /*wideOpt = for (bm <- request.mad.ad.blockMeta) yield {
           OneAdWideQsArgs(
             width = bm.width * 2
           )
-        }
+        }*/
       )
       val qf = oneAdQsArgsFormM(madId)
         .fill( formArgs )

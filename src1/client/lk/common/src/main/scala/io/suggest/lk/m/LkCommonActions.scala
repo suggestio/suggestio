@@ -148,10 +148,6 @@ case class HandleNewHistogramInstalled(nodeId: String) extends ILkCommonAction
 case object PurgeUnusedEdges extends ILkCommonAction
 
 
-/** Экшен сохранения документа. */
-case object Save extends ILkCommonAction
-
-
 /** Запустить инициализации капчи. */
 case object CaptchaInit extends ILkCommonAction
 /** Возвращается результат (пере-)инициализации капчи. */

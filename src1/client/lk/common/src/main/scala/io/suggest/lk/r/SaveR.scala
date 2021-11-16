@@ -6,14 +6,12 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.Save
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.spa.DAction
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 
 /**
@@ -29,7 +27,8 @@ class SaveR {
     * @param currentReq Pot текущего реквеста сохранения, если есть.
     */
   case class PropsVal(
-                       currentReq: Pot[_]
+                       currentReq: Pot[_],
+                       onClick: CallbackTo[DAction],
                      )
   implicit object SaveRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
@@ -42,9 +41,12 @@ class SaveR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    /** Клик по кнопке сохранения. */
     private def onSaveBtnClick: Callback = {
-      dispatchOnProxyScopeCB($, Save)
+      $.props >>= { p: Props =>
+        p.value.onClick >>= { action: DAction =>
+          p.dispatchCB( action )
+        }
+      }
     }
 
     def render(propsProxy: Props): VdomElement = {
@@ -104,7 +106,5 @@ class SaveR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsProxy: Props) = component( propsProxy )
 
 }

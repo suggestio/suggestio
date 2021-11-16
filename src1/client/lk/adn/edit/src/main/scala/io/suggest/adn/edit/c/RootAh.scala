@@ -2,8 +2,8 @@ package io.suggest.adn.edit.c
 
 import diode._
 import io.suggest.adn.edit.api.ILkAdnEditApi
-import io.suggest.adn.edit.m.{MAdnEditInternals, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
-import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, HandleNewHistogramInstalled, Save}
+import io.suggest.adn.edit.m.{MAdnEditInternals, MAdnEditPopups, MLkAdnEditRoot, Save, SaveResp}
+import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, HandleNewHistogramInstalled}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.primo.id._

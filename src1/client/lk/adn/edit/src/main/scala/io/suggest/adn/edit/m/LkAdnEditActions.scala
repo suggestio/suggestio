@@ -36,3 +36,4 @@ case class SetAudienceDescr(audienceDescr: String) extends ILkAdnEditAction
 /** Результат запроса к серверу на тему сохранения данных формы редактирования ADN-узла. */
 case class SaveResp(tryResp: Try[MAdnEditForm]) extends ILkAdnEditAction
 
+case object Save extends ILkAdnEditAction

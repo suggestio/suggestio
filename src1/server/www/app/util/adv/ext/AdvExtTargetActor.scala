@@ -123,7 +123,6 @@ class AdvExtTargetActor @Inject()(
       // Запустить заполнение контекста исходными данными по цели.
       val madCtx = MAdCtx(
         id      = mad.id.get,
-        content = MAdContentCtx.fromAd( mad, args.request.producer ),
         scUrl   = Some( getScUrl(MExtReturns.ToAd) ),
         // Сразу вставить URL картинки в контекст.
         picture = Some( _customArgs.jsPicCtx )

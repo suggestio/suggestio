@@ -7,14 +7,8 @@
 @import util.blocks._
 @import args.mad
 
-<div
-  @if( isWithAction && (!args.bc.hrefBlock || !mad.meta.business.siteUrl.nonEmpty) ) {
-    class="js-shop-link"
-    @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
-      data-producer-id="@producerId"
-    }
-    data-ad-id="@mad.id"
+<div>
+  @for(doc <- args.mad.extras.doc; html <- doc.html) {
+    @Html( html )
   }
->
-  @args.bc.renderBlock(args)
 </div>

@@ -2,9 +2,9 @@ package controllers
 
 import javax.inject.Inject
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings}
-import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
+import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit, MAdEditSave}
 import io.suggest.ad.form.AdFormConstants
-import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.{EmptyProduct, OptionUtil}
 import io.suggest.ctx.CtxData
 import io.suggest.err.HttpResultingException
 import HttpResultingException._
@@ -24,6 +24,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
 import models.req.{BfpArgs, IReq}
+import org.owasp.html.HtmlChangeListener
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -33,6 +34,7 @@ import util.ext.ExtRscUtil
 import util.mdr.MdrUtil
 import util.n2u.N2VldUtil
 import util.sec.CspUtil
+import util.tpl.HtmlSanitizer
 import views.html.lk.ad.edit._
 
 import scala.concurrent.Future
@@ -125,30 +127,61 @@ final class LkAdEdit @Inject() (
     */
   def saveAdSubmit(adIdOptU: Option[MEsUuId], producerIdU: Option[MEsUuId]) = bruteForceProtect(_BFP_ARGS) {
     csrf.Check {
-      canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MJdData] ) { implicit request =>
+      canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MAdEditSave] ) { implicit request =>
         import esModel.api._
 
         // Взять форму из реквеста, провалидировать
         lazy val logPrefix = s"saveAdSubmit(${request.madOpt.fold("pro")(_ => "a")}d#${adIdOptU.orElse(producerIdU).orNull}):"
 
+        val jdDataVldFut = Future {
+          lkAdEdFormUtil
+            .earlyValidateJdData( request.body )
+            .fold(
+              // Не удалось понять присланные эджи:
+              {errorsNel =>
+                val msg = errorsNel
+                  .iterator
+                  .mkString(", ")
+                LOGGER.warn(s"$logPrefix Failed to validate remote edges: $msg")
+                val resFut = errorHandler.onClientError(request, NOT_ACCEPTABLE, s"edges: $msg")
+                throw new HttpResultingException( resFut )
+              },
+              identity
+            )
+        }
+
+        // Validate HTML-text in background:
+        val htmlCleanedOptFut = Future {
+          for {
+            html0 <- request.body.doc.html
+          } yield {
+            case class DiscardedCtx(
+                                     var tags: List[String] = Nil,
+                                     var attrs: List[(String, Seq[String])] = Nil,
+                                   )
+              extends EmptyProduct
+
+            val listener = new HtmlChangeListener[DiscardedCtx] {
+              override def discardedTag(context: DiscardedCtx, elementName: String): Unit =
+                context.tags ::= elementName
+              override def discardedAttributes(context: DiscardedCtx, tagName: String, attributeNames: String*): Unit =
+                context.attrs ::= (tagName -> attributeNames)
+            }
+            val discardCtx = DiscardedCtx()
+            val resultHtml = HtmlSanitizer.textFmtPolicy.sanitize( html0, listener, discardCtx)
+
+            if (discardCtx.nonEmpty)
+              LOGGER.info(s"$logPrefix Sanitizing HTML[${html0.length} => ${resultHtml.length}ch] erased some tags/attrs (person#${request.user.personIdOpt.orNull} @ ${request.remoteClientAddress}):\n tags[${discardCtx.tags.length}]: [${discardCtx.tags.toSet.mkString(", ")}]\n attrs[${discardCtx.attrs.length}]: [${discardCtx.attrs.iterator.map { case (t, as) => t -> as.mkString("[", ",", "]") }.toSet.mkString(", ")}]")
+            else
+              LOGGER.trace(s"$logPrefix Successfully sanitized original HTML[${html0.length}ch]")
+
+            resultHtml
+          }
+        }
+
         (for {
           // Сначала early-валидация эджей. Для валидации шаблона нужны рабочие эджи, поэтому валидация идёт в несколько шагов.
-          jdData1 <- Future {
-            lkAdEdFormUtil
-              .earlyValidateJdData( request.body )
-              .fold(
-                // Не удалось понять присланные эджи:
-                {errorsNel =>
-                  val msg = errorsNel
-                    .iterator
-                    .mkString(", ")
-                  LOGGER.warn(s"$logPrefix Failed to validate remote edges: $msg")
-                  val resFut = errorHandler.onClientError(request, NOT_ACCEPTABLE, s"edges: $msg")
-                  throw new HttpResultingException( resFut )
-                },
-                identity
-              )
-          }
+          jdData1 <- jdDataVldFut
 
           // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
           vldEdgesMap <- n2VldUtil
@@ -160,7 +193,7 @@ final class LkAdEdit @Inject() (
 
           tpl2 = lkAdEdFormUtil
             .validateTpl(
-              template      = request.body.doc.template,
+              template      = jdData1.doc.template,
               vldEdgesMap   = vldEdgesMap,
             )
             .fold(
@@ -175,6 +208,9 @@ final class LkAdEdit @Inject() (
               },
               identity
             )
+
+          htmlCleanedOpt <- htmlCleanedOptFut
+          // TODO Parse cleaned HTML, render into JD+HTML VDOM.
 
           // -- Есть на руках валидный шаблон. Можно создавать новую карточку и др.узлы. dry-run-часть завершена --
 
@@ -250,7 +286,8 @@ final class LkAdEdit @Inject() (
               ),
               extras  = MNodeExtras(
                 doc = Some(MNodeDoc(
-                  template = tpl2
+                  template = tpl2,
+                  html     = htmlCleanedOpt,
                 ))
               ),
               edges = MNodeEdges(

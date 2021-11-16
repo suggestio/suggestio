@@ -4,10 +4,11 @@ import com.github.react.dnd.backend.html5.Html5Backend
 import com.github.react.dnd.backend.touch.TouchBackend
 import com.github.react.dnd.{DndProvider, DndProviderProps}
 import diode.FastEq
+import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths, MBlockExpandMode}
 import io.suggest.ad.edit.c.DocEditAh
-import io.suggest.ad.edit.m.MAeRoot
+import io.suggest.ad.edit.m.{MAdEditFormInit, MAeRoot, Save}
 import io.suggest.ad.edit.m.edit.{MStripEdS, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
@@ -42,6 +43,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
+import org.scalajs.dom
 import scalacss.ScalaCssReact._
 import scalaz.{EphemeralStream, TreeLoc}
 
@@ -98,7 +100,7 @@ class LkAdEditFormR(
                               colSuggPropsOptC                : ReactConnectProxy[Option[colorsSuggestR.PropsVal]],
                               cropBtnPropsOptC                : ReactConnectProxy[cropBtnR.Props_t],
                               rightYOptC                      : ReactConnectProxy[Option[Int]],
-                              savePropsC                      : ReactConnectProxy[saveR.PropsVal],
+                              savePropsC                      : ReactConnectProxy[Pot[MAdEditFormInit]],
                               useAsMainStripPropsOptC         : ReactConnectProxy[Option[useAsMainR.PropsVal]],
                               deletePropsOptC                 : ReactConnectProxy[Option[deleteBtnR.PropsVal]],
                               heightPropsOptC                 : ReactConnectProxy[Option[Int]],
@@ -130,6 +132,10 @@ class LkAdEditFormR(
 
 
   protected class Backend($: BackendScope[Props, State]) {
+
+    /** Preview container-tag ref. Used to dump rendered HTML-version of ad blocks.
+      * In next-gen editor, only HTML-version will be submitted and parsed server-side. */
+    private val _previewContainerRef = Ref[dom.html.Div]
 
     /** Любой клик где-то в форме. Нужно для вычисления кликов за пределами каких-либо элементов. */
     private val _onBodyClick: Callback =
@@ -176,20 +182,22 @@ class LkAdEditFormR(
             LCSS.previewOuterCont,
 
             // Селектор масштаба карточки.
-            s.scalePropsOptC { scaleR.apply },
+            s.scalePropsOptC { scaleR.component.apply },
 
             <.div(
               LCSS.previewInnerCont,
 
               // Тело превьюшки в виде плитки.
-              s.jdPreviewArgsC { jdEditR.JdRrrEdit.DocumentDnd.apply },
+              <.div.withRef( _previewContainerRef )(
+                s.jdPreviewArgsC { jdEditR.JdRrrEdit.DocumentDnd.apply },
+              ),
 
               <.div(
                 ^.`class` := Css.CLEAR
               ),
 
               // Кнопка переключения touch-режима.
-              s.isTouchDevSomeC { touchSwitchR.apply },
+              s.isTouchDevSomeC { touchSwitchR.component.apply },
             )
           ),
 
@@ -217,7 +225,7 @@ class LkAdEditFormR(
                         current       = h,
                       )
                     }
-                  }(plusMinusControlsR.apply)(implicitly, plusMinusOptFeq)
+                  }(plusMinusControlsR.component.apply)(implicitly, plusMinusOptFeq)
                 },
 
                 s.widthPropsOptC { widthPxOptProxy =>
@@ -232,12 +240,12 @@ class LkAdEditFormR(
                         current       = w,
                       )
                     }
-                  }( plusMinusControlsR.apply )( implicitly, plusMinusOptFeq )
+                  }( plusMinusControlsR.component.apply )( implicitly, plusMinusOptFeq )
                 },
 
               ),
 
-              s.expandModeOptC { showWideR.apply },
+              s.expandModeOptC { showWideR.component.apply },
               br,
               br,
 
@@ -246,11 +254,11 @@ class LkAdEditFormR(
               br, br, br,
 
               // Управление main-блоками.
-              s.useAsMainStripPropsOptC { useAsMainR.apply },
+              s.useAsMainStripPropsOptC { useAsMainR.component.apply },
               br,
 
               // Кнопка удаления текущего блока.
-              s.stripEdSOptC { deleteStripBtnR.apply },
+              s.stripEdSOptC { deleteStripBtnR.component.apply },
             )
             // Слайд редактор блока.
             val slideBlockVdom = s.slideBlocks.block { propsOpt =>
@@ -263,10 +271,10 @@ class LkAdEditFormR(
               //^.onDrop ==> _onBlockBgDrop,
 
               // Выбор цвета фона блока.
-              s.colors.stripBgCbOptC { colorCheckBoxR.apply },
+              s.colors.stripBgCbOptC { colorCheckBoxR.component.apply },
 
               // Рендер цветов текущей картинки
-              s.colSuggPropsOptC { colorsSuggestR.apply },
+              s.colSuggPropsOptC { colorsSuggestR.component.apply },
 
               // Рендерить картинку и управление ей, обернув в поддержку таскания файлов:s
               p.wrap { mroot =>
@@ -278,10 +286,10 @@ class LkAdEditFormR(
               }(imgEditBtnR.apply)(implicitly, ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
 
               // Кнопка запуска кропа для картинки:
-              s.cropBtnPropsOptC { cropBtnR.apply },
+              s.cropBtnPropsOptC { cropBtnR.component.apply },
 
               // Отрендерить данные процесса загрузки:
-              s.upStateOptC { uploadStatusR.apply },
+              s.upStateOptC { uploadStatusR.component.apply },
 
             )
             val blockBgSlide = s.slideBlocks.blockBg { propsOpt =>
@@ -357,7 +365,33 @@ class LkAdEditFormR(
             // Кнопка сохранения карточки.
             val saveBtn = <.div(
               ^.`class` := Css.Floatt.RIGHT,
-              s.savePropsC { saveR.apply }
+              s.savePropsC { potProxy =>
+                saveR.component(
+                  potProxy.zoom { currentReqPot =>
+                    saveR.PropsVal(
+                      currentReqPot,
+                      onClick = CallbackTo.lazily {
+                        _previewContainerRef.get.asCallback.map { divOpt =>
+                          Save(
+                            // Grab html-version of current ad: TODO Grab non-editor version (conf.isEdit = false)?
+                            innerHtml = () => {
+                              for {
+                                div <- divOpt
+                                firstChildNode <- Option( div.firstChild )
+                                firstChild = firstChildNode.asInstanceOf[dom.html.Element]
+                                innerHtml <- Option( firstChild.innerHTML )
+                                if innerHtml.nonEmpty
+                              } yield {
+                                innerHtml
+                              }
+                            },
+                          )
+                        }
+                      },
+                    )
+                  }
+                )
+              }
             )
 
             val editors = <.div(
@@ -493,11 +527,7 @@ class LkAdEditFormR(
           mroot.layout.rightPanelY
         }( OptFastEq.OptValueEq ),
 
-        savePropsC = p.connect { mroot =>
-          saveR.PropsVal(
-            currentReq = mroot.save.saveReq
-          )
-        }(saveR.SaveRPropsValFastEq),
+        savePropsC = p.connect { _.save.saveReq },
 
         useAsMainStripPropsOptC = p.connect { mroot =>
           for {

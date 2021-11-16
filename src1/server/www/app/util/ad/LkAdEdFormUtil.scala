@@ -2,9 +2,9 @@ package util.ad
 
 import javax.inject.Inject
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.edit.m.MAdEditSave
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
-import io.suggest.err.ErrorConstants
 import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.scalaz.ZTreeUtil._
@@ -25,6 +25,7 @@ import io.suggest.text.StringUtil.StringCollUtil
 import scala.concurrent.Future
 import scalaz.{EphemeralStream, NonEmptyList, Tree, Validation, ValidationNel}
 import scalaz.syntax.apply._
+import scalaz.syntax.validation._
 import util.n2u.N2VldUtil
 import util.tpl.HtmlSanitizer
 
@@ -117,9 +118,7 @@ final class LkAdEdFormUtil @Inject() (
     * @return Фьючерс с результатом валидации.
     *         exception обозначает ошибку валидации.
     */
-  def earlyValidateJdData(form: MJdData): StringValidationNel[MJdData] = {
-    val nodeIdVld = Validation.liftNel(form.doc.tagId.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
-
+  def earlyValidateJdData(form: MAdEditSave): StringValidationNel[MAdEditSave] = {
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
     val edgesMap = form.edges
       .zipWithIdIter[EdgeUid_t]
@@ -134,7 +133,7 @@ final class LkAdEdFormUtil @Inject() (
       LOGGER.warn( s"earlyValidateEdges(${form.edges.size})[${System.currentTimeMillis()}]: Failed to validate edges: $edgesVlds\n edges = \n ${edges1.mkString("\n ")}" )
 
     (
-      (nodeIdVld *> Validation.success[NonEmptyList[String], MJdDoc](form.doc)) |@|
+      form.doc.successNel[String] |@|
       edgesVlds |@|
       // Заголовок: trim + limitLen
       ScalazUtil.liftNelOpt( form.title ) { title0 =>
@@ -143,7 +142,7 @@ final class LkAdEdFormUtil @Inject() (
         Validation.success[NonEmptyList[String], String]( title2 )
       } // Убрать пустые строки:
         .map(_.filter(_.nonEmpty))
-    )( MJdData.apply )
+    )( MAdEditSave.apply )
   }
 
 

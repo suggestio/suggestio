@@ -162,9 +162,9 @@ trait OAuth1Support
     val nreq = ning.preparePost(MK_MESSAGE_URL)
 
     // Собираем читабельный текст твита.
-    val tweetTextOpt = mad.ad.richDescr
+    val tweetTextOpt = Option.empty[String] /* TODO mad.ad.richDescr
       .map { rd => rdescr2tweetLeadingText(rd.text) }
-      .filter { !_.isEmpty }
+      .filter { !_.isEmpty }*/
     LOGGER.trace {
       tweetTextOpt match {
         case Some(tt) => s"Tweet readable text lenght = ${tt.length}: $tt"
