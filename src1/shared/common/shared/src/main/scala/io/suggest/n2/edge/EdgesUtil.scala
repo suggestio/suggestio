@@ -13,8 +13,9 @@ object EdgesUtil {
   def nextEdgeUid: EdgeUid_t = 0
 
   def nextEdgeUidFrom(edgeUids: IterableOnce[EdgeUid_t]): EdgeUid_t = {
-    if (edgeUids.nonEmpty) {
-      edgeUids.max + 1
+    val iter = edgeUids.iterator
+    if (iter.nonEmpty) {
+      iter.max + 1
     } else {
       nextEdgeUid
     }

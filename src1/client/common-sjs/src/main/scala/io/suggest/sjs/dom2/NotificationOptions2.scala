@@ -34,6 +34,7 @@ trait NotificationOptions2 extends js.Object {
 }
 
 object NotificationOptions2 {
+  import scala.language.implicitConversions
   @inline implicit def toNotificationOptions( no2: NotificationOptions2 ): NotificationOptions =
     no2.asInstanceOf[NotificationOptions]
 }

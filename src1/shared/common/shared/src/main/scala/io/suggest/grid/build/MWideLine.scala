@@ -53,7 +53,7 @@ object MWideLine {
   implicit class WidesCollOpsExt(val wides: IterableOnce[MWideLine] ) extends AnyVal {
 
     def overlaps(mwl: MWideLine): Boolean =
-      wides.exists( mwl.overlaps )
+      wides.iterator.exists( mwl.overlaps )
 
   }
 

@@ -1,10 +1,9 @@
 package io.suggest.proto.http.model
 
 import java.time.{LocalDate, ZoneOffset}
-
 import io.suggest.msg.ErrorMsgs
 import org.scalajs.dom
-import org.scalajs.dom.experimental.serviceworkers.Cache
+import org.scalajs.dom.experimental.serviceworkers.{Cache, CacheStorage}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom.experimental.{Request, Response}
 
@@ -48,8 +47,8 @@ object MHttpCaches {
 
   /** Поиск закэшированного реквеста через match(). */
   def findMatching(req: Request): Future[Option[Response]] = {
-    _tryAvailable { () =>
-      storage()
+    _tryAvailable { storage =>
+      storage
         .`match`(req)
         .toFuture
         .map { _.asInstanceOf[js.UndefOr[Response]].toOptionNullable }
@@ -58,8 +57,8 @@ object MHttpCaches {
 
   /** Открыть кэш для использования. */
   def open(cacheName: String): Future[MHttpCache] = {
-    _tryAvailable { () =>
-      storage()
+    _tryAvailable { storage =>
+      storage
         .open( cacheName )
         .toFuture
         .map( MHttpCache.apply )
@@ -67,10 +66,11 @@ object MHttpCaches {
   }
 
   /** Кэш может не работать. Например, благодаря https-only. Его нужно вырубать автоматом. */
-  private def _tryAvailable[T](f: () => Future[T]): Future[T] = {
+  private def _tryAvailable[T](f: CacheStorage => Future[T]): Future[T] = {
     if (isAvailable()) {
       try {
-        val futRes = f()
+        val stor = storage()//.get // TODO scalajs-dom v2.
+        val futRes = f(stor)
         for (ex <- futRes.failed) {
           _isAvailable = false
           Future.failed( new UnsupportedOperationException(ErrorMsgs.CACHING_ERROR, ex) )
@@ -99,8 +99,8 @@ object MHttpCaches {
 
   /** Быстрое удаление старых кэшей по rolling-ключам. */
   def gc(): Future[_] = {
-    _tryAvailable { () =>
-      val allCacheKeysFut = storage().keys().toFuture
+    _tryAvailable { storage =>
+      val allCacheKeysFut = storage.keys().toFuture
       val yesterday = _localDateNow
         .minusDays( CACHE_MAX_DAYS )
       val maxKey = cacheKey( yesterday )
@@ -116,7 +116,7 @@ object MHttpCaches {
         if cacheKeysForDelete.nonEmpty
 
         results <- Future.traverse( cacheKeysForDelete ) { ck4d =>
-          storage()
+          storage
             .delete( ck4d )
             .toFuture
         }

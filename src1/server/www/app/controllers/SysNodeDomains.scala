@@ -174,7 +174,7 @@ final class SysNodeDomains @Inject()(
   /** Вызов двух copy() при обновлении узла вынесен сюда для облегчения скомпиленного байт-кода. */
   private def _nodeDomains_LENS =
     MNode.extras
-      .composeLens( MNodeExtras.domains )
+      .andThen( MNodeExtras.domains )
 
   /** Дедубликация кода типичного положительного ответа во всех POST-экшенах этого трейта. */
   private def _rdrSuccess(nodeId: String, msg: String): Result = {

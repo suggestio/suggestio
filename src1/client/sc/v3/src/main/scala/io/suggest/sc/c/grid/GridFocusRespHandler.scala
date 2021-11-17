@@ -100,9 +100,9 @@ final class GridFocusRespHandler
     } yield {
       val adLoc1 = adLoc0.modifyLabel( MScAdData.data.modify(_.fail(ex)) )
       val v2 = MScRoot.grid
-        .composeLens( MGridS.core )
-        .composeLens( MGridCoreS.ads )
-        .composeLens( MGridAds.adsTreePot )
+        .andThen( MGridS.core )
+        .andThen( MGridCoreS.ads )
+        .andThen( MGridAds.adsTreePot )
         .modify( _.map( _ => adLoc1.toTree ) )( ctx.value0 )
       ActionResult.ModelUpdateEffect(v2, errFx)
     })
@@ -346,13 +346,13 @@ final class GridFocusRespHandler
                 var subForestAcc = List.empty[Tree[MScAdData]]
                 if (afterGridItems.nonEmpty)
                   subForestAcc ::= Tree.Leaf {
-                    (scAdData_gridItems_LENS set afterGridItems)( parent )
+                    (scAdData_gridItems_LENS replace afterGridItems)( parent )
                   }
                 subForestAcc ::= focAdSubTree
                 val hasBefore = beforeGridItems.nonEmpty
                 if (hasBefore)
                   subForestAcc ::= Tree.Leaf {
-                    (scAdData_gridItems_LENS set beforeGridItems)( parent )
+                    (scAdData_gridItems_LENS replace beforeGridItems)( parent )
                   }
 
                 // Сохранить обновлённый subForest в дерево:
@@ -394,7 +394,7 @@ final class GridFocusRespHandler
       val focAddedTree = focAddedLoc.toTree
 
       // Сохранить новое дерево и счётчик в состояние:
-      val gridCore1 = MGridCoreS.ads.set {
+      val gridCore1 = MGridCoreS.ads.replace {
         gridAds0.copy(
           idCounter = idCounter2,
           adsTreePot = gridAds0.adsTreePot.ready( focAddedTree ),
@@ -410,8 +410,8 @@ final class GridFocusRespHandler
       val resetRouteFx = ResetUrlRoute().toEffectPure
 
       val v2 = MScRoot.grid
-        .composeLens(MGridS.core)
-        .set( gridCore2 )( ctx.value0 )
+        .andThen(MGridS.core)
+        .replace( gridCore2 )( ctx.value0 )
 
       val fxOpt = Some(scrollFx + resetRouteFx)
       ActionResult(Some(v2), fxOpt)

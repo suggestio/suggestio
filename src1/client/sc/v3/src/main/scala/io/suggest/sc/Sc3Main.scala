@@ -2,7 +2,6 @@ package io.suggest.sc
 
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
-import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.log.buffered.BufLogAppender
 import io.suggest.log.filter.SevereFilter
@@ -29,6 +28,7 @@ import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import io.suggest.spa.DiodeUtil.Implicits.CircuitOpsExt
 import io.suggest.xplay.json.PlayJsonSjsUtil
+import japgolly.scalajs.react.ReactDOM
 
 import scala.util.Try
 
@@ -173,10 +173,12 @@ object Sc3Main extends Log {
     // Отрендерить компонент spa-роутера в целевой контейнер.
     for {
       ex <- Try {
-        modules.sc3SpaRouter
-          .state
-          .router()
-          .renderIntoDOM( rootDiv )
+        ReactDOM.hydrateOrRender(
+          element = modules.sc3SpaRouter
+            .state
+            .router(),
+          container = rootDiv,
+        )
       }
         .failed
     } {

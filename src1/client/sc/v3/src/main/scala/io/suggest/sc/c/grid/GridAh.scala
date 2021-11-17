@@ -342,8 +342,8 @@ class GridAh[M](
       val v0 = value
 
       val lens = MGridS.core
-        .composeLens( MGridCoreS.ads )
-        .composeLens( MGridAds.adsTreePot )
+        .andThen( MGridCoreS.ads )
+        .andThen( MGridAds.adsTreePot )
 
       if (
         !lens.get(v0).isPending &&
@@ -462,8 +462,8 @@ class GridAh[M](
                   // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
                   val jdRuntime2 = GridAh.mkJdRuntime( gridAds2, v0.core )
                   val gbRes2 = MGridBuildResult.nextRender
-                    .composeLens( MGridRenderInfo.animate )
-                    .set( false )(
+                    .andThen( MGridRenderInfo.animate )
+                    .replace( false )(
                       GridAh.rebuildGrid( gridAds2, v0.core.jdConf, jdRuntime2 )
                     )
                   val v2 = MGridS.core.modify(
@@ -513,9 +513,9 @@ class GridAh[M](
               }
 
               val v2 = MGridS.core
-                .composeLens( MGridCoreS.ads )
-                .composeLens( MGridAds.adsTreePot )
-                .set( nextReqPot2 )(v0)
+                .andThen( MGridCoreS.ads )
+                .andThen( MGridAds.adsTreePot )
+                .replace( nextReqPot2 )(v0)
               updated(v2, fx)
             }
           )
@@ -547,8 +547,8 @@ class GridAh[M](
               // Состояние обновляем на данную карточку, чтобы sc-nodes-форма могла корректно определить текущую выбранную карточку.
               // Для индикации фокуса на карточке, используем Pot.focused.unavailable(), чтобы scAd.focused отличался от Pot.empty.
               val gridCore1 = MGridCoreS.ads
-                .composeLens( MGridAds.interactWith )
-                .set( Some((gridKeyPath, gridKey)) )(gridCore0)
+                .andThen( MGridAds.interactWith )
+                .replace( Some((gridKeyPath, gridKey)) )(gridCore0)
               GridAh.resetFocus( m.gridPath, gridCore1)
             }
           )(v0)
@@ -565,7 +565,7 @@ class GridAh[M](
             MGridAds.adsTreePot
               .modify(_.map(_ => adPtrs2)) andThen
             // Текущее взаимодействие выставить на родительский элемент:
-            MGridAds.interactWith.set {
+            MGridAds.interactWith.replace {
               for {
                 parentLoc  <- scAdLoc.parent
                 firstBlock <- parentLoc.getLabel.gridItems.headOption
@@ -629,14 +629,14 @@ class GridAh[M](
 
           // Не ясно, надо ли заменять значение interactWith, т.к. состояние плитки пока не изменилось...
           //if (!(v0.interactWith contains m.gridKey))
-          //  modsAcc ::= MGridS.interactWith.set( Some(m.gridKey) )
+          //  modsAcc ::= MGridS.interactWith.replace( Some(m.gridKey) )
 
           val v2Opt = adPtrsModAcc
             .reduceLeftOption(_ andThen _)
             .map { modF =>
               MGridS.core
-                .composeLens( MGridCoreS.ads )
-                .composeLens( MGridAds.adsTreePot )
+                .andThen( MGridCoreS.ads )
+                .andThen( MGridAds.adsTreePot )
                 .modify( modF )(v0)
             }
 
@@ -681,7 +681,7 @@ class GridAh[M](
                   .reduceLeftOption(_ andThen _)
                   .map { modF =>
                     MGridS.core
-                      .composeLens( MGridCoreS.ads )
+                      .andThen( MGridCoreS.ads )
                       .modify(modF)( v0 )
                   }
 
@@ -736,9 +736,9 @@ class GridAh[M](
 
       } else {
         val jdConf1 = {
-          var jdConfLens = MJdConf.gridColumnsCount.set( gridColsCount2 )
+          var jdConfLens = MJdConf.gridColumnsCount replace gridColsCount2
           if (!szMultMatches)
-            jdConfLens = jdConfLens andThen MJdConf.szMult.set(szMult2)
+            jdConfLens = jdConfLens andThen (MJdConf.szMult replace szMult2)
           jdConfLens( jdConf0 )
         }
 
@@ -747,13 +747,13 @@ class GridAh[M](
           else GridAh.mkJdRuntime(v0.core.ads, jdConf1, v0.core.jdRuntime)
 
         var coreModF = (
-          (MGridCoreS.jdConf set jdConf1) andThen
-          (MGridCoreS.gridBuild set GridAh.rebuildGrid(v0.core.ads, jdConf1, jdRuntime2))
+          (MGridCoreS.jdConf replace jdConf1) andThen
+          (MGridCoreS.gridBuild replace GridAh.rebuildGrid(v0.core.ads, jdConf1, jdRuntime2))
         )
 
         // Если изменился szMult, то перепилить css-стили карточек:
         if (!szMultMatches)
-          coreModF = coreModF andThen (MGridCoreS.jdRuntime set jdRuntime2)
+          coreModF = coreModF andThen (MGridCoreS.jdRuntime replace jdRuntime2)
 
         val v2 = (MGridS.core modify coreModF)(v0)
 

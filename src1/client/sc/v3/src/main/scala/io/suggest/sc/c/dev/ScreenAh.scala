@@ -41,7 +41,7 @@ class ScreenAh[M](
             ScreenResetNow
           }
         }
-        val v2 = MScScreenS.rszTimer.set( Some(tp.timerId) )(v0)
+        val v2 = MScScreenS.rszTimer.replace( Some(tp.timerId) )(v0)
         updatedSilent(v2, fx)
 
       } { _ =>
@@ -107,8 +107,8 @@ class ScreenAh[M](
       )
 
       val v2 = MScScreenS.info
-        .composeLens( MScreenInfo.unsafeOffsets )
-        .set(uo2)(v0)
+        .andThen( MScreenInfo.unsafeOffsets )
+        .replace(uo2)(v0)
 
       // По идее, ребилдить можно прямо тут, но zoom-модель не позволяет отсюда получить доступ к scCss.
       // Выполнить ребилд ScCss в фоне:

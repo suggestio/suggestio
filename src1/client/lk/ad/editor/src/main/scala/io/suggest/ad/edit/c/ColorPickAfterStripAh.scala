@@ -75,15 +75,15 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
 
   private def _maybeSetNewTrasform(tmOpt: Option[TagMod], v0: MDocS): ActionResult[M] = {
     val lens = MDocS.jdDoc
-      .composeLens( MJdDocEditS.jdArgs )
-      .composeLens( MJdArgs.renderArgs )
-      .composeLens( MJdRenderArgs.selJdtBgImgMod )
+      .andThen( MJdDocEditS.jdArgs )
+      .andThen( MJdArgs.renderArgs )
+      .andThen( MJdRenderArgs.selJdtBgImgMod )
     // Проверить, изменилось ли хоть что-нибудь:
     if (lens.get(v0) ==* tmOpt) {   // TODO есть сомнения в том, что данное сравнение работает вообще.
       noChange
     } else {
       // Сохранить новые настройки трансформации в состояние.
-      val v2 = lens.set( tmOpt )(v0)
+      val v2 = lens.replace( tmOpt )(v0)
       updated(v2)
     }
   }

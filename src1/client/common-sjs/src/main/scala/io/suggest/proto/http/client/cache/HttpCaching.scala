@@ -139,12 +139,14 @@ object HttpCaching extends Log {
             for (cachedRes <- cachedResOpt)
               p.trySuccess( cachedRes )
           }
-          p.tryCompleteWith( netResFut )
+          val fut = p
+            .completeWith( netResFut )
+            .future
 
           // Закэшировать ответ сервера:
           __networkRespFut foreach __saveToCacheFut
 
-          p.future
+          fut
 
         } else {
           __networkRespFut

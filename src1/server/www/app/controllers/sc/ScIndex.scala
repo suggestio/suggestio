@@ -283,9 +283,9 @@ final class ScIndex @Inject()(
           // Change eph.node title to localized "My current location", if demand index/location testing. When eph.node listed as-is, it looks too unexpected.
           // TODO Change geo.coords of eph.node here? Currenly, it is done client-side inside IndexAh().handle( IndexSwitchNodeClick() )
           mnode = MNode.meta
-            .composeLens( MMeta.basic )
-            .composeLens( MBasicMeta.nameOpt )
-            .set( Some(ephNodeName) ) {
+            .andThen( MMeta.basic )
+            .andThen( MBasicMeta.nameOpt )
+            .replace( Some(ephNodeName) ) {
               mNodes.withDocMeta( mnode, EsDocMeta(None, EsDocVersion.notSaveable) )
             },
           isRcvr = false
@@ -823,8 +823,8 @@ final class ScIndex @Inject()(
       ) {
         LOGGER.trace(s"$logPrefix _qs: Forget ${qsCommon2.locEnv.beacons.length} BLE Beacons info from QS locEnv, because foc.indexAdOpen.withBleBeaconsAds = false")
         qsCommon2 = MScCommonQs.locEnv
-          .composeLens( MLocEnv.beacons )
-          .set( Nil )( qsCommon2 )
+          .andThen( MLocEnv.beacons )
+          .replace( Nil )( qsCommon2 )
       }
 
       MScQs(

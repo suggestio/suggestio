@@ -91,7 +91,7 @@ class BufLogAppendAh[M](
     // Срабатывание таймера сброса логов в бэкэнд.
     case ExpTimerAlarm =>
       val v0 = value
-      val modF = MBufAppendS.expTimerId.set( Pot.empty )
+      val modF = MBufAppendS.expTimerId replace Pot.empty
 
       if (v0.accRev.exists(_.nonEmpty)) {
         val renderLogsFx = Effect.action {
@@ -103,7 +103,7 @@ class BufLogAppendAh[M](
           )
           DoNothing
         }
-        val v2 = (modF andThen MBufAppendS.accRev.set( Nil ))(v0)
+        val v2 = (modF andThen (MBufAppendS.accRev replace Nil))(v0)
         updatedSilent(v2, renderLogsFx)
 
       } else {

@@ -87,21 +87,21 @@ object ScRoutingAh {
 
   def _inxSearchGeoMapInitLens = {
     MScIndex.search
-      .composeLens( MScSearch.geo )
-      .composeLens( MGeoTabS.mapInit )
+      .andThen( MScSearch.geo )
+      .andThen( MGeoTabS.mapInit )
   }
 
 
   def root_internals_info_currRoute_LENS = {
     MScRoot.internals
-      .composeLens( MScInternals.info )
-      .composeLens( MInternalInfo.currRoute )
+      .andThen( MScInternals.info )
+      .andThen( MInternalInfo.currRoute )
   }
 
 
   def root_index_search_geo_init_state_LENS = MScRoot.index
-    .composeLens( _inxSearchGeoMapInitLens )
-    .composeLens( MMapInitState.state )
+    .andThen( _inxSearchGeoMapInitLens )
+    .andThen( MMapInitState.state )
 
 }
 
@@ -150,7 +150,7 @@ final class ScRoutingAh(
       // Save m.route into state, if route is different from changed value.
       val currRouteLens = ScRoutingAh.root_internals_info_currRoute_LENS
       if ( !(currRouteLens.get(v0) contains[SioPages.Sc3] m.mainScreen) )
-        modsAcc ::= currRouteLens.set( Some(m.mainScreen) )
+        modsAcc ::= currRouteLens.replace( Some(m.mainScreen) )
 
       // Check .generation field changes:
       for {
@@ -158,9 +158,9 @@ final class ScRoutingAh(
         if !(currMainScreen.generation contains[Long] generation2)
       } {
         modsAcc ::= MScRoot.index
-          .composeLens(MScIndex.state)
-          .composeLens(MScIndexState.generation)
-          .set(generation2)
+          .andThen(MScIndex.state)
+          .andThen(MScIndexState.generation)
+          .replace(generation2)
         // generation is changed. Reload grid:
         if (isFullyReady) {
           val adsPot = v0.grid.core.ads.adsTreePot
@@ -290,8 +290,8 @@ final class ScRoutingAh(
 
       // If need delay, push current route into delayed. If not, clear delayed route value.
       val root_internals_jsRouter_delayedRouteTo_LENS = MScRoot.internals
-        .composeLens( MScInternals.jsRouter )
-        .composeLens( MJsRouterS.delayedRouteTo )
+        .andThen( MScInternals.jsRouter )
+        .andThen( MJsRouterS.delayedRouteTo )
       val delayedRouteTo0 = root_internals_jsRouter_delayedRouteTo_LENS get v0
       for {
         awaitRouteOpt <- {
@@ -305,7 +305,7 @@ final class ScRoutingAh(
           else None
         }
       } {
-        modsAcc ::= root_internals_jsRouter_delayedRouteTo_LENS set awaitRouteOpt
+        modsAcc ::= root_internals_jsRouter_delayedRouteTo_LENS replace awaitRouteOpt
 
         // If delayed-route set first time, need to subscribe to BootAfter(JsRouter), after platform ready.
         if (delayedRouteTo0.isEmpty) {
@@ -390,7 +390,7 @@ final class ScRoutingAh(
           if currRoute.virtBeacons.nonEmpty &&
             (currRoute isSamePlaceAs nextRoute2)
         }
-          nextRoute2 = (SioPages.Sc3.virtBeacons set currRoute.virtBeacons)(nextRoute2)
+          nextRoute2 = (SioPages.Sc3.virtBeacons replace currRoute.virtBeacons)(nextRoute2)
 
         // Notify router-ctl about change:
         var fx: Effect = Effect.action {
@@ -408,7 +408,7 @@ final class ScRoutingAh(
           }
         }
 
-        //val v2 = (currRouteLens set Some(nextRoute2))( v0 )
+        //val v2 = (currRouteLens replace Some(nextRoute2))( v0 )
         //updatedSilent(v2, fx)
         effectOnly( fx )
       }

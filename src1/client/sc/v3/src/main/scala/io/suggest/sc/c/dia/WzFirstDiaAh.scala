@@ -59,8 +59,8 @@ class WzFirstDiaAh[M <: AnyRef](
 
   // Быстрое выставление фрейма.
   private def _setFrame(frame: MWzFrame, v0: MWzFirstOuterS, view0: MWzFirstS) = {
-    val view2 = (MWzFirstS.frame set frame)(view0)
-    (MWzFirstOuterS.view set Ready( view2 ).pending())(v0)
+    val view2 = (MWzFirstS.frame replace frame)(view0)
+    (MWzFirstOuterS.view replace Ready( view2 ).pending())(v0)
   }
 
   /** Make Effect of updating phase-related settings. */
@@ -255,8 +255,8 @@ class WzFirstDiaAh[M <: AnyRef](
               case MWzFrames.InProgress =>
                 if (isGrantedOpt contains[Boolean] false) {
                   // Юзер не разрешил. Вывести Info с сожалением.
-                  val v2 = MWzFirstOuterS.view.set( Ready(
-                    MWzFirstS.frame.set( MWzFrames.Info )(view0)
+                  val v2 = MWzFirstOuterS.view.replace( Ready(
+                    MWzFirstS.frame.replace( MWzFrames.Info )(view0)
                   ).pending())(v1)
                   ah.updatedMaybeEffect( v2, fxOpt )
                 } else {
@@ -404,7 +404,7 @@ class WzFirstDiaAh[M <: AnyRef](
 
         // Инициализировать состояние first-диалога.
         val v2 = (
-          MWzFirstOuterS.view set Ready(MWzFirstS(
+          MWzFirstOuterS.view replace Ready(MWzFirstS(
             phase = MWzPhases.Starting,
             frame = MWzFrames.InProgress,
             reason = reason,
@@ -531,7 +531,7 @@ class WzFirstDiaAh[M <: AnyRef](
               fxAcc ::= requestPermFx
               v2
             } else {
-              MWzFirstOuterS.view.set {
+              MWzFirstOuterS.view.replace {
                 Ready(
                   view0.copy(
                     phase = nextPhase,
@@ -544,7 +544,7 @@ class WzFirstDiaAh[M <: AnyRef](
 
           } else if (isDenied) {
             // Запрещён доступ. Значит юзеру можно выразить сожаление в инфо-окне.
-            val v2 = MWzFirstOuterS.view.set {
+            val v2 = MWzFirstOuterS.view.replace {
               Ready(
                 view0.copy(
                   phase   = nextPhase,

@@ -64,20 +64,20 @@ object ScUniApi {
     // Удалить gen random:
     if (scQs.search.genOpt.nonEmpty) {
       updateFuns ::= MScQs.search
-        .composeLens( MAdsSearchReq.genOpt )
-        .set( None )
+        .andThen( MAdsSearchReq.genOpt )
+        .replace( None )
     }
 
     // Нормализовать гео-координаты до нескольких цифр после запятой: 4 цифры достаточно для кэша.
     val qs_common_locEnv_geoLoc_LENS = MScQs.common
-      .composeLens( MScCommonQs.locEnv )
-      .composeLens( MLocEnv.geoLoc )
+      .andThen( MScCommonQs.locEnv )
+      .andThen( MLocEnv.geoLoc )
 
     val geoLocs0 = qs_common_locEnv_geoLoc_LENS.get( scQs )
     if (geoLocs0.nonEmpty) {
       val updateCoordsF = MGeoLoc.point
         .modify( _.withCoordScale(MGeoPoint.FracScale.NEAR) )
-      val unsetAccuracyF = MGeoLoc.accuracyOptM set None
+      val unsetAccuracyF = MGeoLoc.accuracyOptM replace None
 
       updateFuns ::= qs_common_locEnv_geoLoc_LENS
         .modify { geoLocs0 =>

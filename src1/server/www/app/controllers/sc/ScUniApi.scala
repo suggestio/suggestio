@@ -109,11 +109,11 @@ final class ScUniApi @Inject()(
         } yield {
           val qs2 = qs.copy(
             search = MAdsSearchReq.rcvrId
-              .set(scIndexResp.nodeId.toEsUuIdOpt)(qs.search),
+              .replace(scIndexResp.nodeId.toEsUuIdOpt)(qs.search),
             common = {
               MScCommonQs.locEnv
-                .composeLens( MLocEnv.geoLoc )
-                .set {
+                .andThen( MLocEnv.geoLoc )
+                .replace {
                   if (scIndexResp.nodeId.isEmpty) {
                     // Узел не задан. Попытаться достать координаты.
                     scIndexResp.geoPoint
@@ -144,7 +144,7 @@ final class ScUniApi @Inject()(
               }
             } yield {
               // если требуется авто-фокусировка, то снять флаг focIndex на всякий случай (для возможной от бесконечных переходов). В норме - это ни на что не должно влиять.
-              (MScFocusArgs.indexAdOpen set None)(foc0)
+              (MScFocusArgs.indexAdOpen replace None)(foc0)
             }
           )
           LOGGER.trace(s"$logPrefix Ads search after index qs2=$qs2")

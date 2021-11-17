@@ -4,7 +4,6 @@ import java.time.OffsetDateTime
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
-import io.suggest.xplay.json.PlayJsonUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -110,11 +109,11 @@ object MEdgeGeoShape
 
   /** Предложить новый id. */
   def nextShapeId(shapes: IterableOnce[MEdgeGeoShape]): Int = {
-    if (shapes.isEmpty) {
+    val iter = shapes.iterator
+    if (iter.isEmpty) {
       SHAPE_ID_START
     } else {
-      shapes
-        .iterator
+      iter
         .map(_.id)
         .max
     }

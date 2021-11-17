@@ -77,7 +77,7 @@ class CreateNodeAh[M](
       (for {
         v0 <- value
       } yield {
-        val v2 = (MCreateNodeS.parentPath set Some(m.nodePath))(v0)
+        val v2 = (MCreateNodeS.parentPath replace Some(m.nodePath))(v0)
         updated( Some(v2) )
       })
         .getOrElse( noChange )
@@ -163,8 +163,8 @@ class CreateNodeAh[M](
         v0 <- value
       } yield {
         val modF = MCreateNodeS.nodeType.modify(
-          (MTextFieldS.value set m.nodeType.value) andThen
-          (MTextFieldS.isValid set (MNodeTypes.lkNodesUserCanCreate contains[MNodeType] m.nodeType))
+          (MTextFieldS.value replace m.nodeType.value) andThen
+          (MTextFieldS.isValid replace (MNodeTypes.lkNodesUserCanCreate contains[MNodeType] m.nodeType))
         )
 
         // TODO If name is empty or default, reset name to default: "My beacon" or "My wifi router", etc.
@@ -230,7 +230,7 @@ class CreateNodeAh[M](
         {ex =>
           logger.warn( ErrorMsgs.SRV_REQUEST_FAILED, ex, m )
           val v2 = for (cs <- value) yield {
-            val invalidateF = MTextFieldS.isValid.set(false)
+            val invalidateF = MTextFieldS.isValid.replace(false)
             cs.copy(
               name = invalidateF(cs.name),
               id   = if (cs.id.isEnabled) invalidateF(cs.id) else cs.id,

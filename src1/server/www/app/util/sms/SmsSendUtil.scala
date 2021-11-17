@@ -83,7 +83,7 @@ final class SmsSendUtil @Inject()(
     var updatesAcc = List.empty[MSmsSend => MSmsSend]
 
     if (MSmsSend.isTest.get(sms) !=* TEST_MODE)
-      updatesAcc ::= MSmsSend.isTest.set( TEST_MODE )
+      updatesAcc ::= MSmsSend.isTest.replace( TEST_MODE )
 
     if (updatesAcc.isEmpty) sms
     else updatesAcc.reduce(_ andThen _)(sms)

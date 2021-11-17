@@ -3,8 +3,7 @@ package io.suggest.common.coll
 import japgolly.univeq.UnivEq
 
 import scala.annotation.tailrec
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
+import scala.collection.BuildFrom
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 import io.suggest.ueq.UnivEqUtil._
@@ -42,20 +41,10 @@ object Lists {
    * @param f Функция обработки коллизий ключей, совпадает MergeF в dict:merge/3: (K,V1,V2) => V
    */
   def mergeMaps[K,V](ms: Map[K, V]*)(f: (K,V,V) => V): Map[K, V] = {
-    (Map[K, V]() /: (for (m <- ms; kv <- m) yield kv)) { (a, kv) =>
-      a + (if (a.contains(kv._1)) kv._1 -> f(kv._1, a(kv._1), kv._2) else kv)
-    }
-  }
-
-
-  /**
-   * mergeMaps() для mutable-словаря. Стоит заменить это добро на нормальный вызов с collections.MapLike и манифестами.
-   * @return
-   */
-  def mergeMutableMaps[K,V](ms: mutable.Map[K,V] *)(f: (K,V,V) => V): mutable.Map[K,V] = {
-    (mutable.Map[K, V]() /: (for (m <- ms; kv <- m) yield kv)) { (a, kv) =>
-      a + (if (a.contains(kv._1)) kv._1 -> f(kv._1, a(kv._1), kv._2) else kv)
-    }
+    (for (m <- ms; kv <- m) yield kv)
+      .foldLeft( Map[K, V]() ) { (a, kv) =>
+        a + (if (a.contains(kv._1)) kv._1 -> f(kv._1, a(kv._1), kv._2) else kv)
+      }
   }
 
 
@@ -280,7 +269,6 @@ object Lists {
       tail match {
         case l: List[T]   => el :: l
         case ll: LazyList[T] => el #:: ll
-        case s: Stream[T] => el #:: s
         case _            => _appendSeqMaybeStream(head, tail)
       }
     } else {
@@ -293,8 +281,6 @@ object Lists {
     head match {
       case ll: LazyList[T] =>
         ll appendedAll tail
-      case stream: Stream[T] =>
-        stream append tail    // Если tail тоже Stream, то это будет ~O(1). Иначе O(tail.size).
       case _ =>
         head ++ tail
     }
@@ -302,7 +288,7 @@ object Lists {
 
 
   /**
-   * map + foldLeft с поддержкой CanBuildFrom.
+   * map + foldLeft с поддержкой BuildFrom.
    * @param src Исходная коллекция.
    * @param acc0 Исходный аккамулятор.
    * @param f Функция маппинга и сверстки.
@@ -315,9 +301,9 @@ object Lists {
   def mapFoldLeft[A, Coll[X] <: IterableOnce[X], B, Acc]
                  (src: Coll[A], acc0: Acc)
                  (f: (Acc, A) => (Acc, B))
-                 (implicit cbf: CanBuildFrom[Coll[A], B, Coll[B]]): (Acc, Coll[B]) = {
+                 (implicit cbf: BuildFrom[Coll[A], B, Coll[B]]): (Acc, Coll[B]) = {
     val seqb = cbf.newBuilder( src )
-    val acc1 = src.foldLeft(acc0) { (_acc0, _el) =>
+    val acc1 = src.iterator.foldLeft(acc0) { (_acc0, _el) =>
       val (_acc1, b) = f(_acc0, _el)
       seqb += b
       _acc1
@@ -359,6 +345,7 @@ object Lists {
     */
   def toListRev[T](elems: IterableOnce[T], acc0: List[T] = Nil): List[T] = {
     elems
+      .iterator
       .foldLeft(acc0) { (acc, e) => e :: acc }
   }
 

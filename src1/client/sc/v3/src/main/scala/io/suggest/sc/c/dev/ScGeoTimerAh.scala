@@ -33,9 +33,9 @@ class ScGeoTimerAh[M](
   private def _removeTimer(v0: MScRoot) = {
     for (glt <- v0.internals.info.geoLockTimer.toOption) yield {
       val alterF = MScRoot.internals
-        .composeLens( MScInternals.info )
-        .composeLens( MInternalInfo.geoLockTimer )
-        .set( Pot.empty.unavailable() )
+        .andThen( MScInternals.info )
+        .andThen( MInternalInfo.geoLockTimer )
+        .replace( Pot.empty.unavailable() )
       val fx = _clearTimerFx( glt.timerId )
       (alterF, fx)
     }
@@ -57,8 +57,8 @@ class ScGeoTimerAh[M](
     // TODO impure: timer started outside effect.
     val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
     val modifier = MScInternals.info
-      .composeLens( MInternalInfo.geoLockTimer )
-      .set(
+      .andThen( MInternalInfo.geoLockTimer )
+      .replace(
         Ready(
           MGeoLocTimerData(
             timerId = tp.timerId,
@@ -101,9 +101,9 @@ class ScGeoTimerAh[M](
           val scSwitch0 = geoLockTimer.reason.switchCtx
           val switchCtx2 = if (mapNeedReset) {
             (
-              (MScSwitchCtx.indexMapReset set indexMapReset2) andThen
+              (MScSwitchCtx.indexMapReset replace indexMapReset2) andThen
               MScSwitchCtx.indexQsArgs
-                .composeLens( MScIndexArgs.retUserLoc )
+                .andThen( MScIndexArgs.retUserLoc )
                 .modify( _ || !m.origOpt.exists(_.isSuccess) )
             )(scSwitch0)
           } else {
@@ -128,7 +128,7 @@ class ScGeoTimerAh[M](
         geoLoc <- glSignal.locationOpt
       } {
         // Always save coordinates to map .userLoc
-        var mapInitModF = MMapInitState.userLoc set Some(geoLoc)
+        var mapInitModF = MMapInitState.userLoc replace Some(geoLoc)
 
         if (
           // Do NOT change map center, if this is just background demand index test.
@@ -157,7 +157,7 @@ class ScGeoTimerAh[M](
         }
 
         modsAcc ::= MScRoot.index
-          .composeLens( ScRoutingAh._inxSearchGeoMapInitLens )
+          .andThen( ScRoutingAh._inxSearchGeoMapInitLens )
           .modify( mapInitModF )
       }
 

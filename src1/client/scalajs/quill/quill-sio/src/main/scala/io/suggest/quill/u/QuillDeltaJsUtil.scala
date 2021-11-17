@@ -433,11 +433,11 @@ class QuillDeltaJsUtil extends Log {
 
                   // Для картинки и для фрейма - ширина обязательная.
                   if (attrsEmbed.width.isEmpty)
-                    changesAcc ::= (MQdAttrsEmbed.width set Some(SetVal(dfltSz.width)))
+                    changesAcc ::= (MQdAttrsEmbed.width replace Some(SetVal(dfltSz.width)))
 
                   // Для фрейма - высота обязательная.
                   if ((e.jdEdge.predicate ==* P.Frame) && attrsEmbed.height.isEmpty)
-                    changesAcc ::= (MQdAttrsEmbed.height set Some(SetVal(dfltSz.height)))
+                    changesAcc ::= (MQdAttrsEmbed.height replace Some(SetVal(dfltSz.height)))
 
                   changesAcc
                     .reduceOption(_ andThen _)

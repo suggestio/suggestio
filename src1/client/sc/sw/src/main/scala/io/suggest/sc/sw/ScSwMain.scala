@@ -21,13 +21,14 @@ object ScSwMain {
   def main(args: Array[String]): Unit = {
 
     self.addEventListener4s( DomEvents.ACTIVATE ) { e: ExtendableEvent =>
+      val caches = self.caches
       e.waitUntil(
-        self.caches
+        caches
           .keys()
           .toFuture
           .flatMap { keysArr =>
             Future.traverse(keysArr.toIterable) { k =>
-              self.caches
+              caches
                 .delete(k)
                 .toFuture
             }

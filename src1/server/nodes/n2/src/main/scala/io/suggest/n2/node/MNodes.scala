@@ -303,7 +303,7 @@ final case class MNode(
       /** Эдж картинки-логотипа adn-узла. */
       lazy val logo = _jdIdWithEdge(
         MAdnResView.logo
-          .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )
+          .andThen( Traversal.fromTraverse[Option, MJdEdgeId] )
           .getAll
       )
         .headOption
@@ -311,7 +311,7 @@ final case class MNode(
       /** Эдж картинки приветствия adn-узла. */
       lazy val wcFg = _jdIdWithEdge(
         MAdnResView.wcFg
-          .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )
+          .andThen( Traversal.fromTraverse[Option, MJdEdgeId] )
           .getAll
       )
         .headOption
@@ -354,9 +354,9 @@ object MNode {
 
   def node_meta_basic_dateEdited_RESET = {
     MNode.meta
-      .composeLens( MMeta.basic )
-      .composeLens( MBasicMeta.dateEdited )
-      .set( Some(OffsetDateTime.now()) )
+      .andThen( MMeta.basic )
+      .andThen( MBasicMeta.dateEdited )
+      .replace( Some(OffsetDateTime.now()) )
   }
 
   /** Make calendar node. */

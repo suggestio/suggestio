@@ -130,7 +130,7 @@ object GridBuilderUtil {
           val gb2 = Tree.Leaf {
             val gb0 = reDoItm.gbBlock
             if (gb0.orderN contains reDoItm.orderN) gb0
-            else ( gbBlock_orderN_LENS set Some(reDoItm.orderN) )( gb0 )
+            else ( gbBlock_orderN_LENS replace Some(reDoItm.orderN) )( gb0 )
           }
 
           // Используем rootLvl для сборки под-контекста, т.к. reDoItm.topLeft задано в абсолютных (root) координатах.
@@ -212,7 +212,7 @@ object GridBuilderUtil {
 
               val currLvl2 = currLvl.copy(
                 restItems   = currLvl.restItems.tail,
-                currLineCol = MCoords2di.x.set(endColumnIndex)(xy),
+                currLineCol = (MCoords2di.x replace endColumnIndex)(xy),
               )
               val xyAbs = currLvl.ctx.colLineToAbs( xy )
 
@@ -491,7 +491,7 @@ object GridBuilderUtil {
           },
           y = res.topLeft.y + args.offY,
         )
-        _gbItemRes_topLeft_LENS.set( finalCoords )(res)
+        (_gbItemRes_topLeft_LENS replace finalCoords)(res)
       }
       .toList
 
@@ -665,7 +665,7 @@ object MGbLevelState {
   }
 
   def stepToCellLens = currLineCol
-    .composeLens(MCoords2di.x)
+    .andThen(MCoords2di.x)
 
   /**
     * step() не может подобрать подходящий блок в текущей строке и хочет просто шагнуть в следующую ячейку,

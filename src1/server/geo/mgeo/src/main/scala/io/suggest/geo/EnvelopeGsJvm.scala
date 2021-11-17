@@ -59,9 +59,9 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
     import GeoPoint.toLngLat
     val outer = (
       toLngLat( gs.topLeft ) ::
-      toLngLat( (MGeoPoint.lon set gs.bottomRight.lon)(gs.topLeft) ) ::
+      toLngLat( (MGeoPoint.lon replace gs.bottomRight.lon)(gs.topLeft) ) ::
       toLngLat( gs.bottomRight ) ::
-      toLngLat( (MGeoPoint.lat set gs.topLeft.lat)(gs.bottomRight) ) ::
+      toLngLat( (MGeoPoint.lat replace gs.topLeft.lat)(gs.bottomRight) ) ::
       Nil
     )
     Polygon [LngLat] (

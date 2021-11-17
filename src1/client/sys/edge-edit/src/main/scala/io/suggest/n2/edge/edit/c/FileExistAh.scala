@@ -24,9 +24,9 @@ class FileExistAh[M](
         .fold(noChange) { nodeId =>
           val v2 = (
             MEdgeEditS.nodeIds
-              .set( nodeId :: Nil ) andThen
+              .replace( nodeId :: Nil ) andThen
             MEdgeEditS.fileExistNodeId
-              .set( None )
+              .replace( None )
           )(v0)
           updated( v2 )
         }
@@ -41,7 +41,7 @@ class FileExistAh[M](
             MEdgeEditS.nodeIds
               .modify( _ :+ nodeId ) andThen
             MEdgeEditS.fileExistNodeId
-              .set( None )
+              .replace( None )
           )(v0)
           updated( v2 )
         }
@@ -54,7 +54,7 @@ class FileExistAh[M](
         noChange
       } else {
         val v2 = MEdgeEditS.fileExistNodeId
-          .set( None )(v0)
+          .replace( None )(v0)
         updated(v2)
       }
 

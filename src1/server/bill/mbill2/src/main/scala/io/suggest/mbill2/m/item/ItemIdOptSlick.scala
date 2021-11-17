@@ -14,6 +14,7 @@ trait ItemIdOptSlick extends IProfile with ItemIdFn {
   import profile.api._
 
   trait ItemIdOpt { that: Table[_] =>
+    import scala.language.existentials
     def itemIdOpt = column[Option[Gid_t]](ITEM_ID_FN)
   }
 

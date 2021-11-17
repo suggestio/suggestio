@@ -160,7 +160,7 @@ object MNodeEdges
   }
 
   def edgesToMap1(edges: IterableOnce[MEdge]): Seq[MEdge] = {
-    edges.toSeq
+    edges.iterator.to( Seq )
   }
   def edgesToMap(edges: MEdge*): Seq[MEdge] = {
     edgesToMap1(edges)
@@ -267,13 +267,13 @@ final case class MNodeEdges(
 
 
   def withPredicate(preds: MPredicate*): MNodeEdges = {
-    MNodeEdges.out.set(
+    MNodeEdges.out.replace(
       withPredicateIter(preds: _*)
         .to(LazyList)
     )(this)
   }
   def withoutPredicate(preds: MPredicate*): MNodeEdges = {
-    MNodeEdges.out.set(
+    MNodeEdges.out.replace(
       withoutPredicateIter(preds: _*)
         .to(LazyList)
     )(this)
@@ -282,13 +282,14 @@ final case class MNodeEdges(
   def withPredicateIter(preds: MPredicate*): Iterator[MEdge] =
     withPredicateIter1( preds )
   def withPredicateIter1(preds: IterableOnce[MPredicate]): Iterator[MEdge] = {
-    if (preds.isEmpty) {
+    val iter = preds.iterator
+    if (iter.isEmpty) {
       throw new IllegalArgumentException("preds must be non-empty")
     } else {
       // В значениях edgesByPred содержатся эджи-дубликаты. Если в preds ошибочно содержатся и родительские,
       // и дочерние элементы по одной линии, то дубликаты будут на выходе withPredicates*().
       // Поэтому дедублицируем предикаты в пользу child-элементов через mostChildest():
-      preds
+      iter
         .mostChildest
         .iterator
         .flatMap( edgesByPred.get )
@@ -377,7 +378,7 @@ final case class MNodeEdges(
       )
       MNodeEdges.empty
     } else {
-      MNodeEdges.out.set(
+      MNodeEdges.out.replace(
         edgeUids
           .iterator
           .flatMap( edgesByUid.get )
@@ -388,7 +389,7 @@ final case class MNodeEdges(
 
   /** Фильтрация по отсутствую указанных edge uid. */
   def withoutUid(edgeUids: EdgeUid_t*): MNodeEdges = {
-    MNodeEdges.out.set(
+    MNodeEdges.out.replace(
       MNodeEdges.edgesToMap1(
         edgeUids
           .foldLeft( edgesByUid )( _ - _ )

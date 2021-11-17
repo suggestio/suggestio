@@ -96,7 +96,7 @@ class BeaconsAh[M](
               data      = bcnSignal2,
               isVisible = bcnSignalOpt2.nonEmpty || bcnSignal2.signal.isStillVisibleNow( now ),
             )
-            mns2 = (MNodeState.beacon set Some(bcnState2))(mns0)
+            mns2 = (MNodeState.beacon replace Some(bcnState2))(mns0)
           } yield {
             treeKey -> mns2
           })
@@ -162,7 +162,7 @@ class BeaconsAh[M](
       if (nodesAppend2.nonEmpty)
         nodesMap2 = nodesMap2.merged( nodesAppend2 )(Keep.right)
       if (nodesMap2 !===* v0.tree.nodesMap)
-        modTreeF = modTreeF andThen (MTree.nodesMap set nodesMap2)
+        modTreeF = modTreeF andThen (MTree.nodesMap replace nodesMap2)
 
       var modTreeOuterF = MTreeOuter.tree.modify( modTreeF )
       var modBeaconsAcc = List.empty[MBeaconScan => MBeaconScan]
@@ -184,7 +184,7 @@ class BeaconsAh[M](
         } else if (v0.tree.opened.isEmpty && v0.tree.nodesMap.sizeIs <= 2) {
           // First shown, nothing opened, but beacons group have something inside. Expand very first non-empty beacon group automatically.
           for (firstSubLoc <- tree2.loc.firstChild if firstSubLoc.hasChildren)
-            modTreeF = modTreeF andThen (MTree.opened set Some(firstSubLoc.toNodePath))
+            modTreeF = modTreeF andThen (MTree.opened replace Some(firstSubLoc.toNodePath))
         }
 
       } else if (/* !bcnGroupCreated && */ v0.beacons.updateTimeout ==* Pot.empty) {
@@ -279,8 +279,8 @@ class BeaconsAh[M](
       if (v0.beacons.updateTimeout.isPending) {
         val v2 = (
           MTreeOuter.beacons
-            .composeLens( MBeaconScan.updateTimeout )
-            .set( Pot.empty ) andThen
+            .andThen( MBeaconScan.updateTimeout )
+            .replace( Pot.empty ) andThen
           // Явная пересборка инстанса tree, чтобы шаблоны заметили обновление.
           MTreeOuter.tree
             .modify(_.copy())
@@ -301,10 +301,10 @@ class BeaconsAh[M](
         // Запрос не удался.
         {ex =>
           MTreeOuter.beacons
-            .composeLens( MBeaconScan.scanReq )
+            .andThen( MBeaconScan.scanReq )
             .modify(_.fail(ex)) andThen
           MTreeOuter.tree
-            .composeLens( MTree.nodesMap )
+            .andThen( MTree.nodesMap )
             .modify { nodesMap0 =>
               // Reset pending infoPots with failures:
               nodesMap0
@@ -371,10 +371,10 @@ class BeaconsAh[M](
           // Залить новую карту маячков в состояние:
           (
             MTreeOuter.tree
-              .composeLens( MTree.nodesMap )
+              .andThen( MTree.nodesMap )
               .modify( _.merged(cachedMapAppend)(Keep.right) ) andThen
             MTreeOuter.beacons
-              .composeLens( MBeaconScan.scanReq )
+              .andThen( MBeaconScan.scanReq )
               .modify(_.ready(resp))
           )
         }
@@ -383,7 +383,7 @@ class BeaconsAh[M](
       val fxOpt = Option.when( v0.beacons.updateTimeout ==* Pot.empty ) {
         // TODO Opt тут MTreeOuter.beacons обновляется второй раз. Надо бы объеденить все изменения внутри beacons-поля.
         modF = modF andThen MTreeOuter.beacons
-          .composeLens( MBeaconScan.updateTimeout )
+          .andThen( MBeaconScan.updateTimeout )
           .modify(_.pending())
 
         _reRenderFx

@@ -24,7 +24,7 @@ object HashesHex {
         .fold[JsResult[MHash]](JsError("e.hash.type"))(JsSuccess(_))
     }
 
-    val w = Writes.mapWrites[String]
+    val w = Writes.genericMapWrites[String, Map]
       .contramap[Map[MHash, String]] { hashesHex =>
         hashesHex.map { case (k,v) => (k.value, v) }
       }

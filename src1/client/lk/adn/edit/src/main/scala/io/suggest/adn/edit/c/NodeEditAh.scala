@@ -34,14 +34,14 @@ class NodeEditAh[M](
       val name2 = Option.when(m.name.nonEmpty)( m.name )
 
       val lens = MAdnNodeS.meta
-        .composeLens( MMetaPub.name )
+        .andThen( MMetaPub.name )
 
       if (name2 ==* lens.get(v0)) {
         noChange
 
       } else {
         // Есть текст, выставить его в состояние. Финальный трим будет на сервере.
-        val v1 = (lens set name2)(v0)
+        val v1 = (lens replace name2)(v0)
 
         // Проверить корректность
         val trimmed = m.name.trim
@@ -63,19 +63,19 @@ class NodeEditAh[M](
         .filter(_filterStrTrimmed)
 
       val lens = MAdnNodeS.meta
-        .composeLens( MMetaPub.address)
-        .composeLens( MAddress.town )
+        .andThen( MMetaPub.address)
+        .andThen( MAddress.town )
 
       if (townOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = (lens set townOpt)( v0 )
+        val v1 = (lens replace townOpt)( v0 )
 
         val v2 = _updateErrors(
           v1,
           MAddress.validateTown(townOpt),
-          MMetaPub.address composeLens MAddress.town
+          MMetaPub.address andThen MAddress.town
         )
 
         updated(v2)
@@ -90,19 +90,19 @@ class NodeEditAh[M](
         .filter( _filterStrTrimmed )
 
       val lens = MAdnNodeS.meta
-        .composeLens( MMetaPub.address )
-        .composeLens( MAddress.address )
+        .andThen( MMetaPub.address )
+        .andThen( MAddress.address )
 
       if (addressOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = (lens set addressOpt)(v0)
+        val v1 = (lens replace addressOpt)(v0)
 
         val v2 = _updateErrors(
           v1,
           MAddress.validateAddress(addressOpt),
-          MMetaPub.address composeLens MAddress.address
+          MMetaPub.address andThen MAddress.address
         )
 
         updated(v2)
@@ -118,20 +118,20 @@ class NodeEditAh[M](
         .filter(_.nonEmpty)
 
       val lens = MAdnNodeS.meta
-        .composeLens( MMetaPub.business )
-        .composeLens( MBusinessInfo.siteUrl )
+        .andThen( MMetaPub.business )
+        .andThen( MBusinessInfo.siteUrl )
 
       if (urlOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = (lens set urlOpt)(v0)
+        val v1 = (lens replace urlOpt)(v0)
 
         // Попытаться распарсить ссылку в тексте.
         val v2 = _updateErrors(
           v1,
           MBusinessInfo.validateSiteUrl( urlOpt ),
-          MMetaPub.business composeLens MBusinessInfo.siteUrl
+          MMetaPub.business andThen MBusinessInfo.siteUrl
         )
 
         updated(v2)
@@ -146,18 +146,18 @@ class NodeEditAh[M](
         .filter( _filterStrTrimmed )
 
       val lens = MAdnNodeS.meta
-        .composeLens( MMetaPub.business )
-        .composeLens( MBusinessInfo.info )
+        .andThen( MMetaPub.business )
+        .andThen( MBusinessInfo.info )
 
       if (infoOpt ==* v0.meta.business.info) {
         noChange
 
       } else {
-        val v1 = (lens set infoOpt)(v0)
+        val v1 = (lens replace infoOpt)(v0)
         val v2 = _updateErrors(
           v1,
           MBusinessInfo.validateInfo( infoOpt ),
-          MMetaPub.business composeLens MBusinessInfo.info
+          MMetaPub.business andThen MBusinessInfo.info
         )
 
         updated(v2)
@@ -172,19 +172,19 @@ class NodeEditAh[M](
         .filter( _filterStrTrimmed )
 
       val lens = MAdnNodeS.meta
-        .composeLens( MMetaPub.business )
-        .composeLens( MBusinessInfo.humanTraffic )
+        .andThen( MMetaPub.business )
+        .andThen( MBusinessInfo.humanTraffic )
 
       if (htOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = (lens set htOpt)(v0)
+        val v1 = (lens replace htOpt)(v0)
 
         val v2 = _updateErrors(
           v1,
           MBusinessInfo.validateHumanTraffic( htOpt ),
-          MMetaPub.business composeLens MBusinessInfo.humanTraffic
+          MMetaPub.business andThen MBusinessInfo.humanTraffic
         )
 
         updated(v2)
@@ -199,19 +199,19 @@ class NodeEditAh[M](
         .filter( _filterStrTrimmed )
 
       val lens = MAdnNodeS.meta
-        .composeLens( MMetaPub.business )
-        .composeLens( MBusinessInfo.audienceDescr )
+        .andThen( MMetaPub.business )
+        .andThen( MBusinessInfo.audienceDescr )
 
       if (audOpt ==* v0.meta.business.audienceDescr) {
         noChange
 
       } else {
-        val v1 = (lens set audOpt)(v0)
+        val v1 = (lens replace audOpt)(v0)
 
         val v2 = _updateErrors(
           v1,
           MBusinessInfo.validateAudienceDescr(audOpt),
-          MMetaPub.business composeLens MBusinessInfo.audienceDescr
+          MMetaPub.business andThen MBusinessInfo.audienceDescr
         )
 
         updated(v2)
@@ -251,7 +251,7 @@ class NodeEditAh[M](
                             vld: StringValidationNel[_],
                             errLens: Lens[MMetaPub, Option[String]]): MAdnNodeS = {
     val lens2 = MAdnNodeS.errors
-      .composeLens(errLens)
+      .andThen(errLens)
     vld.fold(
       // Ошибка валидации
       {errors =>
@@ -260,14 +260,14 @@ class NodeEditAh[M](
         if (lens2.get(v0) contains e2) {
           v0
         } else {
-          (lens2 set Some(e2))(v0)
+          (lens2 replace Some(e2))(v0)
         }
       },
       // Всё ок, нет ошибки
       {_ =>
         if ( lens2.get(v0).nonEmpty ) {
           // стереть ошибку из состояния.
-          (lens2 set None)( v0 )
+          (lens2 replace None)( v0 )
         } else {
           v0
         }

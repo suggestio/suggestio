@@ -3,10 +3,10 @@ import sbt._
 import Keys._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
 import WebScalaJS.autoImport._
-
 import scalajsbundler.sbtplugin.WebScalaJSBundlerPlugin
 import WebScalaJSBundlerPlugin.autoImport._
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import org.scalajs.sbtplugin.Stage
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 
 val DIR0 = "src1/"
@@ -28,14 +28,17 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
       "com.typesafe.play" %%% "play-json" % Common.Vsn.PLAY_JSON_VSN,
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
       "org.scalaz"   %%% "scalaz-core" % Common.Vsn.SCALAZ,
-      "com.github.japgolly.univeq"   %%% "univeq-scalaz" % Common.Vsn.UNIVEQ,
+      "org.typelevel" %%% "cats-effect" % Common.Vsn.CATS_EFFECT,
+      //"com.github.japgolly.univeq"   %%% "univeq-scalaz" % "1.+",
+      "com.github.japgolly.univeq"   %%% "univeq" % Common.Vsn.UNIVEQ,
+      "com.github.japgolly.univeq"   %%% "univeq-cats" % Common.Vsn.UNIVEQ,
       "org.scala-lang.modules" %%% "scala-parser-combinators" % Common.Vsn.SCALA_PARSER_COMBINATORS,
       // diode for FastEq to [common], possibly need to move to js-only with dropping most of FastEq implementations in [common].
       "io.suzaku"    %%% "diode-core"  % Common.diodeVsn,
       // monocle
-      "com.github.julien-truffaut" %%%  "monocle-core"  % Common.Vsn.MONOCLE,
-      "com.github.julien-truffaut" %%%  "monocle-macro" % Common.Vsn.MONOCLE,
-      "com.github.julien-truffaut" %%%  "monocle-law"   % Common.Vsn.MONOCLE % Test,
+      "dev.optics" %%%  "monocle-core"  % Common.Vsn.MONOCLE,
+      "dev.optics" %%%  "monocle-macro" % Common.Vsn.MONOCLE,
+      "dev.optics" %%%  "monocle-law"   % Common.Vsn.MONOCLE % Test,
       // Tests only for [common].
       "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
     )
@@ -479,6 +482,45 @@ lazy val sc3Sjs = {
     )
 }
 
+
+/** Server-side rendering support for sc3.
+  * @see [[https://blog.shipreq.com/post/scala_react_and_ssr_part_1]] */
+lazy val showcaseSsr = crossProject(JSPlatform, JVMPlatform)
+  .crossType( CrossType.Full )
+  .in( file(DIR0 + "shared/showcase/ssr") )
+
+lazy val showcaseSsrJs = showcaseSsr.js
+  .dependsOn( sc3Sjs )
+  .settings(
+    Common.settingsOrgJS,
+    libraryDependencies ++= Seq(
+     "com.github.japgolly.scala-graal" %%% "core-js"       % Common.Vsn.SCALA_GRAAL,
+     "com.github.japgolly.scala-graal" %%% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
+    ),
+    scalaJSLinkerConfig ~= { _.withSourceMap(false) },
+    artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
+    artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js")
+  )
+
+lazy val showcaseSsrJvm = showcaseSsr.jvm
+  .settings(
+    Common.settingsOrg,
+    libraryDependencies ++= Seq(
+      "com.github.japgolly.scala-graal" %% "core"          % Common.Vsn.SCALA_GRAAL,
+      "com.github.japgolly.scala-graal" %% "core-js"       % Common.Vsn.SCALA_GRAAL,
+      "com.github.japgolly.scala-graal" %% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
+    ),
+    unmanagedResources in Compile += Def.taskDyn {
+      val stage = (scalaJSStage in Compile in showcaseSsrJs).value
+      val task = stage match {
+        case Stage.FastOpt => fastOptJS
+        case Stage.FullOpt => fullOptJS
+      }
+      Def.task((task in Compile in showcaseSsrJs).value.data)
+    }.value,
+  )
+
+
 /** ServiceWorker for showcase (sc3Sjs). */
 lazy val scSwSjs = {
   Project(id = "sc-sw-sjs", base = file(DIR0 + "client/sc/sw"))
@@ -682,6 +724,7 @@ lazy val client = project
     sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
     cartSjs, yooKassaSjs,
     flowjsSjs,
+    showcaseSsrJs,
   )
 
 
@@ -698,6 +741,7 @@ lazy val server = project
     mgeo, commonWww,
     commonSlickDriver, mbill2,
     secWwwUtil, secAvUtil, svgUtil,
+    showcaseSsrJvm,
     www
   )
 

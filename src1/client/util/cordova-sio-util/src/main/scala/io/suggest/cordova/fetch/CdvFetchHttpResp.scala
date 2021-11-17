@@ -20,7 +20,7 @@ import scala.util.Try
 case class CdvFetchHttpResp(cdvFetchResp: Response)
   extends HttpResp
   with Log
-{
+{ outer =>
 
   // cdv-fetch может возращать undefined вместо статуса. Это баг в плагине, TODO подменяем ошибочное значение:
   override def status = cdvFetchResp.status getOrElse HttpConst.Status.LOCKED
@@ -62,10 +62,10 @@ case class CdvFetchHttpResp(cdvFetchResp: Response)
   override def toDomResponse(): Option[dom.experimental.Response] = {
     val domResp = new dom.experimental.Response(
       content = cdvFetchResp._bodyInit.orNull,
-      init = ResponseInit(
-        _status = status,
-        _statusText = statusText,
-        _headers = {
+      init = new ResponseInit {
+        var status = outer.status
+        var statusText = outer.statusText
+        var headers = {
           val hdrs = new dom.experimental.Headers()
           for {
             (k, vs) <- cdvFetchResp.headers.map
@@ -78,8 +78,8 @@ case class CdvFetchHttpResp(cdvFetchResp: Response)
             logger.warn( ErrorMsgs.HTTP_HEADER_PROBLEM, ex, (k, v2) )
           }
           hdrs
-        },
-      ),
+        }
+      },
     )
 
     Some(domResp)

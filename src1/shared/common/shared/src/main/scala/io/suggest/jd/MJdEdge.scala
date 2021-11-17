@@ -14,6 +14,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.Validation
 import scalaz.syntax.apply._
+import scala.language.implicitConversions
 
 /**
   * Suggest.io

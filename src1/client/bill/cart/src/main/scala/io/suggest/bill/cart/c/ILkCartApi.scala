@@ -93,7 +93,7 @@ final class LkCartApiHttpImpl extends ILkCartApi {
   override def unHoldOrder(orderId: Gid_t): Future[MOrderContent] = {
     HttpClient.execute(
       HttpReq.routed(
-        route = routes.controllers.LkBill2.unHoldOrder( orderId ),
+        route = routes.controllers.LkBill2.unHoldOrder( orderId.toDouble ),
       )
     )
       .respAuthFut

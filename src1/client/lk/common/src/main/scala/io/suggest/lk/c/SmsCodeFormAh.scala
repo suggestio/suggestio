@@ -31,7 +31,7 @@ class SmsCodeFormAh[M](
 
   private val typedL = Traversal
     .fromTraverse[Option, MSmsCodeS]
-    .composeLens( MSmsCodeS.typed )
+    .andThen( MSmsCodeS.typed )
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -39,7 +39,7 @@ class SmsCodeFormAh[M](
     // Редактирование поля ввода смс-кода.
     case m: SmsCodeSet =>
       val v0Opt = value
-      if (typedL.composeLens(MTextFieldS.value).exist(_ ==* m.smsCode)(v0Opt) ) {
+      if (typedL.andThen(MTextFieldS.value).exist(_ ==* m.smsCode)(v0Opt) ) {
         noChange
       } else {
         val v2Opt = typedL
@@ -58,8 +58,8 @@ class SmsCodeFormAh[M](
       val v0Opt = value
       if (typedL.exist { t0 => t0.isValid !=* SmsCodeFormAh._isSmsCodeValid(t0.value) }(v0Opt)) {
         val v2Opt = typedL
-          .composeLens(MTextFieldS.isValid)
-          .set(false)(v0Opt)
+          .andThen(MTextFieldS.isValid)
+          .replace(false)(v0Opt)
         updated(v2Opt)
       } else {
         noChange

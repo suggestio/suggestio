@@ -549,20 +549,20 @@ final class DynImgUtil @Inject() (
     val countProcessed = new AtomicInteger(0)
 
     val mnode_extras_doc_template_LENS = MNode.extras
-      .composeLens( MNodeExtras.doc )
-      .composeTraversal( Traversal.fromTraverse[Option, MNodeDoc] )
-      .composeLens( MNodeDoc.template )
+      .andThen( MNodeExtras.doc )
+      .andThen( Traversal.fromTraverse[Option, MNodeDoc] )
+      .andThen( MNodeDoc.template )
 
     val jdt_p1_bgImg_LENS = JdTag.props1
-      .composeLens( MJdProps1.bgImg )
+      .andThen( MJdProps1.bgImg )
 
     val jdt_qdProps_edgeInfo_LENS = JdTag.qdProps
-      .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
-      .composeLens( MQdOp.edgeInfo )
+      .andThen( Traversal.fromTraverse[Option, MQdOp] )
+      .andThen( MQdOp.edgeInfo )
     val mnode_extras_adn_resView_LENS = MNode.extras
-      .composeLens( MNodeExtras.adn )
-      .composeTraversal( Traversal.fromTraverse[Option, MAdnExtra] )
-      .composeLens( MAdnExtra.resView )
+      .andThen( MNodeExtras.adn )
+      .andThen( Traversal.fromTraverse[Option, MAdnExtra] )
+      .andThen( MAdnExtra.resView )
 
     mNodes
       .source[MNode]( msearch.toEsQuery )
@@ -623,7 +623,7 @@ final class DynImgUtil @Inject() (
                 .nextOption()
               edgeMedia   <- fileEdge.media
             } yield {
-              val jdId2 = (MJdEdgeId.outImgFormat set edgeMedia.file.imgFormatOpt)(jdId)
+              val jdId2 = (MJdEdgeId.outImgFormat replace edgeMedia.file.imgFormatOpt)(jdId)
               LOGGER.debug(s"$logPrefix2 UPGRADED edge: $jdId2")
               jdId2
             })

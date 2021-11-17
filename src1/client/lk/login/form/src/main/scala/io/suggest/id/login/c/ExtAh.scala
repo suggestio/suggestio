@@ -49,7 +49,7 @@ class ExtAh[M](
     // Логин не удался - разблокировать кнопку.
     case _: ExtLoginViaTimeout =>
       val v0 = value
-      val v2 = MExtLoginFormS.loginUrlReq.set( Pot.empty )(v0)
+      val v2 = MExtLoginFormS.loginUrlReq.replace( Pot.empty )(v0)
       updated( v2 )
 
   }

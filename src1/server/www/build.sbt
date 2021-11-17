@@ -45,7 +45,6 @@ libraryDependencies ++= Seq(
 
   //"com.ning" % "async-http-client" % "1.9.+",   // 2.5 migration, ahc -> 2.0.x. Удалить, если не понадобится возвращать.
   "org.slf4j" % "log4j-over-slf4j" % Common.Vsn.SLF4J,
-  "com.google.guava" % "guava" % "18.+",
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.5.+",
   

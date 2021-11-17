@@ -41,6 +41,7 @@ trait ContractIdSlickFk extends ContractIdSlick with ITableName {
   import profile.api._
 
   trait ContractIdFk extends ContractIdColumn { that: Table[_] =>
+    import scala.language.existentials
     def contract = foreignKey(CONTRACT_ID_FK, contractId, mContracts.query)(_.id)
   }
 

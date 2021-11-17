@@ -50,7 +50,7 @@ final class CartPayAh[M](
         updated( v2, fx )
 
       } else if (v0.cartSubmit isPendingWithStartTime m.timestampMs) {
-        var modsAcc = (MCartPayS.cartSubmit set m.state)
+        var modsAcc = (MCartPayS.cartSubmit replace m.state)
 
         // Also, if ready and cart is need to pay, lets start paySystem-widget initialization:
         for {

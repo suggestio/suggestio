@@ -27,10 +27,10 @@ class FormAh[M](
       var updatesAcc = List.empty[MLoginFormOverallS => MLoginFormOverallS]
 
       if (v0.loginTab !=* m.currTab)
-        updatesAcc ::= MLoginFormOverallS.loginTab.set( m.currTab )
+        updatesAcc ::= MLoginFormOverallS.loginTab.replace( m.currTab )
 
       if (v0.returnUrl !=* m.returnUrl)
-        updatesAcc ::= MLoginFormOverallS.returnUrl.set( m.returnUrl )
+        updatesAcc ::= MLoginFormOverallS.returnUrl.replace( m.returnUrl )
 
       updatesAcc
         .reduceOption(_ andThen _)
@@ -45,7 +45,7 @@ class FormAh[M](
       if (v0.isVisible ==* m.isShow) {
         noChange
       } else {
-        val v2 = (MLoginFormOverallS.isVisible set m.isShow)(v0)
+        val v2 = (MLoginFormOverallS.isVisible replace m.isShow)(v0)
         updated(v2)
       }
 
@@ -61,7 +61,7 @@ class FormAh[M](
             .runNow()
           DoNothing
         }
-        val v2 = MLoginFormOverallS.loginTab.set( m.tab )(v0)
+        val v2 = MLoginFormOverallS.loginTab.replace( m.tab )(v0)
         updated(v2, updateRouterFx)
       }
 

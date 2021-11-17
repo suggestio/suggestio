@@ -125,13 +125,13 @@ class EditTfDailyAh[M](
         modF <- Option {
           if (m.modeId ==* ITfDailyMode.ModeId.Inherit) {
             // юзер выбрал режим наследования тарифа
-            MEditTfDailyS.mode.set( InheritTf )
+            MEditTfDailyS.mode.replace( InheritTf )
 
           } else if (m.modeId ==* ITfDailyMode.ModeId.Manual) {
             // выбран ручной режим управления тарифом.
             val (mia, mprice) = _nodeTfOpt2mia( v0.nodeTfOpt )
-            MEditTfDailyS.mode.set( ManualTf( mprice.amount ) ) andThen
-            MEditTfDailyS.inputAmount.set( Some(mia) )
+            MEditTfDailyS.mode.replace( ManualTf( mprice.amount ) ) andThen
+            MEditTfDailyS.inputAmount.replace( Some(mia) )
 
           } else {
             logger.error( ErrorMsgs.TF_UNDEFINED, msg = m )

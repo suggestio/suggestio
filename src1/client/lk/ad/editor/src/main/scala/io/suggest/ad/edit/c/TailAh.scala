@@ -27,14 +27,14 @@ class TailAh[M](
     case ErrorPopupCloseClick =>
       val v0 = value
       val v2 = MAeRoot.popups
-        .composeLens(MAePopupsS.error)
-        .set(None)(v0)
+        .andThen(MAePopupsS.error)
+        .replace(None)(v0)
       updated( v2 )
 
     // Закрытие всех попапов.
     case CloseAllPopups =>
       val v0 = value
-      val v2 = MAeRoot.popups.set( MAePopupsS.empty )(v0)
+      val v2 = MAeRoot.popups.replace( MAePopupsS.empty )(v0)
       updated( v2 )
 
   }

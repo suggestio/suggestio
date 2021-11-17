@@ -29,7 +29,7 @@ object ReactCommonUtil {
 
   def cbFun0ToJsCb[Res](fun: () => CallbackTo[Res]): js.Function0[Res] = {
     {() =>
-      fun().runNow
+      fun().runNow()
     }
   }
 

@@ -80,7 +80,7 @@ final class Html5NotificationApiAdp[M](
       if (m.isStart) {
         // Сразу парсим пермишен, чтобы exception при ошибке возник как можно раньше.
         val v2 = (
-          MH5nAdpS.permission set Html5NotificationUtil.readPermissionPot()
+          MH5nAdpS.permission replace Html5NotificationUtil.readPermissionPot()
         )(v0)
 
         for (ex <- v2.permission.exceptionOption)
@@ -92,7 +92,7 @@ final class Html5NotificationApiAdp[M](
         // Остановка. Сброс состояния: Скрыть все нотификации.
         val fx = _closeToastsFx( Nil )
         val v2Opt = Option.when( v0.permission.nonEmpty )(
-          MH5nAdpS.permission.set( Pot.empty)(v0)
+          (MH5nAdpS.permission replace Pot.empty)(v0)
         )
         ah.optionalResult( v2Opt, Some(fx) )
       }

@@ -196,12 +196,12 @@ final class ImgMaintainUtil @Inject()(
       countWrite = new AtomicInteger( 0 )
 
       mnode_edges_out_LENS = MNode.edges
-        .composeLens( MNodeEdges.out )
+        .andThen( MNodeEdges.out )
 
       edge_media_picture_wh_LENS = MEdge.media
-        .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
-        .composeLens( MEdgeMedia.picture )
-        .composeLens( MPictureMeta.whPx )
+        .andThen( Traversal.fromTraverse[Option, MEdgeMedia] )
+        .andThen( MEdgeMedia.picture )
+        .andThen( MPictureMeta.whPx )
 
       // Запуск массового обновления.
       _ <- mNodes
@@ -275,7 +275,7 @@ final class ImgMaintainUtil @Inject()(
                         if (e0.predicate ==>> MPredicates.Blob.File) &&
                           media.picture.whPx.nonEmpty
                       } yield {
-                        val edgeMod = edge_media_picture_wh_LENS set wh2Opt
+                        val edgeMod = edge_media_picture_wh_LENS replace wh2Opt
                         edgeMod( e0 )
                       })
                         .getOrElse( e0 )
@@ -327,13 +327,13 @@ final class ImgMaintainUtil @Inject()(
 
     val countProcessed = new AtomicInteger( 0 )
     val node_edges_out_LENS = MNode.edges
-      .composeLens( MNodeEdges.out )
+      .andThen( MNodeEdges.out )
 
     val edge_media_storage_data_LENS = MEdge.media
-      .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
-      .composeLens( MEdgeMedia.storage )
-      .composeTraversal( Traversal.fromTraverse[Option, MStorageInfo] )
-      .composeLens( MStorageInfo.data )
+      .andThen( Traversal.fromTraverse[Option, MEdgeMedia] )
+      .andThen( MEdgeMedia.storage )
+      .andThen( Traversal.fromTraverse[Option, MStorageInfo] )
+      .andThen( MStorageInfo.data )
 
     for {
       _ <- mNodes
@@ -365,7 +365,7 @@ final class ImgMaintainUtil @Inject()(
                     } { swfsFid =>
                       LOGGER.trace(s"$logPrefix Updating shards on node#${mnode.idOrNull} from [${mStorInfoData.shards.mkString(" ")}] to => ${swfsFid.volumeId} (fid#$swfsFid)")
                       MStorageInfoData.shards
-                        .set( Set.empty + swfsFid.volumeId.toString )(mStorInfoData)
+                        .replace( Set.empty + swfsFid.volumeId.toString )(mStorInfoData)
                     }
                   }(e)
                 } else e

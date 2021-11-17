@@ -249,7 +249,7 @@ final class CaptchaUtil @Inject() (
       }
 
       // Обновлённый idMsg:
-      idMsg2 = MIdMsg.validated.set( Some(now) )(idMsg)
+      idMsg2 = MIdMsg.validated.replace( Some(now) )(idMsg)
 
       // Обновлённый токен:
       idToken2 = (

@@ -27,7 +27,7 @@ object CspPolicy {
     // Добавить список значений в аккамулятор.
     def __append(k: String, vs: IterableOnce[String]): Unit = {
       sb.append(k)
-      for (v <- vs) {
+      for (v <- vs.iterator) {
         sb.append( srcDelim )
           .append(v)
       }
@@ -119,7 +119,7 @@ object CspPolicy {
     allowOsmLeaflet andThen
       CspPolicy.scriptSrc.modify(_ + Csp.Sources.UNSAFE_EVAL + Csp.Sources.UNSAFE_INLINE) andThen
       // Чтобы можно было менять подложку карты на любую: их много, они перечислены в шаблоне mapBaseTpl.
-      CspPolicy.imgSrc.set( Set.empty + Csp.Sources.* )
+      CspPolicy.imgSrc.replace( Set.empty + Csp.Sources.* )
     )
 
   def jsUnsafeInline =

@@ -112,7 +112,7 @@ class SmsCodeFormR(
             val isEnabled2 = !props.disabled
             val text = props.smsCode.typed
             if (text.isEnabled ==* isEnabled2) text
-            else (MTextFieldS.isEnabled set isEnabled2)(text)
+            else (MTextFieldS.isEnabled replace isEnabled2)(text)
           }
         }( OptFastEq.Wrapped(MTextFieldS.MTextFieldSFastEq) ),
 

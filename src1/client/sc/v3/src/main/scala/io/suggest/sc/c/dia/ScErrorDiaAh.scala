@@ -96,7 +96,7 @@ class ScErrorDiaAh(
           // (SNH) Если в состоянии есть старая unSubscribe-функция, то использовать её перед перезаписью:
           val oldUnSubscribeFxOpt = ScErrorDiaAh._maybeUnSubscribeFx( errDia0 )
 
-          val errDia2 = (MScErrorDia.potUnSubscribe set Some(unsubscribeF))(errDia0)
+          val errDia2 = (MScErrorDia.potUnSubscribe replace Some(unsubscribeF))(errDia0)
           val allFx = (retryFx :: oldUnSubscribeFxOpt.toList)
             .mergeEffects
             .get

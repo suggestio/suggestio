@@ -113,12 +113,12 @@ object IJdEdgeIdViewAdp {
           val setF = jdt.name match {
             case MJdTagNames.QD_OP =>
               JdTag.qdProps
-                .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
-                .composeLens( MQdOp.edgeInfo )
-                .set _
+                .andThen( Traversal.fromTraverse[Option, MQdOp] )
+                .andThen( MQdOp.edgeInfo )
+                .replace _
             case MJdTagNames.STRIP =>
               _jdtag_p1_bgImg_LENS
-                .set _
+                .replace _
             case jdtName =>
               throw new UnsupportedOperationException(resKey.toString + HtmlConstants.SPACE + newValue + HtmlConstants.SPACE + jdtName)
           }
@@ -132,7 +132,7 @@ object IJdEdgeIdViewAdp {
       val lens = _jdtag_p1_bgImg_LENS
       for (jdt0 <- view) yield {
         if ( lens.get(jdt0).exists(_.edgeUid ==* edgeUid) ) {
-          (lens set None)(jdt0)
+          (lens replace None)(jdt0)
         } else {
           jdt0
         }
@@ -144,7 +144,7 @@ object IJdEdgeIdViewAdp {
 
   private def _jdtag_p1_bgImg_LENS = {
     JdTag.props1
-      .composeLens( MJdProps1.bgImg )
+      .andThen( MJdProps1.bgImg )
   }
 
 }

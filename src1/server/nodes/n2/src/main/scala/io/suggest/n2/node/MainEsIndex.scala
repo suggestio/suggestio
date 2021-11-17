@@ -162,7 +162,7 @@ final class MainEsIndex @Inject()(
       .getIndexMeta( indexName )
       .map { oldIndexMetaOpt =>
         val r = oldIndexMetaOpt.exists { oldIndexMeta =>
-          !oldIndexMeta.getMappings.isEmpty
+          oldIndexMeta.mapping() != null
         }
 
         if (r)

@@ -411,7 +411,7 @@ final class SysMarket @Inject() (
                   meta = if (isAdnNode && mnode0.meta.colors.adnColors.exists(_.isEmpty)) {
                     val colors2 = NodeDfltColors.getOneRandom().adnColors
                     LOGGER.trace(s"$logPrefix Resetting colors for created adn node: $colors2")
-                    MMeta.colors.set( colors2 )(mnode0.meta)
+                    MMeta.colors.replace( colors2 )(mnode0.meta)
                   } else {
                     mnode0.meta
                   }

@@ -68,15 +68,15 @@ final class ScAdsTile @Inject() (
 
         if (_qsRaw.common.locEnv.geoLoc.nonEmpty) {
           modsAcc ::= MScQs.common
-            .composeLens( MScCommonQs.locEnv )
-            .composeLens( MLocEnv.geoLoc )
-            .set( Nil )
+            .andThen( MScCommonQs.locEnv )
+            .andThen( MLocEnv.geoLoc )
+            .replace( Nil )
         }
 
         if (_qsRaw.search.rcvrId.nonEmpty) {
           modsAcc ::= MScQs.search
-            .composeLens( MAdsSearchReq.rcvrId )
-            .set( None )
+            .andThen( MAdsSearchReq.rcvrId )
+            .replace( None )
         }
 
         modsAcc.reduceOption(_ andThen _)
@@ -87,8 +87,8 @@ final class ScAdsTile @Inject() (
 
     private val scQs_common_locEnv_beacons_LENS =
       MScQs.common
-        .composeLens( MScCommonQs.locEnv )
-        .composeLens( MLocEnv.beacons )
+        .andThen( MScCommonQs.locEnv )
+        .andThen( MLocEnv.beacons )
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
@@ -120,7 +120,7 @@ final class ScAdsTile @Inject() (
       val beacons0 = scQs_common_locEnv_beacons_LENS.get( _qs )
       val qsBeacons2 = radioBeaconsCtx.qsBeacons2
       if (beacons0 !=* qsBeacons2) {
-        (scQs_common_locEnv_beacons_LENS set qsBeacons2)( _qs )
+        (scQs_common_locEnv_beacons_LENS replace qsBeacons2)( _qs )
       } else {
         _qs
       }

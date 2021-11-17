@@ -289,7 +289,7 @@ final class MarketLkAdn @Inject() (
                   )
                   mNodes.tryUpdate(request.mnode) {
                     MNode.edges
-                      .composeLens( MNodeEdges.out )
+                      .andThen( MNodeEdges.out )
                       .modify(_ :+ ownEdge)
                   }
                 } else {

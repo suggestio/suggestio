@@ -37,13 +37,13 @@ class EdgeEditAh[M](
       val v0 = value
 
       val lens = MEdgeEditRoot.edge
-        .composeLens( MEdge.predicate )
+        .andThen( MEdge.predicate )
 
       if ( m.pred2 ==* lens.get(v0) ) {
         noChange
 
       } else {
-        val v2 = (lens set m.pred2)(v0)
+        val v2 = (lens replace m.pred2)(v0)
         updated(v2)
       }
 
@@ -64,7 +64,7 @@ class EdgeEditAh[M](
       } else {
         val nodeIds2 = nodeIds0.updated(m.i, nodeId2)
 
-        val v2 = (lens set nodeIds2)( v0 )
+        val v2 = (lens replace nodeIds2)( v0 )
         updated(v2)
       }
 
@@ -82,7 +82,7 @@ class EdgeEditAh[M](
 
       } else {
         val nodeIds2 = nodeIds0 :+ emptyStr
-        val v2 = (lens set nodeIds2)(v0)
+        val v2 = (lens replace nodeIds2)(v0)
         updated(v2)
       }
 
@@ -92,8 +92,8 @@ class EdgeEditAh[M](
       val v0 = value
 
       val lens = MEdgeEditRoot.edge
-        .composeLens( MEdge.info )
-        .composeLens( MEdgeInfo.flag )
+        .andThen( MEdge.info )
+        .andThen( MEdgeInfo.flag )
 
       val flag0 = lens.get(v0)
 
@@ -104,7 +104,7 @@ class EdgeEditAh[M](
       if ( flag0 ==* flag2 ) {
         noChange
       } else {
-        val v2 = (lens set flag2)(v0)
+        val v2 = (lens replace flag2)(v0)
         updated(v2)
       }
 
@@ -114,12 +114,12 @@ class EdgeEditAh[M](
       val v0 = value
 
       val lens = MEdgeEditRoot.edge
-        .composeLens( MEdge.order )
+        .andThen( MEdge.order )
 
       if (lens.get(v0) ==* m.order) {
         noChange
       } else {
-        val v2 = (lens set m.order)(v0)
+        val v2 = (lens replace m.order)(v0)
         updated( v2 )
       }
 
@@ -129,13 +129,13 @@ class EdgeEditAh[M](
       val v0 = value
 
       val lens = MEdgeEditRoot.edge
-        .composeLens( MEdge.info )
-        .composeLens( MEdgeInfo.textNi )
+        .andThen( MEdge.info )
+        .andThen( MEdgeInfo.textNi )
 
       if (lens.get(v0) ==* m.commentNi) {
         noChange
       } else {
-        val v2 = (lens set m.commentNi)(v0)
+        val v2 = (lens replace m.commentNi)(v0)
         updated(v2)
       }
 
@@ -145,13 +145,13 @@ class EdgeEditAh[M](
       val v0 = value
 
       val lens = MEdgeEditRoot.edge
-        .composeLens( MEdge.info )
-        .composeLens( MEdgeInfo.extService )
+        .andThen( MEdge.info )
+        .andThen( MEdgeInfo.extService )
 
       if (lens.get(v0) ==* m.extServiceOpt) {
         noChange
       } else {
-        val v2 = (lens set m.extServiceOpt)(v0)
+        val v2 = (lens replace m.extServiceOpt)(v0)
         updated(v2)
       }
 
@@ -161,13 +161,13 @@ class EdgeEditAh[M](
       val v0 = value
 
       val lens = MEdgeEditRoot.edge
-        .composeLens( MEdge.info )
-        .composeLens( MEdgeInfo.osFamily )
+        .andThen( MEdge.info )
+        .andThen( MEdgeInfo.osFamily )
 
       if (lens.get(v0) ==* m.osFamilyOpt) {
         noChange
       } else {
-        val v2 = (lens set m.osFamilyOpt)(v0)
+        val v2 = (lens replace m.osFamilyOpt)(v0)
         updated(v2)
       }
 
@@ -192,7 +192,7 @@ class EdgeEditAh[M](
               Success( SaveResp(startTimeMs, tryResp) )
             }
         }
-        val v2 = lens.set( req0.pending(startTimeMs) )(v0)
+        val v2 = lens.replace( req0.pending(startTimeMs) )(v0)
         updated(v2, fx)
       }
 
@@ -206,7 +206,7 @@ class EdgeEditAh[M](
 
       } else {
         val req2 = req0.withTry( m.tryResp )
-        val v2 = lens.set( req2 )(v0)
+        val v2 = lens.replace( req2 )(v0)
 
         if (m.tryResp.isSuccess) {
           // Всё сохранено, отредиректить юзера
@@ -245,7 +245,7 @@ class EdgeEditAh[M](
         if ( lens.get(v0) ) {
           noChange
         } else {
-          val v2 = (lens set true)(v0)
+          val v2 = (lens replace true)(v0)
           updated( v2 )
         }
       }
@@ -265,10 +265,10 @@ class EdgeEditAh[M](
           // Всё ок, то скрыть диалог и отредиректить.
           val v2 = (
             MEdgeEditRoot.edit
-              .composeLens( MEdgeEditS.deleteDia )
+              .andThen( MEdgeEditS.deleteDia )
               .modify(
-                MDeleteDiaS.deleteReq.set( req2 ) andThen
-                MDeleteDiaS.opened.set( false )
+                MDeleteDiaS.deleteReq.replace( req2 ) andThen
+                MDeleteDiaS.opened.replace( false )
               )
           )(v0)
           val fx = EdgeEditAh.rdrToSysNodeFx(v2)
@@ -277,7 +277,7 @@ class EdgeEditAh[M](
 
         } else {
           // Ошибка. Не скрывать диалог, отрендерить ошибку.
-          val v2 = (lens set req2)(v0)
+          val v2 = (lens replace req2)(v0)
           updated(v2)
         }
       }
@@ -293,7 +293,7 @@ class EdgeEditAh[M](
         noChange
 
       } else {
-        val v2 = (lens set false)(v0)
+        val v2 = (lens replace false)(v0)
         updated(v2)
       }
 
@@ -303,12 +303,12 @@ class EdgeEditAh[M](
       val v0 = value
       val lens = EdgeEditAh
         .root_edge_media_file_LENS
-        .composeLens( MFileMeta.mime )
+        .andThen( MFileMeta.mime )
 
       if ( lens.exist( _ ==* m.fileMime )(v0) ) {
         noChange
       } else {
-        val v2 = (lens set m.fileMime)(v0)
+        val v2 = (lens replace m.fileMime)(v0)
         updated(v2)
       }
 
@@ -318,12 +318,12 @@ class EdgeEditAh[M](
       val v0 = value
       val lens = EdgeEditAh
         .root_edge_media_file_LENS
-        .composeLens( MFileMeta.sizeB )
+        .andThen( MFileMeta.sizeB )
 
       if ( lens.exist( _ ==* m.sizeB )(v0) ) {
         noChange
       } else {
-        val v2 = (lens set m.sizeB)(v0)
+        val v2 = (lens replace m.sizeB)(v0)
         updated(v2)
       }
 
@@ -333,12 +333,12 @@ class EdgeEditAh[M](
       val v0 = value
       val lens = EdgeEditAh
         .root_edge_media_file_LENS
-        .composeLens( MFileMeta.isOriginal )
+        .andThen( MFileMeta.isOriginal )
 
       if (lens.exist(_ ==* m.isOriginal)(v0)) {
         noChange
       } else {
-        val v2 = (lens set m.isOriginal)(v0)
+        val v2 = (lens replace m.isOriginal)(v0)
         updated(v2)
       }
 
@@ -348,7 +348,7 @@ class EdgeEditAh[M](
       val v0 = value
       val lens = EdgeEditAh
         .root_edge_media_file_LENS
-        .composeLens( MFileMeta.hashesHex )
+        .andThen( MFileMeta.hashesHex )
 
       val hashes0 = lens
         .getAll(v0)
@@ -372,10 +372,10 @@ class EdgeEditAh[M](
         } else {
           val fmHash2 = hashOldOpt.fold[MFileMetaHash] {
             MFileMetaHash(m.mhash, m.hash, Set.empty)
-          }( MFileMetaHash.hexValue.set(m.hash) )
+          }( MFileMetaHash.hexValue.replace(m.hash) )
           fmHash2 :: hashes1
         }
-        val v2 = lens.set( hashes2 )(v0)
+        val v2 = lens.replace( hashes2 )(v0)
         updated(v2)
       }
 
@@ -385,7 +385,7 @@ class EdgeEditAh[M](
       val v0 = value
       val lens = EdgeEditAh
         .root_edge_media_file_LENS
-        .composeLens( MFileMeta.hashesHex )
+        .andThen( MFileMeta.hashesHex )
 
       val hashes0 = lens
         .getAll(v0)
@@ -404,12 +404,12 @@ class EdgeEditAh[M](
           val hashes1 = hashes0
             .filterNot( _.hType ==* m.mhash )
           // Обновить старый хэш.
-          val h2 = MFileMetaHash.flags.set {
+          val h2 = MFileMetaHash.flags.replace {
             if (m.checked) h0.flags + m.flag
             else h0.flags - m.flag
           }(h0)
 
-          val v2 = lens.set( h2 :: hashes1 )(v0)
+          val v2 = lens.replace( h2 :: hashes1 )(v0)
           updated(v2)
         }
 
@@ -419,12 +419,12 @@ class EdgeEditAh[M](
       val v0 = value
       val lens = EdgeEditAh
         .root_edge_media_storage_LENS
-        .composeLens( MStorageInfo.storage )
+        .andThen( MStorageInfo.storage )
 
       if ( lens.exist(_ ==* m.storageType)(v0) ) {
         noChange
       } else {
-        val v2 = lens.set( m.storageType )(v0)
+        val v2 = lens.replace( m.storageType )(v0)
         updated(v2)
       }
 
@@ -433,13 +433,13 @@ class EdgeEditAh[M](
       val v0 = value
       val lens = EdgeEditAh
         .root_edge_media_storage_LENS
-        .composeLens( MStorageInfo.data )
-        .composeLens( MStorageInfoData.meta )
+        .andThen( MStorageInfo.data )
+        .andThen( MStorageInfoData.meta )
 
       if ( lens.exist(_ ==* m.storageData)(v0) ) {
         noChange
       } else {
-        val v2 = lens.set( m.storageData )(v0)
+        val v2 = lens.replace( m.storageData )(v0)
         updated(v2)
       }
 
@@ -452,38 +452,38 @@ object EdgeEditAh {
 
   private def root_edge_media_LENS = {
     MEdgeEditRoot.edge
-      .composeLens( MEdge.media )
-      .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
+      .andThen( MEdge.media )
+      .andThen( Traversal.fromTraverse[Option, MEdgeMedia] )
   }
 
   private def root_edge_media_file_LENS = {
     root_edge_media_LENS
-      .composeLens( MEdgeMedia.file )
+      .andThen( MEdgeMedia.file )
   }
   private def root_edge_media_storage_LENS = {
     root_edge_media_LENS
-      .composeLens( MEdgeMedia.storage )
-      .composeTraversal( Traversal.fromTraverse[Option, MStorageInfo] )
+      .andThen( MEdgeMedia.storage )
+      .andThen( Traversal.fromTraverse[Option, MStorageInfo] )
   }
 
   private def root_edit_nodeIds_LENS = {
     MEdgeEditRoot.edit
-      .composeLens( MEdgeEditS.nodeIds )
+      .andThen( MEdgeEditS.nodeIds )
   }
 
   private def root_edit_deleteDia_LENS =
     MEdgeEditRoot.edit
-      .composeLens( MEdgeEditS.deleteDia )
-      .composeLens( MDeleteDiaS.opened )
+      .andThen( MEdgeEditS.deleteDia )
+      .andThen( MDeleteDiaS.opened )
 
   private def root_edit_deleteDia_req_LENS =
     MEdgeEditRoot.edit
-      .composeLens( MEdgeEditS.deleteDia )
-      .composeLens( MDeleteDiaS.deleteReq )
+      .andThen( MEdgeEditS.deleteDia )
+      .andThen( MDeleteDiaS.deleteReq )
 
   private def root_edit_saveReq =
     MEdgeEditRoot.edit
-      .composeLens( MEdgeEditS.saveReq )
+      .andThen( MEdgeEditS.saveReq )
 
 
   private def rdrToSysNodeFx(v0: MEdgeEditRoot): Effect = {

@@ -154,7 +154,7 @@ class Sc3Circuit(
       val generation2 = System.currentTimeMillis()
       val scInit2 = MSc3Init.conf.modify { conf0 =>
         val conf1 = MSc3Conf.gen
-          .set( Some(generation2) )(conf0)
+          .replace( Some(generation2) )(conf0)
         Sc3ConfUtil.prepareSave( conf1 )
       }(scInit)
 
@@ -304,15 +304,15 @@ class Sc3Circuit(
         }
 
         var modF = MGeoTabS.data
-          .composeLens( MGeoTabData.rcvrsCache )
-          .set( rcvrsCache2 )
+          .andThen( MGeoTabData.rcvrsCache )
+          .replace( rcvrsCache2 )
 
         // И сразу залить в основное состояние карты ресиверов, если там нет иных данных.
         val geoTab_mapInit_rcvrs_LENS = MGeoTabS.mapInit
-          .composeLens( MMapInitState.rcvrs )
+          .andThen( MMapInitState.rcvrs )
         val currRcvrs0 = geoTab_mapInit_rcvrs_LENS.get(geoTab0)
         if (currRcvrs0.isEmpty || (currRcvrs0 ===* geoTab0.data.rcvrsCache))
-          modF = modF andThen geoTab_mapInit_rcvrs_LENS.set( rcvrsCache2 )
+          modF = modF andThen (geoTab_mapInit_rcvrs_LENS replace rcvrsCache2)
 
         modF( geoTab0 )
     }

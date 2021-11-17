@@ -37,6 +37,7 @@ object DomQuick {
 
   /** Принудительная перезагрузка страницы. */
   def reloadPage(): Unit = {
+    println("Reloading page: " + Thread.currentThread().getStackTrace.to(LazyList).tail.take(3).mkString("\n"))
     dom.document.location.reload(true)
   }
 

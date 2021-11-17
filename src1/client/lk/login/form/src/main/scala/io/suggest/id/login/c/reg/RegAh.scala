@@ -49,11 +49,11 @@ class RegAh[M](
     * @return ActionResult.
     */
   private def _toS1Captcha(v0: MRegS, updFs: List[MRegS => MRegS] = List.empty): ActionResult[M] = {
-    var updFsAcc = MRegS.step.set( MRegSteps.S1Captcha ) :: updFs
+    var updFsAcc = MRegS.step.replace( MRegSteps.S1Captcha ) :: updFs
     if (v0.s1Captcha.captcha.isEmpty)
       updFsAcc ::= MRegS.s1Captcha
-        .composeLens(MReg1Captcha.captcha)
-        .set( Some(MCaptchaS.empty) )
+        .andThen(MReg1Captcha.captcha)
+        .replace( Some(MCaptchaS.empty) )
     val v2 = updFsAcc.reduce(_ andThen _)(v0)
     // Надо проинициализировать форму капчи, если она ещё не готова:
     val fxOpt = OptionUtil.maybe( v2.s1Captcha.isCaptchaNeedsInit )( CaptchaInit.toEffectPure )
@@ -64,7 +64,7 @@ class RegAh[M](
   private def _toS2SmsCode(v0: MRegS): ActionResult[M] = {
     // Капча уже принята.
     val v2 = MRegS.step
-      .set( MRegSteps.S2SmsCode )(v0)
+      .replace( MRegSteps.S2SmsCode )(v0)
     updated(v2)
   }
 
@@ -73,7 +73,7 @@ class RegAh[M](
     val nextStep =
       if (v0.s3CheckBoxes.canSubmit) MRegSteps.S4SetPassword
       else MRegSteps.S3CheckBoxes
-    val v2 = MRegS.step.set( nextStep )(v0)
+    val v2 = MRegS.step.replace( nextStep )(v0)
     updated(v2)
   }
 
@@ -119,7 +119,7 @@ class RegAh[M](
             var updF =  MReg0Creds.submitReq
               .modify( _.pending(timeStampMs) )
             if (v0.s0Creds.pwRecoverMsg)
-              updF = updF andThen MReg0Creds.pwRecoverMsg.set(false)
+              updF = updF andThen MReg0Creds.pwRecoverMsg.replace(false)
 
             val v2 = MRegS.s0Creds.modify(updF)( v0 )
 
@@ -156,7 +156,7 @@ class RegAh[M](
             }
 
             val v2 = MRegS.s1Captcha
-              .composeLens( MReg1Captcha.submitReq )
+              .andThen( MReg1Captcha.submitReq )
               .modify( _.pending(timeStampMs) )(v0)
             updated(v2, fx)
 
@@ -189,7 +189,7 @@ class RegAh[M](
             }
 
             val v2 = MRegS.s2SmsCode
-              .composeLens( MReg2SmsCode.submitReq )
+              .andThen( MReg2SmsCode.submitReq )
               .modify( _.pending(tstampMs) )(v0)
             updated(v2, fx)
 
@@ -207,7 +207,7 @@ class RegAh[M](
             noChange
           } else {
             // Просто перейти на следующий шаг.
-            val v2 = MRegS.step.set( MRegSteps.S4SetPassword )(v0)
+            val v2 = MRegS.step.replace( MRegSteps.S4SetPassword )(v0)
             updated(v2)
           }
 
@@ -236,7 +236,7 @@ class RegAh[M](
             }
 
             val v2 = MRegS.s4SetPassword
-              .composeLens( MReg4SetPassword.submitReq )
+              .andThen( MReg4SetPassword.submitReq )
               .modify( _.pending(tstampMs) )(v0)
             updated(v2, fx)
           }
@@ -254,7 +254,7 @@ class RegAh[M](
       } else {
         // Пора залить результат в состоянии.
         var updF = MRegS.s0Creds
-          .composeLens( MReg0Creds.submitReq )
+          .andThen( MReg0Creds.submitReq )
           .modify( _.withTry(m.resp) )
 
         if (m.resp.isSuccess) {
@@ -278,7 +278,7 @@ class RegAh[M](
         // или выверенный смс-код смысла нет, равно как и на форму уже принятых галочек (?).
         case _ =>
           val step2 = MRegSteps.S0Creds
-          val v2 = MRegS.step.set( step2 )( v0 )
+          val v2 = MRegS.step.replace( step2 )( v0 )
           updated(v2)
       }
 
@@ -295,21 +295,21 @@ class RegAh[M](
             MRegS.s1Captcha.modify {
               MReg1Captcha.submitReq.modify( _.fail(ex) ) andThen
               MReg1Captcha.captcha
-                .composeTraversal( Traversal.fromTraverse[Option, MCaptchaS] )
-                .composeLens( MCaptchaS.typed )
-                .composeLens( MTextFieldS.isValid )
-                .set(false)
+                .andThen( Traversal.fromTraverse[Option, MCaptchaS] )
+                .andThen( MCaptchaS.typed )
+                .andThen( MTextFieldS.isValid )
+                .replace(false)
             }
           },
           {okResp =>
             // Сервер подтвердил капчу.
             MRegS.s1Captcha
-              .composeLens( MReg1Captcha.submitReq )
+              .andThen( MReg1Captcha.submitReq )
               .modify( _.ready(okResp) ) andThen
-            MRegS.step.set( MRegSteps.S2SmsCode ) andThen
+            MRegS.step.replace( MRegSteps.S2SmsCode ) andThen
             MRegS.s2SmsCode
-              .composeLens(MReg2SmsCode.smsCode)
-              .set( Some(MSmsCodeS.empty) )
+              .andThen(MReg2SmsCode.smsCode)
+              .replace( Some(MSmsCodeS.empty) )
           }
         )(v0)
 
@@ -331,12 +331,12 @@ class RegAh[M](
 
       } else {
         var updAccF = MRegS.s2SmsCode
-          .composeLens( MReg2SmsCode.submitReq )
+          .andThen( MReg2SmsCode.submitReq )
           .modify( _.withTry(m.tryResp) )
 
         for (_ <- m.tryResp) {
           updAccF = updAccF andThen
-            MRegS.step.set( MRegSteps.S3CheckBoxes )
+            MRegS.step.replace( MRegSteps.S3CheckBoxes )
         }
 
         val v2 = updAccF( v0 )
@@ -355,7 +355,7 @@ class RegAh[M](
       } else {
         // Обработать ответ сервера.
         val v2 = MRegS.s4SetPassword
-          .composeLens( MReg4SetPassword.submitReq )
+          .andThen( MReg4SetPassword.submitReq )
           .modify( _.withTry(m.tryResp) )(v0)
 
         // Запустить эффект редиректа по принятой ссылке при положительном ответе сервера:

@@ -17,7 +17,7 @@ package object geo {
 
   implicit def rcvrMapJson: Format[RcvrsMap_t] = {
     val keyWrites = rcvrKeyKeyWrites
-    val delimCh = keyWrites.DELIM.head
+    val delimCh = KEY_DELIM.head
     val reads = Reads.mapReads[RcvrKey, Boolean] { k =>
       JsResult.fromTry(
         Try(

@@ -258,7 +258,7 @@ final class AdvGeoRcvrsUtil @Inject()(
                 val szCss = logoMakeRes.szCss
                 val szFinal = if (logoMakeRes.isFake) {
                   // Фейковый рендер, значит на выходе оригинальный размер. Надо спроецировать этот размер на targetWh по высоте:
-                  size2d_LENS.set(
+                  size2d_LENS.replace(
                     (szCss.width.toDouble / (szCss.height.toDouble / targetWh.height.toDouble)).toInt
                   )(targetWh)
                 } else {
@@ -557,14 +557,14 @@ final class AdvGeoRcvrsUtil @Inject()(
       val nodeLocEdgeTags = advBuilderUtil.nodeGeoLocTags(mnode0)
 
       val edge_info_tags_LENS = MEdge.info
-        .composeLens( MEdgeInfo.tags )
+        .andThen( MEdgeInfo.tags )
       val mnode2 = MNode.edges
-        .composeLens( MNodeEdges.out )
+        .andThen( MNodeEdges.out )
         .modify { edges0 =>
           for (e0 <- edges0) yield {
             if (e0.predicate ==>> pred) {
               // Апдейт tags
-              (edge_info_tags_LENS set nodeLocEdgeTags)(e0)
+              (edge_info_tags_LENS replace nodeLocEdgeTags)(e0)
             } else {
               e0
             }

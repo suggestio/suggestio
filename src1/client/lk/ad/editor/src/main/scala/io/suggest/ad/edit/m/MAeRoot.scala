@@ -72,7 +72,7 @@ case class MAeRoot(
       ),
       edges = {
         val videoPred = MPredicates.JdContent.Frame
-        val resetUrlF = MJdEdge.url set None
+        val resetUrlF = MJdEdge.url replace None
         jdArgs
           .data
           .edges

@@ -173,7 +173,7 @@ class GridR(
                 // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
                 mgridProxy.resetZoom(
                   MJdArgs(
-                    data        = (MJdDataJs.doc set gridItem.jdDoc)(adData),
+                    data        = (MJdDataJs.doc replace gridItem.jdDoc)(adData),
                     jdRuntime   = mgrid.jdRuntime,
                     conf        = mgrid.jdConf,
                     renderArgs  = jdRenderArgs,

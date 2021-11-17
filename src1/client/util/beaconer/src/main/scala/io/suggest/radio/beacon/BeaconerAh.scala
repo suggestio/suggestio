@@ -514,7 +514,7 @@ class BeaconerAh[M](
 
       def __maybeRmTimer() = {
         Option.when( v0.notifyAllTimer.nonEmpty ) {
-          MBeaconerS.notifyAllTimer.set( None )(v0)
+          MBeaconerS.notifyAllTimer.replace( None )(v0)
         }
       }
 
@@ -571,7 +571,7 @@ class BeaconerAh[M](
         (m.opts !=* v0.opts)
       ) {
         // Update options only.
-        var modF = MBeaconerS.opts set m.opts
+        var modF = MBeaconerS.opts replace m.opts
 
         val fxOpt = for {
           apis <- v0.apis.toOption
@@ -613,7 +613,7 @@ class BeaconerAh[M](
           (!isEnabledNow && isEnabled2)
         ) {
           // If BLE-scanning is powering on, but shut down action received, need to wait scanning ready, and when - to disable scan.
-          val v2 = (MBeaconerS.afterOnOff set Some(m.toEffectPure))(v0)
+          val v2 = (MBeaconerS.afterOnOff replace Some(m.toEffectPure))(v0)
           updatedSilent(v2)
 
         } else {
@@ -769,7 +769,7 @@ class BeaconerAh[M](
 
       def __maybeNoChange =
         v0.afterOnOff.fold( noChange ) { afterOnOffFx =>
-          val v2 = (MBeaconerS.afterOnOff set None)(v0)
+          val v2 = (MBeaconerS.afterOnOff replace None)(v0)
           updatedSilent(v2, afterOnOffFx)
         }
 
@@ -784,7 +784,7 @@ class BeaconerAh[M](
           .modify( _ withTry m.tryEnabled )
 
         if (v0.afterOnOff.nonEmpty)
-          v2F = v2F andThen (MBeaconerS.afterOnOff set None)
+          v2F = v2F andThen (MBeaconerS.afterOnOff replace None)
 
         def __updatedMaybeEffect =
           ah.updatedMaybeEffect( v2F(v0), v0.afterOnOff )

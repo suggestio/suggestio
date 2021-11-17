@@ -1,7 +1,7 @@
 package com.quilljs.quill.modules.toolbar
 
 import com.quilljs.quill.QuillStatic
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -14,7 +14,7 @@ import scala.scalajs.js
 @js.native
 trait QuillToolbar extends js.Object {
 
-  val container: HTMLElement = js.native
+  val container: dom.html.Element = js.native
 
   val quill: QuillStatic = js.native
 

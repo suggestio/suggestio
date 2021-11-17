@@ -166,7 +166,7 @@ final class CordovaLocalNotificationAh[M](
 
       } else if (v0.permission.nonEmpty) {
         // Окончательное отключение: сброс данных по пермишшену.
-        val v2 = MCnlNotifierS.permission.set( Pot.empty )(v0)
+        val v2 = MCnlNotifierS.permission.replace( Pot.empty )(v0)
         updated( v2 )
 
       } else {
@@ -266,7 +266,7 @@ final class CordovaLocalNotificationAh[M](
       var fxs: List[Effect] = cnlFx :: Nil
 
       // Обновить состояние адаптера:
-      val v2 = (MCnlNotifierS.lastId set counter1)(v0)
+      val v2 = (MCnlNotifierS.lastId replace counter1)(v0)
 
       for (upListenFx <- _updateCnlListenersFx(v0, v2.toastsById))
         fxs ::= upListenFx
@@ -333,8 +333,8 @@ final class CordovaLocalNotificationAh[M](
         // Сокрытие всех уведомлений
         case CnlEvents.CANCEL_ALL | CnlEvents.CLEAR_ALL =>
           val v2 = (
-            MCnlNotifierS.toastUids.set( HashMap.empty ) andThen
-            MCnlNotifierS.toastsById.set( HashMap.empty )
+            MCnlNotifierS.toastUids.replace( HashMap.empty ) andThen
+            MCnlNotifierS.toastsById.replace( HashMap.empty )
           )(v0)
 
           for (upListenFx <- _updateCnlListenersFx(v0, v2.toastsById))
@@ -496,7 +496,7 @@ final class CordovaLocalNotificationAh[M](
         if (permPot2 ==* permPot0) {
           noChange
         } else {
-          val v2 = MCnlNotifierS.permission.set(permPot2) (v0)
+          val v2 = MCnlNotifierS.permission.replace(permPot2) (v0)
           updated(v2)
         }
       }

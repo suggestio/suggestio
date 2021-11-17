@@ -61,7 +61,7 @@ class OrderItemsAh[M](
           v0.itemsSelected -- itemIdSet
         }
       }
-      val v2 = (MOrderItemsS.itemsSelected set selItemIds2)(v0)
+      val v2 = (MOrderItemsS.itemsSelected replace selItemIds2)(v0)
       updated( v2 )
 
 
@@ -83,7 +83,7 @@ class OrderItemsAh[M](
               Success( action )
             }
         }
-        val v2 = (MOrderItemsS.orderContents set req2)(v0)
+        val v2 = (MOrderItemsS.orderContents replace req2)(v0)
         updated( v2, fx )
       }
 
@@ -105,7 +105,7 @@ class OrderItemsAh[M](
               Success( action )
             }
         }
-        val v2 = (MOrderItemsS.orderContents set req2)(v0)
+        val v2 = (MOrderItemsS.orderContents replace req2)(v0)
         updated( v2, fx )
       }
 
@@ -152,7 +152,7 @@ class OrderItemsAh[M](
         updated( v2 )
       } else if (!m.isOpen) {
         // Close opened dialog
-        val v2 = (MOrderItemsS.unHoldOrder set Pot.empty)(v0)
+        val v2 = (MOrderItemsS.unHoldOrder replace Pot.empty)(v0)
         updated( v2 )
       } else {
         logger.log( ErrorMsgs.INACTUAL_NOTIFICATION, msg = (m, v0.unHoldOrder) )
@@ -195,7 +195,7 @@ class OrderItemsAh[M](
           {response =>
             // Update order with instance received.
             val v2 = (
-              MOrderItemsS.unHoldOrder.set( Pot.empty ) andThen
+              MOrderItemsS.unHoldOrder.replace( Pot.empty ) andThen
               MOrderItemsS.orderContents.modify( _.ready( MOrderContentJs(response) ) )
             )(v0)
             updated(v2)

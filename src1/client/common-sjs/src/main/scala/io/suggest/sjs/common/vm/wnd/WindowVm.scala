@@ -50,6 +50,7 @@ case class WindowVm(_underlying: Window = dom.window) extends WindowVmT {
 
 
 object WindowStub {
+  import scala.language.implicitConversions
   implicit def apply(wnd: Window): WindowStub =
     wnd.asInstanceOf[WindowStub]
 }

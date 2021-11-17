@@ -40,7 +40,7 @@ class DlAppAh(
         noChange
 
       } else {
-        var updF = MDlAppDia.opened set m.opened
+        var updF = MDlAppDia.opened replace m.opened
         var finalFx: Effect = ResetUrlRoute().toEffectPure
 
         if (m.opened) {
@@ -51,7 +51,7 @@ class DlAppAh(
           }
         } else {
           // Сокрытие диалога - сброс частей состояния, чтобы перезапросить ссылки с сервера.
-          updF = updF andThen (MDlAppDia.getReq set Pot.empty)
+          updF = updF andThen (MDlAppDia.getReq replace Pot.empty)
         }
 
         val v2 = updF(v0)
@@ -71,7 +71,7 @@ class DlAppAh(
 
         val v2 = (
           MDlAppDia.platform
-            .set( Some(m.osPlatform) ) andThen
+            .replace( Some(m.osPlatform) ) andThen
           infoReqUpdF
         )(v0)
 
@@ -153,13 +153,13 @@ class DlAppAh(
           // Плашка уже раскрыта
           noChange
         } else {
-          val v2 = (MDlAppDia.expanded set Some(m.index))(v0)
+          val v2 = (MDlAppDia.expanded replace Some(m.index))(v0)
           updated(v2)
         }
       } else {
         // Сокрытие плашки
         if (v0.expanded contains m.index) {
-          val v2 = (MDlAppDia.expanded set None)(v0)
+          val v2 = (MDlAppDia.expanded replace None)(v0)
           updated(v2)
         } else {
           // Эта плашка НЕ раскрыта, и скрывать её не надо.
@@ -175,7 +175,7 @@ class DlAppAh(
       if (v0.showTechInfo ==* m.isShow) {
         noChange
       } else {
-        val v2 = (MDlAppDia.showTechInfo set m.isShow)(v0)
+        val v2 = (MDlAppDia.showTechInfo replace m.isShow)(v0)
         updated(v2)
       }
 
@@ -187,7 +187,7 @@ class DlAppAh(
       if (v0.qrCodeExpanded ==* m.expanded) {
         noChange
       } else {
-        val v2 = (MDlAppDia.qrCodeExpanded set m.expanded)(v0)
+        val v2 = (MDlAppDia.qrCodeExpanded replace m.expanded)(v0)
         updated(v2)
       }
 
@@ -213,7 +213,7 @@ class DlAppAh(
         }
     }
 
-    val updF = MDlAppDia.getReq.set {
+    val updF = MDlAppDia.getReq.replace {
       Pot.empty[MScAppGetResp].pending(timeStampMs)
     }
 

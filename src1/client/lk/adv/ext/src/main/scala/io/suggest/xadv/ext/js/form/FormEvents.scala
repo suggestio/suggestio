@@ -1,14 +1,7 @@
 package io.suggest.xadv.ext.js.form
 
-import org.scalajs.dom
-import org.scalajs.dom.{Element, XMLHttpRequest}
-import org.scalajs.jquery._
-import io.suggest.adv.ext.view.FormPage._
 import io.suggest.init.routed.InitRouter
 import japgolly.univeq._
-
-import scala.scalajs.js
-import scala.scalajs.js.{Any, Array, Dictionary}
 
 /**
  * Suggest.io
@@ -37,6 +30,7 @@ class FormEvents {
 
   /** Забиндить все события формы, вдохнув в неё жизнь. */
   def bindFormEvents(): Unit = {
+    println( "FormEvents: starting ....")
     bindAddTargetClick()
     bindDeleteTargetClick()
     bindOneTgChange()
@@ -48,6 +42,8 @@ class FormEvents {
 
   /** Забиндиться на событие клика по кнопке добавления новой цели. */
   def bindAddTargetClick(): Unit = {
+    ???
+    /*
     // Обработчик события клика по добавлению таргета
     val listener = { evt: JQueryEventObject =>
       evt.preventDefault()
@@ -74,11 +70,14 @@ class FormEvents {
     // Повесить обработчик клика на кнопку добавления новой цели.
     jQuery("#" + ID_ADD_TARGET_LINK)
       .click(listener: Any)
+    */
   }
 
 
   /** Событие удаления цели со страницы. */
   def bindDeleteTargetClick(): Unit = {
+    ???
+    /*
     val listener = { evt: JQueryEventObject =>
       evt.preventDefault()
       val ct = jQuery(evt.currentTarget)
@@ -113,11 +112,14 @@ class FormEvents {
     // Делегировать обработчик удаления списку всех целей.
     jQuery("#" + ID_ALL_TARGETS_LIST)
       .on("click",  "." + CLASS_DELETE_TARGET_BTN,  listener: Any)
+    */
   }
 
 
   /** Событие изменения содержимого одного из инпутов в форме одной цели. */
   def bindOneTgChange(): Unit = {
+    ???
+    /*
     val listener = {evt: JQueryEventObject =>
       val input = jQuery(evt.currentTarget)
       val tgForm = input.parents("." + CLASS_ONE_TARGET_FORM_INNER)
@@ -126,11 +128,14 @@ class FormEvents {
     // Повесить листенеры на инпуты
     jQuery("#" + ID_ALL_TARGETS_LIST)
       .on("change",  "." + CLASS_ONE_TARGET_INPUT,  listener : Any)
+    */
   }
 
 
   /** При сабмите формы редактирования одной цели, нужно подменять обработку. */
   def bindOneTgSubmit(): Unit = {
+    ???
+    /*
     val listener = { evt: JQueryEventObject =>
       evt.preventDefault()
       val oldForm = jQuery(evt.currentTarget)
@@ -165,11 +170,14 @@ class FormEvents {
     // Повесить обработчик на все формы редактирования
     jQuery("#" + ID_ALL_TARGETS_LIST)
       .on("submit", "." + CLASS_ONE_TARGET_FORM_INNER, listener: Any)
+    */
   }
 
 
   /** Сабмит формы размещения целей. Нужно залить в форму необходимые инпуты и продолжить выполнение. */
   def bindAdvFormSubmit(): Unit = {
+    ???
+    /*
     val listener = { evt: JQueryEventObject =>
       val newTags = jQuery("#" + ID_ALL_TARGETS_LIST)
         .find("." + CLASS_ONE_TARGET_CONTAINER)
@@ -204,11 +212,14 @@ class FormEvents {
     // Вешаем данный обработчик на целевую форму
     jQuery("#" + ID_ADV_FORM)
       .on("submit", listener: Any)
+    */
   }
 
 
   /** Чекбоксы в рамках одного div'а должны имитировать поведение radiogroup. */
   def bindReturnCheckboxRadio(): Unit = {
+    ???
+    /*
     // Есть мнение, что вынос cbSel за скобки не сказывается положительно на потреблении ресурсов.
     val cbSel = "." + CLASS_ONE_TARGET_INPUT_RETURN_CHECKBOX
     val listener = { evt: JQueryEventObject =>
@@ -224,6 +235,7 @@ class FormEvents {
     // Делегируем обработчик контейнеру списка целей
     jQuery("#" + ID_ALL_TARGETS_LIST)
       .on("change", cbSel, listener: Any)
+    */
   }
 
 }

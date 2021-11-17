@@ -69,7 +69,7 @@ object ScQsUtil {
       )
     )
     if (pxRatio2.value > scr0.pxRatio.value)
-      (MScreen.pxRatio set pxRatio2)(scr0)
+      (MScreen.pxRatio replace pxRatio2)(scr0)
     else
       scr0
   }

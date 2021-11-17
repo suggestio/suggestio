@@ -12,7 +12,7 @@ import scala.scalajs.js.annotation.JSName
   * Created: 12.12.18 11:13
   * Description: Sjs-интерфейсы для dom.window.caches .
   */
-
+// TODO scalajs-dom v2.0 => delete this file & usages
 @js.native
 trait DomWindowCaches extends js.Object {
 
@@ -24,6 +24,7 @@ trait DomWindowCaches extends js.Object {
 }
 
 object DomWindowCaches {
+  import scala.language.implicitConversions
   implicit def apply( window: Window ): DomWindowCaches =
     window.asInstanceOf[DomWindowCaches]
 }

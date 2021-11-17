@@ -78,7 +78,7 @@ object TplDataFormatUtil {
     */
   def setFormatPrice(mprice: MPrice)(implicit ctx: Context): MPrice = {
     val someAmountStr = Some( formatPriceAmount(mprice) )
-    (MPrice.amountStrOpt set someAmountStr)(mprice)
+    (MPrice.amountStrOpt replace someAmountStr)(mprice)
   }
 
   /**

@@ -1,7 +1,7 @@
 package io.suggest.id.login
 
 import io.suggest.spa.SioPages
-import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl, RouterCtl}
+import japgolly.scalajs.react.extra.router.{BaseUrl, Router, RouterConfigDsl, RouterCtl, SetRouteVia}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 
@@ -54,10 +54,10 @@ class LoginFormSpaRouter(
                 tabId <- Try(v.toInt).toOption
                 tab   <- MLoginTabs.withValueOpt( tabId )
               } {
-                updatesAcc ::= (SioPages.Login.currTab set tab)
+                updatesAcc ::= (SioPages.Login.currTab replace tab)
               }
             } else if (k2 ==* RETURN_URL_FN) {
-              updatesAcc ::= (SioPages.Login.returnUrl set Some(v))
+              updatesAcc ::= (SioPages.Login.returnUrl replace Some(v))
             }
           }
 
@@ -82,7 +82,7 @@ class LoginFormSpaRouter(
 
       loginFormRule
         .notFound { _ =>
-          redirectToPage( SioPages.Login.default )( Redirect.Replace )
+          redirectToPage( SioPages.Login.default )( SetRouteVia.HistoryReplace )
         }
     }
 

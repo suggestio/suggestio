@@ -35,11 +35,11 @@ object Sc3ConfUtil extends Log {
     if (lens.get(t) contains ts2) {
       t
     } else {
-      (lens set Some(ts2))(t)
+      (lens replace Some(ts2))(t)
     }
   }
   def prepareSave( init: MSc3Init ): MSc3Init =
-    _prepareSave( init, MSc3Init.conf composeLens MSc3Conf.clientUpdatedAt )
+    _prepareSave( init, MSc3Init.conf andThen MSc3Conf.clientUpdatedAt )
   def prepareSave( conf: MSc3Conf ): MSc3Conf =
     _prepareSave( conf, MSc3Conf.clientUpdatedAt )
 
@@ -159,7 +159,7 @@ object Sc3ConfUtil extends Log {
         domVal = copyPasteLens.get( domInitConf )
         if domVal !=* currVal
       } yield {
-        copyPasteLens.set( domVal )
+        copyPasteLens.replace( domVal )
       })
         .reduceOption( _ andThen _ )
         .foreach { updF =>

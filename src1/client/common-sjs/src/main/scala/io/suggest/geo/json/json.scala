@@ -2,6 +2,7 @@ package io.suggest.geo
 
 import scala.scalajs.js
 import scala.scalajs.js.|
+import scala.language.implicitConversions
 
 /**
   * Suggest.io

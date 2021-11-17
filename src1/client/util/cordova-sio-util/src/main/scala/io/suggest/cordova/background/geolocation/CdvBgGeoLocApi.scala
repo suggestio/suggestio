@@ -193,7 +193,7 @@ final class CdvBgGeoLocApi(
     _isHighAccuracy = false
     _maxAgeMsU = js.undefined
 
-    Future.successful()
+    Future.successful(())
   }
 
 }

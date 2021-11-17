@@ -28,9 +28,9 @@ sealed trait CssSzT extends Any {
   def v: Any
 
   /** CSS-пиксели. */
-  def px = v + "px"
+  def px = v.toString + "px"
 
-  def percents = v + "%"
+  def percents = v.toString + "%"
 }
 
 

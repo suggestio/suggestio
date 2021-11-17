@@ -67,7 +67,7 @@ class RcvrMarkersInitAh[M](
             // Нет значения и нет ошибок. Организовать бы запуск запроса...
             // Есть связь с инетом. Запуск запроса на исполнение.
             val v2 = v0.pending()
-            val m2 = RcvrMarkersInit.resp.set( v2 )(m)
+            val m2 = RcvrMarkersInit.resp.replace( v2 )(m)
             val fx = RcvrMarkersInitAh.startInitFx( argsRO.value, api, m2 )
             updatedSilent( v2, fx )
 

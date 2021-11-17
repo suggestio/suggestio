@@ -43,6 +43,7 @@ trait OrderIdFkSlick extends OrderIdSlick with OrderIdFkFn with IMOrders {
 
   /** Поддержка внешнего ключа таблицы по полю order_id. */
   trait OrderIdFk extends OrderId { that: Table[_] =>
+    import scala.language.existentials
     def order = foreignKey(ORDER_ID_FK, orderId, mOrders.query)(_.id)
   }
 

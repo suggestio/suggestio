@@ -73,7 +73,7 @@ class NfcAh[M](
     // Update .scanning value
     case m: NfcSetScanning =>
       val v0 = value
-      val v2 = (MNfcState.scanning set m.scanning)(v0)
+      val v2 = (MNfcState.scanning replace m.scanning)(v0)
       updatedSilent( v2 )
 
 

@@ -28,12 +28,12 @@ object MEditorsS {
 
     def withOutQdEdit: MEditorsS = {
       if (doc.qdEdit.isEmpty) doc
-      else (qdEdit set None)(doc)
+      else (qdEdit replace None)(doc)
     }
 
     def withOutStripEd: MEditorsS = {
       if (doc.stripEd.isEmpty) doc
-      else (stripEd set None)(doc)
+      else (stripEd replace None)(doc)
     }
 
   }

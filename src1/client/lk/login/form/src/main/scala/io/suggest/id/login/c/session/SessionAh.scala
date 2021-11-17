@@ -82,14 +82,14 @@ class SessionAh[M](
           }
         }
 
-      val v2 = (MSessionS.token set pot1.pending() )(v0)
+      val v2 = (MSessionS.token replace pot1.pending() )(v0)
       ah.updatedSilentMaybeEffect( v2, fxOpt )
 
 
     // Сигнал о сохранении сессии логина в постоянное хранилище.
     case m: SessionSaved =>
       val v0 = value
-      val v2 = (MSessionS.token set m.cookiePot)(v0)
+      val v2 = (MSessionS.token replace m.cookiePot)(v0)
       // TODO Надо какой-то таймер организовать, наверное.
       //      Чтобы перевалидировать кукис через определённое время, возможно делаяя keepalive для обновления сессии.
       //      А пока - сервер проверит и порешит.

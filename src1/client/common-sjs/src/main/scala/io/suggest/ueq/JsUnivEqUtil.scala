@@ -47,4 +47,7 @@ object JsUnivEqUtil {
   @inline implicit def undefOrUe[T: UnivEq]: UnivEq[js.UndefOr[T]] = UnivEq.force
   @inline implicit def diodeEffectUe: UnivEq[Effect] = UnivEq.force
 
+  // TODO scalajs-dom v2.0+
+  //@inline implicit def documentReadyStateUe: UnivEq[DocumentReadyState] = UnivEq.force
+
 }

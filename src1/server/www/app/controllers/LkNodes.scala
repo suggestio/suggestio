@@ -591,12 +591,12 @@ final class LkNodes @Inject() (
         // Запустить обновление узла.
         val saveFut = mNodes.tryUpdate(request.mnode)(
           MNode.common
-            .composeLens( MNodeCommon.isEnabled )
-            .set( isEnabled ) andThen
+            .andThen( MNodeCommon.isEnabled )
+            .replace( isEnabled ) andThen
           MNode.meta
-            .composeLens( MMeta.basic )
-            .composeLens( MBasicMeta.dateEdited )
-            .set( Some(OffsetDateTime.now()) )
+            .andThen( MMeta.basic )
+            .andThen( MBasicMeta.dateEdited )
+            .replace( Some(OffsetDateTime.now()) )
         )
 
         // В фоне собрать инфу по тарифу текущему.
@@ -669,7 +669,7 @@ final class LkNodes @Inject() (
             val updateFut = mNodes.tryUpdate( request.mnode ) {
               val nameOpt = Some( binded.name )
               MNode.meta
-                .composeLens( MMeta.basic )
+                .andThen( MMeta.basic )
                 .modify {
                   _.copy(
                     nameOpt       = nameOpt,
@@ -771,7 +771,7 @@ final class LkNodes @Inject() (
             edgesIter1
           }
           val out2 = MNodeEdges.edgesToMap1( edgesIter2 )
-          MNodeEdges.out.set( out2 )(edges0)
+          MNodeEdges.out.replace( out2 )(edges0)
         }
       }
 
@@ -831,9 +831,9 @@ final class LkNodes @Inject() (
               LOGGER.trace(s"$logPrefix mode=$tfdm ==>> tf = $tfDailyOpt")
               mNodes.tryUpdate( request.mnode ) {
                 MNode.billing
-                  .composeLens( MNodeBilling.tariffs )
-                  .composeLens( MNodeTariffs.daily )
-                  .set( tfDailyOpt )
+                  .andThen( MNodeBilling.tariffs )
+                  .andThen( MNodeTariffs.daily )
+                  .replace( tfDailyOpt )
               }
             }
 
@@ -891,9 +891,9 @@ final class LkNodes @Inject() (
           LOGGER.trace(s"$logPrefix Will update mad#$adId with showOpened=$isEnabled on $nodeId")
           val edge2 = (
             MEdge.nodeIds
-              .set( Set.empty + nodeId ) andThen
+              .replace( Set.empty + nodeId ) andThen
             MEdge.info
-              .composeLens( MEdgeInfo.flags )
+              .andThen( MEdgeInfo.flags )
               .modify { flags0 =>
                 if (isEnabled) {
                   MEdgeFlagData( MEdgeFlags.AlwaysOpened ) +: flags0.toSeq
@@ -919,7 +919,7 @@ final class LkNodes @Inject() (
             mad2 <- mNodes.tryUpdate( request.mad ) {
               // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
               MNode.edges.modify { edges0 =>
-                MNodeEdges.out.set(
+                MNodeEdges.out.replace(
                   MNodeEdges.edgesToMap1(
                     (
                       edges0.withoutNodePred(nodeId, pred) ::
@@ -982,13 +982,13 @@ final class LkNodes @Inject() (
 
           val edge2 = (
             MEdge.nodeIds
-              .set( Set.empty + nodeId ) andThen
+              .replace( Set.empty + nodeId ) andThen
             MEdge.info.modify { info0 =>
               val fd = MEdgeFlagData( MEdgeFlags.AlwaysOutlined )
               val flags2 =
                 if (isEnabled) info0.flags.toSeq appended fd
                 else (info0.flagsMap - fd.flag).values
-              MEdgeInfo.flags.set( flags2 )(info0)
+              MEdgeInfo.flags.replace( flags2 )(info0)
             }
           )(edge0)
 
@@ -1007,7 +1007,7 @@ final class LkNodes @Inject() (
             mad2 <- mNodes.tryUpdate( request.mad ) {
               // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
               MNode.edges.modify { edges0 =>
-                MNodeEdges.out.set(
+                MNodeEdges.out.replace(
                   MNodeEdges.edgesToMap1(
                     (
                       edges0.withoutNodePred(nodeId, pred) ::

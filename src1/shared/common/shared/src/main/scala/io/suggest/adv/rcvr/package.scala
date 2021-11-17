@@ -16,12 +16,12 @@ package object rcvr {
     */
   type RcvrKey = List[String]
 
+  def KEY_DELIM = HtmlConstants.SPACE
 
   /** Тип не указан, чтобы был доступ к полю DELIM. */
-  implicit def rcvrKeyKeyWrites = {
+  implicit def rcvrKeyKeyWrites: KeyWrites[RcvrKey] = {
     new KeyWrites[RcvrKey] {
-      def DELIM = HtmlConstants.SPACE
-      override def writeKey(key: RcvrKey): String = key.mkString( DELIM )
+      override def writeKey(key: RcvrKey): String = key.mkString( KEY_DELIM )
     }
   }
 

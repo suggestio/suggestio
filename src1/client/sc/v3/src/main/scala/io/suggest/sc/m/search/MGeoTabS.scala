@@ -36,8 +36,8 @@ object MGeoTabS {
     /** Дедубликация кода сброса значения this.mapInit.loader. */
     def resetMapLoader: MGeoTabS = {
       mapInit
-        .composeLens( MMapInitState.loader )
-        .set(None)(m)
+        .andThen( MMapInitState.loader )
+        .replace(None)(m)
     }
 
     /** В mapInit.rcvrs лежит закэшированная карта или нет? */

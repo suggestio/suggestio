@@ -250,8 +250,8 @@ final class Bill2Util @Inject() (
 
         mNodes.tryUpdate(mnode) {
           MNode.billing
-            .composeLens( MNodeBilling.contractId )
-            .set( mc2.id )
+            .andThen( MNodeBilling.contractId )
+            .replace( mc2.id )
         }
       }
     } yield {
@@ -2097,8 +2097,8 @@ final class Bill2Util @Inject() (
             LOGGER.info(s"$logPrefix Repair node#${mnode.idOrNull}, contract#${contractId} NOT exist.")
             val mnode2 = mNodes.prepareIndex(
               MNode.billing
-                .composeLens( MNodeBilling.contractId )
-                .set( None )(mnode)
+                .andThen( MNodeBilling.contractId )
+                .replace( None )(mnode)
             )
             bp.add( mnode2.request() )
             repairCounter.incrementAndGet()

@@ -85,7 +85,7 @@ case object MPxRatios extends ShortEnum[MPxRatio] {
 
 
 sealed abstract class MPxRatio(override val value: Short) extends ShortEnumEntry {
-  def pixelRatio: Float = value / 10
+  def pixelRatio: Float = value.toFloat / 10.toFloat
 }
 
 object MPxRatio {

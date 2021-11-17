@@ -7,7 +7,6 @@ import org.scalajs.dom.experimental.Notification
 
 import scala.concurrent.Future
 import scala.scalajs.js.JavaScriptException
-import scala.util.Try
 
 /**
   * Suggest.io

@@ -58,7 +58,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
         .acc_node_edges_LENS
         .modify { edges0 =>
           // Собрать новую карту эджей.
-          MNodeEdges.out.set(
+          MNodeEdges.out.replace(
             MNodeEdges.edgesToMap1(
               edges0
                 .withoutPredicateIter( predsForClear : _* )

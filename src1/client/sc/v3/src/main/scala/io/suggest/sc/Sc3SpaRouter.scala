@@ -8,7 +8,7 @@ import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.spa.{SioPages, SioPagesUtilJs}
 import io.suggest.text.UrlUtil2
-import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
+import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Router, RouterConfigDsl, SetRouteVia}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import java.net.URI
@@ -92,7 +92,7 @@ class Sc3SpaRouter(
 
     val routerCfg = mainScreenRule
       .notFound {
-        redirectToPage( SioPages.Sc3.empty )( Redirect.Replace )
+        redirectToPage( SioPages.Sc3.empty )( SetRouteVia.HistoryReplace )
       }
 
     val (r, rCtl) = Router.componentAndCtl[SioPages.Sc3](

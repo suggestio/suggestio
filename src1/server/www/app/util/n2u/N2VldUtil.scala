@@ -137,7 +137,7 @@ final class N2VldUtil @Inject()(
       imgFormat2 = mediaEdge.file.imgFormatOpt
       if imgFormat2.nonEmpty
     } yield {
-      val dynImgId2 = (MDynImgId.imgFormat set imgFormat2)( dynImgId )
+      val dynImgId2 = (MDynImgId.imgFormat replace imgFormat2)( dynImgId )
       val mimg = MImg3( dynImgId2 )
       edgeUid -> mimg
     })

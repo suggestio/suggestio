@@ -454,8 +454,8 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
       // Костыль для выставления формата в картинку. Надо разобраться в актуальности этого действия:
       if (!(mimg0.dynImgId.imgFormat contains[MImgFormat] imgFormat2)) {
         MImg3.dynImgId
-          .composeLens( MDynImgId.imgFormat )
-          .set( edgeMedia.file.imgFormatOpt )(mimg0)
+          .andThen( MDynImgId.imgFormat )
+          .replace( edgeMedia.file.imgFormatOpt )(mimg0)
       } else {
         mimg0
       }
@@ -465,7 +465,7 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
   override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
     val dynImgId0 = img.dynImgId
-    val dynImgId2 = dynOps2.fold(dynImgId0) { MDynImgId.dynImgOps.set(_)(dynImgId0) }
+    val dynImgId2 = dynOps2.fold(dynImgId0) { MDynImgId.dynImgOps.replace(_)(dynImgId0) }
 
     MImg3( dynImgId2 )
   }
@@ -500,8 +500,8 @@ case class MImg3(
 
   override def withDynOps(dynImgOps2: Seq[ImOp]): MImg3 = {
     MImg3.dynImgId
-      .composeLens( MDynImgId.dynImgOps )
-      .set( dynImgOps2 )(this)
+      .andThen( MDynImgId.dynImgOps )
+      .replace( dynImgOps2 )(this)
   }
 
   def withDynImgId(dynImgId: MDynImgId) = copy(dynImgId = dynImgId)

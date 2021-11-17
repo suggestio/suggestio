@@ -66,13 +66,13 @@ object GeoTabAh {
 
   def scRoot_index_search_geo_LENS = {
     MScRoot.index
-      .composeLens( MScIndex.search )
-      .composeLens( MScSearch.geo )
+      .andThen( MScIndex.search )
+      .andThen( MScSearch.geo )
   }
   def scRoot_index_search_geo_found_req_LENS = {
     scRoot_index_search_geo_LENS
-      .composeLens( MGeoTabS.found )
-      .composeLens( MNodesFoundS.req )
+      .andThen( MGeoTabS.found )
+      .andThen( MNodesFoundS.req )
   }
 
   /** Извлечение точки маркера на карте. */
@@ -137,7 +137,7 @@ class GeoTabAh[M](
         )
       }
 
-      val args2 = MScQs.search.set(search2)(args0)
+      val args2 = MScQs.search.replace(search2)(args0)
 
       // Запустить поиск, если что-то изменилось.
       if (v0.found.reqSearchArgs contains[MScQs] args2) {
@@ -181,7 +181,7 @@ class GeoTabAh[M](
         }
         // Обновить карту ресиверов в состоянии, если инстанс изменился:
         val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs) {
-          (MMapInitState.rcvrs set rcvrs2)(v0.mapInit)
+          (MMapInitState.rcvrs replace rcvrs2)(v0.mapInit)
         } else {
           v0.mapInit
         }
@@ -217,10 +217,10 @@ class GeoTabAh[M](
         noChange
       } else {
         val nodesFound2 = MNodesFoundS.rHeightPx
-          .set( rHeightPx0 ready heightPx2 )( v0.found )
+          .replace( rHeightPx0 ready heightPx2 )( v0.found )
         val v2 = (
-          (MGeoTabS.found set nodesFound2) andThen
-          (MGeoTabS.css set GeoTabAh._mkSearchCss( nodesFound2, screenInfoRO.value, v0.css ))
+          (MGeoTabS.found replace nodesFound2) andThen
+          (MGeoTabS.css replace GeoTabAh._mkSearchCss( nodesFound2, screenInfoRO.value, v0.css ))
         )( v0 )
         updated( v2 )
       }
@@ -243,8 +243,8 @@ class GeoTabAh[M](
           val isAlreadySelected = v0.data.selTagIds contains nodeId
 
           val v2 = MGeoTabS.data
-            .composeLens( MGeoTabData.selTagIds )
-            .set {
+            .andThen( MGeoTabData.selTagIds )
+            .replace {
               var set0 = Set.empty[String]
 
               // Снять либо выставить выделение для тега:
@@ -274,8 +274,8 @@ class GeoTabAh[M](
             effectOnly(fx)
           } else {
             val v2 = MGeoTabS.data
-              .composeLens( MGeoTabData.selTagIds )
-              .set( Set.empty )(v0)
+              .andThen( MGeoTabData.selTagIds )
+              .replace( Set.empty )(v0)
             updated(v2, fx)
           }
         }
@@ -313,8 +313,8 @@ class GeoTabAh[M](
       val v0 = value
       if (!v0.mapInit.ready) {
         val v2 = MGeoTabS.mapInit
-          .composeLens( MMapInitState.ready )
-          .set( true )(v0)
+          .andThen( MMapInitState.ready )
+          .replace( true )(v0)
         updated( v2 )
 
       } else {
@@ -326,8 +326,8 @@ class GeoTabAh[M](
     case m: HandleMapReady =>
       val v0 = value
       val v2 = MGeoTabS.data
-        .composeLens( MGeoTabData.lmap )
-        .set( Some(m.map) )(v0)
+        .andThen( MGeoTabData.lmap )
+        .replace( Some(m.map) )(v0)
       updatedSilent( v2 )
 
   }

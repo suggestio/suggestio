@@ -51,10 +51,10 @@ class NodesSearchRah(
       .fail(ex)
 
     val v2 = GeoTabAh.scRoot_index_search_geo_LENS.modify { geo0 =>
-      val nodesFound2 = (MNodesFoundS.req set req2)( geo0.found )
+      val nodesFound2 = (MNodesFoundS.req replace req2)( geo0.found )
 
       (
-        (MGeoTabS.found set nodesFound2 ) andThen
+        (MGeoTabS.found replace nodesFound2 ) andThen
         // При ошибках надо обновлять css, иначе ширина может быть неверной.
         MGeoTabS.css.modify { css0 =>
           GeoTabAh._mkSearchCss(
@@ -149,7 +149,7 @@ class NodesSearchRah(
     val mapRszFxOpt = for (lmap <- g2.data.lmap) yield
       SearchAh.mapResizeFx(lmap)
 
-    val v2 = (GeoTabAh.scRoot_index_search_geo_LENS set g2)(ctx.value0)
+    val v2 = (GeoTabAh.scRoot_index_search_geo_LENS replace g2)(ctx.value0)
     ActionResult( Some(v2), mapRszFxOpt )
   }
 

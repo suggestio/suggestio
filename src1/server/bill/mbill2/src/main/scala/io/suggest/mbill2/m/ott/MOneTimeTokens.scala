@@ -36,7 +36,7 @@ class MOneTimeTokens @Inject() (
   import profile.api._
 
   override protected def _withId(el: MOneTimeToken, id: UUID): MOneTimeToken =
-    (MOneTimeToken.id set id)(el)
+    (MOneTimeToken.id replace id)(el)
 
   override type Id_t    = UUID
   override type Table_t = MOneTimeTokensTable

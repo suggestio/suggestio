@@ -32,7 +32,7 @@ object JdUtil {
 
   private def _jdId_blockExpand_LENS = {
     MJdDoc.jdId
-      .composeLens( MJdTagId.blockExpand )
+      .andThen( MJdTagId.blockExpand )
   }
 
 
@@ -71,7 +71,7 @@ object JdUtil {
         if (doc.tagId.blockExpand ==* blkExp2)
           doc
         else
-          (_jdId_blockExpand_LENS set blkExp2)(doc)
+          (_jdId_blockExpand_LENS replace blkExp2)(doc)
       } #:: LazyList.empty
     }
   }
@@ -150,7 +150,7 @@ object JdUtil {
         if (jdt.name ==* MJdTagNames.STRIP) {
           val expandMode2 = jdt.props1.expandMode
           if (expandMode2 !=* jdId.blockExpand)
-            updAcc ::= (jdTagId_blockExpand_LENS set expandMode2)
+            updAcc ::= (jdTagId_blockExpand_LENS replace expandMode2)
         }
 
         // Выставить blockExpand, если требуется:
@@ -175,16 +175,16 @@ object JdUtil {
     implicit class OpsExt( val args: prepareJdRuntime ) extends AnyVal {
 
       def docs[D: JdDocsGetter](from: D): prepareJdRuntime =
-        (jdDocs set implicitly[JdDocsGetter[D]].apply(from) )(args)
+        (jdDocs replace implicitly[JdDocsGetter[D]].apply(from) )(args)
 
       def prev[P: JdRuntimeGetter](from: P): prepareJdRuntime =
-        (prevOpt set implicitly[JdRuntimeGetter[P]].apply(from) )(args)
+        (prevOpt replace implicitly[JdRuntimeGetter[P]].apply(from) )(args)
 
       def cssRelBlocks: prepareJdRuntime =
-        (cssAbsBlocks set false)(args)
+        (cssAbsBlocks replace false)(args)
 
       def cssNameGen(f: String => String): prepareJdRuntime =
-        (prepareJdRuntime.cssNameGen set Option(f))(args)
+        (prepareJdRuntime.cssNameGen replace Option(f))(args)
 
       /** Финальная сборка состояния рантайма. Сравнительно ресурсоёмкая операция. */
       def make: MJdRuntime = {

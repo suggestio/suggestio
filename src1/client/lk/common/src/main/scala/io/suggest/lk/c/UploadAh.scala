@@ -68,14 +68,14 @@ final class UploadAh[V, M](
         .fold( noChange ) { edgeDataJs0 =>
           val progressOpt2 = Some( m.info )
           val lens = MEdgeDataJs.fileJs
-            .composeTraversal( Traversal.fromTraverse[Option, MJsFileInfo] )
-            .composeLens( MJsFileInfo.upload )
-            .composeLens( MFileUploadS.progress )
+            .andThen( Traversal.fromTraverse[Option, MJsFileInfo] )
+            .andThen( MJsFileInfo.upload )
+            .andThen( MFileUploadS.progress )
 
           if (lens.getAll(edgeDataJs0) contains progressOpt2) {
             noChange
           } else {
-            val edgeDataJs2 = (lens set progressOpt2)(edgeDataJs0)
+            val edgeDataJs2 = (lens replace progressOpt2)(edgeDataJs0)
             val v2 = v0
               .withEdges( v0.edges + (m.src.edgeUid -> edgeDataJs2) )
             updated( v2 )
@@ -316,14 +316,14 @@ final class UploadAh[V, M](
 
               // Дедубликация кода обновления текущего эджа:
               def __v2F(fileJs9: MJsFileInfo): MUploadAh[V] = {
-                val edge2 = (MEdgeDataJs.fileJs set Some(fileJs9))(edge0)
+                val edge2 = (MEdgeDataJs.fileJs replace Some(fileJs9))(edge0)
                 v0.withEdges(
                   v0.edges.updated( edgeUid, edge2 )
                 )
               }
 
               val fileJs1 = MJsFileInfo.fileMeta
-                .composeLens( MFileMeta.hashesHex )
+                .andThen( MFileMeta.hashesHex )
                 .modify { hhs0 =>
                   MFileMetaHash(
                     hType     = m.hash,
@@ -368,7 +368,7 @@ final class UploadAh[V, M](
                     }
 
                     val prepareReq_LENS = MJsFileInfo.upload
-                      .composeLens( MFileUploadS.prepareReq )
+                      .andThen( MFileUploadS.prepareReq )
                     val fileJs2 = if (prepareReq_LENS.get(fileJs1).isPending) {
                       fileJs1
                     } else {
@@ -402,16 +402,16 @@ final class UploadAh[V, M](
           // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
           {ex =>
             val fileJsOpt2 = UploadAh._fileJsWithUpload(edge0.fileJs) {
-              (MFileUploadS.reqHolder set None) andThen
+              (MFileUploadS.reqHolder replace None) andThen
               MFileUploadS.prepareReq.modify( _.fail(ex) )
             }
-            val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
+            val edge2 = (MEdgeDataJs.fileJs replace fileJsOpt2)(edge0)
             val errPopup0 = v0.errorPopup getOrElse MErrorPopupS.empty
             val v2 = v0
               .withEdges( v0.edges + (edgeUid -> edge2) )
               // Распахнуть попап с ошибкой закачки файла:
               .withErrorPopup( Some(
-                (MErrorPopupS.exception set Some(ex))(errPopup0)
+                (MErrorPopupS.exception replace Some(ex))(errPopup0)
               ))
             updated(v2)
           },
@@ -452,7 +452,7 @@ final class UploadAh[V, M](
                     )
                   }
                   val edge2 = MEdgeDataJs.fileJs
-                    .set(fileJsOpt2)(edge0)
+                    .replace(fileJsOpt2)(edge0)
                   var v2 = v0
                     .withEdges( v0.edges + (edgeUid -> edge2) )
 
@@ -469,7 +469,7 @@ final class UploadAh[V, M](
                   val edge2 = edge0.copy(
                     jdEdge = UploadAh._srvFileIntoJdEdge( fe, edge0.jdEdge ),
                     fileJs = UploadAh._fileJsWithUpload(edge0.fileJs) {
-                      MFileUploadS.reqHolder.set( None ) andThen
+                      MFileUploadS.reqHolder.replace( None ) andThen
                       MFileUploadS.prepareReq.modify( _.ready(resp) )
                     }
                   )
@@ -528,10 +528,10 @@ final class UploadAh[V, M](
 
         // Сохранить httpReq.httpRespHolder в состояние для возможности взаимодействия с закачкой:
         val fileJsOpt2 = UploadAh._fileJsWithUpload(edge0.fileJs)(
-          MFileUploadS.reqHolder set Some( m.respHolder )
+          MFileUploadS.reqHolder replace Some( m.respHolder )
         )
 
-        val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
+        val edge2 = (MEdgeDataJs.fileJs replace fileJsOpt2)(edge0)
         val edgeUid = edge0.jdEdge.edgeDoc.id.get
         val v2 = v0
           .withEdges( v0.edges + (edgeUid -> edge2) )
@@ -557,7 +557,7 @@ final class UploadAh[V, M](
         m.tryRes.fold(
           // Ошибка выполнения upload'а.
           {ex =>
-            val edge2 = MEdgeDataJs.fileJs.set(
+            val edge2 = MEdgeDataJs.fileJs.replace(
               UploadAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
                 upload0.copy(
                   resultHolder = None,
@@ -666,9 +666,9 @@ final class UploadAh[V, M](
       val e0 = v0.edges(m.edgeUid)
 
       val e2 = MEdgeDataJs.fileJs
-        .composeTraversal( Traversal.fromTraverse[Option, MJsFileInfo] )
-        .composeLens( MJsFileInfo.whPx )
-        .set( Some(m.wh) )(e0)
+        .andThen( Traversal.fromTraverse[Option, MJsFileInfo] )
+        .andThen( MJsFileInfo.whPx )
+        .replace( Some(m.wh) )(e0)
 
       val v2 = v0.withEdges(
         v0.edges.updated(m.edgeUid, e2)
@@ -810,7 +810,7 @@ final class UploadAh[V, M](
 
       val view2 = picViewContAdp.updated(v0.view, m.resKey) {
         Some {
-          MJdEdgeId.crop.set( Some(pixelCrop) )(bgImg0)
+          (MJdEdgeId.crop replace Some(pixelCrop))(bgImg0)
         }
       }
 
@@ -839,7 +839,7 @@ final class UploadAh[V, M](
           // Восстановить исходный кроп sel-тега в состоянии.
           v1.withView(
             picViewContAdp.updateWith(v1.view, m.resKey) { imgEdgeIdOpt =>
-              imgEdgeIdOpt.map( MJdEdgeId.crop set cropPopup.origCrop )
+              imgEdgeIdOpt.map( MJdEdgeId.crop replace cropPopup.origCrop )
             }
           )
         }
@@ -860,7 +860,7 @@ final class UploadAh[V, M](
       // Не обновлять ничего, если ничего не изменилось.
       if !(bgImg.crop contains[MCrop] mcrop2)
     } yield {
-      MJdEdgeId.crop.set( Some(mcrop2) )( bgImg )
+      (MJdEdgeId.crop replace Some(mcrop2))( bgImg )
     }
 
     imgEdgeId2.fold(v0) { _ =>
@@ -944,7 +944,7 @@ object UploadAh {
 
     } else {
       (
-        MJdEdge.nodeId.set( fileNew.nodeId ) andThen
+        (MJdEdge.nodeId replace fileNew.nodeId) andThen
         MJdEdge.fileSrv.modify { fileSrvOpt0 =>
           fileSrvOpt0.fold( fileNew.fileSrv ) { fileSrv0 =>
             Some(fileSrv0 updateFrom fileNew.fileSrv.get)

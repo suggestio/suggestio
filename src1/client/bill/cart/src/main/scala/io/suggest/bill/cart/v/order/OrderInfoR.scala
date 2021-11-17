@@ -71,7 +71,7 @@ class OrderInfoR(
                     .fold {
                       crCtx.messages( MsgCodes.`Cart` )
                     } { orderId =>
-                      crCtx.messages( MsgCodes.`Order.N`, orderId )
+                      crCtx.messages( MsgCodes.`Order.N`, orderId.toDouble )
                     }
                 }
                 .rawNode

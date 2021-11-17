@@ -28,7 +28,7 @@ class ScLoginDiaAh[M](
     Effect.action {
       ResetUrlRoute(
         mods = Some { r =>
-          (SioPages.Sc3.login set nextLogin)(r())
+          (SioPages.Sc3.login replace nextLogin)(r())
         },
       )
     }
@@ -72,7 +72,7 @@ class ScLoginDiaAh[M](
             effectOnly( startHideFx >> reDoFx )
 
           } else {
-            val v2 = (MScLoginS.ident set None)(v0)
+            val v2 = (MScLoginS.ident replace None)(v0)
             updated(v2)
           }
         }
@@ -87,7 +87,7 @@ class ScLoginDiaAh[M](
         }
 
         v0.ident.fold {
-          val v2 = (MScLoginS.ident set Some(loginFormCircuit))(v0)
+          val v2 = (MScLoginS.ident replace Some(loginFormCircuit))(v0)
           updated(v2, routeFx)
         } { _ =>
           effectOnly( routeFx )

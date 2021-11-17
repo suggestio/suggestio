@@ -1,6 +1,6 @@
 package io.suggest.sjs.dom2
 
-import org.scalajs.dom.raw.DOMList
+import org.scalajs.dom.DOMList
 
 import scala.collection.{AbstractIterator, mutable}
 
@@ -59,7 +59,8 @@ case class DomListSeq[T](
     domList(idx)
   }
   override def update(idx: Int, elem: T): Unit = {
-    domList.update(idx, elem)
+    // TODO DOMList.update() is missing since scalajs-dom v2.0?
+    throw new UnsupportedOperationException
   }
 }
 

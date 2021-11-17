@@ -18,11 +18,11 @@ object CommonPage {
   /** Запустить этот код, когда страница будет готова. */
   def onReady(f: () => _): Unit = {
     // Пример без jQuery, покрывающий большинство ситуаций, взят отсюда - https://stackoverflow.com/a/7053197
-    if (dom.document.readyState !=* "loading") {
+    if (dom.document.readyState !=* /*DocumentReadyState.*/"loading") {
       f()
     } else if (EventTargetVm.isIe()) {
       dom.document.addEventListener4s( DomEvents.READY_STATE_CHANGE ) { _ =>
-        if (dom.document.readyState ==* "complete")
+        if (dom.document.readyState ==* /*DocumentReadyState.*/"complete")
           f()
       }
     } else {

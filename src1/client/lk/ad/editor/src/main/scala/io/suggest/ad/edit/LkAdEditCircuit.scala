@@ -90,7 +90,7 @@ class LkAdEditCircuit(
             conf0.touchDev ==* isTouchDev2.value
           }
           .fold(conf0) { isTouchDev2 =>
-            (MAdEditFormConf.touchDev set isTouchDev2.value)(conf0)
+            (MAdEditFormConf.touchDev replace isTouchDev2.value)(conf0)
           }
       },
 
@@ -189,8 +189,8 @@ class LkAdEditCircuit(
 
     def setColorOpt(jdTag: JdTag, colorOpt2: Option[MColorData]): JdTag = {
       JdTag.props1
-        .composeLens( MJdProps1.bgColor )
-        .set( colorOpt2 )( jdTag )
+        .andThen( MJdProps1.bgColor )
+        .replace( colorOpt2 )( jdTag )
     }
 
     /** @return ZoomRW до Option[MColorPick]. */
@@ -216,24 +216,24 @@ class LkAdEditCircuit(
           }
           val tpl2 = strip2.toTree
           val jdDoc2 = MJdDoc.template
-            .set(tpl2)( mdoc0.jdDoc.jdArgs.data.doc )
+            .replace(tpl2)( mdoc0.jdDoc.jdArgs.data.doc )
 
           (
             MDocS.jdDoc
-              .composeLens(MJdDocEditS.jdArgs)
+              .andThen(MJdDocEditS.jdArgs)
               .modify(
                 MJdArgs.data
-                  .composeLens(MJdDataJs.doc)
-                  .set(jdDoc2) andThen
-                MJdArgs.jdRuntime.set {
+                  .andThen(MJdDataJs.doc)
+                  .replace(jdDoc2) andThen
+                MJdArgs.jdRuntime.replace {
                   DocEditAh
                     .mkJdRuntime(jdDoc2, mdoc0.jdDoc.jdArgs)
                     .make
                 }
               ) andThen
             MDocS.editors
-              .composeLens(MEditorsS.colorsState)
-              .set( mColorAh.colorsState )
+              .andThen(MEditorsS.colorsState)
+              .replace( mColorAh.colorsState )
           )(mdoc0)
         })
           // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
@@ -262,9 +262,9 @@ class LkAdEditCircuit(
   private val shadowColorRW = {
     val zoomer = new ZoomToBgColorPick {
       def jdt_p1_textShadow_color_TRAV = JdTag.props1
-        .composeLens( MJdProps1.textShadow )
-        .composeTraversal( Traversal.fromTraverse[Option, MJdShadow] )
-        .composeLens( MJdShadow.color )
+        .andThen( MJdProps1.textShadow )
+        .andThen( Traversal.fromTraverse[Option, MJdShadow] )
+        .andThen( MJdShadow.color )
 
       override def getColorOpt(jdTag: JdTag): Option[MColorData] = {
         jdt_p1_textShadow_color_TRAV
@@ -273,7 +273,7 @@ class LkAdEditCircuit(
       }
 
       override def setColorOpt(jdTag: JdTag, colorOpt2: Option[MColorData]): JdTag = {
-        jdt_p1_textShadow_color_TRAV.set( colorOpt2 )(jdTag)
+        jdt_p1_textShadow_color_TRAV.replace( colorOpt2 )(jdTag)
       }
     }
     zoomer.getZoom
@@ -334,12 +334,12 @@ class LkAdEditCircuit(
       (mPictureAh.edges !===* mdoc0.jdDoc.jdArgs.data.edges)
     ) {
       MDocS.jdDoc
-        .composeLens(MJdDocEditS.jdArgs)
+        .andThen(MJdDocEditS.jdArgs)
         .modify { jdArgs0 =>
           // Разобраться, изменился ли шаблон в реальности:
           val (jdDoc2, jdRuntime2) = if (isTplChanged) {
             // Изменился шаблон. Вернуть новый шаблон, пересобрать css
-            val jdDoc1 = (MJdDoc.template set mPictureAh.view)( jdDoc0 )
+            val jdDoc1 = (MJdDoc.template replace mPictureAh.view)( jdDoc0 )
             val jdRuntime11 = DocEditAh
               .mkJdRuntime(jdDoc1, jdArgs0)
               .make
@@ -369,9 +369,9 @@ class LkAdEditCircuit(
       mdoc1
     } else {
       MDocS.editors
-        .composeLens( MEditorsS.colorsState )
-        .composeLens( MColorsState.histograms )
-        .set( mPictureAh.histograms )( mdoc1 )
+        .andThen( MEditorsS.colorsState )
+        .andThen( MColorsState.histograms )
+        .replace( mPictureAh.histograms )( mdoc1 )
     }
 
     mroot0.copy(

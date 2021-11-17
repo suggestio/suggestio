@@ -72,8 +72,8 @@ class NodeMdrAh[M](
 
     val mdrPots2 = v0.node.mdrPots + (info -> pot2)
     val v2 = MSysMdrRootS.node
-      .composeLens( MMdrNodeS.mdrPots )
-      .set( mdrPots2 )(v0)
+      .andThen( MMdrNodeS.mdrPots )
+      .replace( mdrPots2 )(v0)
 
     (v2, fx)
   }
@@ -89,9 +89,9 @@ class NodeMdrAh[M](
         noChange
       } else {
         val v2 = MSysMdrRootS.dialogs
-          .composeLens( MMdrDialogs.refuse )
-          .composeLens( MMdrRefuseDialogS.reason )
-          .set( m.reason )(v0)
+          .andThen( MMdrDialogs.refuse )
+          .andThen( MMdrRefuseDialogS.reason )
+          .replace( m.reason )(v0)
         updated(v2)
       }
 
@@ -117,8 +117,8 @@ class NodeMdrAh[M](
             val dia2 = if (m.tryResp.isSuccess && (v0.dialogs.refuse.actionInfo contains m.info)) {
               // Закрыть диалог, т.к. всё ок.
               MMdrDialogs.refuse
-                .composeLens( MMdrRefuseDialogS.actionInfo )
-                .set( None )(v0.dialogs)
+                .andThen( MMdrRefuseDialogS.actionInfo )
+                .replace( None )(v0.dialogs)
             } else {
               v0.dialogs
             }
@@ -128,8 +128,8 @@ class NodeMdrAh[M](
               // Если всё ок, то надо удалить уже-промодерированные-item'ы из состояния.
               v0.node.info.map {
                 MMdrNextRespJs.resp
-                  .composeLens( MMdrNextResp.nodeOpt )
-                  .composeTraversal( Traversal.fromTraverse[Option, MNodeMdrInfo] )
+                  .andThen( MMdrNextResp.nodeOpt )
+                  .andThen( Traversal.fromTraverse[Option, MNodeMdrInfo] )
                   .modify { nodeInfo =>
                     val isActionInfoEmpty = m.info.isEmpty
 
@@ -204,7 +204,7 @@ class NodeMdrAh[M](
       } else {
         // Отказ - нужен диалог отказа с указанием причины отказа.
         val v2 = root_dialogs_refuse_actionInfo_LENS
-          .set( Some(m.info) )(v0)
+          .replace( Some(m.info) )(v0)
 
         updated(v2)
       }
@@ -227,7 +227,7 @@ class NodeMdrAh[M](
         // Дублирующееся событие, диалог уже закрыт.
         noChange
       } { _ =>
-        val v2 = root_dialogs_refuse_actionInfo_LENS.set( None )(v0)
+        val v2 = root_dialogs_refuse_actionInfo_LENS.replace( None )(v0)
         updated(v2)
       }
 
@@ -286,8 +286,8 @@ class NodeMdrAh[M](
 
         // И результат экшена...
         val v2 = MSysMdrRootS.node
-          .composeLens(MMdrNodeS.info)
-          .set(infoReq2)(v0)
+          .andThen(MMdrNodeS.info)
+          .replace(infoReq2)(v0)
 
         updated(v2 , fx)
       }
@@ -350,8 +350,8 @@ class NodeMdrAh[M](
         jdArgs <- v0.node.jdArgsOpt
       } yield {
         val v2 = MSysMdrRootS.node
-          .composeLens( MMdrNodeS.gridBuild )
-          .set {
+          .andThen( MMdrNodeS.gridBuild )
+          .replace {
             Some( GridBuilderUtilJs.buildGridFromJdArgs( jdArgs ) )
           }(v0)
         updated(v2)
@@ -383,7 +383,7 @@ class NodeMdrAh[M](
         val pot2 = pot0.pending( timestamp )
 
         val v2 = MSysMdrRootS.node
-          .composeLens( MMdrNodeS.fixNodePots )
+          .andThen( MMdrNodeS.fixNodePots )
           .modify { _ + (m.nodeId -> pot2) }(v0)
 
         updated(v2, fx)
@@ -406,7 +406,7 @@ class NodeMdrAh[M](
               { _ => pot0.ready(None) }
             )
             val v2 = MSysMdrRootS.node
-              .composeLens( MMdrNodeS.fixNodePots )
+              .andThen( MMdrNodeS.fixNodePots )
               .modify( _ + (m.reason.nodeId -> pot2) )(v0)
             updated(v2)
 
@@ -425,8 +425,8 @@ class NodeMdrAh[M](
 
       } else {
         val v2 = MSysMdrRootS.form
-          .composeLens( MMdrFormS.forceAllRcvrs )
-          .set( m.forceAllNodes )(v0)
+          .andThen( MMdrFormS.forceAllRcvrs )
+          .replace( m.forceAllNodes )(v0)
 
         // Запустить пересборку текущего view с перемоткой в начало:
         val fx = MdrNextNode( offsetDelta = -v0.node.nodeOffset )
@@ -440,8 +440,8 @@ class NodeMdrAh[M](
 
   private def root_dialogs_refuse_actionInfo_LENS = {
     MSysMdrRootS.dialogs
-      .composeLens( MMdrDialogs.refuse )
-      .composeLens( MMdrRefuseDialogS.actionInfo )
+      .andThen( MMdrDialogs.refuse )
+      .andThen( MMdrRefuseDialogS.actionInfo )
   }
 
 }

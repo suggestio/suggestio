@@ -11,14 +11,14 @@ object RadAhUtil {
 
   def radCenterDragging(v0: MRad, rcd: RadCenterDragging): MRad = {
     MRad.state
-      .composeLens( MRadS.centerDragging )
-      .set( Some(rcd.geoPoint) )(v0)
+      .andThen( MRadS.centerDragging )
+      .replace( Some(rcd.geoPoint) )(v0)
   }
 
   def radCenterDragStart(v0: MRad): MRad = {
     MRad.state
-      .composeLens( MRadS.centerDragging )
-      .set( Some(v0.circle.center) )(v0)
+      .andThen( MRadS.centerDragging )
+      .replace( Some(v0.circle.center) )(v0)
   }
 
   def radCenterDragEnd(v0: MRad, rcde: RadCenterDragEnd): MRad = {
@@ -28,7 +28,7 @@ object RadAhUtil {
 
     v0.copy(
       // Выставить новый центр круга в состояние.
-      circle = (CircleGs.center set c2)(v0.circle),
+      circle = (CircleGs.center replace c2)(v0.circle),
       state  = v0.state.copy(
         centerDragging = None,
         // Пересчитать координаты маркера радиуса.
@@ -43,8 +43,8 @@ object RadAhUtil {
 
   def radiusDragStart(v0: MRad): MRad = {
     MRad.state
-      .composeLens(MRadS.radiusDragging)
-      .set( true )(v0)
+      .andThen( MRadS.radiusDragging )
+      .replace( true )(v0)
   }
 
 
@@ -67,7 +67,7 @@ object RadAhUtil {
       Math.min( contraints.MAX_M, distanceM )
     )
 
-    val circle2 = CircleGs.radiusM.set(radius2m)( v0.circle )
+    val circle2 = (CircleGs.radiusM replace radius2m)( v0.circle )
 
     // Не двигать радиус, вылезающий за пределы допустимых значений:
     val rmGp2 = if (radius2m != distanceM) {
@@ -163,11 +163,11 @@ class RadAh[M](
     case hlf: HandleLocationFound =>
       _valueFold { mrad =>
         val center2 = hlf.geoPoint
-        val mgc2 = CircleGs.center.set(center2)(mrad.circle)
+        val mgc2 = (CircleGs.center replace center2)(mrad.circle)
         val radiusXy = MapsUtil.radiusMarkerLatLng(mgc2)
         val mrad2 = mrad.copy(
           circle = mgc2,
-          state  = MRadS.radiusMarkerCoords.set(radiusXy)(mrad.state),
+          state  = (MRadS.radiusMarkerCoords replace radiusXy)(mrad.state),
         )
         updated( Some(mrad2) )
       }
@@ -175,7 +175,7 @@ class RadAh[M](
     // Сигнал включения/выключения rad-подсистемы.
     case RadOnOff(isEnabled) =>
       _valueFold { mrad0 =>
-        val mrad1 = (MRad.enabled set isEnabled)(mrad0)
+        val mrad1 = (MRad.enabled replace isEnabled)(mrad0)
         updated( Some(mrad1), priceUpdateFx )
       }
 

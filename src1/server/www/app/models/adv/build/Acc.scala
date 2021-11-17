@@ -34,7 +34,7 @@ final case class TryUpdateBuilder(acc: Acc) extends ITryUpdateData[MNode, TryUpd
   override def _saveable = acc.mnode
 
   override def _instance(m: MNode) = {
-    val acc2 = (Acc.mnode set m)(acc)
+    val acc2 = (Acc.mnode replace m)(acc)
     TryUpdateBuilder( acc2 )
   }
 

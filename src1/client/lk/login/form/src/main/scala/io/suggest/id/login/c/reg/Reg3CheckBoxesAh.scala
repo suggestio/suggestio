@@ -27,7 +27,7 @@ class Reg3CheckBoxesAh[M](
       if ( cbState0.isChecked ==* m.isAccepted) {
         noChange
       } else {
-        val cbState1 = (MRegCheckBoxS.isChecked set m.isAccepted)(cbState0)
+        val cbState1 = (MRegCheckBoxS.isChecked replace m.isAccepted)(cbState0)
         val v2 = MReg3CheckBoxes.cbStates
           .modify { _ + (m.checkBox -> cbState1) }(v0)
         updated( v2 )

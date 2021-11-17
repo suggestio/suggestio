@@ -89,7 +89,7 @@ final class SysNodeEdges @Inject() (
         mnode2 <- mNodes.tryUpdate(request.mnode)(
           MNode.node_meta_basic_dateEdited_RESET andThen
           MNode.edges
-            .composeLens( MNodeEdges.out )
+            .andThen( MNodeEdges.out )
             .modify { edges0 =>
               qs.edgeId.fold {
                 // Создание нового эджа.
@@ -154,7 +154,7 @@ final class SysNodeEdges @Inject() (
         mnode2 <- mNodes.tryUpdate( request.mnode )(
           MNode.node_meta_basic_dateEdited_RESET andThen
           MNode.edges
-            .composeLens( MNodeEdges.out )
+            .andThen( MNodeEdges.out )
             .modify { edgesOut0 =>
               MNodeEdges.edgesToMap1(
                 edgesOut0

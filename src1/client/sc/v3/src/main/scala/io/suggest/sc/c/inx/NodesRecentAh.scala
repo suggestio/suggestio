@@ -32,9 +32,9 @@ final class NodesRecentAh[M](
 
   private def recents2searchCssModF(inxRecents: MScIndexes) = {
     MIndexesRecentOuter.searchCss
-      .composeLens( SearchCss.args )
-      .composeLens( MSearchCssProps.nodesFound )
-      .composeLens( MNodesFoundS.req )
+      .andThen( SearchCss.args )
+      .andThen( MSearchCssProps.nodesFound )
+      .andThen( MNodesFoundS.req )
       .modify( _.ready(
         MSearchRespInfo(
           resp = MGeoNodesResp(
@@ -78,7 +78,7 @@ final class NodesRecentAh[M](
 
             // If mobile screen, close menu panel (via route flag):
             if (nextRoute.menuOpened && mroot.grid.core.jdConf.gridColumnsCount <= 3)
-              nextRoute = (SioPages.Sc3.menuOpened set false)(nextRoute)
+              nextRoute = (SioPages.Sc3.menuOpened replace false)(nextRoute)
 
             ResetUrlRoute( mods = Some(_ => nextRoute) )
           }
@@ -120,7 +120,7 @@ final class NodesRecentAh[M](
 
         // Successfully read result:
         val modF = (
-          (MIndexesRecentOuter.saved set pot2) andThen
+          (MIndexesRecentOuter.saved replace pot2) andThen
           // Update CSS for nodes list, because everything is ok.
           (recents2searchCssModF( indexes2 ))
         )
@@ -150,7 +150,7 @@ final class NodesRecentAh[M](
                             nodeId <- inx0.indexResp.nodeId
                             resp2 <- resps2Map.get( nodeId )
                           } yield {
-                            MScIndexInfo.indexResp.set( resp2 )(inx0)
+                            MScIndexInfo.indexResp.replace( resp2 )(inx0)
                           }
                         }(indexes2)
                       }
@@ -237,7 +237,7 @@ final class NodesRecentAh[M](
                 } else {
                   // If no geo-point for node, read it from geo map center:
                   (
-                    MSc3IndexResp.geoPoint set Some(mroot.index.search.geo.mapInit.state.center)
+                    MSc3IndexResp.geoPoint replace Some(mroot.index.search.geo.mapInit.state.center)
                   )(currIndexRespData)
                 }
               },

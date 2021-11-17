@@ -41,7 +41,7 @@ class ScConfAh[M](
           if rcvrsMapUrlArgs2 !=* v0.rcvrsMapUrl
         } {
           // Закинуть новый URL ресиверов в состояние:
-          modsAcc ::= (MSc3Conf.rcvrsMapUrl set rcvrsMapUrlArgs2)
+          modsAcc ::= (MSc3Conf.rcvrsMapUrl replace rcvrsMapUrlArgs2)
 
           // Организовать эффект или таймер для обновления карты. Таймер нужен, чтобы карта не обновлялась слишком часто:
           fxAcc ::= Effect.action {
@@ -66,7 +66,7 @@ class ScConfAh[M](
       // Попытаться сохранить конфигурацию в постоянную модель:
       for (v2 <- v2Opt) {
         fxAcc ::= Effect.action {
-          val init2 = MSc3Init.conf.set( v2 )( scInitRO.value )
+          val init2 = MSc3Init.conf.replace( v2 )( scInitRO.value )
           Sc3ConfUtil.saveInitIfPossible( init2 )
           DoNothing
         }
@@ -80,7 +80,7 @@ class ScConfAh[M](
       if (v0.debug ==* m.isDebug) {
         noChange
       } else {
-        val v2 = (MSc3Conf.debug set m.isDebug)(v0)
+        val v2 = (MSc3Conf.debug replace m.isDebug)(v0)
         // Сохранить конфиг, т.к. debug-флаг сохраняется в постоянно-хранимый конфиг:
         val fx = SaveConf().toEffectPure
         updated( v2, fx )

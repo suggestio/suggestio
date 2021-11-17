@@ -2,7 +2,6 @@ package io.suggest.sjs.common.view
 
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.sjs.common.vm.create.CreateDiv
-import io.suggest.sjs.common.vm.{Vm, VmT}
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 import org.scalajs.dom.{Element, Node}
@@ -42,41 +41,6 @@ object VUtil extends CssSzImplicits with CreateDiv {
     val e = newDiv()
     e.innerHTML = innerHtml
     e
-  }
-
-
-  /**
-   * Поиск первого элемента вверх по дереву, удовлетворяющего предикату.
-   * @param el VM начального элемента.
-   * @param f Предикат.
-   * @return Some, если что-то найдено.
-   */
-  @tailrec
-  def hasOrHasParent(el: VmT)(f: VmT => Boolean): Option[VmT] = {
-    if (dom.document == el._underlying) {
-      None
-    } else if ( f(el) ) {
-      Some(el)
-    } else {
-      val parentEl = el._underlying.parentNode
-      if (parentEl == null) {
-        None
-      } else {
-        val parentSafeEl = Vm( parentEl )
-        hasOrHasParent(parentSafeEl)(f)
-      }
-    }
-  }
-
-  /**
-   * Определить, если ли у тега или его родителей указанный css-класс.
-   * @param el Исходный тег, от которого пляшем.
-   * @param className название искомого css-класса.
-   * @return Some с узлом, у которой замечен указанный класс. Это el либо один из родительских тегов.
-   *         None, если указанный класс не найден у тега и его родителей.
-   */
-  def hasCssClass(el: VmT, className: String): Option[VmT] = {
-    hasOrHasParent(el)(_.containsClass(className))
   }
 
 

@@ -61,7 +61,7 @@ class HtmlBgTimerAh[M](
       if (m.timerId ==* v0.timerId) {
         noChange
       } else {
-        val v2 = (MHtmlBgTimerS.timerId set m.timerId)(v0)
+        val v2 = (MHtmlBgTimerS.timerId replace m.timerId)(v0)
         updatedSilent(v2)
       }
 

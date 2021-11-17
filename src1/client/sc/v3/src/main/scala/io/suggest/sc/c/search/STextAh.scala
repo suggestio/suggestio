@@ -77,7 +77,7 @@ class STextAh[M](
           DomQuick.clearTimeout( oldTimerId )
 
         // Текст для поиска изменился.
-        val v1 = (MScSearchText.query set m.newText)(v0)
+        val v1 = (MScSearchText.query replace m.newText)(v0)
 
         // Есть какой-то текст для запуска поиска. Запустить таймер.
         val tstamp = System.currentTimeMillis()

@@ -106,7 +106,7 @@ final class MBalances @Inject() (
       for ( (amount2, blocked2) <- resOpt ) yield {
         balance0.copy(
           blocked = blocked2,
-          price   = (MPrice.amount set amount2)(balance0.price),
+          price   = (MPrice.amount replace amount2)(balance0.price),
         )
       }
     }

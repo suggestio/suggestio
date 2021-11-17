@@ -287,9 +287,9 @@ final class TfDailyUtil @Inject()(
     // Запускаем апдейт узла.
     val fut = mNodes.tryUpdate(mnode0) {
       MNode.billing
-        .composeLens( MNodeBilling.tariffs )
-        .composeLens( MNodeTariffs.daily )
-        .set( newTf )
+        .andThen( MNodeBilling.tariffs )
+        .andThen( MNodeTariffs.daily )
+        .replace( newTf )
     }
 
     // Логгируем в фоне результаты апдейта.
@@ -454,11 +454,11 @@ final class TfDailyUtil @Inject()(
     val counter = new AtomicInteger(0)
 
     val nodeResetTfComissionF = MNode.billing
-      .composeLens( MNodeBilling.tariffs )
-      .composeLens( MNodeTariffs.daily )
-      .composeTraversal( Traversal.fromTraverse[Option, MTfDaily] )
-      .composeLens( MTfDaily.comissionPc )
-      .set( None )
+      .andThen( MNodeBilling.tariffs )
+      .andThen( MNodeTariffs.daily )
+      .andThen( Traversal.fromTraverse[Option, MTfDaily] )
+      .andThen( MTfDaily.comissionPc )
+      .replace( None )
 
     mNodes
       .source[MNode](

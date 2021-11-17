@@ -43,9 +43,9 @@ final class GridRespHandler(
   }
 
   private def _scRoot_grid_core_ads_adPtrs_LENS = MScRoot.grid
-    .composeLens( MGridS.core )
-    .composeLens( MGridCoreS.ads )
-    .composeLens( MGridAds.adsTreePot )
+    .andThen( MGridS.core )
+    .andThen( MGridCoreS.ads )
+    .andThen( MGridAds.adsTreePot )
 
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
     Some( _scRoot_grid_core_ads_adPtrs_LENS.get( ctx.value0 ) )
@@ -140,7 +140,7 @@ final class GridRespHandler(
         // Reset scAd info metadata from cached version into new, received from server:
         if (scAdData0.info !=* sc3AdData.info) {
           modAccF ::= MScAdData.data.modify { _.map {
-            MJdDataJs.info set sc3AdData.info
+            MJdDataJs.info replace sc3AdData.info
           }}
         }
 
@@ -294,8 +294,8 @@ final class GridRespHandler(
 
         if (isGridPatching) {
           gbRes = MGridBuildResult.nextRender
-            .composeLens( MGridRenderInfo.animFromBottom )
-            .set( true )(gbRes)
+            .andThen( MGridRenderInfo.animFromBottom )
+            .replace( true )(gbRes)
         }
 
         g0.core.copy(
@@ -382,7 +382,7 @@ final class GridRespHandler(
     }
 
     // И вернуть новый акк:
-    val v2 = (MScRoot.grid set g2)(ctx.value0)
+    val v2 = (MScRoot.grid replace g2)(ctx.value0)
     ActionResult(Some(v2), fxAcc.mergeEffects)
   }
 

@@ -296,7 +296,7 @@ class DlAppDiaR(
                                   MuiTableCell()( sizeMsg ),
                                   MuiTableCell()(
                                     JsFormatUtil.formatKilMegGigTer(
-                                      value     = fileSizeB,
+                                      value     = fileSizeB.toDouble,
                                       baseUnits = bytesMsg,
                                       use1024   = true,
                                     )(crCtx.messages)

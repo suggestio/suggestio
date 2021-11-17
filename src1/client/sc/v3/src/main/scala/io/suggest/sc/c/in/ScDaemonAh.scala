@@ -166,7 +166,7 @@ class ScDaemonAh[M](
           .toOption
 
         val v2 = m.timerId.fold {
-          MScDaemon.fallSleepTimer set Pot.empty[Int]
+          MScDaemon.fallSleepTimer replace Pot.empty[Int]
         } { timerId2 =>
           MScDaemon.fallSleepTimer.modify( _.ready(timerId2) )
         }(v0)

@@ -42,22 +42,22 @@ class Reg0CredsAh[M](
       noChange
 
     } else {
-      var fieldUpdatesAccF = MTextFieldS.value.set( valueEdited )
+      var fieldUpdatesAccF = MTextFieldS.value.replace( valueEdited )
 
       // Если isValid уже false, то повторить валидацию.
       if ( !p0.isValid && isValid(valueEdited) )
-        fieldUpdatesAccF = fieldUpdatesAccF andThen MTextFieldS.isValid.set( true )
+        fieldUpdatesAccF = fieldUpdatesAccF andThen MTextFieldS.isValid.replace( true )
 
       var vUpdF = plens.modify( fieldUpdatesAccF )
 
       // Если уже готовы следующие шаги, то надо обнулить.
       if (v0.s0Creds.submitReq.nonEmpty) {
-        vUpdF = vUpdF andThen (MRegS.s0Creds composeLens MReg0Creds.submitReq set Pot.empty)
+        vUpdF = vUpdF andThen (MRegS.s0Creds andThen MReg0Creds.submitReq replace Pot.empty)
         if (v0.s1Captcha.nonEmpty) {
-          vUpdF = vUpdF andThen MRegS.s1Captcha.set( MReg1Captcha.empty )
+          vUpdF = vUpdF andThen MRegS.s1Captcha.replace( MReg1Captcha.empty )
           // Сбросить состояние смс-кода, если оно уже запрашивалось ранее.
           if (v0.s2SmsCode.nonEmpty)
-            vUpdF = vUpdF andThen MRegS.s2SmsCode.set( MReg2SmsCode.empty )
+            vUpdF = vUpdF andThen MRegS.s2SmsCode.replace( MReg2SmsCode.empty )
         }
       }
 
@@ -73,8 +73,8 @@ class Reg0CredsAh[M](
     val p0 = plens.get(v0)
     if (p0.isValid && !isValid( p0.value )) {
       val v2 = plens
-        .composeLens( MTextFieldS.isValid )
-        .set( false )(v0)
+        .andThen( MTextFieldS.isValid )
+        .replace( false )(v0)
       updated( v2 )
 
     } else {
@@ -84,9 +84,9 @@ class Reg0CredsAh[M](
 
 
   private def _emailLens =
-    MRegS.s0Creds composeLens MReg0Creds.email
+    MRegS.s0Creds andThen MReg0Creds.email
   private def _phoneLens =
-    MRegS.s0Creds composeLens MReg0Creds.phone
+    MRegS.s0Creds andThen MReg0Creds.phone
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -116,8 +116,8 @@ class Reg0CredsAh[M](
 
       } else {
         val updF = MRegS.s0Creds
-          .composeLens( MReg0Creds.pwRecoverMsg )
-          .set( m.enable )
+          .andThen( MReg0Creds.pwRecoverMsg )
+          .replace( m.enable )
 
         val fxOpt = OptionUtil.maybe( m.enable ) {
           Effect.action {

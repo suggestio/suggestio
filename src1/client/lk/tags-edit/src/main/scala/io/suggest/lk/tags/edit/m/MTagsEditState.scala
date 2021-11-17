@@ -38,7 +38,7 @@ object MTagsEditState {
   implicit final class TagsEditStateExt( private val tes: MTagsEditState ) extends AnyVal {
 
     def reset: MTagsEditState =
-      (MTagsEditState.props set tes.props)(MTagsEditState.empty)
+      (MTagsEditState.props replace tes.props)(MTagsEditState.empty)
 
   }
 

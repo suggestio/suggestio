@@ -45,7 +45,7 @@ object MAdsSearchReq extends IEmpty {
   implicit final class AsrOpsExt( val req: MAdsSearchReq ) extends AnyVal {
 
     def withOffset(offset: Option[Int] = None) =
-      MAdsSearchReq.offset.set(offset)(req)
+      (MAdsSearchReq.offset replace offset)(req)
 
     def withLimitOffset(limit: Option[Int], offset: Option[Int]) =
       req.copy(limit = limit, offset = offset)

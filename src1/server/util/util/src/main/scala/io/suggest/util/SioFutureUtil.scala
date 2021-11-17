@@ -7,7 +7,6 @@ import scala.util.{Failure, Success}
 import scala.concurrent.duration.FiniteDuration
 import java.util.TimerTask
 
-import com.google.common.util.concurrent.{ListenableFuture => GListenableFuture}
 import io.suggest.util.logs.MacroLogsImpl
 
 /**
@@ -144,23 +143,6 @@ object SioFutureUtil extends MacroLogsImpl {
       addListener(listener, executor)
       p.future
     }
-  }
-
-  /**
-   * Конверсия guava ListenableFuture к scala Future.
-   * @param gfut java-фьючерс.
-   * @tparam T Тип значения.
-   * @return Экземпляр scala.concurrent.Future[T].
-   */
-  implicit def guavaFuture2scalaFuture[T](gfut: GListenableFuture[T])(implicit ec: ExecutionContext): Future[T] = {
-    val w = new RunnableListenableFutureWrapper[T] {
-      override def _ec: ExecutionContext = ec
-      override def getValue: T = gfut.get()
-      override def addListener(runnable: Runnable, executor: Executor): Unit = {
-        gfut.addListener(runnable, executor)
-      }
-    }
-    w.future
   }
 
 }

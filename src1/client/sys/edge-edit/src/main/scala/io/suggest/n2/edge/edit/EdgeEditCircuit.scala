@@ -115,23 +115,23 @@ class EdgeEditCircuit
           (
             MEdgeEditRoot.edit
               .modify(
-                MEdgeEditS.errorDia.set( v2.errorPopup ) andThen
-                MEdgeEditS.upload.set( MFileUploadS.empty )
+                MEdgeEditS.errorDia.replace( v2.errorPopup ) andThen
+                MEdgeEditS.upload.replace( MFileUploadS.empty )
               ) andThen
             MEdgeEditRoot.edge
-              .composeLens( MEdge.media )
-              .set( None )
+              .andThen( MEdge.media )
+              .replace( None )
           )(mroot)
 
         } { edgeDataJs2 =>
           // Есть/выставлен файл. Залить данные в эдж.
           val rootEditUpdateF = MEdgeEditRoot.edit.modify(
             MEdgeEditS.fileJs
-              .set( edgeDataJs2.fileJs ) andThen
+              .replace( edgeDataJs2.fileJs ) andThen
             MEdgeEditS.errorDia
-              .set( v2.errorPopup ) andThen
+              .replace( v2.errorPopup ) andThen
             MEdgeEditS.upload
-              .set( edgeDataJs2.fileJs.fold(MFileUploadS.empty)(_.upload) )
+              .replace( edgeDataJs2.fileJs.fold(MFileUploadS.empty)(_.upload) )
           )
 
           val nodeIdOpt2 = edgeDataJs2.jdEdge.nodeId
@@ -150,11 +150,11 @@ class EdgeEditCircuit
               } yield {
                 (
                   rootEditUpdateF andThen
-                  MEdgeEditRoot.edge.set( uploadExtra.edge ) andThen
-                  MEdgeEditRoot.conf.set( uploadExtra.edgeId ) andThen
+                  MEdgeEditRoot.edge.replace( uploadExtra.edge ) andThen
+                  MEdgeEditRoot.conf.replace( uploadExtra.edgeId ) andThen
                   MEdgeEditRoot.edit
-                    .composeLens( MEdgeEditS.nodeIds )
-                    .set( uploadExtra.edge.nodeIds.toSeq )
+                    .andThen( MEdgeEditS.nodeIds )
+                    .replace( uploadExtra.edge.nodeIds.toSeq )
                 )
               })
                 .getOrElse {
@@ -164,7 +164,7 @@ class EdgeEditCircuit
                     rootEditUpdateF andThen
                     MEdgeEditRoot.edge.modify(
                       MEdge.predicate
-                        .set( edgeDataJs2.jdEdge.predicate ) andThen
+                        .replace( edgeDataJs2.jdEdge.predicate ) andThen
                       MEdge.media.modify { edgeMediaOpt0 =>
                         for {
                           srvInfo <- edgeDataJs2.jdEdge.fileSrv
@@ -199,8 +199,8 @@ class EdgeEditCircuit
               (
                 rootEditUpdateF andThen
                 MEdgeEditRoot.edit
-                  .composeLens( MEdgeEditS.fileExistNodeId )
-                  .set( nodeIdOpt2 )
+                  .andThen( MEdgeEditS.fileExistNodeId )
+                  .replace( nodeIdOpt2 )
               )
             }
           })(mroot)

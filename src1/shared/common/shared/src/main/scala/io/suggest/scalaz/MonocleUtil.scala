@@ -3,10 +3,6 @@ package io.suggest.scalaz
 import japgolly.univeq._
 import monocle._
 import monocle.function.{At, Index}
-import scalaz.Applicative
-import scalaz.std.map._
-import scalaz.syntax.traverse._
-import scalaz.syntax.applicative._
 
 import scala.collection.immutable.ListMap
 
@@ -18,6 +14,13 @@ import scala.collection.immutable.ListMap
   */
 object MonocleUtil {
 
+  // This code is not used anymore
+  // To uncomment, need to add dep:
+  // "org.typelevel" %%% "alleycats-core" % Common.Vsn.CATS,
+  // import cats.std.map._
+  // import cats.Applicative
+  // import cats.implicits.catsSyntaxApplicativeId
+  /*
   object map {
 
     /** Траверс для работы в контексте определённых ключей ассоциативного массива.
@@ -36,7 +39,7 @@ object MonocleUtil {
             val v2 = if ( predicate(k) ) f(v)
                      else v.pure[F]
             k -> v2
-          }.sequenceU
+          }.sequence
         }
       }
     }
@@ -46,6 +49,7 @@ object MonocleUtil {
     def get[K: UnivEq, V](key: K) = filterKey[K, V](key ==* _)
 
   }
+   */
 
 
   object kvList {

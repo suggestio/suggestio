@@ -272,7 +272,7 @@ class MdrSidePanelR(
                         mdrPot      = __mdrPot(ai)
                       )
                     } { mdrRowPropsProxy =>
-                      mdrRowR.component.withKey( mnode.nodeId + HtmlConstants.COMMA )( mdrRowPropsProxy )(
+                      mdrRowR.component.withKey( mnode.nodeId.getOrElse("") + HtmlConstants.COMMA )( mdrRowPropsProxy )(
                         mnode.nameOrIdOrEmpty,
                         // TODO Ссылка на sys-узел продьюсера.
                       )

@@ -168,14 +168,14 @@ final class SysAdnGeo @Inject() (
                   )
                 } { medge0 =>
                   MEdge.info
-                    .composeLens( MEdgeInfo.geoShapes )
-                    .set( shapes1 )(medge0)
+                    .andThen( MEdgeInfo.geoShapes )
+                    .replace( shapes1 )(medge0)
                 }
 
                 // Залить новый эдж в карту эджей узла
                 MNode.edges
-                  .composeLens( MNodeEdges.out )
-                  .set {
+                  .andThen( MNodeEdges.out )
+                  .replace {
                     val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(locEdge1)
                     MNodeEdges.edgesToMap1(iter)
                   }(mnode0)
@@ -459,17 +459,17 @@ final class SysAdnGeo @Inject() (
                 )
               } { e0 =>
                 val lens = MEdge.info
-                  .composeLens( MEdgeInfo.geoShapes )
+                  .andThen( MEdgeInfo.geoShapes )
 
                 val shapes0 = lens.get(e0)
-                val circle1 = (MEdgeGeoShape.id set MEdgeGeoShape.nextShapeId(shapes0))(circle0)
+                val circle1 = (MEdgeGeoShape.id replace MEdgeGeoShape.nextShapeId(shapes0))(circle0)
 
                 lens.modify { circle1 :: _ }(e0)
               }
 
             MNode.edges
-              .composeLens( MNodeEdges.out )
-              .set {
+              .andThen( MNodeEdges.out )
+              .replace {
                 val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(edge0)
                 MNodeEdges.edgesToMap1(iter)
               }(mnode0)

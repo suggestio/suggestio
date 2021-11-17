@@ -70,7 +70,7 @@ trait IToEsQueryFn {
 
 case class GeoShapeToEsQuery( gs: IGeoShapeQuerable ) extends IToEsQueryFn {
 
-  def esShapeBuilder = GeoShapeJvm.toEsShapeBuilder(gs)
+  def esShapeBuilder: AnyEsShapeBuilder_t = GeoShapeJvm.toEsShapeBuilder(gs)
 
   override def toEsQuery(fn: String): QueryBuilder = {
     QueryBuilders.geoShapeQuery( fn, esShapeBuilder.buildGeometry() )

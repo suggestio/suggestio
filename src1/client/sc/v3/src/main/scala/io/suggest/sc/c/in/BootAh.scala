@@ -338,7 +338,7 @@ class BootAh[M](
             acc2.fxAcc
 
           val svcData2 = if (isWillStart)
-            MBootServiceState.started.set( Some(Success(false)) )(svcData0)
+            MBootServiceState.started.replace( Some(Success(false)) )(svcData0)
           else
             svcData0
 
@@ -431,14 +431,14 @@ class BootAh[M](
           logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
           noChange
         } { svcData0 =>
-          var svcDataModF = MBootServiceState.started.set(
+          var svcDataModF = MBootServiceState.started.replace(
             Some(
               m.tryRes
                 .map(_ => true)
             )
           )
           if (svcData0.after.nonEmpty)
-            svcDataModF = svcDataModF andThen MBootServiceState.after.set( None )
+            svcDataModF = svcDataModF andThen MBootServiceState.after.replace( None )
           val svcData2 = svcDataModF(svcData0)
 
           // Залить полученную инфу в состояние.

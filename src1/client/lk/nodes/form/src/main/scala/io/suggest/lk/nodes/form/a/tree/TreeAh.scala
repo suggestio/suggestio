@@ -267,7 +267,7 @@ class TreeAh[M](
 
               // Если false=>true, то нужно сфокусироваться на данном узле: чтобы галочки потом раскрылись.
               if (m.value.bool.getOrElseFalse && !(v0.opened contains nodePath))
-                modF = modF andThen (MTree.opened set nodePathOpt)
+                modF = modF andThen (MTree.opened replace nodePathOpt)
 
               val v2 = modF(v0)
               Some( updated(v2, fx) )
@@ -277,7 +277,7 @@ class TreeAh[M](
             // Шаг 2: Отработать завершение запроса запроса изменения опции.
             // Сервер сохранил ок, и прислал обновлённый узел. Обновить состояние.
             val mns2 = (
-              (MNodeState.infoPot set m.nextPot) andThen
+              (MNodeState.infoPot replace m.nextPot) andThen
               (MNodeState.optionMods.modify(_ - m.key))
             )(mns0)
             val v2 = MTree.nodesMap.modify(_ + (treeId -> mns2))(v0)
@@ -332,7 +332,7 @@ class TreeAh[M](
         val v2 = (
           (MTree setNodes loc2.toTree) andThen
           MTree.nodesMap.modify(_ + (resp.id -> mns2)) andThen
-          (MTree.opened set Some(loc2.toNodePath ))
+          (MTree.opened replace Some(loc2.toNodePath ))
         )(v0)
         updated(v2)
       })
@@ -443,7 +443,7 @@ class TreeAh[M](
         lens = MNodeState.tfInfoWide
         if !lens.get(mns0)
       } yield {
-        val mns2 = (lens set true)(mns0)
+        val mns2 = (lens replace true)(mns0)
         val v2 = MTree.nodesMap.modify(_ + (treeId -> mns2))(v0)
         updated(v2)
       })
@@ -565,7 +565,7 @@ class TreeAh[M](
 
             val v1 = (
               MTree.setNodes( idsTree2 ) andThen
-              MTree.nodesMap.set( nodesMap2 )
+              MTree.nodesMap.replace( nodesMap2 )
             )(v0)
 
             // После очистки могли появиться неизвестные видимые bluetooth-маячки, и нужно подумать над организацией beacon-scan-запроса на сервер:
@@ -595,17 +595,17 @@ class TreeAh[M](
                     .toOption
                     .flatten
                 } yield {
-                  MTree.opened set Some(loc0.toNodePath)
+                  MTree.opened replace Some(loc0.toNodePath)
                 })
                   .orElse {
                     // Выбрать корневой узел.
-                    val modF = MTree.opened set Some(idsTree2.loc.toNodePath)
+                    val modF = MTree.opened replace Some(idsTree2.loc.toNodePath)
                     Some(modF)
                   }
                   .orElse {
                     // Обнулить opened, если выставлен.
                     Option.when( v1.opened.nonEmpty ) {
-                      (MTree.opened set None)
+                      (MTree.opened replace None)
                     }
                   }
                   // Вернуть MTree

@@ -13,7 +13,7 @@ import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
  */
 
 case class FbLoginArgs(
-                        scopes        : IterableOnce[FbPermission] = Nil,
+                        scopes        : Iterable[FbPermission] = Nil,
                         returnScopes  : Option[Boolean] = None,
                         authType      : Option[FbAuthType] = None
                       )

@@ -42,9 +42,9 @@ object MAdnResViewUtil extends Log {
       resKey.frkType.get match {
         // Апдейт галереи.
         case MFrkTypes.Logo =>
-          MAdnResView.logo.set( newValue )
+          MAdnResView.logo replace newValue
         case MFrkTypes.WcFg =>
-          MAdnResView.wcFg.set( newValue )
+          MAdnResView.wcFg replace newValue
         case MFrkTypes.GalImg =>
           // Нужно найти по id эджа, если он задан.
           resKey.edgeUid.fold {

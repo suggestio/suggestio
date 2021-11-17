@@ -245,7 +245,7 @@ final class LkAdvGeo @Inject() (
           }
           .toMap
         LOGGER.trace(s"$logPrefix Rcvrs map updated:\n OLD = ${mFormS0.rcvrsMap}\n NEW = $rcvrsMap2")
-        (MFormS.rcvrsMap set rcvrsMap2)(mFormS0)
+        (MFormS.rcvrsMap replace rcvrsMap2)(mFormS0)
       }
     } else {
       Future.successful(mFormS0)

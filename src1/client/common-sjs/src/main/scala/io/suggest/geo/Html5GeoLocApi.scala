@@ -63,7 +63,7 @@ final class Html5GeoLocApi extends GeoLocApi {
         .orUndefined
     }
 
-    Future.successful()
+    Future.successful(())
   }
 
 

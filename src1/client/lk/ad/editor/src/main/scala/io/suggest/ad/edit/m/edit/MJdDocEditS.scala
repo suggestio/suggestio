@@ -36,7 +36,7 @@ object MJdDocEditS {
     ) { gridBuild2 => v0 =>
       val gb0 = _gridBuild_LENS get v0
       if (gb0 !=* gridBuild2)
-        _gridBuild_LENS.set(gridBuild2)(v0)
+        _gridBuild_LENS.replace(gridBuild2)(v0)
       else
         v0
     }

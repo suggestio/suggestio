@@ -108,7 +108,7 @@ case class MTfDaily(
     _err("Too many default clauses with empty calId field.")
 
   override def toString: String = {
-    s"$currency(${clauses.valuesIterator.map(cl => MPrice.amountToReal(cl.amount, currency)).mkString(";")})-${comissionPc.fold("")(_ + "%%")}"
+    s"$currency(${clauses.valuesIterator.map(cl => MPrice.amountToReal(cl.amount, currency)).mkString(";")})-${comissionPc.fold("")(_.toString + "%%")}"
   }
 
   def calIdsIter: Iterator[String] = {

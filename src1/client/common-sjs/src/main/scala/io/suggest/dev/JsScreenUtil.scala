@@ -29,7 +29,7 @@ object JsScreenUtil extends Log {
 
     vszOpt.fold{
       // Наврядли этот код будет вызываться когда-либо.
-      MScreen.pxRatio.set( pxRatio )(MScreen.default)
+      (MScreen.pxRatio replace pxRatio)(MScreen.default)
     } { sz2d =>
       MScreen(
         wh = MSize2di(

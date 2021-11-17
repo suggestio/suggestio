@@ -132,7 +132,7 @@ final class PlatformAh[M](
 
       } else {
         // Изменилось состояние текущей активности приложения. Надо запустить/остановить части системы.
-        val v2 = (isUsingNow_LENS set m.isScVisible)(v0)
+        val v2 = (isUsingNow_LENS replace m.isScVisible)(v0)
 
         // Если сокрыие выдачи с открытой панелью, то скрыть панель:
         var fxAcc = List.empty[Effect]
@@ -311,12 +311,12 @@ final class PlatformAh[M](
 
       } else if (m.state.isPending) {
         // В фоне продолжается процесс обновления готовности...
-        val v2 = (MPlatformS.isReadyPot set m.state)( v0 )
+        val v2 = (MPlatformS.isReadyPot replace m.state)( v0 )
         updatedSilent(v2)
 
       } else if (m.state.isFailed) {
         // Произошла какая-то ошибка при попытке инициализации.
-        val v2 = (MPlatformS.isReadyPot set m.state.pending())( v0 )
+        val v2 = (MPlatformS.isReadyPot replace m.state.pending())( v0 )
 
         val retryFx = Effect
           .action( PlatformReady( Pot.empty ) )
@@ -328,7 +328,7 @@ final class PlatformAh[M](
         // Готовность успешно перешла в новое качество.
         val isReadyNow = m.state contains[Boolean] true
         // Собираем модификатор значения v0 в несколько шагов. isReady надо выставлять всегда:
-        var modF = MPlatformS.isReadyPot set m.state
+        var modF = MPlatformS.isReadyPot replace m.state
         var fxAcc = List.empty[Effect]
 
         if (isReadyNow) {
@@ -377,7 +377,7 @@ final class PlatformAh[M](
                     osFamily <- osFamilyOpt
                     if !(v0.osFamily contains[MOsFamily] osFamily)
                   } {
-                    modF = modF andThen (MPlatformS.osFamily set osFamilyOpt)
+                    modF = modF andThen (MPlatformS.osFamily replace osFamilyOpt)
                   }
                 }
               )

@@ -27,10 +27,10 @@ class PasswordInputAh[M](
         noChange
 
       } else {
-        var updAccF = MTextFieldS.value.set( m.password )
+        var updAccF = MTextFieldS.value.replace( m.password )
 
         if (!v0.isValid && Validators.isPasswordValid(m.password))
-          updAccF = updAccF andThen MTextFieldS.isValid.set(true)
+          updAccF = updAccF andThen MTextFieldS.isValid.replace(true)
 
         val v2 = updAccF(v0)
 
@@ -45,7 +45,7 @@ class PasswordInputAh[M](
       if (v0.isValid ==* isPwValid2) {
         noChange
       } else {
-        val v2 = MTextFieldS.isValid.set( isPwValid2 )(v0)
+        val v2 = MTextFieldS.isValid.replace( isPwValid2 )(v0)
         updated(v2)
       }
 

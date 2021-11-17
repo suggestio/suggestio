@@ -313,7 +313,7 @@ class Sc3Module extends Log { outer =>
       val csrf2 = sc3Circuit.csrfTokenRW.value.toOption
       // Выставить CSRF-токен для всех под-форм, т.к. там почти все запросы требуют CSRF-токена:
       if (v0.csrfToken !=* csrf2)
-        (HttpClientConfig.csrfToken set csrf2)(v0)
+        (HttpClientConfig.csrfToken replace csrf2)(v0)
       else
         v0
     }
@@ -409,7 +409,7 @@ class Sc3Module extends Log { outer =>
 
     override lazy val loginRouterCtl = routerCtl contramap { login: SioPages.Login =>
       // пропихнуть в роутер обновлённую страницу логина.
-      (SioPages.Sc3.login set Option(login))(route0)
+      (SioPages.Sc3.login replace Option(login))(route0)
     }
 
     override lazy val routerCtlCtx: React.Context[RouterCtl[SioPages.Login]] =

@@ -60,8 +60,8 @@ class UmapUtil @Inject() () {
           }
 
         MNode.edges
-          .composeLens( MNodeEdges.out )
-          .set( MNodeEdges.edgesToMap1( edges1iter ) )(mnode)
+          .andThen( MNodeEdges.out )
+          .replace( MNodeEdges.edgesToMap1( edges1iter ) )(mnode)
       }
 
     } else {

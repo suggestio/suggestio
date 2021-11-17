@@ -615,7 +615,7 @@ final class Ident @Inject() (
                     for (msg0 <- idMsgs0) yield {
                       if (msg0 ===* smsFound) {
                         // Это смс было выверено, код совпал. Обновить состояние.
-                        MIdMsg.validated.set( Some(now) )(msg0)
+                        (MIdMsg.validated replace Some(now) )(msg0)
                       } else msg0
                     }
                   }
@@ -682,8 +682,8 @@ final class Ident @Inject() (
             idToken2 = (
               idTokenMod andThen
               MIdToken.dates
-                .composeLens( MIdTokenDates.modified )
-                .set( someNow )
+                .andThen( MIdTokenDates.modified )
+                .replace( someNow )
             )( idToken0 )
 
             // Сохранить в базу обновлённый токен.
@@ -838,8 +838,8 @@ final class Ident @Inject() (
                 ) :: idMsgs0
               } andThen
               MIdToken.dates
-                .composeLens( MIdTokenDates.modified )
-                .set( Some(now) )
+                .andThen( MIdTokenDates.modified )
+                .replace( Some(now) )
             )(idToken0)
           }
 
@@ -1117,7 +1117,7 @@ final class Ident @Inject() (
             mNodes.tryUpdate(request.mnode) {
               // Найти email-эдж и выставить flag=true
               MNode.edges
-                .composeLens( MNodeEdges.out )
+                .andThen( MNodeEdges.out )
                 .modify { edges0 =>
                   // Найти существующий email-эдж, если он есть (а это не обязательно)
                   var hasChangedEdge = false
@@ -1130,7 +1130,9 @@ final class Ident @Inject() (
                       !(e.info.flag contains true)
                     ) {
                       hasChangedEdge = true
-                      (MEdge.info composeLens MEdgeInfo.flag set OptionUtil.SomeBool.someTrue)(e)
+                      MEdge.info
+                        .andThen( MEdgeInfo.flag )
+                        .replace( OptionUtil.SomeBool.someTrue )(e)
                     } else {
                       e
                     }

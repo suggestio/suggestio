@@ -73,7 +73,7 @@ class CaptchaAh[M](
               URL.revokeObjectURL( oldUrl )
             // Залить новую ссылку в состояние
             val blobUrl2 = URL.createObjectURL( res.imgData )
-            changesAccF = changesAccF andThen MCaptchaS.captchaImgUrlOpt.set( Some(blobUrl2) )
+            changesAccF = changesAccF andThen MCaptchaS.captchaImgUrlOpt.replace( Some(blobUrl2) )
           }
 
           // Обновить состояние:
@@ -93,9 +93,9 @@ class CaptchaAh[M](
           // Текст капчи не изменился.
           noChange
         } else {
-          var updAccF = MTextFieldS.value.set( m.typed )
+          var updAccF = MTextFieldS.value.replace( m.typed )
           if (!v0.typed.isValid && MCaptchaS.isTypedCapchaValid(v0.typed.value))
-            updAccF = updAccF andThen MTextFieldS.isValid.set(true)
+            updAccF = updAccF andThen MTextFieldS.isValid.replace(true)
 
           val v2 = MCaptchaS.typed
             .modify( updAccF )(v0)
@@ -120,14 +120,14 @@ class CaptchaAh[M](
           !MCaptchaS.isTypedCapchaValid(v0.typed.value)
         ) {
           // Капча стала невалидной.
-          inputChangesAccF ::= MTextFieldS.isValid.set( false )
+          inputChangesAccF ::= MTextFieldS.isValid.replace( false )
         }
 
         // Тримминг начала и хвоста капчи.
         if (v0.typed.value.nonEmpty) {
           val trimmedTyped = v0.typed.value.trim
           if ( trimmedTyped !=* v0.typed.value )
-            inputChangesAccF ::= MTextFieldS.value.set( trimmedTyped )
+            inputChangesAccF ::= MTextFieldS.value.replace( trimmedTyped )
         }
 
         inputChangesAccF

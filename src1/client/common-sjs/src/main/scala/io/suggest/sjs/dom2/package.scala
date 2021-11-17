@@ -2,9 +2,9 @@ package io.suggest.sjs
 
 import org.scalajs.dom
 import org.scalajs.dom.experimental.Headers
-import org.scalajs.dom.raw
 
 import scala.scalajs.js
+import scala.language.implicitConversions
 
 /**
   * Suggest.io
@@ -14,10 +14,10 @@ import scala.scalajs.js
   */
 package object dom2 {
 
-  @inline implicit def posOptsToRaw(posOpts: PositionOptions): raw.PositionOptions =
-    posOpts.asInstanceOf[raw.PositionOptions]
+  @inline implicit def posOptsToRaw(posOpts: PositionOptions): dom.PositionOptions =
+    posOpts.asInstanceOf[dom.PositionOptions]
 
-  @inline implicit def geolocationFromRaw(geolocation: raw.Geolocation): Geolocation =
+  @inline implicit def geolocationFromRaw(geolocation: dom.Geolocation): Geolocation =
     geolocation.asInstanceOf[Geolocation]
 
   /** Тип идентификатора watch'ера в Geolocation API. */

@@ -1,6 +1,6 @@
 package com.github.gcl.swtoolbox
 
-import org.scalajs.dom.experimental.serviceworkers.CacheQueryOptions
+import org.scalajs.dom.experimental.cachestorage.CacheQueryOptions
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport

@@ -112,7 +112,7 @@ final class NfcDialogAh[M](
           // Cancel writing by user.
           v0.cancelF.fold {
             // Not cancellable. Just clean-up current state.
-            val v2 = (MNfcDiaS.writing set Pot.empty)(v0)
+            val v2 = (MNfcDiaS.writing replace Pot.empty)(v0)
             updated( Some(v2) )
           } { cancelF =>
             val fx = Effect.action {
@@ -121,18 +121,18 @@ final class NfcDialogAh[M](
               m
             }
             val v2 = (
-              (MNfcDiaS.writing set m.state.pending()) andThen
-              (MNfcDiaS.cancelF set None)
+              (MNfcDiaS.writing replace m.state.pending()) andThen
+              (MNfcDiaS.cancelF replace None)
             )(v0)
             updated( Some(v2), fx )
           }
 
         } else if (m.state.isPending) {
-          var modF = (MNfcDiaS.writing set m.state)
+          var modF = (MNfcDiaS.writing replace m.state)
 
           // Save/update cancelling function:
           for (res <- m.state)
-            modF = modF andThen (MNfcDiaS.cancelF set res.cancel)
+            modF = modF andThen (MNfcDiaS.cancelF replace res.cancel)
 
           val v2 = modF(v0)
           updated( Some(v2) )
@@ -140,8 +140,8 @@ final class NfcDialogAh[M](
         } else if (m.state.isReady) {
           // Successfully done writing.
           val v2 = (
-            (MNfcDiaS.writing set m.state) andThen
-            (MNfcDiaS.cancelF set None)
+            (MNfcDiaS.writing replace m.state) andThen
+            (MNfcDiaS.cancelF replace None)
           )(v0)
           updated( Some(v2) )
 
@@ -149,8 +149,8 @@ final class NfcDialogAh[M](
           // Failed to write data into NFC-tag.
           logger.error( ErrorMsgs.NFC_API_ERROR, msg = m )
           val v2 = (
-            (MNfcDiaS.writing set m.state) andThen
-            (MNfcDiaS.cancelF set None)
+            (MNfcDiaS.writing replace m.state) andThen
+            (MNfcDiaS.cancelF replace None)
           )(v0)
           updated( Some(v2) )
 
@@ -256,7 +256,7 @@ final class NfcDialogAh[M](
               }
           }
 
-          val v2 = (MNfcDiaS.writing set state2)(v0)
+          val v2 = (MNfcDiaS.writing replace state2)(v0)
           updated( Some(v2), nfcScanWriteTagFx )
         }
       })

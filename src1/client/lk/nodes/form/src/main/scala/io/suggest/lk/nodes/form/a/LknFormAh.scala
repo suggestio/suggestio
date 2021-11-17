@@ -34,8 +34,8 @@ class LknFormAh[M](
 
       } else {
         val v2 = MLkNodesRoot.conf
-          .composeLens( MLknConf.adIdOpt )
-          .set( m.adId )(v0)
+          .andThen( MLknConf.adIdOpt )
+          .replace( m.adId )(v0)
 
         // Запустить пере-инициализацию дерева:
         val fx = TreeInit().toEffectPure

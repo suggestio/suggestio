@@ -129,6 +129,7 @@ trait Html5PermissionApiStub extends js.Object {
   def queryU: js.UndefOr[js.Function] = js.native
 }
 object Html5PermissionApiStub {
+  import scala.language.implicitConversions
   implicit def h5stub( domPermissions: Permissions ): Html5PermissionApiStub =
     domPermissions.asInstanceOf[Html5PermissionApiStub]
 }

@@ -206,7 +206,7 @@ object PriceDsl {
         .price
         .fold {
           Tree.Node(
-            (PriceDsl.price set Some( priceDslTree.price ))(priceDsl),
+            (PriceDsl.price replace Some( priceDslTree.price ))(priceDsl),
             priceDslTree.subForest
           )
         }( _ => priceDslTree )
@@ -235,7 +235,7 @@ object PriceDsl {
             .price
             .fold(priceDslTree) { price0 =>
               Tree.Node(
-                (PriceDsl.price set Some(f(price0)))(priceDsl),
+                (PriceDsl.price replace Some(f(price0)))(priceDsl),
                 priceDslTree.subForest
               )
             }

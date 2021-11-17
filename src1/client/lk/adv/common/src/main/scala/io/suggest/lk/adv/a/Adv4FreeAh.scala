@@ -22,7 +22,7 @@ class Adv4FreeAh[M](
         a4f <- value
         if (m.checked !=* a4f.checked)
       } yield {
-        val v2 = Some( (MAdv4Free.checked set m.checked)(a4f) )
+        val v2 = Some( (MAdv4Free.checked replace m.checked)(a4f) )
         // TODO Если checked сменился с false на true, то надо бы просто занулять отображаемую цену без дёрганья сервера.
         val fx = priceUpdateFx
         updated( v2, fx )

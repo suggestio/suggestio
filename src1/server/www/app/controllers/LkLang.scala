@@ -126,9 +126,9 @@ final class LkLang @Inject() (
 
               res <- mNodes.tryUpdate( personNode ) {
                 MNode.meta
-                  .composeLens( MMeta.basic )
-                  .composeLens( MBasicMeta.langs )
-                  .set( newLangCode :: Nil )
+                  .andThen( MMeta.basic )
+                  .andThen( MBasicMeta.langs )
+                  .replace( newLangCode :: Nil )
               }
 
             } yield res.id

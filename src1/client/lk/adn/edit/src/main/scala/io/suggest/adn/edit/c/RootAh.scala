@@ -28,7 +28,7 @@ class RootAh[M](
 
   private def _root_internals_saving_LENS = {
     MLkAdnEditRoot.internals
-      .composeLens( MAdnEditInternals.saving)
+      .andThen( MAdnEditInternals.saving)
   }
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -101,7 +101,7 @@ class RootAh[M](
     // Закрытие всех попапов.
     case CloseAllPopups =>
       val v0 = value
-      val v2 = (MLkAdnEditRoot.popups set MAdnEditPopups.empty)(v0)
+      val v2 = (MLkAdnEditRoot.popups replace MAdnEditPopups.empty)(v0)
       updated( v2 )
 
     // DocBodyClick используется для сокрытия color picker'а

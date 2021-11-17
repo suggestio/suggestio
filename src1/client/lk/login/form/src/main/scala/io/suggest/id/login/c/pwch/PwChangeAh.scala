@@ -79,9 +79,9 @@ class PwChangeAh[M](
               case mce: MCheckException =>
                 // Отрендерить экзепшен
                 if (mce.fields contains[String] MPwChangeForm.Fields.PW_OLD_FN)
-                  updAccF = updAccF andThen (MPwChangeS.pwOld composeLens MTextFieldS.isValid set false)
+                  updAccF = updAccF andThen (MPwChangeS.pwOld andThen MTextFieldS.isValid replace false)
                 if (mce.fields contains[String] MPwChangeForm.Fields.PW_NEW_FN) {
-                  val isValidSetF = MTextFieldS.isValid set false
+                  val isValidSetF = MTextFieldS.isValid replace false
                   updAccF = updAccF andThen
                     (MPwChangeS.pwNew modify (MPwNew.password1.modify(isValidSetF) andThen MPwNew.password2.modify(isValidSetF)))
                 }
@@ -108,7 +108,7 @@ class PwChangeAh[M](
 
       val lens = if (m.isPwNew) {
         MPwChangeS.pwNew
-          .composeLens( MPwNew.pwVisible )
+          .andThen( MPwNew.pwVisible )
       } else {
         MPwChangeS.pwOldVisible
       }
@@ -116,7 +116,7 @@ class PwChangeAh[M](
       if (lens.get(v0) ==* m.visible) {
         noChange
       } else {
-        val v2 = lens.set( m.visible )(v0)
+        val v2 = lens.replace( m.visible )(v0)
         updated(v2)
       }
 

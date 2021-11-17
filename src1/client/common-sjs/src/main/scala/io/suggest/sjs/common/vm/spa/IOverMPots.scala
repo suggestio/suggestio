@@ -27,7 +27,7 @@ trait IOverMPots extends Product {
     (for {
       pots <- _mPotsIterator
       pot <- pots._pots
-      r <- f(pot)
+      r <- f(pot).iterator
     } yield r)
       .nextOption()
   }

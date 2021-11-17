@@ -25,17 +25,17 @@ class LoginRootAh[M](
 
       val lens = if (m.isPwNew) {
         MLoginRootS.overall
-          .composeLens( MLoginFormOverallS.pwNew )
-          .composeLens( MPwNew.pwVisible )
+          .andThen( MLoginFormOverallS.pwNew )
+          .andThen( MPwNew.pwVisible )
       } else {
         MLoginRootS.epw
-          .composeLens( MEpwLoginS.passwordVisible )
+          .andThen( MEpwLoginS.passwordVisible )
       }
 
       if (lens.get(v0) ==* m.visible) {
         noChange
       } else {
-        val v2 = lens.set( m.visible )(v0)
+        val v2 = lens.replace( m.visible )(v0)
         updated(v2)
       }
 

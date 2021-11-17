@@ -294,7 +294,7 @@ final class Upload @Inject()(
                 for {
                   storAssigned <- cdnUtil.toAssignedStorage( foundFileNodeId, fileStorage )
                 } yield {
-                  val upInfo22 = (MUploadInfoQs.existNodeId set foundFileNodeIdOpt)( upInfo )
+                  val upInfo22 = (MUploadInfoQs.existNodeId replace foundFileNodeIdOpt)( upInfo )
                   upInfo22 -> storAssigned
                 }
               })
@@ -360,11 +360,11 @@ final class Upload @Inject()(
                           val edgesSeq2 = MNodeEdges.edgesToMap1(
                             edges0.withoutPredicateIter( MPredicates.Blob ) ++ (fileEdge :: Nil)
                           )
-                          (MNodeEdges.out set edgesSeq2)(edges0)
+                          (MNodeEdges.out replace edgesSeq2)(edges0)
                         } andThen
                         MNode.common
-                          .composeLens( MNodeCommon.isEnabled )
-                          .set( false )
+                          .andThen( MNodeCommon.isEnabled )
+                          .replace( false )
                       )
                     } yield {
                       LOGGER.info(s"$logPrefix Updated node#$existNodeId v=${existNode2.versioning.version.orNull} for chunked uploading")
@@ -374,7 +374,7 @@ final class Upload @Inject()(
                 } yield {
                   LOGGER.debug(s"$logPrefix For $fileCreator created node#${mnode.id.orNull} w/o techName")
                   // Вернуть ожидаемый ответ:
-                  val upInfoNoded = (MUploadInfoQs.existNodeId set mnode.id)( upInfo )
+                  val upInfoNoded = (MUploadInfoQs.existNodeId replace mnode.id)( upInfo )
                   upInfoNoded -> assignResp
                 }
               }
@@ -790,15 +790,15 @@ final class Upload @Inject()(
                   val edgesSeq2 = MNodeEdges.edgesToMap1(
                     edges0.withoutPredicateIter( MPredicates.CreatedBy, MPredicates.Blob ) ++ addEdges
                   )
-                  MNodeEdges.out.set( edgesSeq2 )(edges0)
+                  (MNodeEdges.out replace edgesSeq2)(edges0)
                 }
               )
 
               if (!mnode0.common.isEnabled) {
                 LOGGER.trace(s"$logPrefix Reset node#${mnode0.idOrNull} isEnabled => true")
                 modF = modF andThen MNode.common
-                  .composeLens( MNodeCommon.isEnabled )
-                  .set(true)
+                  .andThen( MNodeCommon.isEnabled )
+                  .replace( true )
               }
 
               mNodes.tryUpdate( mnode0 )(modF)
@@ -895,16 +895,16 @@ final class Upload @Inject()(
                           .withPredicateIter( pred )
                           .map(
                             MEdge.media
-                              .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
-                              .composeLens( MEdgeMedia.picture )
-                              .composeLens( MPictureMeta.histogram )
-                              .set( Some(colorsHist2) )
+                              .andThen( Traversal.fromTraverse[Option, MEdgeMedia] )
+                              .andThen( MEdgeMedia.picture )
+                              .andThen( MPictureMeta.histogram )
+                              .replace( Some(colorsHist2) )
                           )
                       )
                       val edges2 = MNodeEdges.edgesToMap1(
                         edges0.withoutPredicateIter(pred) ++ fileEdges1
                       )
-                      MNodeEdges.out.set( edges2 )(edges0)
+                      MNodeEdges.out.replace( edges2 )(edges0)
                     }
                   )
 
@@ -1215,7 +1215,7 @@ final class Upload @Inject()(
 
             if (!(sliceOpt0 contains sliceEdge)) {
               modsAcc ::= MNode.edges
-                .composeLens(MNodeEdges.out)
+                .andThen( MNodeEdges.out )
                 .modify { out0 =>
                   var iter = out0.iterator
 
@@ -1232,9 +1232,9 @@ final class Upload @Inject()(
             if (mnode0.meta.basic.techName.isEmpty) {
               for ( fileName <- chunkQs.fileName if fileName.nonEmpty )
                 modsAcc ::= MNode.meta
-                  .composeLens( MMeta.basic )
-                  .composeLens( MBasicMeta.techName )
-                  .set( chunkQs.fileName )
+                  .andThen( MMeta.basic )
+                  .andThen( MBasicMeta.techName )
+                  .replace( chunkQs.fileName )
             }
 
             modsAcc

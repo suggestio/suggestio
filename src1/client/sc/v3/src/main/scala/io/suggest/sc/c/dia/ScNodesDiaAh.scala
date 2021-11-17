@@ -129,7 +129,7 @@ class ScNodesDiaAh[M](
           if (v0.opened) {
             effectOnly( beaconsFx )
           } else {
-            val v2 = (MScNodes.opened set true)(v0)
+            val v2 = (MScNodes.opened replace true)(v0)
             updated(v2, beaconsFx)
           }
         }
@@ -203,7 +203,7 @@ class ScNodesDiaAh[M](
           ScNodesBcnrSubscribeStatus( pot1.ready(unSubsCribeF) )
         }
 
-        val v2 = MScNodes.unSubsCribeBcnr.set( pot1 )(v0)
+        val v2 = MScNodes.unSubsCribeBcnr.replace( pot1 )(v0)
         updatedSilent( v2, fx )
 
       } else if (m.unSubsCribeF.isReady) {
@@ -214,13 +214,13 @@ class ScNodesDiaAh[M](
         val fxOpt = __unSubsCribeFx
 
         // Сохранение функции отписки в состояние:
-        val v2 = (MScNodes.unSubsCribeBcnr set m.unSubsCribeF)(v0)
+        val v2 = (MScNodes.unSubsCribeBcnr replace m.unSubsCribeF)(v0)
         ah.updatedSilentMaybeEffect(v2, fxOpt)
 
       } else if (m.unSubsCribeF.isUnavailable && v0.unSubsCribeBcnr.nonEmpty) {
         // Отписка от событий:
         val fxOpt = __unSubsCribeFx
-        val v2 = (MScNodes.unSubsCribeBcnr set Pot.empty)(v0)
+        val v2 = (MScNodes.unSubsCribeBcnr replace Pot.empty)(v0)
 
         ah.updatedSilentMaybeEffect( v2, fxOpt )
 
@@ -238,7 +238,7 @@ class ScNodesDiaAh[M](
         nodesCircuit <- v0.circuit
         if v0.mode !=* m.mode
       } yield {
-        val v2 = (MScNodes.mode set m.mode)(v0)
+        val v2 = (MScNodes.mode replace m.mode)(v0)
         val fx = Effect.action {
           val adIdOpt2 = m.mode match {
             case MLkNodesModes.NodesManage =>

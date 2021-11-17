@@ -7,7 +7,6 @@ import io.suggest.sjs.common.model.TimeoutPromise
 import io.suggest.sjs.dom2.DomQuick
 
 import scala.concurrent.{Future, Promise}
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -65,7 +64,7 @@ object CircuitUtil {
               (mkRwF: (Parent_t => Child_t, (Parent_t, Child_t) => Parent_t) => ModelRW[Root_t, Child_t]): ModelRW[Root_t, Child_t] = {
     mkRwF(
       lens.get,
-      (parent0, child2) => (lens set child2)(parent0),
+      (parent0, child2) => (lens replace child2)(parent0),
     )
   }
 

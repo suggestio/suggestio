@@ -246,7 +246,7 @@ object JsBinaryUtil {
   def blob2arrBuf(blob: Blob): Future[ArrayBuffer] = {
     val fr = new FileReader()
     val p = Promise[ArrayBuffer]()
-    fr.onload = { _: UIEvent =>
+    fr.onload = { _: UIEvent => //ProgressEvent =>
       p.success( fr.result.asInstanceOf[ArrayBuffer] )
     }
     fr.readAsArrayBuffer(blob)

@@ -35,6 +35,7 @@ trait ItemIdFkSlick extends ItemIdSlick with ItemIdFkFn with IMItems {
   import profile.api._
 
   trait ItemIdFk extends ItemIdColumn { that: Table[_] =>
+    import scala.language.existentials
     def item = foreignKey(ITEM_ID_FK, itemId, mItems.query)(_.id)
   }
 

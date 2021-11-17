@@ -71,7 +71,7 @@ final class LkAdEdit @Inject() (
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
 
 
-  private lazy val _BFP_ARGS = (BfpArgs.tryCountDivisor set 2)( BfpArgs.default )
+  private lazy val _BFP_ARGS = (BfpArgs.tryCountDivisor replace 2)( BfpArgs.default )
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {
@@ -339,16 +339,16 @@ final class LkAdEdit @Inject() (
                 } andThen
                 // Залить новый шаблон:
                 MNode.extras
-                  .composeLens( MNodeExtras.doc )
+                  .andThen( MNodeExtras.doc )
                   .modify { mdoc0 =>
-                    val mdoc2 = mdoc0.fold( MNodeDoc(template = tpl2) )( MNodeDoc.template.set(tpl2) )
+                    val mdoc2 = mdoc0.fold( MNodeDoc(template = tpl2) )( MNodeDoc.template.replace(tpl2) )
                     Some( mdoc2 )
                   } andThen
                 MNode.meta
-                  .composeLens( MMeta.basic )
+                  .andThen( MMeta.basic )
                   .modify(
-                    (MBasicMeta.nameOpt set jdData1.title) andThen
-                    (MBasicMeta.techName set nodeTechNameOpt)
+                    (MBasicMeta.nameOpt replace jdData1.title) andThen
+                    (MBasicMeta.techName replace nodeTechNameOpt)
                   )
             )
           }

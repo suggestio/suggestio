@@ -61,9 +61,9 @@ class TagsEditAh[M](
       // Проверяем тут, изменился ли текст на самом деле:
       val v1 = if (q != text0) {
         MTagsEditState.props
-          .composeLens( MTagsEditProps.query )
-          .composeLens( MTagsEditQueryProps.text )
-          .set( q )(v0)
+          .andThen( MTagsEditProps.query )
+          .andThen( MTagsEditQueryProps.text )
+          .replace( q )(v0)
       } else {
         v0
       }
@@ -85,7 +85,7 @@ class TagsEditAh[M](
           .after( TagsEditConstants.Search.START_SEARCH_TIMER_MS.milliseconds )
 
         // Залить в состояние итоги запуска запроса:
-        val v2 = (MTagsEditState.searchTimer set Some(now))(v1)
+        val v2 = (MTagsEditState.searchTimer replace Some(now))(v1)
 
         updated(v2, awaitFx)
       }
@@ -171,9 +171,9 @@ class TagsEditAh[M](
       } else {
         // Есть хотя бы одна ошибка. Закинуть ошибки в состояние.
         val v2 = MTagsEditState.props
-          .composeLens( MTagsEditProps.query )
-          .composeLens( MTagsEditQueryProps.errors )
-          .set( errors )(v0)
+          .andThen( MTagsEditProps.query )
+          .andThen( MTagsEditQueryProps.errors )
+          .replace( errors )(v0)
         updated( v2 )
       }
 
@@ -185,8 +185,8 @@ class TagsEditAh[M](
       val te1 = te0 - tagFace
       if (te1.size < te0.size) {
         val v2 = MTagsEditState.props
-          .composeLens( MTagsEditProps.tagsExists )
-          .set( te1 )(v0)
+          .andThen( MTagsEditProps.tagsExists )
+          .replace( te1 )(v0)
         updated(v2, priceUpdateFx)
       } else {
         noChange

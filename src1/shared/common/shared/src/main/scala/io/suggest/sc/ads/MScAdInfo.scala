@@ -95,7 +95,7 @@ case class MScAdInfo(
     f("edit")(canEdit)
     if (flags.nonEmpty) f("flags")(flags)
     if (matchInfos.nonEmpty) f("match")(matchInfos)
-    if (isMad404) f("404")()
+    if (isMad404) f("404")(())
   }
 
 }

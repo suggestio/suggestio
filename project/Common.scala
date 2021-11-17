@@ -88,16 +88,13 @@ object Common {
       */
     val SCALAZ = "7.3.+"
 
-    /** Версия scalaCSS.
+    /** ScalaCSS ABI is connected with UnivEq ABI.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    val SCALACSS = "0.7.0"
+    val SCALACSS = "0.8.0-RC1"
 
-    /** Улучшенное жестко-типизированное сравнение.
-      * 1.3.x требует scalacss 0.7.0
-      * @see [[https://github.com/japgolly/univeq#scalaz]]
-      */
-    val UNIVEQ = "1.3.+"
+    /** @see [[https://github.com/japgolly/univeq#scalaz]] */
+    val UNIVEQ = "1.+"
 
     /** Apache commons lang3
       * @see [[https://commons.apache.org/proper/commons-lang/]]
@@ -225,12 +222,8 @@ object Common {
       */
     val SW_TOOLBOX = "3.6.0"
 
-    /** Версия monocle.
-      * 1.7.x - scalaz 7.3 и выше.
-      * 2.x   - переезд на cats, это параллель для scalaz, на которую завязана целая кода.
-      * @see [[http://julien-truffaut.github.io/Monocle/]]
-      */
-    val MONOCLE = "1.7.+"
+    /** @see [[http://julien-truffaut.github.io/Monocle/]] */
+    val MONOCLE = "3.+"
 
     /** @see [[https://mvnrepository.com/artifact/commons-codec/commons-codec]] */
     val APACHE_COMMONS_CODEC = "1.12"
@@ -279,6 +272,15 @@ object Common {
     /** @see [[https://github.com/OWASP/java-html-sanitizer/releases]] */
     val OWASP_JAVA_HTML_SANITIZER = "20211018.2"
 
+    /** @see [[https://github.com/japgolly/scala-graal]] */
+    val SCALA_GRAAL = "2.0.0"
+
+    /** @see [[https://github.com/typelevel/cats-effect#getting-started]] */
+    val CATS_EFFECT = "3.+"
+
+    /** @see [[https://github.com/typelevel/cats]] */
+    val CATS = "2.+"
+
   }
 
 
@@ -286,9 +288,10 @@ object Common {
     organization := ORG,
     // Выключение сборки документации
     //sources in (Compile, doc) := Seq.empty,
-    publishArtifact in (Compile, packageDoc) := false
+    publishArtifact in (Compile, packageDoc) := false,
     // Ускорение резолва зависимостей путём запрета их резолва без явной необходимости.
     //, offline := true
+    scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
   )
 
   /** Очень общие сеттинги для jvm-проектов. */
@@ -323,7 +326,7 @@ object Common {
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
    */
-  def sjsDomVsn         = "1.+"
+  def sjsDomVsn         = "1.+" // TODO v2.+ => + react + diode + univeq + etc
 
   /** Версия Apache commons-io. */
   def apacheCommonsIoVsn = "2.6"
@@ -342,6 +345,7 @@ object Common {
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
   val reactSjsVsn        = "1.7.7" // И контроллировать суффикс diodeReactVsn ниже!
+  // TODO reactSjsVsn "2.+"
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
@@ -366,6 +370,7 @@ object Common {
     * @see [[https://github.com/ochrons/diode/]]
     */
   val diodeVsn = "1.1.+"
+  //val diodeVsn = "1.2.+" // TODO
   val diodeReactVsn = diodeVsn //+ "." + reactSjsVsn.replaceAllLiterally(".", "")
 
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.

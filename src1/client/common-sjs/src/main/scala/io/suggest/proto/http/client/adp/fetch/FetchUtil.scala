@@ -47,10 +47,8 @@ object FetchUtil {
       // Выставить Content-Type, если отсутствует в заголовках:
       val ct = HttpConst.Headers.CONTENT_TYPE
       if (
-        reqHeaders
-          .get( ct )
-          .toOption
-          .flatMap( Option.apply )
+        Option( reqHeaders.get( ct ).toOption )
+          .flatten
           .fold(true)(_.isEmpty)
       )
         reqHeaders.append( ct, MimeConst.TEXT_PLAIN )

@@ -32,53 +32,6 @@ trait CssClassT extends AttrVmUtilT {
       }
   }
 
-  /** Вспомогательная подсистема для отработки разных вариантов.  */
-  protected trait Helper[T] extends super.Helper[T] {
-
-    override def attrName = "class"
-
-    /** Есть classList. */
-    def withClassList(classList: DOMTokenList): T
-
-    // Для возможности дополнения логики в setter helper'е используются эти методы.
-    protected def _usingCll(cll: DOMTokenList): T = {
-      withClassList(cll)
-    }
-    
-    override def execute(): T = {
-      val el1 = ElCssClassStub(_underlying)
-      val cllOrUndef = el1.classList
-
-      if (cllOrUndef.isDefined) {
-        // Std-compilant browser
-        _usingCll(cllOrUndef.get)
-      } else {
-        super.execute()
-      }
-    }
-  }
-
-
-  /**
-   * Содержится ли указанный css-класс у текущего элемента?
-   * @param name Название css-класса.
-   * @return true, если у элемента уже есть css-класс с указанными именем.
-   *         Иначе false.
-   */
-  def containsClass(name: String): Boolean = {
-    // Собираем helper для проверки наличия класса.
-    val h = new Helper[Boolean] {
-      override def withClassList(classList: DOMTokenList): Boolean = {
-        classList contains name
-      }
-      override def withAttrValue(classAttr: Option[String]): Boolean = {
-        _containsClassViaAttr(name, classAttr)
-      }
-      override def notFound = false
-    }
-    h.execute()
-  }
-
 }
 
 

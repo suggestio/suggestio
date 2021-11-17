@@ -53,7 +53,7 @@ object MScQs {
 
   implicit final class MScQsExt(private val scQs: MScQs) extends AnyVal {
 
-    def withSearch = MScQs.search.set(_: MAdsSearchReq)(scQs)
+    def withSearch = MScQs.search.replace(_: MAdsSearchReq)(scQs)
 
 
     /** Есть ли какие-то полезные данные для поиска карточек?

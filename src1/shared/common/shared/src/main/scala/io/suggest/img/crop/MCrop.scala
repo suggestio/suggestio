@@ -18,7 +18,7 @@ import scalaz.syntax.apply._
 
 object MCrop {
 
-  private def optSign(v: Int, posSign: Char, acc: StringBuilder) {
+  private def optSign(v: Int, posSign: Char, acc: StringBuilder): Unit = {
     if (v < 0) {
       acc.append(v)
     } else {

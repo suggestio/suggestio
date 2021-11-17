@@ -80,11 +80,11 @@ final class AdvBuilderUtil @Inject() (
 
   def acc_node_edges_LENS =
     Acc.mnode
-      .composeLens( MNode.edges )
+      .andThen( MNode.edges )
 
   def acc_node_edges_out_LENS =
     acc_node_edges_LENS
-      .composeLens( MNodeEdges.out )
+      .andThen( MNodeEdges.out )
 
   def clearByPredicate(b0: IAdvBuilder, preds: Seq[MPredicate]): IAdvBuilder = {
     // Вычистить теги из эджей карточки
@@ -93,7 +93,7 @@ final class AdvBuilderUtil @Inject() (
     } yield {
       acc_node_edges_LENS
         .modify { edges0 =>
-          MNodeEdges.out.set(
+          MNodeEdges.out.replace(
             MNodeEdges.edgesToMap1(
               edges0
                 // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
@@ -321,7 +321,7 @@ final class AdvBuilderUtil @Inject() (
             }
             dbAction :: dbas0
           }
-          (Acc.dbActions set dbas1)(acc0)
+          (Acc.dbActions replace dbas1)(acc0)
         }
       }
     } else {

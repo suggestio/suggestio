@@ -67,19 +67,19 @@ class JdAh[M](
         if (hasMoreBlQdsAwaiting) {
           // Есть ещё ожидаемые данные. Просто тихо обновить состояние:
           val v2 = MJdRuntime.data
-            .composeLens(MJdRuntimeData.qdBlockLess)
-            .set(qdBlMap2)(v0)
+            .andThen(MJdRuntimeData.qdBlockLess)
+            .replace(qdBlMap2)(v0)
 
           updatedSilent(v2)
 
         } else {
           // Требуется пересборка данных для шаблонов
           val data2 = MJdRuntimeData.qdBlockLess
-            .set(qdBlMap2)(v0.data)
+            .replace(qdBlMap2)(v0.data)
           val v2 = MJdRuntime(
             jdCss = JdCss.jdCssArgs
-              .composeLens(MJdCssArgs.data)
-              .set(data2)(v0.jdCss),
+              .andThen(MJdCssArgs.data)
+              .replace(data2)(v0.jdCss),
             data = data2,
           )
           val rebuildFx = GridRebuild(force = true).toEffectPure

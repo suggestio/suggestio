@@ -142,7 +142,7 @@ final class CordovaBgModeAh[M](
         }
       }
 
-      val v2 = (MCBgModeDaemonS.initOpts set m.initOpts)(v0)
+      val v2 = (MCBgModeDaemonS.initOpts replace m.initOpts)(v0)
       for ( listenersFx <- _ensureListenersFx(v2) )
         fxAcc ::= listenersFx
 
@@ -224,7 +224,7 @@ final class CordovaBgModeAh[M](
       if (listeners2 ===* v0.listeners) {
         noChange
       } else {
-        val v2 = (MCBgModeDaemonS.listeners set listeners2)(v0)
+        val v2 = (MCBgModeDaemonS.listeners replace listeners2)(v0)
         updatedSilent( v2 )
       }
 

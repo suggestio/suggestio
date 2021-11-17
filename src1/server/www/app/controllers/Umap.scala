@@ -335,7 +335,7 @@ final class Umap @Inject() (
             MNode.edges.modify { edges0 =>
               val keepIter = edges0.withoutPredicateIter( MPredicates.NodeLocation )
               val newIter = Iterator.single( locEdge )
-              (MNodeEdges.out set MNodeEdges.edgesToMap1( keepIter ++ newIter ))(edges0)
+              (MNodeEdges.out replace MNodeEdges.edgesToMap1( keepIter ++ newIter ))(edges0)
             }
           }
         }

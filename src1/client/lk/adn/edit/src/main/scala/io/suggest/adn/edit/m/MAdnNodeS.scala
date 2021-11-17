@@ -49,7 +49,7 @@ case class MAdnNodeS(
                     ) {
 
   def toForm: MAdnEditForm = {
-    val resetUrlF = MJdEdge.url.set( None )
+    val resetUrlF = MJdEdge.url replace None
 
     MAdnEditForm(
       meta = meta,

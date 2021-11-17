@@ -15,6 +15,7 @@ trait OrderIdOptSlick extends IProfile with OrderIdFn {
 
   /** Добавить колонку orderId. */
   trait OrderIdOpt { that: Table[_] =>
+    import scala.language.existentials
     def orderIdOpt = column[Option[Gid_t]](ORDER_ID_FN)
   }
 
@@ -28,6 +29,7 @@ trait OrderIdOptFkSlick extends OrderIdOptSlick with OrderIdFkFn with IMOrders {
 
   /** Поддержка внешнего ключа таблицы по полю order_id. */
   trait OrderIdOptFk extends OrderIdOpt { that: Table[_] =>
+    import scala.language.existentials
     def orderOpt = foreignKey(ORDER_ID_FK, orderIdOpt, mOrders.query)(_.id.?)
   }
 

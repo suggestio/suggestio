@@ -138,7 +138,7 @@ object MDynImgId {
         val ops2 =
           if (dynImgId.imgOps.isEmpty) addDynImgOps
           else dynImgId.imgOps ++ addDynImgOps
-        (MDynImgId.dynImgOps set ops2)(dynImgId)
+        (MDynImgId.dynImgOps replace ops2)(dynImgId)
       }
     }
 
@@ -202,7 +202,7 @@ final case class MDynImgId(
   /** Хранилка инстанса оригинала.
     * Для защиты от хранения ненужных ссылок на this, тут связка из метода и lazy val. */
   private lazy val _originalHolder =
-    (MDynImgId.dynImgOps set Nil)(this)
+    (MDynImgId.dynImgOps replace Nil)(this)
 
   /** id для модели MMedia. */
   lazy val mediaId = MDynImgId.mkMediaId(this)

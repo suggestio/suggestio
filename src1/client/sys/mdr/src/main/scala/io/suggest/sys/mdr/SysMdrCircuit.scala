@@ -60,7 +60,7 @@ class SysMdrCircuit extends CircuitLog[MSysMdrRootS] with ReactConnector[MSysMdr
     modelRW = jdArgsOptRW.zoomRW[MJdRuntime] { jdArgsOpt =>
       jdArgsOpt.fold( SysMdrUtil.mkJdRuntime(LazyList.empty) )( _.jdRuntime )
     } { (jdArgsOpt0, jdRuntime2) =>
-      jdArgsOpt0.map( MJdArgs.jdRuntime.set(jdRuntime2) )
+      jdArgsOpt0.map( MJdArgs.jdRuntime.replace(jdRuntime2) )
     },
   )
 

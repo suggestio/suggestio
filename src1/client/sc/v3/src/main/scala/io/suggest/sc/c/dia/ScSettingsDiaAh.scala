@@ -92,7 +92,7 @@ class ScSettingsDiaAh[M](
         noChange
 
       } else {
-        val v2 = (MScSettingsDia.opened set m.opened)(v0)
+        val v2 = (MScSettingsDia.opened replace m.opened)(v0)
         // Заменяем в истории, т.к. иначе откроется панель меню.
         val fx = Effect.action {
           ResetUrlRoute(

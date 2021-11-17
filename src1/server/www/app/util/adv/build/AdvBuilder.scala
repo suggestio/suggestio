@@ -163,7 +163,7 @@ trait IAdvBuilder
           }
           dbAction :: dbas0
         }
-        (Acc.dbActions set dbas1)(acc0)
+        (Acc.dbActions replace dbas1)(acc0)
       }
 
     } else {

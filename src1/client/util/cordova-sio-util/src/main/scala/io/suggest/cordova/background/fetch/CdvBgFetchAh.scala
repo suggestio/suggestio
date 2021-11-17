@@ -84,7 +84,7 @@ class CdvBgFetchAh[M](
       } yield {
         val v2 = (
           MCBgFetchS.isEnabled.modify( _.pending() ) andThen
-          MCBgFetchS.opts.set( m.options )
+          MCBgFetchS.opts.replace( m.options )
         )(v0)
         updatedSilent( v2, fx )
       })
@@ -117,7 +117,7 @@ class CdvBgFetchAh[M](
         opts <- v0.opts
       } yield {
         val v2Opt = Option.when(!(v0.curTaskId contains m.taskId)) {
-          (MCBgFetchS.curTaskId set Some(m.taskId))(v0)
+          (MCBgFetchS.curTaskId replace Some(m.taskId))(v0)
         }
         val fx = opts.onTime.toEffectPure
         ah.optionalResult( v2Opt, Some(fx), silent = true )
@@ -155,7 +155,7 @@ class CdvBgFetchAh[M](
             DoNothing
           }
         }
-        val v2 = (MCBgFetchS.curTaskId set None)(v0)
+        val v2 = (MCBgFetchS.curTaskId replace None)(v0)
         updatedSilent(v2, fx)
       })
         .getOrElse {

@@ -57,7 +57,7 @@ class SaveAh[M](
             }
         }
 
-        val v2 = _save_saveReq_LENS.set( pot2 )( v0 )
+        val v2 = _save_saveReq_LENS.replace( pot2 )( v0 )
 
         updated(v2, fx)
       }
@@ -79,7 +79,7 @@ class SaveAh[M](
           // Запрос сохранения исполнен. Залить новые данные в текущую форму.
           {formReInit =>
             val v2 = (
-              MAeRoot.conf.set( formReInit.conf ) andThen
+              MAeRoot.conf.replace( formReInit.conf ) andThen
               lens.modify(_.ready(formReInit))
             )(v0)
 
@@ -101,6 +101,6 @@ class SaveAh[M](
 
   private def _save_saveReq_LENS =
     MAeRoot.save
-      .composeLens( MSaveS.saveReq )
+      .andThen( MSaveS.saveReq )
 
 }

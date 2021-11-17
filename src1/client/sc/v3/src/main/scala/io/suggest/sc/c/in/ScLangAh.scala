@@ -45,7 +45,7 @@ class ScLangAh[M](
         for (ex <- m.state.exceptionOption)
           logger.error( ErrorMsgs.EXPECTED_FILE_MISSING, ex, m )
 
-        val v2 = (MScReactCtx.langSwitch set m.state)(v0)
+        val v2 = (MScReactCtx.langSwitch replace m.state)(v0)
         updated(v2)
 
       } else if (m.state.isReady) {
@@ -127,7 +127,7 @@ class ScLangAh[M](
               ))
             }
         }
-        val v2 = (MScReactCtx.langSwitch set pendingPot)(v0)
+        val v2 = (MScReactCtx.langSwitch replace pendingPot)(v0)
         updated(v2, fx)
 
       } else {

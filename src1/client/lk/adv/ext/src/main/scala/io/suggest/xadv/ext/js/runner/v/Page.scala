@@ -1,11 +1,7 @@
 package io.suggest.xadv.ext.js.runner.v
 
 import io.suggest.adv.ext.view.RunnerPage._
-import org.scalajs.dom
-import org.scalajs.dom.Node
 import org.scalajs.jquery._
-
-import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -26,9 +22,12 @@ object Page {
   def bindShowErrorInfo(container: JQuery): Unit = {
     container.on("click", s".$CLASS_JSLINK_SHOW_ERROR", {
       e: JQueryEventObject =>
+        ???
+        /*
         jQuery(e.currentTarget)
           .next()
           .slideToggle()
+        */
     })
   }
 

@@ -47,7 +47,7 @@ class QuillCss extends StyleSheet.Standalone {
   {
     val xFontFamilyName = MFonts.default.cssFontFamily
     val ffAV = fontFamily.attr := Css.quoted( xFontFamilyName )
-    val cAV = content := Css.quoted( xFontFamilyName )
+    val cAV = content :=! Css.quoted( xFontFamilyName )
     for (what <- List(ITEM, LABEL)) {
       QL_SNOW_CSS_SEL - (
         &(QL_PICKER_CSS_SEL + QL_ + Font.FONT) - (
@@ -81,7 +81,7 @@ class QuillCss extends StyleSheet.Standalone {
 
     val pickerCssAttrs = List[ToStyle](
       fontFamilyAV,
-      content := Css.quoted( xFontFamilyName )
+      content :=! Css.quoted( xFontFamilyName )
     )
 
     /* MFonts:
@@ -108,7 +108,7 @@ class QuillCss extends StyleSheet.Standalone {
     val lineHeightPx = mFontSize.lineHeight.px
 
     val labelCssAttrs = List[ToStyle](
-      content := Css.quoted( sizeStr )
+      content :=! Css.quoted( sizeStr )
     )
 
     val fontSizeAV: ToStyle = fontSize( mFontSize.value.px )
@@ -141,7 +141,7 @@ class QuillCss extends StyleSheet.Standalone {
     val lineHeightPx = mFontSize.lineHeight.px
 
     val labelCssAttrs = List[ToStyle](
-      content := Css.quoted( sizeStr )
+      content :=! Css.quoted( sizeStr )
     )
 
     val fontSizeAV: ToStyle = fontSize( mFontSize.value.px )

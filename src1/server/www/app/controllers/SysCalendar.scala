@@ -223,12 +223,12 @@ final class SysCalendar @Inject() (
         {mcal2 =>
           val mcal3 = (
             MNode.extras
-              .composeLens( MNodeExtras.calendar )
-              .set( mcal2.extras.calendar ) andThen
+              .andThen( MNodeExtras.calendar )
+              .replace( mcal2.extras.calendar ) andThen
             MNode.meta
-              .composeLens( MMeta.basic )
-              .composeLens( MBasicMeta.nameOpt )
-              .set( mcal2.meta.basic.nameOpt )
+              .andThen( MMeta.basic )
+              .andThen( MBasicMeta.nameOpt )
+              .replace( mcal2.meta.basic.nameOpt )
           )(request.mnode)
 
           for {

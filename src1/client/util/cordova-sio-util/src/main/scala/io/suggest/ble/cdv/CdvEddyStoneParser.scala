@@ -87,7 +87,7 @@ case class CdvEddyStoneParser(override val dev: BtDevice)
       esAdBytes: Uint8Array <- {
         val rawType = js.typeOf(advDataRaw.asInstanceOf[js.Any])
 
-        if ( rawType ==* JsTypes.OBJECT ) {
+        (if ( rawType ==* JsTypes.OBJECT ) {
           val eddyStoneUuidTok = ScanRecordToken.UuidToken.EDDY_STONE
           val resps = advDataRaw match {
             // Here is android raw blob.
@@ -127,7 +127,8 @@ case class CdvEddyStoneParser(override val dev: BtDevice)
           // Wtf?
           logger.warn( ErrorMsgs.JSON_PARSE_ERROR, msg = advDataRaw )
           Nil
-        }
+        })
+          .iterator
       }
 
     } yield {

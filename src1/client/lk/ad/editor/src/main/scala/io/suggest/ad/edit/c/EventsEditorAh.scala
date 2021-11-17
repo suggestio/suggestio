@@ -87,7 +87,7 @@ final class EventsEditorAh[M](
           val jdEdge = _emptyAdEdge( nextEdgeUid )
 
           var vModF =  _mdoc_jdDoc_jdArgs_data.modify(
-            (_doc_tpl_LENS set jdTree2) andThen
+            (_doc_tpl_LENS replace jdTree2) andThen
             MJdDataJs.edges.modify(_ + (nextEdgeUid -> jdEdge))
           )
 
@@ -115,7 +115,7 @@ final class EventsEditorAh[M](
             .toTree
 
           _mdoc_jdDoc_jdArgs_data.modify(
-            (_doc_tpl_LENS set jdTree2) andThen
+            (_doc_tpl_LENS replace jdTree2) andThen
             MJdDataJs.edges.modify( JdTag.purgeUnusedEdges( jdTree2, _ ) )
           )
         }
@@ -142,11 +142,11 @@ final class EventsEditorAh[M](
       } yield {
         // Обновить новый nodeId, залив его в эдж:
         val jdEdge2 = MEdgeDataJs.jdEdge
-          .composeLens( MJdEdge.nodeId )
-          .set( Option(m.nodeId) )(jdEdge0)
+          .andThen( MJdEdge.nodeId )
+          .replace( Option(m.nodeId) )(jdEdge0)
 
         val v2 = _mdoc_jdDoc_jdArgs_data
-          .composeLens( MJdDataJs.edges )
+          .andThen( MJdDataJs.edges )
           .modify(_ + (mJdEdgeUid.edgeUid -> jdEdge2))(v0)
 
         updated( v2 )
@@ -178,14 +178,14 @@ final class EventsEditorAh[M](
             val adsAvail0 = eventsEd0.adsAvail
             val adsAvailV2 = adsAvail0.fold(adsAppend)(_ ++ adsAppend)
 
-            var modF = (MEventsEdit.adsAvail set adsAvail0.ready(adsAvailV2))
+            var modF = (MEventsEdit.adsAvail replace adsAvail0.ready(adsAvailV2))
 
             // Обновить значение флага hasMoreAds:
             if (
               (adsAppend.lengthIs < LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST) &&
               v0.editors.events.hasMoreAds
             ) {
-              modF = modF andThen (MEventsEdit.hasMoreAds set false)
+              modF = modF andThen (MEventsEdit.hasMoreAds replace false)
             }
 
             val jdRuntime = {
@@ -206,10 +206,10 @@ final class EventsEditorAh[M](
               jdRuntimePrep.make
             }
 
-            modF = modF andThen (MEventsEdit.jdRuntime set Some(jdRuntime))
+            modF = modF andThen (MEventsEdit.jdRuntime replace Some(jdRuntime))
 
             val v2 = MDocS.editors
-              .composeLens( MEditorsS.events )
+              .andThen( MEditorsS.events )
               .modify( modF )(v0)
 
             updated(v2)
@@ -246,7 +246,7 @@ final class EventsEditorAh[M](
           loc0
             .modifyLabel(
               JdTag.events
-                .composeLens( MJdtEvents.events )
+                .andThen( MJdtEvents.events )
                 .modify { jdtEvents0 =>
                   for (evData <- jdtEvents0) yield {
                     if (evData.event ===* m.eventPtr.eventInfo) {
@@ -282,7 +282,7 @@ final class EventsEditorAh[M](
                 .modify( _ :+ MJdEdgeId(nextEdgeUid) )
             }
 
-            (_doc_tpl_LENS set tree2) andThen
+            (_doc_tpl_LENS replace tree2) andThen
             MJdDataJs.edges.modify(_ + (nextEdgeUid -> jdEdge))
 
           } else {
@@ -294,7 +294,7 @@ final class EventsEditorAh[M](
                 }
               }
             }
-            (_doc_tpl_LENS set tree2) andThen
+            (_doc_tpl_LENS replace tree2) andThen
             MJdDataJs.edges.modify( JdTag.purgeUnusedEdges( tree2, _ ) )
           }
         )(v0)
@@ -311,24 +311,24 @@ final class EventsEditorAh[M](
 
   private def _doc_editors_events_adsAvail_LENS = {
     MDocS.editors
-      .composeLens( MEditorsS.events )
-      .composeLens( MEventsEdit.adsAvail )
+      .andThen( MEditorsS.events )
+      .andThen( MEventsEdit.adsAvail )
   }
 
   private def _jdt_events_events_LENS = {
     JdTag.events
-      .composeLens( MJdtEvents.events )
+      .andThen( MJdtEvents.events )
   }
 
   private def _mdoc_jdDoc_jdArgs_data = {
     MDocS.jdDoc
-      .composeLens( MJdDocEditS.jdArgs )
-      .composeLens( MJdArgs.data )
+      .andThen( MJdDocEditS.jdArgs )
+      .andThen( MJdArgs.data )
   }
 
   private def _doc_tpl_LENS = {
     MJdDataJs.doc
-      .composeLens( MJdDoc.template )
+      .andThen( MJdDoc.template )
   }
 
 

@@ -624,7 +624,7 @@ final class MdrUtil @Inject() (
               }
           }
 
-          (MNodeEdges.out set MNodeEdges.edgesToMap1(edgesIter2))( edges0 )
+          (MNodeEdges.out replace MNodeEdges.edgesToMap1(edgesIter2))( edges0 )
         }
       )
     } else {

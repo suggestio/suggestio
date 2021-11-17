@@ -71,7 +71,7 @@ class ScRespAh(
 
       } yield {
         val acc9 = scResp.respActions.foldLeft( RaFoldAcc(value0) ) { (acc0, ra) =>
-          val rhCtx1 = (MRhCtx.value0 set acc0.v1)(rhCtx0)
+          val rhCtx1 = (MRhCtx.value0 replace acc0.v1)(rhCtx0)
           scRespActionHandlers
             .find { rah =>
               rah.isMyRespAction( ra.acType, rhCtx0 )

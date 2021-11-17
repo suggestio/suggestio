@@ -1,5 +1,7 @@
 package io.suggest.primo.id
 
+import scala.language.implicitConversions
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

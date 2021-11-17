@@ -30,7 +30,7 @@ object PwLoginAh {
       (password.length > 5)
 
     if (isActiveNow !=* isActiveNext) {
-      changesAcc andThen MEpwLoginS.loginBtnEnabled.set( isActiveNext )
+      changesAcc andThen MEpwLoginS.loginBtnEnabled.replace( isActiveNext )
     } else
       changesAcc
   }
@@ -62,8 +62,8 @@ class PwLoginAh[M](
           password      = v0.password.value,
           isPendingNow  = v0.loginReq.isPending,
           changesAcc    = MEpwLoginS.name
-            .composeLens(MTextFieldS.value)
-            .set(m.name),
+            .andThen(MTextFieldS.value)
+            .replace(m.name),
         )(v0)
         updated(v2)
       }
@@ -81,8 +81,8 @@ class PwLoginAh[M](
           password      = m.password,
           isPendingNow  = v0.loginReq.isPending,
           changesAcc    = MEpwLoginS.password
-            .composeLens(MTextFieldS.value)
-            .set(m.password),
+            .andThen(MTextFieldS.value)
+            .replace(m.password),
         )(v0)
         updated(v2)
       }
@@ -94,7 +94,7 @@ class PwLoginAh[M](
       if (v0.isForeignPc ==* m.isForeign) {
         noChange
       } else {
-        val v2 = MEpwLoginS.isForeignPc.set( m.isForeign )( v0 )
+        val v2 = MEpwLoginS.isForeignPc.replace( m.isForeign )( v0 )
         updated( v2 )
       }
 
@@ -126,8 +126,8 @@ class PwLoginAh[M](
         }
 
         val v2 = (
-          MEpwLoginS.loginReq.set( req2 ) andThen
-          MEpwLoginS.loginBtnEnabled.set( false )
+          MEpwLoginS.loginReq.replace( req2 ) andThen
+          MEpwLoginS.loginBtnEnabled.replace( false )
         )(v0)
 
         updated( v2, reqFx )
@@ -144,11 +144,11 @@ class PwLoginAh[M](
         val fxOpt = for (rdrUrl <- loginReq2.toOption)
                     yield diConfig.onRedirect(m, external = false, rdrUrl)
 
-        var changesAcc = MEpwLoginS.loginReq.set( loginReq2 )
+        var changesAcc = MEpwLoginS.loginReq.replace( loginReq2 )
 
         val loginBtnEnabled2 = !m.tryRes.isSuccess
         if (v0.loginBtnEnabled !=* loginBtnEnabled2)
-          changesAcc = changesAcc andThen MEpwLoginS.loginBtnEnabled.set( loginBtnEnabled2 )
+          changesAcc = changesAcc andThen MEpwLoginS.loginBtnEnabled.replace( loginBtnEnabled2 )
 
         for (ex <- m.tryRes.failed)
           logger.warn( ErrorMsgs.LOGIN_FORM_ERROR, ex, m )

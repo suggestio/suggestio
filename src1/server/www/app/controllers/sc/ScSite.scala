@@ -31,7 +31,6 @@ import views.html.sc.SiteTpl
 import japgolly.univeq._
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
-import util.seo.WebCrawlerUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -66,7 +65,7 @@ final class ScSite @Inject() (
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val assets = injector.instanceOf[Assets]
-  private lazy val webCrawlerUtil = injector.instanceOf[WebCrawlerUtil]
+  //private lazy val webCrawlerUtil = injector.instanceOf[WebCrawlerUtil]
 
   import esModel.api._
   import cspUtil.Implicits._

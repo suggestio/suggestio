@@ -3,6 +3,7 @@ package io.suggest
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.geometry.Geometry
 import org.locationtech.spatial4j.shape.Shape
+import scala.language.existentials
 
 package object geo {
 

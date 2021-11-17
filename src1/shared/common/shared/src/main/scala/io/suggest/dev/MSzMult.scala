@@ -87,9 +87,13 @@ object MSzMult {
   }
 
   implicit class SzMultsDOpsExt( val szMults: IterableOnce[Double] ) extends AnyVal {
-    def reduceMults: Double =
-      szMults.reduce(_ * _)
+    def reduceMults: Double = {
+      szMults
+        .iterator
+        .reduce(_ * _)
+    }
   }
+
   implicit class SzMultsOpsExt( val szMults: IterableOnce[MSzMult] ) extends AnyVal {
     def mapToDoubleIter = {
       szMults
@@ -104,7 +108,7 @@ object MSzMult {
     }
 
     def reduceToDoubleOption: Option[Double] =
-      OptionUtil.maybe( szMults.nonEmpty )( reduceToDouble )
+      OptionUtil.maybe( szMults.iterator.nonEmpty )( reduceToDouble )
   }
 
 }
@@ -128,7 +132,7 @@ case class MSzMult private[dev] (multBody: Int) {
 
   // Пока только один int-аргумент, допускаем использование его как hash-код.
   override def hashCode = multBody
-  override def toString = multBody + HtmlConstants.SLASH + MSzMult.SZ_MULT_MOD
+  override def toString = multBody.toString + HtmlConstants.SLASH + MSzMult.SZ_MULT_MOD.toString
 
   def withMultPc(multPc: Int) = copy(multBody = multPc)
 

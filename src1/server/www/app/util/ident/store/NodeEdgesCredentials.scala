@@ -166,7 +166,7 @@ final class NodeEdgesCredentials @Inject()(
     // TODO Update meta.basic.lang from regContext.lang?
 
     val mnode1 = MNode.edges
-      .composeLens( MNodeEdges.out )
+      .andThen( MNodeEdges.out )
       .modify { edges0 =>
         // Убрать гарантировано ненужные эджи:
         val edges1 = edges0
@@ -293,7 +293,7 @@ final class NodeEdgesCredentials @Inject()(
 
     mNodes.tryUpdate( personNode ) {
       MNode.edges.modify { edges0 =>
-        MNodeEdges.out.set(
+        MNodeEdges.out.replace(
           MNodeEdges.edgesToMap1(
             edges0
               .withoutPredicateIter( MPredicates.Ident.Password )

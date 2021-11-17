@@ -84,7 +84,7 @@ class LkAdnEditCircuit
         edges   = mPictureAh2.edges,
         resView = mPictureAh2.view
       )
-      mroot2 = (MLkAdnEditRoot.node set node2)(mroot2)
+      mroot2 = (MLkAdnEditRoot.node replace node2)(mroot2)
     }
 
     // Импортировать изменившиеся попапы:
@@ -94,7 +94,7 @@ class LkAdnEditCircuit
         cropPopup = mPictureAh2.cropPopup,
         errorPopup = mPictureAh2.errorPopup
       )
-      mroot2 = (MLkAdnEditRoot.popups set popups2)(mroot2)
+      mroot2 = (MLkAdnEditRoot.popups replace popups2)(mroot2)
     }
 
     mroot2
@@ -119,9 +119,9 @@ class LkAdnEditCircuit
   /** Сборка инстансов контроллера ColorPickAh для разных picker'ов цвета фона и переднего плана. */
   private def _mkColorPickerAh(colorOfType: MColorType with IColorPickerMarker): ColorPickAh[MLkAdnEditRoot] = {
     val colorLens = MLkAdnEditRoot.node
-      .composeLens( MAdnNodeS.meta )
-      .composeLens( MMetaPub.colors )
-      .composeLens( MColors.ofType( colorOfType ) )
+      .andThen( MAdnNodeS.meta )
+      .andThen( MMetaPub.colors )
+      .andThen( MColors.ofType( colorOfType ) )
 
     new ColorPickAh[MLkAdnEditRoot](
       myMarker = Some(colorOfType),
@@ -136,10 +136,10 @@ class LkAdnEditCircuit
         mcpOpt2.fold(mroot0) { mcp2 =>
           (
             colorLens
-              .set( mcp2.colorOpt ) andThen
+              .replace( mcp2.colorOpt ) andThen
             MLkAdnEditRoot.internals
-              .composeLens( MAdnEditInternals.colorState )
-              .set( mcp2.colorsState )
+              .andThen( MAdnEditInternals.colorState )
+              .replace( mcp2.colorsState )
           )(mroot0)
         }
       }( OptFastEq.Wrapped(MColorPickFastEq) )

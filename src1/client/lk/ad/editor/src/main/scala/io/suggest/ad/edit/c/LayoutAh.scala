@@ -63,7 +63,7 @@ class LayoutAh[M](
         } else if ( v0.rightPanelY.contains(newY2.toDouble) ) {
           noChange
         } else {
-          val v2 = MLayoutS.rightPanelY.set( Some(newY2) )(v0)
+          val v2 = MLayoutS.rightPanelY.replace( Some(newY2) )(v0)
           updated(v2)
         }
       }
@@ -76,7 +76,7 @@ class LayoutAh[M](
     if (v0.rightPanelY.isEmpty) {
       noChange
     } else {
-      val v2 = MLayoutS.rightPanelY.set(None)(v0)
+      val v2 = MLayoutS.rightPanelY.replace(None)(v0)
       updated(v2)
     }
   }

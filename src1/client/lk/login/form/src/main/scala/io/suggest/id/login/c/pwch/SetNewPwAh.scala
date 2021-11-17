@@ -37,15 +37,15 @@ class SetNewPwAh[M](
 
       } else {
         var updAccF = pwLens
-          .composeLens( MTextFieldS.value )
-          .set( m.value )
+          .andThen( MTextFieldS.value )
+          .replace( m.value )
 
         // Сбросить не валидность нового пароля, если он валиден.
         if (!pw0.isValid && Validators.isPasswordValid(m.value)) {
           updAccF = updAccF andThen
             pwLens
-              .composeLens( MTextFieldS.isValid )
-              .set(true)
+              .andThen( MTextFieldS.isValid )
+              .replace(true)
         }
 
         val v2 = updAccF( v0 )
@@ -58,7 +58,7 @@ class SetNewPwAh[M](
 
       // Если password mismatch, то подсветить несовпадение паролей.
       val updAccF0 = if (!v0.showPwMisMatch && !v0.isPasswordsMatch)
-        (MPwNew.showPwMisMatch set true) #:: LazyList.empty
+        (MPwNew.showPwMisMatch replace true) #:: LazyList.empty
       else
         LazyList.empty
 
@@ -69,8 +69,8 @@ class SetNewPwAh[M](
         if isValid !=* pw0.isValid
       } yield {
         lens
-          .composeLens(MTextFieldS.isValid)
-          .set(isValid)
+          .andThen(MTextFieldS.isValid)
+          .replace(isValid)
       }
 
       // Провалидировать оба password-поля:

@@ -63,7 +63,7 @@ trait AbstractFsm {
     override def toString: String = name
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
-    def afterBecome() {}
+    def afterBecome(): Unit = {}
   }
 
   override def toString: String = {
@@ -95,7 +95,9 @@ object AbstractFsmUtil {
 
   /** Собрать несколько partial-функций в одну. */
   def combinePfs[A,B](pfs: IterableOnce[PartialFunction[A, B]]): PartialFunction[A, B] = {
-    pfs.reduceLeft(_ orElse _)
+    pfs
+      .iterator
+      .reduceLeft(_ orElse _)
   }
 
 }

@@ -528,7 +528,7 @@ object Css {
       }
 
       final def duration(durationSec: Double): String = {
-        durationSec + "s"
+        durationSec.toString + "s"
       }
 
       final def all(durationSec: Double, timingFun: String): String = {

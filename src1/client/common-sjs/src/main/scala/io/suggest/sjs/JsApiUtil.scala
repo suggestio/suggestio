@@ -30,7 +30,7 @@ object JsApiUtil extends Log {
 
   def call0Fut(f: js.Function0[Unit] => Unit): Future[Unit] = {
     val p = Promise[Unit]()
-    apiCallSyncSafe(p)( f(() => p.success()) )
+    apiCallSyncSafe(p)( f(() => p.success(())) )
   }
 
   def call1Fut[T1](f: js.Function1[T1, Unit] => Unit): Future[T1] = {

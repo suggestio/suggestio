@@ -160,7 +160,7 @@ final class JdAdUtil @Inject()(
       // uid как-то получился обязательным, хотя TODO его следует сделать опциональным в MJdEdge, и убрать getOrElse-костыль:
       val edgeDoc2 = if (medge.doc.id.isEmpty) {
         MEdgeDoc.id
-          .set( Some(-i) )( medge.doc )
+          .replace( Some(-i) )( medge.doc )
       } else {
         medge.doc
       }
@@ -301,7 +301,7 @@ final class JdAdUtil @Inject()(
   /** traversal от JdTag до bm.isWide-флага. */
   private def _jdt_p1_bm_wide_LENS = {
     JdTag.props1
-      .composeLens( MJdProps1.expandMode )
+      .andThen( MJdProps1.expandMode )
   }
 
   /** Выставление нового значения флага wide для всех блоков, имеющих иное значение флага.
@@ -316,7 +316,7 @@ final class JdAdUtil @Inject()(
     val lens = _jdt_p1_bm_wide_LENS
     for (jdt <- blkTpl) yield {
       if (jdt.name ==* MJdTagNames.STRIP && lens.exist(_ !=* expandMode2)(jdt)) {
-        lens.set(expandMode2)(jdt)
+        (lens replace expandMode2)(jdt)
       } else {
         jdt
       }
@@ -661,11 +661,11 @@ final class JdAdUtil @Inject()(
         // Удалить все crop'ы из растровых картинок, у которых задан кроп. Все растровые картинки должны бы быть уже подогнаны под карточку.
 
         val _jdt_p1_bgImg_LENS = JdTag.props1
-          .composeLens( MJdProps1.bgImg )
+          .andThen( MJdProps1.bgImg )
 
         val _jdt_p1_bgImg_crop_LENS = _jdt_p1_bgImg_LENS
-          .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )
-          .composeLens( MJdEdgeId.crop )
+          .andThen( Traversal.fromTraverse[Option, MJdEdgeId] )
+          .andThen( MJdEdgeId.crop )
 
         for (jdTag <- tpl0) yield {
           (for {
@@ -678,7 +678,7 @@ final class JdAdUtil @Inject()(
             if !edgeAndImg._2.dynImgId.imgFormat.exists( _.isVector )
           } yield {
             // Пересобрать тег без crop'а в bgImg:
-            (_jdt_p1_bgImg_crop_LENS set None)( jdTag )
+            (_jdt_p1_bgImg_crop_LENS replace None)( jdTag )
           })
             // Если ничего не пересобрано, значит текущий тег не требуется обновлять. Вернуть исходный jd-тег:
             .getOrElse( jdTag )

@@ -123,7 +123,7 @@ final class GeoLocAh[M](
             // Make on/off switcher to be non-pending.
             // If not reset this and user coords not changes, ScSettings may display "blanked" geoloc switcher after screen on-off cycle.
             val v2 = MScGeoLoc.switch
-              .composeLens( MGeoLocSwitchS.onOff )
+              .andThen( MGeoLocSwitchS.onOff )
               .modify { onOffPot =>
                 onOffPot.ready( onOffPot.getOrElseTrue )
               }(v0)
@@ -235,7 +235,7 @@ final class GeoLocAh[M](
                 .get( glType )
                 .fold {
                   MGeoLocWatcher( watchId = watcherPot2 )
-                } (MGeoLocWatcher.watchId set watcherPot2)
+                } (MGeoLocWatcher.watchId replace watcherPot2)
 
               acc0 + (glType -> glWatcher2)
           }
@@ -359,7 +359,7 @@ final class GeoLocAh[M](
               leafOpts.args.onLocError( m.error.raw.asInstanceOf[dom.PositionError] )
               DoNothing
             }
-            modAccF ::= MScGeoLoc.leafletLoc set None
+            modAccF ::= MScGeoLoc.leafletLoc replace None
           }
 
           if (m.error.isPermissionDenied) {
@@ -393,11 +393,11 @@ final class GeoLocAh[M](
 
             if (v2.switch.onOff.isPending) {
               val lens = MScGeoLoc.switch
-                .composeLens(MGeoLocSwitchS.onOff)
+                .andThen(MGeoLocSwitchS.onOff)
               val isOnOff2 = lens.get(v2) getOrElse[Boolean] true
 
               val onOff2 = FailedStale(isOnOff2, m.error)
-              val v3 = (lens set onOff2)(v2)
+              val v3 = (lens replace onOff2)(v2)
               updated(v3, fxAcc)
             } else {
               updatedSilent(v2, fxAcc)
@@ -414,7 +414,7 @@ final class GeoLocAh[M](
         if (v0.leafletLoc.isEmpty) {
           noChange
         } else {
-          val v2 = (MScGeoLoc.leafletLoc set None)(v0)
+          val v2 = (MScGeoLoc.leafletLoc replace None)(v0)
           updatedSilent(v2)
         }
 
@@ -467,7 +467,7 @@ final class GeoLocAh[M](
           for (fx <- _cancelLeafletTimeout(v0.leafletLoc))
             fxAcc ::= fx
 
-          val v2 = (MScGeoLoc.leafletLoc set Some(
+          val v2 = (MScGeoLoc.leafletLoc replace Some(
             MGlSourceS(
               args            = leafletLocateOpts,
               timeoutId       = timeoutNeedOpt
@@ -478,7 +478,7 @@ final class GeoLocAh[M](
 
         } else if (alreadyRepliedLocation && v0.leafletLoc.nonEmpty) {
           // Уже отправлен одноразовый ответ геолокации. Надо удалить старые leafletLoc-данные из состояния:
-          val v2 = (MScGeoLoc.leafletLoc set None)(v0)
+          val v2 = (MScGeoLoc.leafletLoc replace None)(v0)
           Some( v2 )
 
         } else {
@@ -507,7 +507,7 @@ final class GeoLocAh[M](
           }
 
           // Если watch, то подчистить данные по таймеру. Иначе - вычистить сразу всё.
-          val v2 = (MScGeoLoc.leafletLoc set None)(v0)
+          val v2 = (MScGeoLoc.leafletLoc replace None)(v0)
           updatedSilent(v2, locErrorFx)
 
         } { case (_, currLoc) =>
@@ -517,12 +517,12 @@ final class GeoLocAh[M](
           val v2 = if (glSrcS.args.locateOpts.watch contains[Boolean] true) {
             // Чистка только данных по таймеру.
             MScGeoLoc.leafletLoc
-              .composeTraversal( Traversal.fromTraverse[Option, MGlSourceS] )
-              .composeLens( MGlSourceS.timeoutId )
-              .set( None )(v0)
+              .andThen( Traversal.fromTraverse[Option, MGlSourceS] )
+              .andThen( MGlSourceS.timeoutId )
+              .replace( None )(v0)
           } else {
             // Без watch, поэтому просто чистим состояние целиком.
-            MScGeoLoc.leafletLoc.set( None )(v0)
+            MScGeoLoc.leafletLoc.replace( None )(v0)
           }
 
           updatedSilent(v2, fx)

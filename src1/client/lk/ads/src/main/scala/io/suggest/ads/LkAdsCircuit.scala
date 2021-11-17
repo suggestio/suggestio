@@ -5,6 +5,7 @@ import io.suggest.ads.c.NodeAdsAh
 import io.suggest.ads.m.{GetMoreAds, MAdsS, MLkAdsRoot}
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
+import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.lk.api.ILkAdsApi
 import io.suggest.lk.nodes.form.a.ILkNodesApi
@@ -54,20 +55,28 @@ class LkAdsCircuit(
   }
 
   // Модели
-  val currNodeRW = mkLensRootZoomRW(this, MLkAdsRoot.ads)(MAdsS.MAdsSFastEq)
+  val adsRW = mkLensRootZoomRW(this, MLkAdsRoot.ads)(MAdsS.MAdsSFastEq)
   val confRO = mkLensRootZoomRO(this, MLkAdsRoot.conf)( FastEqUtil.AnyRefFastEq )
+  val jdRuntimeRW = mkLensZoomRW( adsRW, MAdsS.jdRuntime )
 
 
   val nodeAdsAh = new NodeAdsAh(
     api           = lkAdsApi,
     lkNodesApi    = lkNodesApi,
     confRO        = confRO,
-    modelRW       = currNodeRW
+    modelRW       = adsRW
+  )
+
+  val jdAh = new JdAh(
+    modelRW = jdRuntimeRW,
   )
 
 
   override protected val actionHandler: HandlerFunction = {
-    nodeAdsAh
+    composeHandlers(
+      nodeAdsAh,
+      jdAh,
+    )
   }
 
 

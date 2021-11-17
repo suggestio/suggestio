@@ -73,7 +73,7 @@ object MHistogram
         MHistogram.colors.modify { sorted0 =>
           for (e <- sorted0) yield {
             e.count.fold(e) { eCount =>
-              (MColorData.freqPc set Some((eCount * 100 / totalCount).toInt) )(e)
+              (MColorData.freqPc replace Some((eCount * 100 / totalCount).toInt) )(e)
             }
           }
         }(hist0)

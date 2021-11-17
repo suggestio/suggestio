@@ -44,7 +44,7 @@ object MEdgeEditRoot {
         .filter(_.nonEmpty)
         .toSet
       if (nodeIds2 !=* e0.nodeIds)
-        edgeUpdAcc ::= (MEdge.nodeIds set nodeIds2)
+        edgeUpdAcc ::= (MEdge.nodeIds replace nodeIds2)
 
       Option.when( edgeUpdAcc.nonEmpty ) {
         edgeUpdAcc.reduce(_ andThen _)(e0)

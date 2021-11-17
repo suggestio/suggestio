@@ -419,7 +419,7 @@ class GeoTagsUtil @Inject() (
               } else {
                 // Есть изменения. Заливаем в инстанс MNode и сохраняем:
                 MNode.edges.modify { edges0 =>
-                  MNodeEdges.out.set(
+                  MNodeEdges.out.replace(
                     MNodeEdges.edgesToMap1(
                       edges0
                         .withoutPredicateIter(p)

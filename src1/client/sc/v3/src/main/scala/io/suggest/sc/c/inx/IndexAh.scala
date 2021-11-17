@@ -146,8 +146,8 @@ object IndexAh {
           mgp <- inx.geoPoint
           if m.switchCtxOpt.fold( MScSwitchCtx.INDEX_MAP_RESET_DFLT )(_.indexMapReset)
           geo_mapInit_state_LENS = MScSearch.geo
-            .composeLens( MGeoTabS.mapInit )
-            .composeLens( MMapInitState.state )
+            .andThen( MGeoTabS.mapInit )
+            .andThen( MMapInitState.state )
           if !(geo_mapInit_state_LENS.get(i0.search).center ~= mgp)
         } yield {
           geo_mapInit_state_LENS
@@ -161,9 +161,9 @@ object IndexAh {
           if s0.geo.mapInit.userLoc.isEmpty
         } {
           s0 = MScSearch.geo
-            .composeLens(MGeoTabS.mapInit)
-            .composeLens(MMapInitState.userLoc)
-            .set( inx.userGeoLoc )(s0)
+            .andThen(MGeoTabS.mapInit)
+            .andThen(MMapInitState.userLoc)
+            .replace( inx.userGeoLoc )(s0)
         }
 
         // Если заход в узел с карты, то надо скрыть search-панель.
@@ -172,8 +172,8 @@ object IndexAh {
           inx.welcome.nonEmpty
         }) {
           s0 = MScSearch.panel
-            .composeLens( MSearchPanelS.opened )
-            .set( false )(s0)
+            .andThen( MSearchPanelS.opened )
+            .replace( false )(s0)
         }
 
         // Возможный сброс состояния тегов
@@ -184,8 +184,8 @@ object IndexAh {
             fxsAcc ::= DoNodesSearch(clear = true, ignorePending = true).toEffectPure
           else
             s0 = MScSearch.geo
-              .composeLens( MGeoTabS.found )
-              .set( MNodesFoundS.empty )(s0)
+              .andThen( MGeoTabS.found )
+              .replace( MNodesFoundS.empty )(s0)
         }
 
         // Сбросить флаг mapInit.loader, если он выставлен.
@@ -199,9 +199,9 @@ object IndexAh {
 
         if (s0.geo.data.selTagIds !=* qsTagIds) {
           s0 = MScSearch.geo
-            .composeLens( MGeoTabS.data )
-            .composeLens( MGeoTabData.selTagIds )
-            .set( qsTagIds )(s0)
+            .andThen( MGeoTabS.data )
+            .andThen( MGeoTabData.selTagIds )
+            .replace( qsTagIds )(s0)
         }
 
         s0
@@ -263,14 +263,14 @@ object IndexAh {
     }
 
     i1 = MScIndex.welcome
-      .set( mWcSFutOpt.map(_._2) )(i1)
+      .replace( mWcSFutOpt.map(_._2) )(i1)
 
     // Нужно отребилдить ScCss, но только если что-то реально изменилось.
     val scCssArgs2 = MScCssArgs.from( i1.respOpt, mroot.dev.screen.info )
     if (scCssArgs2 !=* i1.scCss.args) {
       // Изменились аргументы. Пора отребилдить ScCss.
       i1 = MScIndex.scCss
-        .set( ScCss( scCssArgs2 ) )(i1)
+        .replace( ScCss( scCssArgs2 ) )(i1)
     }
     // Объединить эффекты плитки и приветствия воедино:
     for (mwc <- mWcSFutOpt)
@@ -295,15 +295,15 @@ object IndexAh {
   }
 
   def _inx_state_switch_ask_LENS = MScIndex.state
-    .composeLens( MScIndexState.switch )
-    .composeLens( MInxSwitch.ask )
+    .andThen( MScIndexState.switch )
+    .andThen( MInxSwitch.ask )
 
   def _inx_search_panel_opened_LENS = MScIndex.search
-    .composeLens( MScSearch.panel )
-    .composeLens( MSearchPanelS.opened )
+    .andThen( MScSearch.panel )
+    .andThen( MSearchPanelS.opened )
 
   def _inx_menu_opened_LENS = MScIndex.menu
-    .composeLens( MMenuS.opened )
+    .andThen( MMenuS.opened )
 
 
   /** Сборка эффекта окрашивания системной панели статуса. */
@@ -341,17 +341,17 @@ class IndexRah
     logger.error( eMsg, ex, msg = ctx.m )
 
     val inx_search_geo_LENS = MScIndex.search
-      .composeLens( MScSearch.geo )
+      .andThen( MScSearch.geo )
     val ctx_v0_index_LENS = MRhCtx.value0
-      .composeLens( MScRoot.index )
+      .andThen( MScRoot.index )
 
     var actionsAccF = MScIndex.resp.modify( _.fail(ex) )
 
     // Если закешированные scQs содержат что-либо, то надо их обнулить. Иначе повторная ошибка будет прожёвана как уже пройденный успех.
     val inx_search_geo_found_LENS = inx_search_geo_LENS
-      .composeLens( MGeoTabS.found )
+      .andThen( MGeoTabS.found )
     val nodesFound0 = ctx_v0_index_LENS
-      .composeLens( inx_search_geo_found_LENS )
+      .andThen( inx_search_geo_found_LENS )
       .get( ctx )
     var nodesFoundMods = List.empty[MNodesFoundS => MNodesFoundS]
 
@@ -365,16 +365,16 @@ class IndexRah
 
     // Надо перевести карту в текущее состояние, которое было до ошибки.
     val searchGeoMapInit_LENS = inx_search_geo_LENS
-      .composeLens( MGeoTabS.mapInit )
+      .andThen( MGeoTabS.mapInit )
     val mapInit0 = ctx_v0_index_LENS
-      .composeLens( searchGeoMapInit_LENS )
+      .andThen( searchGeoMapInit_LENS )
       .get(ctx)
 
     var mapInitModsF = List.empty[MMapInitState => MMapInitState]
 
     // Сбросить mapLoader на исходную
     if (mapInit0.loader.nonEmpty)
-      mapInitModsF ::= (MMapInitState.loader set None)
+      mapInitModsF ::= (MMapInitState.loader replace None)
 
     // Если загрузка нового индекса связана с перемещением карты, то надо отскочить карту назад в текущую позицию.
     // MapReIndex включает в себя OpenMapRcvr из-за особенностей реализации.
@@ -454,9 +454,9 @@ class IndexRah
 
       val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
       if ( inx_state_switch_ask_LENS.get(i1).nonEmpty )
-        i1 = (inx_state_switch_ask_LENS set None)( i1 )
+        i1 = (inx_state_switch_ask_LENS replace None)( i1 )
 
-      val v2 = MScRoot.index.set(i1)(v0)
+      val v2 = (MScRoot.index replace i1)(v0)
 
       var fxAcc = List.empty[Effect]
 
@@ -494,7 +494,7 @@ class IndexRah
 
       val v2 = MScRoot.index
         .modify(
-          IndexAh._inx_state_switch_ask_LENS set Some(switchAskState) andThen
+          IndexAh._inx_state_switch_ask_LENS replace Some(switchAskState) andThen
           MScIndex.resp.modify( _.unPending )
         )(v0)
 
@@ -510,7 +510,7 @@ class IndexRah
       )
       ActionResult(
         for (inx2 <- actRes1.newModelOpt) yield {
-          MScRoot.index.set(inx2)(v0)
+          (MScRoot.index replace inx2)(v0)
         },
         actRes1.effectOpt
       )
@@ -650,9 +650,9 @@ class IndexAh[M](
       // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
       if (isSearchNodes) {
         valueModF = valueModF andThen MScIndex.search
-          .composeLens( MScSearch.geo )
-          .composeLens( MGeoTabS.found )
-          .composeLens( MNodesFoundS.req )
+          .andThen( MScSearch.geo )
+          .andThen( MGeoTabS.found )
+          .andThen( MNodesFoundS.req )
           .modify( _.pending(ts) )
       }
 
@@ -686,13 +686,13 @@ class IndexAh[M](
             // Действительно изменилось состояние отображения панели:
             val search_panel_open_LENS = IndexAh._inx_search_panel_opened_LENS
             var v2 = m.open
-              .fold( search_panel_open_LENS.modify(!_) )( search_panel_open_LENS.set )(v0)
+              .fold( search_panel_open_LENS.modify(!_) )( search_panel_open_LENS.replace )(v0)
 
             val isOpen2 = search_panel_open_LENS.get( v2 )
 
             // Не допускать открытости обеих панелей одновременно:
             if (isOpen2 && v2.menu.opened)
-              v2 = (IndexAh._inx_menu_opened_LENS set false)(v2)
+              v2 = (IndexAh._inx_menu_opened_LENS replace false)(v2)
 
             // Аккаумулятор сайд-эффектов.
             var fxAcc: Effect = ResetUrlRoute().toEffectPure
@@ -713,7 +713,7 @@ class IndexAh[M](
           if ( m.open contains[Boolean] menu_opened_LENS.get(v0) ) {
             noChange
           } else {
-            var v2 = m.open.fold( menu_opened_LENS.modify(!_) )( menu_opened_LENS.set )(v0)
+            var v2 = m.open.fold( menu_opened_LENS.modify(!_) )( menu_opened_LENS.replace )(v0)
             val isOpen2 = menu_opened_LENS.get( v2 )
             // Обновить URL.
             var fxAcc: Effect = ResetUrlRoute().toEffectPure
@@ -723,7 +723,7 @@ class IndexAh[M](
 
             // Не допускать открытости обоих панелей одновременно.
             if (isOpen2 && v2.search.panel.opened)
-              v2 = (IndexAh._inx_search_panel_opened_LENS set false)(v2)
+              v2 = (IndexAh._inx_search_panel_opened_LENS replace false)(v2)
 
             updated( v2, fxAcc )
           }
@@ -775,7 +775,7 @@ class IndexAh[M](
       inx_state_switch_ask_LENS
         .get(v0)
         .fold(noChange) { switchS0 =>
-          def cleanedState = (inx_state_switch_ask_LENS set None)(v0)
+          def cleanedState = (inx_state_switch_ask_LENS replace None)(v0)
 
           m .nodeId
             .fold [Option[Either[ActionResult[M], MSc3IndexResp]]] {
@@ -822,7 +822,7 @@ class IndexAh[M](
                           .filter( _ =>  switchS0.okAction.qs.index.exists(_.retUserLoc) )
                       }
                       .fold( nodeFound ) { qsGeoLoc =>
-                        (MSc3IndexResp.geoPoint set Some(qsGeoLoc.point))(nodeFound)
+                        (MSc3IndexResp.geoPoint replace Some(qsGeoLoc.point))(nodeFound)
                       }
                   }( _ => nodeFound )
                   // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
@@ -846,14 +846,14 @@ class IndexAh[M](
       if (v0.scCss.args != scCssArgs) {
         val scCss2 = ScCss( scCssArgs )
         val searchCss2 = SearchCss(
-          args = (MSearchCssProps.screenInfo set scCssArgs.screenInfo)(v0.search.geo.css.args),
+          args = (MSearchCssProps.screenInfo replace scCssArgs.screenInfo)(v0.search.geo.css.args),
         )
         val v2 = (
-          MScIndex.scCss.set( scCss2 ) andThen
+          MScIndex.scCss.replace( scCss2 ) andThen
           MScIndex.search
-            .composeLens( MScSearch.geo )
-            .composeLens( MGeoTabS.css )
-            .set( searchCss2 )
+            .andThen( MScSearch.geo )
+            .andThen( MGeoTabS.css )
+            .replace( searchCss2 )
         )(v0)
         val rszMapFx = for (lmap <- v0.search.geo.data.lmap) yield SearchAh.mapResizeFx(lmap)
         ah.updatedMaybeEffect(v2, rszMapFx)
@@ -867,7 +867,7 @@ class IndexAh[M](
       val v0 = value
 
       val outer_LENS = MScIndex.search
-        .composeLens( MScSearch.geo )
+        .andThen( MScSearch.geo )
 
       val geoPointNextOpt = m.geoPoint
         .orElse {
@@ -900,8 +900,8 @@ class IndexAh[M](
           if !(gp ~= mmap.center)
         } yield {
           val v2 = outer_LENS
-            .composeLens( MGeoTabS.mapInit )
-            .composeLens( MMapInitState.state )
+            .andThen( MGeoTabS.mapInit )
+            .andThen( MMapInitState.state )
             .modify( IndexAh.setMap(gp, m.rcvrId) )(v0)
           updated(v2)
         })
@@ -910,7 +910,7 @@ class IndexAh[M](
       } else {
 
         var mapInitModF = MMapInitState.loader
-          .set( Some(mmap.center) )
+          .replace( Some(mmap.center) )
 
         for (gp <- geoPointNextOpt) {
           // Перемещение в данную точку:
@@ -922,15 +922,15 @@ class IndexAh[M](
 
         // Обнулить id текущего тега.
         val geoTab_data_selTagIds_LENS = MGeoTabS.data
-          .composeLens( MGeoTabData.selTagIds )
+          .andThen( MGeoTabData.selTagIds )
 
         if (
           outer_LENS
-            .composeLens( geoTab_data_selTagIds_LENS )
+            .andThen( geoTab_data_selTagIds_LENS )
             .get(v0)
             .nonEmpty
         ) {
-          geoTabModF = geoTabModF andThen (geoTab_data_selTagIds_LENS set Set.empty)
+          geoTabModF = geoTabModF andThen (geoTab_data_selTagIds_LENS replace Set.empty)
         }
 
         // Выставить новое состояние и запустить GetIndex.
@@ -1005,10 +1005,10 @@ class IndexAh[M](
     case UnIndex =>
       val v0 = value
       val v2 = (
-        (MScIndex.resp set Pot.empty) andThen
+        (MScIndex.resp replace Pot.empty) andThen
         (MScIndex.scCss
-          .composeLens(ScCss.args)
-          .set( MScCssArgs.from( None, rootRO.value.dev.screen.info ) )
+          .andThen(ScCss.args)
+          .replace( MScCssArgs.from( None, rootRO.value.dev.screen.info ) )
         )
       )(v0)
       updated(v2)

@@ -299,7 +299,7 @@ class AdvRcvrsUtil @Inject()(
     import esModel.api._
     mNodes.tryUpdate(mad0)(
       MNode.edges.modify { edges0 =>
-        MNodeEdges.out.set(
+        MNodeEdges.out.replace(
           MNodeEdges.edgesToMap1(
             edges0
               .withoutPredicateIter( MPredicates.Receiver )

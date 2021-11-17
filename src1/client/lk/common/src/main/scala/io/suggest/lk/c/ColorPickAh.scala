@@ -40,7 +40,7 @@ class ColorPickAh[M](
     // Сигнал об изменении цвета. m.marker - используется в ColorSuggestR, чтобы заменять цвета без picker'а.
     case m: ColorChanged if isMyPickerOpened() || isMyMarker(m.marker) =>
       val v0 = value.get
-      var v2 = (MColorPick.colorOpt set Some( m.mcd ))(v0)
+      var v2 = (MColorPick.colorOpt replace Some( m.mcd ))(v0)
 
       // Запилить в состояние презетов выбранный цвет.
       if (m.isCompleted && !(v2.colorsState.colorPresets.colors contains[MColorData] m.mcd)) {
@@ -57,8 +57,8 @@ class ColorPickAh[M](
 
       // Убрать с экрана picker
       var v2 = MColorPick.colorsState
-        .composeLens( MColorsState.picker )
-        .set( None )(v0)
+        .andThen( MColorsState.picker )
+        .replace( None )(v0)
 
       // Сохранить текущий цвет.
       for (
@@ -92,7 +92,7 @@ class ColorPickAh[M](
             // Вообще нет никаких цветов, ужас какой-то.
             MColorData.Examples.BLACK
           }
-        val v2 = (MColorPick.colorOpt set Some(mcd2))(v0)
+        val v2 = (MColorPick.colorOpt replace Some(mcd2))(v0)
         updated( Some(v2) )
 
       } else if (!m.isEnabled && v0.colorOpt.nonEmpty) {
@@ -128,8 +128,8 @@ class ColorPickAh[M](
         )
       }
       val v2 = MColorPick.colorsState
-        .composeLens( MColorsState.picker )
-        .set( pickerOpt2 )( v0 )
+        .andThen( MColorsState.picker )
+        .replace( pickerOpt2 )( v0 )
 
       updated( Some(v2) )
 

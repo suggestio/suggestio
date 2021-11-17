@@ -37,7 +37,7 @@ object MColorsState {
 
     def prependPresets(mcd: MColorData): MColorsState = {
       MColorsState.colorPresets
-        .composeLens( MHistogram.colors )
+        .andThen( MHistogram.colors )
         .modify( MColorsState.prependPresets(_, mcd) )(mcs0)
     }
 

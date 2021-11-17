@@ -46,7 +46,7 @@ class JsRouterInitAh[M <: AnyRef](
               }
           }
           val v2 = MJsRouterS.jsRouter
-            .set( m.status.pending() )(v0)
+            .replace( m.status.pending() )(v0)
 
           // silent - потому что pending никого не интересует.
           updatedSilent(v2, fx)
@@ -54,7 +54,7 @@ class JsRouterInitAh[M <: AnyRef](
 
       } else {
         // Сигнал готовности и проблеме инициализации роутера.
-        var stateMods = MJsRouterS.jsRouter.set( m.status )
+        var stateMods = MJsRouterS.jsRouter.replace( m.status )
         var fxsAcc = List.empty[Effect]
 
         // Если неудача, то надо попробовать ещё раз:

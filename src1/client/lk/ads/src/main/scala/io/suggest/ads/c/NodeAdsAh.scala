@@ -6,6 +6,7 @@ import io.suggest.ads.{LkAdsFormConst, MLkAdsConf, MLkAdsOneAdResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ads.m._
 import io.suggest.common.empty.OptionUtil
+import io.suggest.jd.render.m.GridRebuild
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.lk.api.ILkAdsApi
 import io.suggest.lk.nodes.{MLknModifyQs, MLknOpKeys, MLknOpValue}
@@ -112,7 +113,7 @@ class NodeAdsAh[M](
                   },
                   {mLknNode2 =>
                     adProps0.copy(
-                      adResp = MLkAdsOneAdResp.shownAtParent.set(
+                      adResp = MLkAdsOneAdResp.shownAtParent.replace(
                         mLknNode2.options
                           .get( MLknOpKeys.AdvEnabled )
                           .flatMap( _.bool )
@@ -209,6 +210,11 @@ class NodeAdsAh[M](
         }
       )
       updated(v2)
+
+
+    // No grid here (jdAh notifies about changes in qdBlockless layout).
+    case _: GridRebuild =>
+      noChange
 
   }
 

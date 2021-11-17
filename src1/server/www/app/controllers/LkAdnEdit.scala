@@ -302,10 +302,10 @@ final class LkAdnEdit @Inject() (
                       )
                     } andThen
                     MNode.extras
-                      .composeLens( MNodeExtras.adn )
-                      .composeTraversal( Traversal.fromTraverse[Option, MAdnExtra] )
-                      .composeLens( MAdnExtra.resView )
-                      .set( form.resView ) andThen
+                      .andThen( MNodeExtras.adn )
+                      .andThen( Traversal.fromTraverse[Option, MAdnExtra] )
+                      .andThen( MAdnExtra.resView )
+                      .replace( form.resView ) andThen
                     MNode.meta
                       .modify( _.withPublic(form.meta) )
                   )

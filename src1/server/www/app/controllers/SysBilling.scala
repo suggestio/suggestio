@@ -294,10 +294,10 @@ final class SysBilling @Inject() (
           // Запустить сохранение нового id контракта в узел.
           val nodeSaveFut = mcSaveFut.flatMap { mc =>
             val lens = MNode.billing
-              .composeLens( MNodeBilling.contractId )
+              .andThen( MNodeBilling.contractId )
             mNodes.tryUpdate(request.mnode) { mnode =>
               assert( lens.get(mnode).isEmpty )
-              lens.set( mc.id )(mnode)
+              (lens replace mc.id )(mnode)
             }
           }
 
@@ -406,8 +406,8 @@ final class SysBilling @Inject() (
         // TODO XXX дорефакторить tryUpdate + monocle. TODO Допроверять код на предмет null'ов, возвращаемых из tryUpdate.
         mNodes.tryUpdate(request.mnode) {
           MNode.billing
-            .composeLens( MNodeBilling.contractId )
-            .set( None )
+            .andThen( MNodeBilling.contractId )
+            .replace( None )
         }
       }
 

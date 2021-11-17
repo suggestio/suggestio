@@ -32,7 +32,7 @@ object ZTreeUtil {
         )
         .inmap[EphemeralStream[Tree[A]]](
           EphemeralStream(_ : _*),
-          EphemeralStream.toIterable(_).toStream
+          _.toList
         )
     )( Tree.Node.apply(_, _), unlift(Tree.Node.unapply[A]) )
     fmt

@@ -26,6 +26,7 @@ object MAdsS {
 
   @inline implicit def univEq: UnivEq[MAdsS] = UnivEq.derive
 
+  def jdRuntime = GenLens[MAdsS](_.jdRuntime)
   def ads = GenLens[MAdsS](_.ads)
 
 }

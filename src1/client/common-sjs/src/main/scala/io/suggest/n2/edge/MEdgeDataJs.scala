@@ -53,6 +53,8 @@ object MEdgeDataJs {
   def jdEdge = GenLens[MEdgeDataJs](_.jdEdge)
   def fileJs = GenLens[MEdgeDataJs](_.fileJs)
 
+  // QuillDeltaJsUtil zipWithIdIter[] uses this implicit convertion.
+  import scala.language.implicitConversions
   implicit def edgeDataJs2edgeUidOpt(e: MEdgeDataJs): Option[EdgeUid_t] =
     implicitly[MJdEdge => Option[EdgeUid_t]]
       .apply( e.jdEdge )
