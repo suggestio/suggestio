@@ -27,8 +27,6 @@ sealed abstract class BlockWidth(override val value: Int) extends IBlockSize {
 /** Модель допустимых ширин блока. */
 case object BlockWidths extends IntEnum[BlockWidth] with IBlockSizes[BlockWidth] {
 
-  // TODO Взять значения из IBlockSize.S*. Сейчас оно не компилится даже с final.
-
   /** Самый узкий блок. */
   case object NARROW extends BlockWidth( 140 ) {
     override def relSz = 1

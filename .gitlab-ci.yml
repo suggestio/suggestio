@@ -1,4 +1,4 @@
-image: docker-registry.suggest.io:5000/sio/sio2/os-www-build:20210524-01
+image: docker-registry.suggest.io:5000/sio/sio2/os-www-build:20211117-01
 
 stages:
   - build

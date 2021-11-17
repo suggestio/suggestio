@@ -5,7 +5,7 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.{I18nConst, MLanguages, MsgCodes}
 import io.suggest.maps.MMapProps
 import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.MNode
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.spa.SioPages
@@ -17,24 +17,21 @@ import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
-import util.acl.{SioControllerApi, _}
-import util.adv.geo.{AdvGeoLocUtil, AdvGeoRcvrsUtil}
+import util.adv.geo.AdvGeoLocUtil
 import util.ext.ExtServicesUtil
 import util.i18n.JsMessagesUtil
 import util.sec.CspUtil
-import util.stat.StatUtil
 import OptionUtil.BoolOptOps
 import com.google.inject.Inject
 import controllers.Assets
 import controllers.Assets.Asset
-import io.suggest.es.model.EsModel
 import io.suggest.playx.CacheApiUtil
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc.SiteTpl
 import japgolly.univeq._
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
-import util.domain.Domains3pUtil
+import util.seo.WebCrawlerUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -49,22 +46,18 @@ import scala.concurrent.duration._
 
 /** Базовый трейт с утилью для сборки конкретных реализация экшенов раздачи "сайтов" выдачи. */
 final class ScSite @Inject() (
-                               sioControllerApi       : SioControllerApi,
+                               val scCtlUtil          : ScCtlUtil,
                              )
   extends MacroLogsImpl
 {
 
-  import sioControllerApi._
+  import scCtlUtil._
+  import scCtlUtil.sioControllerApi._
 
   protected val scCtlApi = injector.instanceOf[ScCtlUtil]
-  private lazy val statUtil = injector.instanceOf[StatUtil]
   private lazy val extServicesUtil = injector.instanceOf[ExtServicesUtil]
-  private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val contextUtil = injector.instanceOf[ContextUtil]
-  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val advGeoLocUtil = injector.instanceOf[AdvGeoLocUtil]
-  private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
-  private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val scJsRouter = injector.instanceOf[ScJsRouter]
@@ -73,7 +66,7 @@ final class ScSite @Inject() (
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val assets = injector.instanceOf[Assets]
-  private lazy val domains3pUtil = injector.instanceOf[Domains3pUtil]
+  private lazy val webCrawlerUtil = injector.instanceOf[WebCrawlerUtil]
 
   import esModel.api._
   import cspUtil.Implicits._
@@ -158,8 +151,8 @@ final class ScSite @Inject() (
     }
 
 
-    /** Значение флага sysRender, пробрасывается напрямую в ScSiteArgs. */
-    def _syncRender: Boolean
+    /** Sync server-side showcase content rendering for web-crawlers. */
+    //def inlineIndexFut: Future[Option[Html]]
 
     /** Здесь описывается методика сборки аргументов для рендера шаблонов. */
     def renderArgsFut: Future[MScSiteArgs] = {
@@ -179,7 +172,6 @@ final class ScSite @Inject() (
           scriptHtml  = _scriptHtml,
           apiVsn      = _siteQsArgs.apiVsn,
           jsStateOpt  = _customScStateOpt,
-          syncRender  = _syncRender,
           mainScreen  = _mainScreen,
         )
       }
@@ -250,7 +242,6 @@ final class ScSite @Inject() (
   protected abstract class SiteScriptLogicV3 extends SiteLogic {
 
     import views.html.sc.site.v3._
-
 
     private def cspMainV3ModF = (
       CspPolicy.allowOsmLeaflet andThen
@@ -367,12 +358,22 @@ final class ScSite @Inject() (
       }
     }
 
-    override def _syncRender = false
+    /*
+    override def inlineIndexFut: Future[Option[Html]] = Future {
+      webCrawlerUtil
+        .ajaxJsScState[SioPages.Sc3]( _request.queryString )
+        .fold {
+          Future successful None
+        } { scJsState =>
+
+          ???
+        }
+    }
+      .flatten
+    */
 
   }
 
-
-  // Экшены реализации поддержки sc-сайта.
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов.
     * mainScreen разбирается на клиенте самой выдачей. */
@@ -387,27 +388,20 @@ final class ScSite @Inject() (
           override def _siteQsArgs = siteArgs
           override def _mainScreen = mainScreen
         }
-        _geoSiteResult(logic)
+
+        // Сборка обычного результата.
+        val resFut = logic.resultFut
+
+        // Запуск сохранения статистики.
+        logic.saveScStat()
+
+        // Вернуть асинхронный результатец.
+        resFut
 
       } else {
         errorHandler.onClientError(request, UPGRADE_REQUIRED, s"API version '${siteArgs.apiVsn}' not implemented.")
       }
     }
-  }
-
-
-  /**
-   * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
-   */
-  protected def _geoSiteResult(logic: SiteLogic): Future[Result] = {
-    // Сборка обычного результата.
-    val resFut = logic.resultFut
-
-    // Запуск сохранения статистики.
-    logic.saveScStat()
-
-    // Вернуть асинхронный результатец.
-    resFut
   }
 
 

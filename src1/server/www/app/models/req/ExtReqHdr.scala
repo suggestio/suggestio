@@ -5,12 +5,10 @@ import inet.ipaddr.IPAddressString
 import java.net.InetAddress
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.proto.http.HttpConst
-import io.suggest.spa.SioPages
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.http.HeaderNames
-import play.api.mvc.{QueryStringBindable, RequestHeader}
-import play.core.parsers.FormUrlEncodedParser
+import play.api.mvc.RequestHeader
 
 import scala.util.Try
 
@@ -125,41 +123,6 @@ trait ExtReqHdr extends RequestHeader {
     ipTry
   }
 
-
-  /** Кравлеры при индексации !#-страниц используют ссылки, содержащие что-то типа "?_escaped_fragment_=...". */
-  lazy val ajaxEscapedFragment: Option[String] = {
-    queryString
-      .get("_escaped_fragment_")
-      .flatMap(_.headOption)
-      // TODO Нужно делать URL unescape тут?
-  }
-
-  /** Переданное js-состояние скрипта выдачи, закинутое в ajax escaped_fragment. */
-  lazy val ajaxJsScState: Option[SioPages.Sc3] = {
-    ajaxEscapedFragment
-      .flatMap { raw =>
-        try {
-          val r = FormUrlEncodedParser.parseNotPreservingOrder(raw)
-          Some(r)
-        } catch {
-          case ex: Exception =>
-            LOGGER.debug("Failed to parse ajax-escaped fragment.", ex)
-            None
-        }
-      }
-      .flatMap { aefMap =>
-        import io.suggest.model.CommonModelsJvm._
-        implicitly[QueryStringBindable[SioPages.Sc3]]
-          .bind("", aefMap)
-      }
-      .flatMap {
-        case Right(res) =>
-          Some(res)
-        case Left(errMsg) =>
-          LOGGER.warn(s"_geoSiteResult(): Failed to bind ajax escaped_fragment '$ajaxEscapedFragment' from '$remoteClientAddress': $errMsg")
-          None
-      }
-  }
 
   /** У нас тут своя методика определения хоста: используя X-Forwarded-Host. */
   override lazy val host: String = {

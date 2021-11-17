@@ -23,12 +23,14 @@ final case class MScSiteArgs(
                               /** Версия API выдачи. */
                               apiVsn        : MScApiVsn,
                               jsStateOpt    : Option[SioPages.Sc3] = None,
-                              syncRender    : Boolean,
                               mainScreen    : SioPages.Sc3,
                             ) {
 
   // Пока оставлено тут, хотя это пережитки ScSyncSite, и наверное будет удалено.
   def inlineIndex   : Option[Html] = None
+
+  def syncRender: Boolean =
+    inlineIndex.nonEmpty
 
 }
 

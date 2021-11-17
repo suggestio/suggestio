@@ -9,8 +9,7 @@ import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model._
 import io.suggest.es.search.MSubSearch
-import io.suggest.geo
-import io.suggest.geo.{MGeoLocSources, _}
+import io.suggest.geo._
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.media.{MMediaInfo, MMediaTypes}

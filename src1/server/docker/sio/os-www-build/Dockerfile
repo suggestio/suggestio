@@ -6,7 +6,8 @@ LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## Поставить зависимости для сборки sio.
 ## openssh нужен для legacy-deploy на sio2/sio3/sio5, а так - не нужен.
-RUN $PACMAN -Sy --noconfirm --needed npm nodejs yarn sbt jdk15-openjdk docker openssh rsync sed
+RUN $PACMAN -Sy --noconfirm --needed npm nodejs yarn sbt docker openssh rsync sed
+## jdk15-openjdk - removed, because of graalvm includes jdk11
 
 ## /usr/bin/sbt needs sed
 RUN pacman -D --asexplicit sed
