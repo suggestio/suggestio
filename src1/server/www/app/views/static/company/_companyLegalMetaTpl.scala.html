@@ -1,0 +1,142 @@
+@(cellCss: String = "", keyCss: String = "", valueCss: String = "", rowCss: String = "")(implicit ctx: Context)
+
+@* Table rows about company legal info. Should be wrapped info [table] html tag *@
+
+@import ctx.messages
+@import io.suggest.i18n.MsgCodes
+
+@__cell(css: String = "")(content: Html) = {
+    <td class="@cellCss @css">
+        @content
+    </td>
+}
+
+@__key()(content: Html) = {
+    @__cell( keyCss )(content)
+}
+
+@__value()(content: Html) = {
+    @__cell( valueCss )(content)
+}
+
+@__row()(content: Html) = {
+  <tr @if(rowCss.nonEmpty){class="@rowCss"}>
+    @content
+  </tr>
+}
+
+@ctx.api.current.configuration.getOptional[Seq[play.api.Configuration]]("company.about").fold {
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`Organization.name` )
+  }
+  @__value() {
+    <strong>
+      @messages( MsgCodes.`_Cbca.name.full_` )
+    </strong>
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`Legal.address` )
+  }
+  @__value() {
+    @messages( MsgCodes.`_Cbca.address.legal_` )
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`Mail.address` )
+  }
+  @__value() {
+    @messages( MsgCodes.`_Cbca.address.mail_` )
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`INN` )
+  }
+  @__value() {
+    7801307156
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`KPP` )
+  }
+  @__value() {
+    780101001
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`OGRN` )
+  }
+  @__value() {
+    1167847188794
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`Checking.account` )
+  }
+  @__value() {
+    40702810955000006863
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`Correspondent.account` )
+  }
+  @__value() {
+    30101810500000000653
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`Bank` )
+  }
+  @__value() {
+    @messages( MsgCodes.`_Cbca.bank.name_` )
+  }
+}
+
+@__row() {
+  @__key() {
+    @messages( MsgCodes.`Bank.BIK` )
+  }
+  @__value() {
+    044030653
+  }
+}
+
+} { confs =>
+  @for(rowConf <- confs; key <- rowConf.keys; keyFixed = key.replace("\"", "")) {
+    @__row() {
+      @__key() {
+        @messages( keyFixed )
+      }
+      @__value() {
+        @for(value <- rowConf.getOptional[String](key)) {
+          @if( keyFixed == "Phone" ) {
+             <a href="tel:@value">@value</a>
+          } else {
+            @if( keyFixed == "Email" ) {
+              <a href="mailto:@value">@value</a>
+            } else {
+              @value
+            }
+          }
+        }
+      }
+    } @* /tr *@
+  } @* /for *@
+}
