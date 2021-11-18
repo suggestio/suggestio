@@ -81,7 +81,7 @@ final class Static @Inject() (
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val current = injector.instanceOf[Application]
-  private lazy val marketUserAgreementTpl = injector.instanceOf[MarketUserAgreementTpl]
+  private lazy val marketOfferoTpl = injector.instanceOf[MarketOfferoTpl]
   implicit private lazy val mat = injector.instanceOf[Materializer]
   implicit private lazy val actorSystem = injector.instanceOf[ActorSystem]
 
@@ -101,18 +101,18 @@ final class Static @Inject() (
    */
   def privacyPolicy() = maybeAuth() { implicit request =>
     Ok( privacyPolicyTpl() )
-      .withHeaders( CACHE_CONTROL -> "public, max-age=600" )
+      .cacheControl( 3600 )
   }
 
-  def userAgreement() = maybeAuth() { implicit request =>
-    Ok( marketUserAgreementTpl() )
-      .withHeaders( CACHE_CONTROL -> "public, max-age=600" )
+  def offero() = maybeAuth() { implicit request =>
+    Ok( marketOfferoTpl() )
+      .cacheControl( 3600 )
   }
 
   /** Содержимое проверочного попап-окна. */
   def popupCheckContent() = maybeAuth() { implicit request =>
     Ok( popups.popupCheckTpl() )
-      .withHeaders( CACHE_CONTROL -> "public, max-age=86400" )
+      .cacheControl( 86400 )
   }
 
   /**

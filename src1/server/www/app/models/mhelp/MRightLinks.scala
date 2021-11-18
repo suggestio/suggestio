@@ -16,8 +16,8 @@ object MRightLinks extends Enum[MRightLink] {
   /** Страница запроса в техподдержку. */
   case object Support extends MRightLink
 
-  /** Page with user agreement text. */
-  case object UserAgreement extends MRightLink
+  /** Page with offero text. */
+  case object Offero extends MRightLink
 
   /** Страница "О компании". */
   case object CompanyAbout extends MRightLink

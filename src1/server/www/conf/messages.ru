@@ -1207,3 +1207,4 @@ Cancel.order...=Отменить заказ...
 Advertising.services=Рекламные услуги
 User.agreement=Пользовательское соглашение
 _accept.privacy.policy=политику приватности
+Offero=Оферта

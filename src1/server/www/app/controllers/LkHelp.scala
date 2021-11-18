@@ -7,10 +7,10 @@ import io.suggest.n2.node.MNode
 import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
-import models.req.{INodeOptReq, INodeReq, IReq, IReqHdr, MNodeOptReq, MNodeReq, MReq}
+import models.req.{INodeReq, IReqHdr}
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc.{ActionBuilder, ActionTransformer, AnyContent, Result}
+import play.api.mvc.Result
 import util.acl._
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -39,15 +39,11 @@ final class LkHelp @Inject()(
   private lazy val identUtil = injector.instanceOf[IdentUtil]
   private lazy val supportUtil = injector.instanceOf[SupportUtil]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
-  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
   private lazy val maybeAuthMaybeNode = injector.instanceOf[MaybeAuthMaybeNode]
-  private lazy val isAuth = injector.instanceOf[IsAuth]
-  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val htmlCompressUtil = injector.instanceOf[HtmlCompressUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
-  private lazy val lkUserAgreementTpl = injector.instanceOf[LkUserAgreementTpl]
+  private lazy val lkOfferoTpl = injector.instanceOf[LkOfferoTpl]
 
-  // TODO Объеденить node и не-node вызовы в единые экшены.
   // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.
 
 
@@ -67,25 +63,6 @@ final class LkHelp @Inject()(
   }
 
 
-  private def _nodeIdOptActionBuilder(nodeIdOpt: Option[String]) = {
-    nodeIdOpt
-      .fold[ActionBuilder[INodeOptReq, AnyContent]] {
-        isAuth() andThen new ActionTransformer[MReq, MNodeOptReq] {
-          override protected def transform[A](request: MReq[A]): Future[MNodeOptReq[A]] = {
-            Future successful MNodeOptReq( None, request, request.user )
-          }
-          override protected def executionContext = ec
-        }
-      } { nodeId =>
-        isNodeAdmin(nodeId, U.PersonNode, U.Lk) andThen new ActionTransformer[MNodeReq, MNodeOptReq] {
-          override protected def transform[A](request: MNodeReq[A]): Future[MNodeOptReq[A]] = {
-            Future successful MNodeOptReq( Some(request.mnode), request, request.user )
-          }
-          override protected def executionContext = ec
-        }
-      }
-  }
-
   /**
    * Отрендерить форму запроса помощи вне узла.
     *
@@ -93,7 +70,7 @@ final class LkHelp @Inject()(
    * @return 200 Ok и страница с формой.
    */
   def supportForm(nodeIdOpt: Option[String], r: Option[String]) = csrf.AddToken {
-    _nodeIdOptActionBuilder( nodeIdOpt ).async { implicit request =>
+    maybeAuthMaybeNode( nodeIdOpt, U.PersonNode, U.Lk ).async { implicit request =>
       // Взять дефолтовое значение email'а по сессии
       val emailsDfltFut = getEmails( request.user.personNodeOptFut )
 
@@ -130,7 +107,7 @@ final class LkHelp @Inject()(
   /** Сабмит формы обращения за помощью вне узла. */
   def supportFormSubmit(nodeIdOpt: Option[String], r: Option[String]) = csrf.Check {
     bruteForceProtect {
-      _nodeIdOptActionBuilder( nodeIdOpt ).async { implicit request =>
+      maybeAuthMaybeNode( nodeIdOpt, U.PersonNode ).async { implicit request =>
         val adnIdOpt = request.mnodeOpt.flatMap(_.id)
         lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
         supportFormM.bindFromRequest().fold(
@@ -177,8 +154,7 @@ final class LkHelp @Inject()(
     * @return Страница с инфой о компании.
     */
   def companyAbout(onNodeId: Option[String]) = csrf.AddToken {
-    val actionBuilder = onNodeId.fold[ActionBuilder[IReq, AnyContent]]( maybeAuth(U.Lk) )( isNodeAdmin(_, U.Lk) )
-    actionBuilder.async { implicit request =>
+    maybeAuthMaybeNode( onNodeId, U.Lk ).async { implicit request =>
       val mnodeOpt = request match {
         case nreq: INodeReq[_] =>
           Some(nreq.mnode)
@@ -198,10 +174,10 @@ final class LkHelp @Inject()(
 
 
   /** User agreement page. */
-  def userAgreement(onNodeId: Option[String]) = csrf.AddToken {
+  def offero(onNodeId: Option[String]) = csrf.AddToken {
     maybeAuthMaybeNode( onNodeId, U.Lk ).async { implicit request =>
       request.user.lkCtxDataFut.map { implicit ctxData =>
-        Ok( lkUserAgreementTpl( request.mnodeOpt ) )
+        Ok( lkOfferoTpl( request.mnodeOpt ) )
           .cacheControl(3600)
       }
     }

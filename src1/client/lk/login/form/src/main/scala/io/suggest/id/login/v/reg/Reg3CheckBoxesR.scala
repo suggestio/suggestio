@@ -52,7 +52,7 @@ class Reg3CheckBoxesR(
       }
     }
 
-    private val _onUserAgreementLinkClick = _onLinkClick( _userAgreementRoute )
+    private val _onOfferoLinkClick = _onLinkClick( _userAgreementRoute )
     private val _onPrivacyPolicyLinkClick = _onLinkClick( _privacyPolicyRoute )
 
     def render(p: Props): VdomElement = {
@@ -79,14 +79,15 @@ class Reg3CheckBoxesR(
                   MuiLink(
                     new MuiLinkProps {
                       val href = HttpClient.route2url( _userAgreementRoute() )
-                      override val onClick = _onUserAgreementLinkClick
+                      override val onClick = _onOfferoLinkClick
                       val target = HtmlConstants.Target.blank
                     }
                   )(
                     crCtx.messages( MsgCodes.`terms.of.service` ),
+                    // TODO MsgCodes.`terms.of.service`: Use `Offero` as message code?
                   ),
                 )
-                val checkBoxType = MReg3CheckBoxTypes.UserAgreement
+                val checkBoxType = MReg3CheckBoxTypes.Offero
                 val cbx = p.wrap { props =>
                   checkBoxR.PropsVal(
                     checked   = props.cbStates( checkBoxType ).isChecked,

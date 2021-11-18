@@ -152,7 +152,7 @@ POST /lk/node/invite                    @controllers.MarketLkAdn.nodeOwnerInvite
 GET  /lk/help/support                   @controllers.LkHelp.supportForm(nodeId: Option[String] ?= None, r: Option[String] ?= None)
 POST /lk/help/support                   @controllers.LkHelp.supportFormSubmit(nodeId: Option[String] ?= None, r: Option[String] ?= None)
 GET  /lk/help/about                     @controllers.LkHelp.companyAbout(nodeId: Option[String] ?= None)
-GET  /lk/help/user-agreement            @controllers.LkHelp.userAgreement(nodeId: Option[String] ?= None)
+GET  /lk/help/offero                    @controllers.LkHelp.offero(nodeId: Option[String] ?= None)
 
 ## Languages & localization.
 GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
@@ -333,7 +333,7 @@ GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm()
 ## compat. TODO keepalive - Not used?
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession()
 GET  /privacy                           @controllers.Static.privacyPolicy()
-GET  /user-agreement                    @controllers.Static.userAgreement()
+GET  /offero                            @controllers.Static.offero()
 GET  /st/popup/check                    @controllers.Static.popupCheckContent()
 POST /_/csp/report                      @controllers.Static.handleCspReport()
 

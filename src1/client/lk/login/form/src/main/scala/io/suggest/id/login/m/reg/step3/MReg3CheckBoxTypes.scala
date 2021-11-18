@@ -5,7 +5,7 @@ import japgolly.univeq.UnivEq
 
 object MReg3CheckBoxTypes extends Enum[MReg3CheckBoxType] {
 
-  case object UserAgreement extends MReg3CheckBoxType
+  case object Offero extends MReg3CheckBoxType
   case object PrivacyPolicy extends MReg3CheckBoxType
   case object PersonalData extends MReg3CheckBoxType
 

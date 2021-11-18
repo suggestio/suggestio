@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.pay
 
-import com.materialui.{Mui, MuiBox, MuiColorTypes, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants, MuiSx}
+import com.materialui.{Mui, MuiColorTypes, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.MPayableVia
 import io.suggest.bill.cart.m.{CartSubmit, MCartRootS}
@@ -15,8 +15,6 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-
-import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -56,14 +54,18 @@ class PayButtonR(
           FlexCenteredR.component(false)(
             s.payableViasC { payableViasProxy =>
               val payableVias = payableViasProxy.value
+              val hasManyChoises = payableVias.lengthIs > 1
 
               // TODO Render info, if payableVias is empty, but order have items?
               React.Fragment(
                 payableVias.toVdomArray { payableVia =>
+                  // If only one button here, display it always as production payment (to bypass paysystems' security checks for test-content presence).
+                  val renderAsTestPayment = hasManyChoises && payableVia.isTest
+
                   MuiFab.component.withKey( payableVia.toString ) {
                     new MuiFabProps {
                       override val variant    = MuiFabVariants.extended
-                      override val color      = payableVia.isTest match {
+                      override val color      = renderAsTestPayment match {
                         case false => MuiColorTypes.secondary
                         case true  => MuiColorTypes.disabled
                       }
@@ -72,13 +74,13 @@ class PayButtonR(
                       override val classes    = payBtnCss
                     }
                   } (
-                    (payableVia.isTest match {
+                    (renderAsTestPayment match {
                       case true   => Mui.SvgIcons.MoneyOff
                       case false  => Mui.SvgIcons.Payment
                     })()(),
                     NBSP_STR,
                     payMsg,
-                    ReactCommonUtil.maybeNode( payableVia.isTest ) (React.Fragment(
+                    ReactCommonUtil.maybeNode( renderAsTestPayment ) (React.Fragment(
                       NBSP_STR, `(`, MsgCodes.`Test`, `)`,
                     )),
                   )
