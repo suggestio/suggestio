@@ -32,7 +32,7 @@ object MScRespActionTypes extends StringEnum[MScRespActionType] {
 
 
   /** Список всех значений модели. */
-  override val values = findValues
+  override def values = findValues
 
 }
 

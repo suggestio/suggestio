@@ -7,9 +7,13 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.c.{IRespActionHandler, IRespHandler, MRhCtx}
+import io.suggest.sc.m.inx.ReGetIndex
 import io.suggest.sc.m.{HandleScApiResp, MScRoot, OnlineCheckConn}
+import io.suggest.sc.ssr.SsrSetState
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
+
+import scala.util.Success
 
 /** Controller for handling and sub-routing of showcase pub api responses. */
 class ScRespAh(
@@ -21,11 +25,7 @@ class ScRespAh(
   with Log
 { ah =>
 
-  override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
-
-    // United processing for most of Sc-API-responses from server.
-    // All responses for index, grid, focused, search actions - at first handled here.
-    case m: HandleScApiResp =>
+  private def _handleScApiResp(m: HandleScApiResp): ActionResult[MScRoot] = {
       val value0 = value
 
       val rhCtx0 = MRhCtx(value0, m, modelRW)
@@ -104,6 +104,26 @@ class ScRespAh(
       })
         // Return Left or Right results.
         .fold(identity, identity)
+  }
+
+
+  override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
+    // United processing for most of Sc-API-responses from server.
+    // All responses for index, grid, focused, search actions - at first handled here.
+    case m: HandleScApiResp =>
+      _handleScApiResp( m )
+
+    // Showcase running on server-side, and ScSite controller wants to render to HTML some stuff.
+    // Rendering is synchronous, so everything in VDOM should be updated right with no background requests.
+    // Everything MUST
+    case m: SsrSetState =>
+      val m2 = HandleScApiResp(
+        reqTimeStamp = None,
+        qs = m.scQs,
+        tryResp = Success( m.scResp ),
+        reason = ReGetIndex(),  // TODO What should be defined as reason here?
+      )
+      _handleScApiResp( m2 )
 
   }
 

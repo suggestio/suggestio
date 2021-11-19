@@ -46,7 +46,7 @@ import io.suggest.sc.m.inx.{IIndexAction, IWelcomeAction, MScIndex, MScIndexStat
 import io.suggest.sc.m.menu.{IScAppAction, MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
-import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
+import io.suggest.sc.sc3.{IScRespAction, MSc3Conf, MSc3Init}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.u.api.{IScAppApi, IScStuffApi, IScUniApi}
 import io.suggest.sc.v.search.SearchCss

@@ -5,6 +5,7 @@ import com.typesafe.sbt.web.SbtWeb.autoImport._
 import WebScalaJS.autoImport._
 import scalajsbundler.sbtplugin.WebScalaJSBundlerPlugin
 import WebScalaJSBundlerPlugin.autoImport._
+import org.scalajs.jsenv.nodejs.NodeJSEnv
 import org.scalajs.sbtplugin.Stage
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
@@ -63,6 +64,25 @@ lazy val commonJS = common.js
       // tzdb only for [lk-dt-period-sjs]
     )
   )
+
+
+/** Boopickle-support for common models.
+  * Used for SSR, separated from common to guarantee unbloating of *sjs/fullOptJS resulting *opt.js
+  * without boopickle-generated stuff, and optimise compiler performance in *sjs/fastOptJS.
+  */
+lazy val commonBoo = crossProject(JSPlatform, JVMPlatform)
+  .crossType( CrossType.Full )
+  .in( file(DIR0 + "shared/common-boo") )
+  .dependsOn( common )
+  .settings(
+    Common.settingsOrg,
+    version := "0.0.0",
+    libraryDependencies ++= Seq(
+      "io.suzaku" %%% "boopickle" % "1.+",
+    ),
+  )
+lazy val commonBooJS = commonBoo.js
+lazy val commonBooJVM = commonBoo.jvm
 
 
 /** Historically server-side utils. */
@@ -488,8 +508,10 @@ lazy val sc3Sjs = {
 lazy val showcaseSsr = crossProject(JSPlatform, JVMPlatform)
   .crossType( CrossType.Full )
   .in( file(DIR0 + "shared/showcase/ssr") )
+  .dependsOn( commonBoo )
 
 lazy val showcaseSsrJs = showcaseSsr.js
+  .enablePlugins( ScalaJSBundlerPlugin )
   .dependsOn( sc3Sjs )
   .settings(
     Common.settingsOrgJS,
@@ -498,8 +520,14 @@ lazy val showcaseSsrJs = showcaseSsr.js
      "com.github.japgolly.scala-graal" %%% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
     ),
     scalaJSLinkerConfig ~= { _.withSourceMap(false) },
-    artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
-    artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js")
+    //TODO artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
+    //TODO artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js"),
+    webpackBundlingMode := BundlingMode.LibraryOnly(),
+    useYarn := true,
+    jsEnv := new NodeJSEnv(
+      NodeJSEnv.Config()
+        .withArgs( "--max-old-space-size=4096" :: Nil )
+    ),
   )
 
 lazy val showcaseSsrJvm = showcaseSsr.jvm

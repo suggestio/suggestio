@@ -26,6 +26,8 @@ scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_
   .withESVersion( Common.Vsn.ECMA_SCRIPT )
 )}
 
+scalaJSLinkerConfig in fullOptJS ~= { _.withSourceMap(false) }
+
 scalaJSUseMainModuleInitializer := true
 
 useYarn := true
@@ -33,6 +35,6 @@ useYarn := true
 // Попытка гашения node.js OOM на стадии "Bundling NPM deps..."
 jsEnv := new NodeJSEnv(
   NodeJSEnv.Config()
-    .withArgs( List("--max_old_space_size=8192") )
+    .withArgs( List("--max-old-space-size=8192") )
 )
 

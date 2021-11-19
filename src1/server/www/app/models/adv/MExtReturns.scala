@@ -1,6 +1,5 @@
 package models.adv
 
-import controllers.routes
 import play.api.data.Mapping
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil

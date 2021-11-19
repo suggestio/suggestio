@@ -45,7 +45,11 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.7.1")
 //addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("com.github.praneethpuligundla" % "sbt-filter" % "1.0.2")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.20.0")
+// scalacenter/scalajs-bundler looks abandoned.
+// 0.21.x from https://github.com/giabao/scalajs-bundler is NEEDED, because
+// - @react-leaflet/core uses new module syntax with '??' operator,
+//   that needs fresh WebPack 5.5x or later: https://github.com/PaulLeCam/react-leaflet/issues/891
+addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.21.0-RC1-0-20211119")
 
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.1" cross CrossVersion.full)
 

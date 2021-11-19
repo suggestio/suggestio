@@ -133,7 +133,7 @@ object Common {
     /** @see [[https://github.com/PaulLeCam/react-leaflet]]
       * @see [[https://www.npmjs.com/package/react-leaflet]]
       */
-    val REACT_LEAFLET             = "3.1.0"
+    val REACT_LEAFLET             = "3.2.2"
 
     /** Окостыливание экспортов js-модулей для совместимости с webpack и es-modules.
       * @see [[https://github.com/webpack-contrib/exports-loader]]

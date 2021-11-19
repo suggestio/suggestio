@@ -119,7 +119,9 @@ object MSzMult {
   * @param multBody Размер в целочисленных долях от исходного.
   *                 Изначально, тут были проценты.
   */
-case class MSzMult private[dev] (multBody: Int) {
+case class MSzMult(multBody: Int) {
+  // this(Int) constructor was private until boopickle support.
+  // Boopickle generated pickler needs direct access to constuctor from io.suggest.sc.ssr.*
 
   def toIntPct = Math.round(toDouble * PERCENTS_COUNT)
 

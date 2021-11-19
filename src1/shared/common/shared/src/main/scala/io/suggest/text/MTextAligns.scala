@@ -33,7 +33,7 @@ object MTextAligns extends StringEnum[MTextAlign] {
   }
 
 
-  override val values = findValues
+  override def values = findValues
 
   def withCssNameOption(cssName: String): Option[MTextAlign] = {
     values

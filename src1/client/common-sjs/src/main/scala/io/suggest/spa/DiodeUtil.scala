@@ -1,5 +1,7 @@
 package io.suggest.spa
 
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 import diode.data.{FailedBase, PendingBase, Pot}
 import diode._
 import io.suggest.common.empty.OptionUtil
@@ -180,6 +182,18 @@ object DiodeUtil {
 
       def runEffectAction[A <: DAction](action: A): Future[Unit] =
         runEffect( action.toEffectPure, action )
+
+    }
+
+
+    /** Extention to cats.effect.IO for Diode-related stuff. */
+    implicit final class CatsEffectIOExt[A]( private val io: IO[A] ) extends AnyVal {
+
+      /** Wrap IO into diode-effect. */
+      def toDiodeEffect(implicit actionType: ActionType[A], ioRuntime: IORuntime = cats.effect.unsafe.implicits.global): Effect = {
+        // Just a shortcut. May be in future, there will be more optimal solution.
+        Effect( io.unsafeToFuture() )
+      }
 
     }
 

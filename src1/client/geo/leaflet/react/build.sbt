@@ -12,7 +12,7 @@ version := Common.Vsn.REACT_LEAFLET
 scalacOptions += "-feature"
 
 npmDependencies in Compile ++= Seq(
-  "react-leaflet" -> Common.Vsn.REACT_LEAFLET
+  "react-leaflet" -> Common.Vsn.REACT_LEAFLET,
 )
 
 useYarn := true

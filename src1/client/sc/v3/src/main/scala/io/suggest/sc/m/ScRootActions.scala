@@ -13,7 +13,7 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MOnLineInfo}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
-import io.suggest.sc.sc3.{MSc3Resp, MScConfUpdate, MScQs, MScRespActionType, MScSettingsData}
+import io.suggest.sc.sc3.{IScRespAction, MSc3Resp, MScConfUpdate, MScQs, MScRespActionType, MScSettingsData}
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.spa.{DAction, SioPages}
 import io.suggest.text.StringUtil
@@ -189,8 +189,6 @@ case object GeoLocTimerCancel extends IGeoLocTimerAction
 /** Наступление таймаута получения гео-координат. */
 case object GeoLocTimeOut extends IGeoLocTimerAction
 
-
-sealed trait IScRespAction extends ISc3Action
 
 /** Экшен для запуска обработки унифицированного ответа выдачи, который бывает сложным и много-гранным.
   * @param reqTimeStamp Время запуска запроса к серверу.

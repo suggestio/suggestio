@@ -51,11 +51,7 @@ scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_
 // Выключение оптимизации для дебага нетривиальных ошибок, видимых только на продакшене
 //scalaJSLinkerConfig ~= { _.withOptimizer(false) }
 
-
-// TODO scalajs-1.0: Выставить в scalaJSLinkerConfig emitSourceMaps:
-//emitSourceMaps := true
-
-//(emitSourceMaps in fullOptJS) := false
+scalaJSLinkerConfig in fullOptJS ~= { _.withSourceMap(false) }
 
 
 scalaJSUseMainModuleInitializer := true
@@ -66,7 +62,7 @@ useYarn := true
 // Ускорить node.js на продакшене.
 jsEnv := new NodeJSEnv(
   NodeJSEnv.Config()
-    .withArgs( List("--max_old_space_size=4096") )
+    .withArgs( "--max-old-space-size=4096" :: Nil )
 )
 
 
