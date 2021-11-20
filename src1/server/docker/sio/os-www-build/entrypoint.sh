@@ -20,20 +20,34 @@ user=$K8S_SECRET_IVY2_USER
 password=$K8S_SECRET_IVY2_PASSWORD
 EOF
 
-## Local Artifactory support for global.sbt was here until 2021-05-24
+cat > $HOME/.sbt/repositories << EOF
+[repositories]
+local
+my-ivy-proxy-releases: http://ci.suggest.io/artifactory/sbt-virtual-dev/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext], allowInsecureProtocol
+my-maven-proxy-releases: http://ci.suggest.io/artifactory/sbt-virtual-dev/, allowInsecureProtocol
+EOF
 
+
+## Local Artifactory support for global.sbt was here until 2021-05-24
 _fatal() {
   echo "$1\n Waiting for admin for debugging..." >&2
   sleep 600
   exit 1
 }
 
+
 ## Выставить кол-во RAM в sbtopts.
 SBT_OPTS="/etc/sbt/sbtopts"
 if [ -z $K8S_SECRET_SBT_MEM ]; then
-  K8S_SECRET_SBT_MEM=4096
+  K8S_SECRET_SBT_MEM=5120
 fi
-echo "-mem $K8S_SECRET_SBT_MEM" > "$SBT_OPTS"
+cat > "$SBT_OPTS" << EOF
+-mem $K8S_SECRET_SBT_MEM
+
+-Dsbt.override.build.repos=true
+
+EOF
+
 
 ## взять файлы из /root/.ssh-mount и скопировать в .ssh с правильными правами.
 ## .ssh-mount монтируется как read-only и с неправильными правами, поэтому вручную копипастим всё куда надо.

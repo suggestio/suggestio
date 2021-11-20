@@ -1,4 +1,4 @@
-image: docker-registry.suggest.io:5000/sio/sio2/os-www-build:20211117-01
+image: docker-registry.suggest.io:5000/sio/sio2/os-www-build:20211120-02
 
 stages:
   - build
@@ -17,7 +17,7 @@ www-stage:
   before_script:
   - /sbin/entrypoint.sh
   script:
-  - export NODE_OPTIONS="--max-old-space-size=8192"
+  - export NODE_OPTIONS="--max-old-space-size=6144"
   - sbt 'set scalaJSStage in Global := FullOptStage' 'project www' 'stage'
   - src1/server/docker/scripts/deploy-www-stage-to-nodes.sh  src1/server/www  sio2/sioweb21  sio2.suggest.io sio3.suggest.io
 
