@@ -5,7 +5,6 @@ import io.suggest.common.html.HtmlConstants
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
-import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io

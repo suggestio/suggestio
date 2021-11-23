@@ -488,7 +488,7 @@ lazy val swToolBoxSjs = {
 /** Some showcase stuff outside sc3-sjs. */
 lazy val scCommonSjs = {
   Project(id = "sc-common", base = file(DIR0 + "client/sc/common"))
-    .dependsOn( commonSjs, reactMaterialUiSjs )
+    .dependsOn( commonSjs, reactMaterialUiSjs, lkCommonSjs )
 }
 
 /** Showcase 3rd-generation -- react.js main single-page-application of Suggest.io. */
@@ -510,7 +510,11 @@ lazy val showcaseSsr = crossProject(JSPlatform, JVMPlatform)
   .in( file(DIR0 + "shared/showcase/ssr") )
   .dependsOn( commonBoo )
 
+/** Generate showcase JS for server-side rendering. */
 lazy val showcaseSsrJs = showcaseSsr.js
+  // TODO Remove out sjs-bundler from here?
+  //  > If you target the Node.js runtime, you shouldn't even bundle. Node.js can load the non-bundled CommonJS module in the regular fastopt.js.
+  //  > https://github.com/scalacenter/scalajs-bundler/issues/250#issuecomment-395658194
   .enablePlugins( ScalaJSBundlerPlugin )
   .dependsOn( sc3Sjs )
   .settings(
@@ -520,9 +524,9 @@ lazy val showcaseSsrJs = showcaseSsr.js
      "com.github.japgolly.scala-graal" %%% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
     ),
     scalaJSLinkerConfig ~= { _.withSourceMap(false) },
-    //TODO artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
-    //TODO artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js"),
     webpackBundlingMode := BundlingMode.LibraryOnly(),
+    webpackConfigFile in fastOptJS := Some(baseDirectory.value / "webpack.config.js"),
+    webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.config.js"),
     useYarn := true,
     jsEnv := new NodeJSEnv(
       NodeJSEnv.Config()
@@ -530,6 +534,7 @@ lazy val showcaseSsrJs = showcaseSsr.js
     ),
   )
 
+/** JVM-parts for showcase server-side rendering. */
 lazy val showcaseSsrJvm = showcaseSsr.jvm
   .settings(
     Common.settingsOrg,
@@ -582,7 +587,7 @@ lazy val reactMaterialUiColorSjs = {
 /** React-form for editing node edges with file-uploading support. */
 lazy val sysEdgeEditSjs = {
   Project(id = "sys-edge-edit-sjs", base = file(DIR0 + "client/sys/edge-edit"))
-    .dependsOn( lkCommonSjs, scCommonSjs, reactMaterialUiSjs )
+    .dependsOn( lkCommonSjs, reactMaterialUiSjs )
 }
 
 /** JD (Json Document) tree rendering components. */
@@ -683,11 +688,12 @@ lazy val www = project
     commonWww,
     streamsUtil, brotliUtil,
     textUtil,
-    svgUtil, ipgeobase, stat
+    svgUtil, ipgeobase, stat,
+    showcaseSsrJvm,
   )
   .settings(
-    scalaJSProjects := Seq(lkSjs, sc3Sjs, scSwSjs, sysSjs),
-    pipelineStages in Assets := Seq(scalaJSPipeline),
+    scalaJSProjects := Seq( lkSjs, sc3Sjs, scSwSjs, sysSjs, showcaseSsrJs ),
+    pipelineStages in Assets := scalaJSPipeline :: Nil,
     // Copy some assets from npm:
     // react DatePicker
     npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>

@@ -82,7 +82,7 @@ class Sc3Module extends Log { outer =>
 
   import io.suggest.jd.render.JdRenderModule._
   import io.suggest.ReactCommonModule._
-  import ScCommonModule._
+  import io.suggest.lk.LkCommonModule._
 
   lazy val sc3SpaRouter: Sc3SpaRouter = {
     import io.suggest.spa.DiodeUtil.Implicits._

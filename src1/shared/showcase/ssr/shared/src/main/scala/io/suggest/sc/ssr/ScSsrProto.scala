@@ -6,7 +6,7 @@ import boopickle.Default._
   * This model is compatible with Boopickle, but no boopickle currently in /shared/common.
   * All picklers for showcase SSR-needs must be defined here.
   */
-object ScSsrUtil {
+object ScSsrProto {
 
   /** API call-names container. */
   object Manifest {
@@ -17,16 +17,15 @@ object ScSsrUtil {
 }
 
 
-/** Arguments container for renderUniApiResp() call. */
-case class MScSsrRenderArgs(
-                             action: IScSsrAction,
-                           )
+/** Arguments container for renderActionSync() call. */
+case class MScSsrArgs(
+                       action: IScSsrAction,
+                     )
 
-object MScSsrRenderArgs {
+object MScSsrArgs {
 
   import io.suggest.CommonBooUtil._
 
-  implicit val scSsrActionP: Pickler[IScSsrAction] = generatePickler
-  implicit val scSsrRenderArgsP: Pickler[MScSsrRenderArgs] = generatePickler
+  implicit val scSsrRenderArgsP: Pickler[MScSsrArgs] = generatePickler
 
 }

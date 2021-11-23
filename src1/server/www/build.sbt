@@ -199,9 +199,9 @@ dockerUpdateLatest := true
 
 
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.
-excludeFilter in gzip := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.br" || "*.apk" || "*.ipa"
+excludeFilter in gzip := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.br" || "*.apk" || "*.ipa" //|| "*ssr*"
 
-excludeFilter in brotli := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.gz" || "*.apk" || "*.ipa"
+excludeFilter in brotli := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.gz" || "*.apk" || "*.ipa" //|| "*ssr*"
 
 // Дополнительные импорты для twirl-шаблонов.
 TwirlKeys.templateImports ++= Seq(

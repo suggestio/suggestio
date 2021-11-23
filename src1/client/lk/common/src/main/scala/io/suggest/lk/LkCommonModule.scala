@@ -1,6 +1,7 @@
 package io.suggest.lk
 
 import com.softwaremill.macwire._
+import io.suggest.dev.OsFamiliesR
 import io.suggest.lk.m.color.MColor2PickerCtx
 import io.suggest.lk.r._
 import io.suggest.lk.r.captcha.CaptchaFormR
@@ -65,6 +66,8 @@ object LkCommonModule {
   lazy val color2PickerR = wire[Color2PickerR]
 
   lazy val scriptTagR = wire[ScriptTagR]
+
+  lazy val osFamiliesR = wire[OsFamiliesR]
 
 }
 

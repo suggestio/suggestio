@@ -16,7 +16,7 @@ import io.suggest.n2.edge.edit.v.inputs._
 class EdgeEditModule {
 
   import io.suggest.ReactCommonModule._
-  import io.suggest.sc.ScCommonModule._
+  import io.suggest.lk.LkCommonModule._
 
   // edge
   lazy val predicateR = wire[PredicateR]

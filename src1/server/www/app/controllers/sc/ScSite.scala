@@ -65,7 +65,11 @@ final class ScSite @Inject() (
   private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val assets = injector.instanceOf[Assets]
-  //private lazy val webCrawlerUtil = injector.instanceOf[WebCrawlerUtil]
+
+  //private lazy val scSsrUtil = injector.instanceOf[ScSsrUtil]
+  //private lazy val scUniApi = injector.instanceOf[ScUniApi]
+
+
 
   import esModel.api._
   import cspUtil.Implicits._
@@ -151,7 +155,7 @@ final class ScSite @Inject() (
 
 
     /** Sync server-side showcase content rendering for web-crawlers. */
-    //def inlineIndexFut: Future[Option[Html]]
+    def inlineIndexFut: Future[Option[Html]]
 
     /** Здесь описывается методика сборки аргументов для рендера шаблонов. */
     def renderArgsFut: Future[MScSiteArgs] = {
@@ -318,6 +322,9 @@ final class ScSite @Inject() (
       // Рендерить скрипт ServiceWorker'а только для домена suggest.io
       val _withServiceWorkerFut = ctx.domainNode3pOptFut.map(_.isEmpty)
 
+      // Inline index rendering start:
+      val _inlineIndexFut = inlineIndexFut
+
       // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
       // Собрать все результаты в итоговый скрипт.
@@ -327,6 +334,7 @@ final class ScSite @Inject() (
         scriptCacheHashCode   <- _scriptCacheHashCodeFut
         rcvrsMapUrlArgs       <- _rcvrsMapUrlArgsFut
         withServiceWorker     <- _withServiceWorkerFut
+        _inlineIndex          <- _inlineIndexFut
       } yield {
         // Сборка модели данных инициализации выдачи:
         val state0 = MSc3Init(
@@ -351,25 +359,12 @@ final class ScSite @Inject() (
             .toString(),
           jsMessagesJs        = jsMessagesJs,
           cacheHashCode       = scriptCacheHashCode,
-          withServiceWorker   = withServiceWorker
+          withServiceWorker   = withServiceWorker,
+          inlineIndex         = _inlineIndex,
         )
         _scriptV3Tpl(scriptRenderArgs)(ctx)
       }
     }
-
-    /*
-    override def inlineIndexFut: Future[Option[Html]] = Future {
-      webCrawlerUtil
-        .ajaxJsScState[SioPages.Sc3]( _request.queryString )
-        .fold {
-          Future successful None
-        } { scJsState =>
-
-          ???
-        }
-    }
-      .flatten
-    */
 
   }
 
@@ -379,13 +374,85 @@ final class ScSite @Inject() (
   def geoSite(mainScreen: SioPages.Sc3, siteArgs: SiteQsArgs) = {
     // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
     maybeAuth(U.PersonNode).async { implicit request =>
+      lazy val logPrefix = s"geoSite(${mainScreen.nodeId.orNull})#${System.currentTimeMillis()}:"
+      LOGGER.trace(s"$logPrefix ")
+
       // Выбор движка выдачи:
       if (siteArgs.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
         // Логика sc3
-        val logic = new SiteScriptLogicV3 {
+        val logic = new SiteScriptLogicV3 { siteLogic =>
           override implicit def _request = request
           override def _siteQsArgs = siteArgs
           override def _mainScreen = mainScreen
+
+          /** Sync server-side showcase content rendering for web-crawlers. */
+          override def inlineIndexFut: Future[Option[Html]] = {
+            Future successful None
+            // TODO Render static markup: for react-hydrate & web-crawlers.
+            /*
+            val scQs = MScQs(
+              common = MScCommonQs(
+                locEnv = MLocEnv(
+                  beacons = for (b <- mainScreen.virtBeacons) yield {
+                    MUidBeacon( b, None )
+                  },
+                  geoLoc = mainScreen.locEnv
+                    .map( MGeoLoc(_, None, None) )
+                    .toList,
+                ),
+              ),
+              search = MAdsSearchReq(
+                rcvrId = mainScreen.nodeId
+                  .map( MEsUuId.apply ),
+                genOpt = mainScreen.generation,
+                tagNodeId = mainScreen.tagNodeId
+                  .map( MEsUuId.apply ),
+              ),
+              index = Some( MScIndexArgs(
+                nodeId = mainScreen.nodeId,
+                geoIntoRcvr = false,
+                retUserLoc = false,
+                returnEphemeral = false,
+              )),
+              foc = mainScreen.focusedAdId.map { focAdId =>
+                MScFocusArgs(
+                  indexAdOpen = None,
+                  adIds = NonEmptyList( focAdId ),
+                )
+              },
+              grid = Some( MScGridArgs(
+                withTitle = false,
+              )),
+              nodes = Option.when( mainScreen.searchOpened ) {
+                MScNodesArgs()
+              },
+            )
+            val scApiLogic = new scUniApi.ScPubApiLogicHttpV3( scQs )(request) {
+              override implicit lazy val ctx = siteLogic.ctx
+            }
+            (for {
+              scResp <- scApiLogic.scRespFut
+              indexHtmlStrE <- scSsrUtil.renderShowcaseContent(MScSsrArgs(
+                action = SsrSetState( scQs, scResp ),
+              ))
+            } yield {
+              indexHtmlStrE.fold[Option[Html]](
+                {ex =>
+                  LOGGER.warn(s"$logPrefix Failed to SSR-render", ex)
+                  None
+                },
+                {htmlStr =>
+                  LOGGER.trace(s"$logPrefix Successfully rendered showcase SSR HTML[${htmlStr.length}ch]")
+                  Some( Html( htmlStr ) )
+                }
+              )
+            })
+              .recover { case ex: Throwable =>
+                LOGGER.warn(s"$logPrefix Erorr to prepare or start SSR rendering", ex)
+                None
+              }
+             */
+          }
         }
 
         // Сборка обычного результата.

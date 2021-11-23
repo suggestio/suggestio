@@ -110,7 +110,7 @@ object Common {
       *
       * @see [[https://github.com/adamw/macwire#installation-using-with-sbt]]
      */
-    val MACWIRE = "2.3.+"
+    val MACWIRE = "2.5.0"
 
     /** Версия wysiwyg-редактора quill, который будем пытаться использовать заместо tinymce.
       * @see [[https://www.npmjs.com/package/quill?activeTab=versions]]
@@ -257,9 +257,9 @@ object Common {
     val MATERIAL_UI_LAB = "5.0.0-alpha.44"
 
     /** @see [[https://www.npmjs.com/package/@emotion/react]] */
-    val EMOTION_REACT = "11.4.1"
+    val EMOTION_REACT = "11.6.0"
     /** @see [[https://www.npmjs.com/package/@emotion/styled]] */
-    val EMOTION_STYLED = "11.3.0"
+    val EMOTION_STYLED = "11.6.0"
 
     /** The lightest colorpicker for React Material-Ui.
       * @see [[https://github.com/mikbry/material-ui-color]]

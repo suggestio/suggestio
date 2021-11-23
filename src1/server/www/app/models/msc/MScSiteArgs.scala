@@ -26,11 +26,7 @@ final case class MScSiteArgs(
                               mainScreen    : SioPages.Sc3,
                             ) {
 
-  // Пока оставлено тут, хотя это пережитки ScSyncSite, и наверное будет удалено.
-  def inlineIndex   : Option[Html] = None
-
-  def syncRender: Boolean =
-    inlineIndex.nonEmpty
+  def syncRender: Boolean = false
 
 }
 

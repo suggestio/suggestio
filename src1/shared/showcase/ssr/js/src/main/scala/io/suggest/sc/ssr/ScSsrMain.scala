@@ -14,13 +14,13 @@ object ScSsrMain {
   val component: VdomElement = sc3Modules.sc3SpaRouter.state.router()
 
   /** API function to call from JVM. */
-  @JSExportTopLevel( ScSsrUtil.Manifest.RenderActionSync )
-  def renderActionSync(args: Pickled[MScSsrRenderArgs]): String = {
+  @JSExportTopLevel( ScSsrProto.Manifest.RenderActionSync )
+  def renderActionSync(args: Pickled[MScSsrArgs]): String = {
     // Notify showcase circuit about new state:
     sc3Modules.sc3Circuit.dispatch( args.value.action )
 
     // Execute HTML rendering:
-    ReactDOMServer.renderToStaticMarkup( component )
+    ReactDOMServer.renderToString( component )
   }
 
 }

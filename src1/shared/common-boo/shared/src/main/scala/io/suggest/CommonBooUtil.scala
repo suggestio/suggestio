@@ -28,6 +28,7 @@ import io.suggest.geo.GeoBooUtil._
 import io.suggest.jd.tags.event.{MJdtAction, MJdtEventActions, MJdtEventInfo, MJdtEventType, MJdtEvents}
 import io.suggest.jd.tags.html.{MJdHtml, MJdHtmlType}
 import io.suggest.jd.tags.qd.{MQdAttrsEmbed, MQdAttrsLine, MQdAttrsText, MQdOp}
+import io.suggest.sc.ssr.IScSsrAction
 import io.suggest.text.MTextAlign
 
 /** Picklers for common models.
@@ -124,6 +125,7 @@ object CommonBooUtil {
   implicit val scAdInfoP: Pickler[MScAdInfo] = generatePickler
   implicit val scAdMatchInfoP: Pickler[MScAdMatchInfo] = generatePickler
   implicit val scNodeMatchInfoP: Pickler[MScNodeMatchInfo] = generatePickler
+  implicit val scSsrActionP: Pickler[IScSsrAction] = generatePickler
 
   implicit val scQsP: Pickler[MScQs] = generatePickler
   implicit val scCommonQsP: Pickler[MScCommonQs] = generatePickler

@@ -1,6 +1,6 @@
 package models.msc
 
-import play.twirl.api.JavaScript
+import play.twirl.api.{Html, JavaScript}
 
 /**
   * Suggest.io
@@ -13,4 +13,5 @@ case class MSc3ScriptRenderArgs(
                                  jsMessagesJs       : JavaScript,
                                  cacheHashCode      : Int,
                                  withServiceWorker  : Boolean,
+                                 inlineIndex        : Option[Html],
                                )

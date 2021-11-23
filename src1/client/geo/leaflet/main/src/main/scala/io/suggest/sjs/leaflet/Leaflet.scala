@@ -59,10 +59,6 @@ trait ILeaflet extends js.Object {
 
   def rectangle(bounds: LatLngBounds, options: PathOptions = js.native): Rectangle = js.native
 
-  /** Instantiate a circle. */
-  @deprecated("Use circle() instead", "1.0.0")
-  @JSName("circle")
-  def circleApi07(latLng: LatLng, radiusMeters: Double, pathOptions: PathOptions = js.native): Circle = js.native
   def circle(latLng: LatLng, opts: CircleOptions = js.native): Circle = js.native
 
   def circleMarker(latLng: LatLng, options: CircleMarkerOptions = js.native): CircleMarker = js.native
