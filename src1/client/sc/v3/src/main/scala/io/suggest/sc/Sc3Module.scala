@@ -105,7 +105,7 @@ class Sc3Module extends Log { outer =>
     }
     wire[Sc3Circuit]
   }
-  lazy val sc3LeafletOverrides = new Sc3LeafletOverrides( sc3Circuit )
+  //lazy val sc3LeafletOverrides = new Sc3LeafletOverrides( sc3Circuit )
 
   /** Функция, возвращающая списки стабильных инстансов реализаций API геолокации. */
   val geoLocApis: () => LazyList[GeoLocApi] = {

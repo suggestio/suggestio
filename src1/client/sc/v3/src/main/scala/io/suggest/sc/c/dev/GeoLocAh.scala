@@ -5,21 +5,17 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MGeoLocSwitchS, MGeoLocWatcher, MGlSourceS, MScGeoLoc, Suppressor}
+import io.suggest.sc.m.dev.{MGeoLocSwitchS, MGeoLocWatcher, MScGeoLoc, Suppressor}
 import io.suggest.sc.m._
 import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2
 import io.suggest.sjs.dom2._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
-import monocle.Traversal
 import org.scalajs.dom
-import scalaz.Need
-import scalaz.std.option._
 
 import scala.concurrent.duration._
 import scala.scalajs.js
@@ -147,7 +143,7 @@ final class GeoLocAh[M](
           var fxAcc = List.empty[Effect]
 
           for (leafLoc <- v0.leafletLoc)
-            fxAcc ::= _leafletOnLocationFx( leafLoc.args, loc.location )
+            fxAcc ::= LeafletGeoLocAh.leafletOnLocationFx( leafLoc.args, loc.location )
 
           // Если приходят высокоточные данные GPS, то надо отказаться от неточных данных геолокации хотя бы на какое-то время.
           val supprOpt = for {
@@ -271,7 +267,7 @@ final class GeoLocAh[M](
         } {
           // Включение геолокации:
           case true =>
-            GEO_LOC_API.fold {
+            geoLocApis().firstAvailable.fold {
               // should never happen(?)
               logger.warn( ErrorMsgs.GEO_LOCATION_FAILED, msg = m )
               effectOnly(glPubErrFx)
@@ -315,7 +311,7 @@ final class GeoLocAh[M](
       (for {
         s <- v0.suppressor
         if s.generation ==* m.generation
-        glApi <- GEO_LOC_API
+        glApi <- geoLocApis().firstAvailable
       } yield {
         val prevGlTypes0 = s.minWatch.allPrevious
         val watchers2 = pendingWatch( prevGlTypes0, v0.watchers )
@@ -406,169 +402,8 @@ final class GeoLocAh[M](
         }
 
 
-    // Вызов функции локации внутри Leaflet, но вместо API произошла переброска в текущий circuit.
-    case m: GlLeafletApiLocate =>
-      val v0 = value
-      m.locateOpts.fold {
-        // Выключения подписки на геолокацию.
-        if (v0.leafletLoc.isEmpty) {
-          noChange
-        } else {
-          val v2 = (MScGeoLoc.leafletLoc replace None)(v0)
-          updatedSilent(v2)
-        }
-
-      } { leafletLocateOpts =>
-        // Запрашивается включение подписки на геолокацию.
-        var fxAcc = List.empty[Effect]
-
-        // Если есть текущая геолокация, то вернуть её сразу же:
-        // TODO currentLocation надо проверять по maxAge, но пока сейчас дата-время получения ещё не сохраняется в состоянии.
-        var alreadyRepliedLocation = false
-        for ( (_, geoLoc) <- v0.currentLocation) {
-          fxAcc ::= _leafletOnLocationFx( leafletLocateOpts, geoLoc )
-          alreadyRepliedLocation = true
-        }
-
-        // Если геолокация выключена, то надо её включить.
-        if (!(v0.switch.onOff contains[Boolean] true))
-          fxAcc ::= GeoLocOnOff( enabled = true, isHard = false ).toEffectPure
-        else {
-          // Надо запустить single-update, чтобы гарантированно получить текущее местоположение.
-          for (glApi <- GEO_LOC_API) {
-            fxAcc ::= Effect {
-              glApi
-                .getPosition()
-                .transform {
-                  case _ =>
-                    Success(DoNothing)
-                }
-            }
-          }
-        }
-
-        // Если задан timeout, то запустить таймер.
-        val timeoutNeedOpt = for {
-          timeoutMs <- leafletLocateOpts.locateOpts.timeout.toOption
-        } yield {
-          Need {
-            DomQuick.timeoutPromiseT( timeoutMs )( GlLeafletApiLocateTimeout )
-          }
-        }
-        for (timeoutNeed <- timeoutNeedOpt)
-          fxAcc ::= Effect( timeoutNeed.value.fut )
-
-        val v2Opt = if (
-          !alreadyRepliedLocation ||
-          (leafletLocateOpts.locateOpts.watch contains[Boolean] true)
-        ) {
-          // Нужно ждать получения локации.
-          // Закрыть старый таймаут, если есть.
-          for (fx <- _cancelLeafletTimeout(v0.leafletLoc))
-            fxAcc ::= fx
-
-          val v2 = (MScGeoLoc.leafletLoc replace Some(
-            MGlSourceS(
-              args            = leafletLocateOpts,
-              timeoutId       = timeoutNeedOpt
-                .map( need => () => need.value.timerId ),
-            )
-          ))(v0)
-          Some( v2 )
-
-        } else if (alreadyRepliedLocation && v0.leafletLoc.nonEmpty) {
-          // Уже отправлен одноразовый ответ геолокации. Надо удалить старые leafletLoc-данные из состояния:
-          val v2 = (MScGeoLoc.leafletLoc replace None)(v0)
-          Some( v2 )
-
-        } else {
-          None
-        }
-
-        ah.optionalResult( v2Opt, fxAcc.mergeEffects, silent = true )
-      }
-
-
-    case GlLeafletApiLocateTimeout =>
-      val v0 = value
-      (for {
-        glSrcS <- v0.leafletLoc
-      } yield {
-        v0.currentLocation.fold {
-          // Отправить ошибку по таймауту:
-          val locErrorFx = Effect.action {
-            val posErr = new dom2.PositionError {
-              // Используем не-нативные константы PositionError, т.к. внутри WebView нет гарантий, что в window определён тип PositionError.*
-              override val code = dom2.PositionError.TIMEOUT
-              override val message = "Timeout"
-            }
-            glSrcS.args.onLocError( posErr )
-            DoNothing
-          }
-
-          // Если watch, то подчистить данные по таймеру. Иначе - вычистить сразу всё.
-          val v2 = (MScGeoLoc.leafletLoc replace None)(v0)
-          updatedSilent(v2, locErrorFx)
-
-        } { case (_, currLoc) =>
-          // Отправить текущее местоположение, если ещё не отправлено.
-          val fx = _leafletOnLocationFx( glSrcS.args, currLoc )
-          // Если !watch, то почистить состояние целиком. Иначе - снести только timeoutId.
-          val v2 = if (glSrcS.args.locateOpts.watch contains[Boolean] true) {
-            // Чистка только данных по таймеру.
-            MScGeoLoc.leafletLoc
-              .andThen( Traversal.fromTraverse[Option, MGlSourceS] )
-              .andThen( MGlSourceS.timeoutId )
-              .replace( None )(v0)
-          } else {
-            // Без watch, поэтому просто чистим состояние целиком.
-            MScGeoLoc.leafletLoc.replace( None )(v0)
-          }
-
-          updatedSilent(v2, fx)
-        }
-      })
-        .getOrElse( noChange )
-
   }
 
-
-  /** Эффект переброса данных в leaflet функцию onLocation. */
-  private def _leafletOnLocationFx(lOpts: GlLeafletLocateArgs, geoLoc: MGeoLoc) = Effect.action {
-    val _coords = new Coordinates {
-      override val longitude = geoLoc.point.lon.toDouble
-      override val latitude = geoLoc.point.lat.toDouble
-      override val accuracy = geoLoc.accuracyOptM getOrElse 1000.0
-    }
-    val pos = new dom2.Position {
-      override val timestamp = js.Date.now()    // TODO Брать реальный timestamp, а не выдумывать на ходу.
-      override val coords = _coords
-    }
-    lOpts.onLocation( pos )
-    DoNothing
-  }
-
-
-  /** Эффект отмены таймаута. */
-  private def _cancelLeafletTimeout( leafletLocOpt: Option[MGlSourceS] ): Option[Effect] = {
-    // Закрыть старый таймаут, если есть.
-    for {
-      leafletLoc0 <- leafletLocOpt
-      timer0 <- leafletLoc0.timeoutId
-    } yield {
-      Effect.action {
-        DomQuick.clearTimeout( timer0() )
-        DoNothing
-      }
-    }
-  }
-
-
-  /** Интерфейс API для геолокации. */
-  private def GEO_LOC_API: Option[GeoLocApi] = {
-    geoLocApis()
-      .find( _.isAvailable() )
-  }
 
   /** Зачистка watcher'ов. */
   private def clearWatchers(watchers: Map[GeoLocType, MGeoLocWatcher]): (Option[Effect], Map[GeoLocType, MGeoLocWatcher]) = {
@@ -584,7 +419,7 @@ final class GeoLocAh[M](
     }
 
     val fxOpt = OptionUtil.maybeOpt( forStop.nonEmpty ) {
-      for (glApi <- GEO_LOC_API) yield {
+      for (glApi <- geoLocApis().firstAvailable) yield {
         Effect {
           for {
             _ <- glApi.reset()

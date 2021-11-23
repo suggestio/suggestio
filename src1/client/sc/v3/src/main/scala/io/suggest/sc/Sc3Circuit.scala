@@ -11,7 +11,7 @@ import io.suggest.cordova.background.mode.CordovaBgModeAh
 import io.suggest.daemon.{IDaemonAction, IDaemonSleepAction, MDaemonState, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
-import io.suggest.dev.{JsScreenUtil, MPlatformS, MScreenInfo}
+import io.suggest.dev.{JsScreenUtil, MPlatformS, MScScreenS, MScreenInfo}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
@@ -25,7 +25,7 @@ import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAh
 import io.suggest.routes.routes
 import io.suggest.sc.ads.MScNodeMatchInfo
-import io.suggest.sc.c.dev.{GeoLocAh, OnLineAh, PlatformAh, ScGeoTimerAh, ScreenAh}
+import io.suggest.sc.c.dev.{GeoLocAh, LeafletGeoLocAh, OnLineAh, PlatformAh, ScGeoTimerAh, ScScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.dia.{ScErrorDiaAh, ScLoginDiaAh, ScNodesDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler, LocationButtonAh}
@@ -37,7 +37,7 @@ import io.suggest.sc.index.MScIndexes
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
 import io.suggest.sc.m.boot.{Boot, IBootAction, MBootServiceIds, MSpaRouterState}
-import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
+import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS}
 import io.suggest.sc.m.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS, MScAdData}
@@ -464,7 +464,7 @@ class Sc3Circuit(
     modelRW       = gridRW
   )
 
-  private def screenAh: HandlerFunction = new ScreenAh(
+  private def scScreenAh: HandlerFunction = new ScScreenAh(
     modelRW = scScreenRW,
     rootRO  = rootRW
   )
@@ -475,6 +475,11 @@ class Sc3Circuit(
 
   private val geoLocAh: HandlerFunction = new GeoLocAh(
     dispatcher   = this,
+    modelRW      = scGeoLocRW,
+    geoLocApis   = geoLocApis,
+  )
+
+  private def leafletGeoLocAh: HandlerFunction = new LeafletGeoLocAh(
     modelRW      = scGeoLocRW,
     geoLocApis   = geoLocApis,
   )
@@ -756,7 +761,7 @@ class Sc3Circuit(
       case _: IIndexAction              => indexAh
       case _: IScRespAction             => scRespAh
       case _: ISearchTextAction         => searchTextAh
-      case _: IScScreenAction           => screenAh
+      case _: IScScreenAction           => scScreenAh
       case _: IPlatformAction           => platformAh
       case _: IScNodesAction            => scNodesDiaAh
       case _: IWelcomeAction            => welcomeAh
@@ -775,6 +780,7 @@ class Sc3Circuit(
       case _: IDaemonAction             => daemonBgModeAh
       case _: IDaemonSleepAction        => daemonSleepTimerAh
       case _: IHwBtnAction              => scHwButtonsAh
+      case _: ILeafletGeoLocAction      => leafletGeoLocAh
       // редкие варианты:
       case _: IScConfAction             => scConfAh
       case _: IScLoginAction            => scLoginDiaAh

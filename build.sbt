@@ -5,7 +5,6 @@ import com.typesafe.sbt.web.SbtWeb.autoImport._
 import WebScalaJS.autoImport._
 import scalajsbundler.sbtplugin.WebScalaJSBundlerPlugin
 import WebScalaJSBundlerPlugin.autoImport._
-import org.scalajs.jsenv.nodejs.NodeJSEnv
 import org.scalajs.sbtplugin.Stage
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
@@ -486,9 +485,20 @@ lazy val swToolBoxSjs = {
 }
 
 /** Some showcase stuff outside sc3-sjs. */
-lazy val scCommonSjs = {
-  Project(id = "sc-common", base = file(DIR0 + "client/sc/common"))
-    .dependsOn( commonSjs, reactMaterialUiSjs, lkCommonSjs )
+lazy val showcaseCommonSjs = {
+  Project(id = "showcase-common", base = file(DIR0 + "client/sc/common"))
+    .dependsOn(
+      // Normal sc-common deps:
+      commonSjs, commonReactSjs, reactMaterialUiSjs, lkCommonSjs, jdRenderSjs,
+      // TODO Unwanted [sc-common] deps, must be moved back to sc3Sjs, with all related code:
+      beaconerSjs,
+      cordovaSioUtilSjs,
+      mapsSjs,
+      reactScroll,
+      reactQrCodeSjs,
+      loginFormSjs,
+      lkNodesFormSjs,
+    )
 }
 
 /** Showcase 3rd-generation -- react.js main single-page-application of Suggest.io. */
@@ -496,9 +506,7 @@ lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
     .dependsOn(
-      scCommonSjs, commonReactSjs, beaconerSjs, cordovaSioUtilSjs,
-      mapsSjs, jdRenderSjs, reactScroll, reactQrCodeSjs,
-      loginFormSjs, lkNodesFormSjs,
+      showcaseCommonSjs,
     )
 }
 
@@ -509,40 +517,19 @@ lazy val showcaseSsr = crossProject(JSPlatform, JVMPlatform)
   .crossType( CrossType.Full )
   .in( file(DIR0 + "shared/showcase/ssr") )
   .dependsOn( commonBoo )
+  .settings(
+    Common.settingsOrg,
+  )
 
 /** Generate showcase JS for server-side rendering. */
 lazy val showcaseSsrJs = showcaseSsr.js
-  // TODO Remove out sjs-bundler from here?
-  //  > If you target the Node.js runtime, you shouldn't even bundle. Node.js can load the non-bundled CommonJS module in the regular fastopt.js.
-  //  > https://github.com/scalacenter/scalajs-bundler/issues/250#issuecomment-395658194
-  .enablePlugins( ScalaJSBundlerPlugin )
+  .enablePlugins( WebScalaJS )
   .dependsOn( sc3Sjs )
-  .settings(
-    Common.settingsOrgJS,
-    libraryDependencies ++= Seq(
-     "com.github.japgolly.scala-graal" %%% "core-js"       % Common.Vsn.SCALA_GRAAL,
-     "com.github.japgolly.scala-graal" %%% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
-    ),
-    scalaJSLinkerConfig ~= { _.withSourceMap(false) },
-    webpackBundlingMode := BundlingMode.LibraryOnly(),
-    webpackConfigFile in fastOptJS := Some(baseDirectory.value / "webpack.config.js"),
-    webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.config.js"),
-    useYarn := true,
-    jsEnv := new NodeJSEnv(
-      NodeJSEnv.Config()
-        .withArgs( "--max-old-space-size=4096" :: Nil )
-    ),
-  )
 
 /** JVM-parts for showcase server-side rendering. */
 lazy val showcaseSsrJvm = showcaseSsr.jvm
   .settings(
-    Common.settingsOrg,
-    libraryDependencies ++= Seq(
-      "com.github.japgolly.scala-graal" %% "core"          % Common.Vsn.SCALA_GRAAL,
-      "com.github.japgolly.scala-graal" %% "core-js"       % Common.Vsn.SCALA_GRAAL,
-      "com.github.japgolly.scala-graal" %% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
-    ),
+    // TODO unmanagedResources setting is copy-pasted from example. But we copying assets via SbtWebScalaJS plugin... This settings is really needed?
     unmanagedResources in Compile += Def.taskDyn {
       val stage = (scalaJSStage in Compile in showcaseSsrJs).value
       val task = stage match {
@@ -744,7 +731,7 @@ lazy val client = project
     leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
     lkAdvCommonSjs, mapsSjs,
     lkSjs, sysSjs,
-    scCommonSjs, sc3Sjs,
+    showcaseCommonSjs, sc3Sjs,
     scSwSjs, swToolBoxSjs,
     momentSjs, reactDatePickerSjs, momentSioSjs, lkDtPeriodSjs,
     cordovaSjs, cordovaSioUtilSjs, beaconerSjs,

@@ -9,16 +9,7 @@ version := "0.0.0"
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  // С самого начала был нужен js-роутер.
-  "com.github.japgolly.scalajs-react" %%% "extra" % Common.reactSjsVsn,
-
-  // И сразу же завязываем генерацию css на scalacss, чтобы style="" костыли не городить.
-  "com.github.japgolly.scalacss" %%% "ext-react"  % Common.Vsn.SCALACSS,
-
-  // Compile-time DI без рантаймового кода (кроме нагенеренной примитивщины):
   "com.softwaremill.macwire"     %% "macros"     % Common.Vsn.MACWIRE % "provided",
-
-  // testing
   "io.monix"      %%% "minitest"                  % Common.minitestVsn  % Test
 )
 

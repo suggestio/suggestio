@@ -31,6 +31,12 @@ trait GeoLocApi {
   def clearWatch(): Future[_]
 
 }
+object GeoLocApi {
+  implicit final class GeoLocApiCollExt( private val geoLocApis: IterableOnce[GeoLocApi] ) extends AnyVal {
+    def firstAvailable: Option[GeoLocApi] =
+      geoLocApis.iterator.find(_.isAvailable())
+  }
+}
 
 
 /** Опции для абстрактного интерфейса [[GeoLocApi.getAndWatchPosition()]].

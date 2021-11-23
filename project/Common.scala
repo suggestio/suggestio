@@ -242,7 +242,7 @@ object Common {
       * @see [[https://github.com/cquiroz/scala-java-time]]
       * @see [[https://mvnrepository.com/artifact/io.github.cquiroz/scala-java-time]]
       */
-    val SCALA_JAVA_TIME = "2.1.0"
+    val SCALA_JAVA_TIME = "2.+"
 
     /** Flow.js library providing multiple simultaneous, stable and resumable uploads via the HTML5 File API.
       * @see [[https://github.com/flowjs/flow.js/]]

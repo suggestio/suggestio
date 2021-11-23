@@ -2,9 +2,8 @@ package io.suggest.sc.c.dev
 
 import diode._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dev.{HwScreenUtil, JsScreenUtil, MScreenInfo}
+import io.suggest.dev.{HwScreenUtil, JsScreenUtil, MScScreenS, MScreenInfo}
 import io.suggest.jd.render.m.GridRebuild
-import io.suggest.sc.m.dev.MScScreenS
 import io.suggest.sc.m.inx.{MScSideBars, ScCssReBuild, SideBarOpenClose}
 import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -17,10 +16,10 @@ import io.suggest.sjs.dom2.DomQuick
   * Created: 28.11.17 10:46
   * Description: Контроллер, слушающий события экрана устройства.
   */
-class ScreenAh[M](
-                   modelRW: ModelRW[M, MScScreenS],
-                   rootRO : ModelRO[MScRoot]
-                 )
+final class ScScreenAh[M](
+                           modelRW: ModelRW[M, MScScreenS],
+                           rootRO : ModelRO[MScRoot]
+                         )
   extends ActionHandler(modelRW)
 {
 

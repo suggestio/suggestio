@@ -1,4 +1,4 @@
-package io.suggest.sc.router
+package io.suggest.sc.view.jsrouter
 
 import io.suggest.routes.routes
 import io.suggest.sjs.common.vm.doc.SafeBody

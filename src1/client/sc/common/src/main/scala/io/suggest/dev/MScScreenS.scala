@@ -1,7 +1,6 @@
-package io.suggest.sc.m.dev
+package io.suggest.dev
 
 import diode.FastEq
-import io.suggest.dev.MScreenInfo
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens

@@ -1,4 +1,4 @@
-package io.suggest.sc.router
+package io.suggest.sc.view.jsrouter
 
 import io.suggest.sc.ScConstants.JsRouter.{URI, DOM_ID => ID}
 import io.suggest.sjs.common.vm.VmT

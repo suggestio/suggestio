@@ -2,7 +2,7 @@ package io.suggest.sc.m.dev
 
 import diode.FastEq
 import io.suggest.radio.beacon.MBeaconerS
-import io.suggest.dev.MPlatformS
+import io.suggest.dev.{MPlatformS, MScScreenS}
 import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

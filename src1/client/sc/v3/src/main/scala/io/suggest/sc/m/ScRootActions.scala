@@ -114,10 +114,14 @@ case class GlModWatchers( watchers: Map[GeoLocType, Pot[GeoLocWatchId_t]] ) exte
 /** Сработал таймер подавления нежелательных координат. */
 case class GlSuppressTimeout(generation: Long) extends IGeoLocAction
 
+
+/** Actions for LeafletGeoLocAh controller. */
+sealed trait ILeafletGeoLocAction extends IScRootAction
+
 /** Переброска в GeoLocAh запроса из Leaflet.Map().locate() и stopLocation(). */
-case class GlLeafletApiLocate(locateOpts: Option[GlLeafletLocateArgs] ) extends IGeoLocAction
+case class GlLeafletApiLocate(locateOpts: Option[GlLeafletLocateArgs] ) extends ILeafletGeoLocAction
 /** Таймаут запроса геолокации из leaflet. */
-case object GlLeafletApiLocateTimeout extends IGeoLocAction
+case object GlLeafletApiLocateTimeout extends ILeafletGeoLocAction
 
 
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
