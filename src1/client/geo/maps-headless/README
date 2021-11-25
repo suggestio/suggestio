@@ -1,0 +1,3 @@
+Geo maps utilities for common usage, without any Leaflet/mapbox/etc dependencies.
+
+Used also for [showcase-common] sub-project, that must not depend on leaflet.js.

@@ -4,8 +4,9 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.maps.RadOnOff
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.maps.m.{MRad, RadOnOff}
+import io.suggest.maps.m.MRad
 import io.suggest.msg.Messages
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}

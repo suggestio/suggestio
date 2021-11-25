@@ -201,11 +201,6 @@
   resolved "https://registry.yarnpkg.com/@flowjs/flow.js/-/flow.js-2.14.1.tgz#267d9f9d0958f32267ea5815c2a7cc09b9219304"
   integrity sha512-99DWlPnksOOS8uHfo+bhSjvs8d2MfLTB/22JBDC2ONwz/OCdP+gL/iiM4puMSTE2wH4A2/+J0eMc7pKwusXunw==
 
-"@glartek/leaflet.markercluster@1.4.4":
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/@glartek/leaflet.markercluster/-/leaflet.markercluster-1.4.4.tgz#4ad1accf12a7ee1759d17dbc2aed1b49948f79d0"
-  integrity sha512-9ZFmiegPfugwEB7xU8R9cjpKhvqAclJqzXzCUzRB9nzLl15JGsUhT3PlKK1oU+4elUEdBgQBaXlGnKo7pDSxww==
-
 "@material-ui/core@5.0.0-beta.5":
   version "5.0.0-beta.5"
   resolved "https://registry.yarnpkg.com/@material-ui/core/-/core-5.0.0-beta.5.tgz#6ee717d4ec02b28d737fb4be42dbc3b345dccc7c"
@@ -369,11 +364,6 @@
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@react-dnd/shallowequal/-/shallowequal-2.0.0.tgz#a3031eb54129f2c66b2753f8404266ec7bf67f0a"
   integrity sha512-Pc/AFTdwZwEKJxFJvlxrSmGe/di+aAOBn60sremrpLo6VI/6cmiUYNNwlI5KNYttg7uypzA3ILPMPgxB2GYZEg==
-
-"@react-leaflet/core@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@react-leaflet/core/-/core-1.1.1.tgz#827fd05bb542cf874116176d8ef48d5b12163f81"
-  integrity sha512-7PGLWa9MZ5x/cWy8EH2VzI4T8q5WpuHbixzCDXqixP/WyqwIrg5NDUPgYuFnB4IEIZF+6nA265mYzswFo/h1Pw==
 
 "@types/eslint-scope@^3.7.0":
   version "3.7.1"
@@ -1517,14 +1507,6 @@ expand-brackets@^2.1.4:
     snapdragon "^0.8.1"
     to-regex "^3.0.1"
 
-exports-loader@0.7.0:
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/exports-loader/-/exports-loader-0.7.0.tgz#84881c784dea6036b8e1cd1dac3da9b6409e21a5"
-  integrity sha512-RKwCrO4A6IiKm0pG3c9V46JxIHcDplwwGJn6+JJ1RcVnh/WSGJa0xkmk5cRVtgOPzCAtTMGj2F7nluh9L0vpSA==
-  dependencies:
-    loader-utils "^1.1.0"
-    source-map "0.5.0"
-
 express@^4.17.1:
   version "4.17.1"
   resolved "https://registry.yarnpkg.com/express/-/express-4.17.1.tgz#4491fc38605cf51f8629d39c2b5d026f98a4c134"
@@ -1985,14 +1967,6 @@ import-local@^3.0.2:
     pkg-dir "^4.2.0"
     resolve-cwd "^3.0.0"
 
-imports-loader@0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/imports-loader/-/imports-loader-0.8.0.tgz#030ea51b8ca05977c40a3abfd9b4088fe0be9a69"
-  integrity sha512-kXWL7Scp8KQ4552ZcdVTeaQCZSLW+e6nJfp3cwUMB673T7Hr98Xjx5JK+ql7ADlJUvj1JS5O01RLbKoutN5QDQ==
-  dependencies:
-    loader-utils "^1.0.2"
-    source-map "^0.6.1"
-
 inflight@^1.0.4:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/inflight/-/inflight-1.0.6.tgz#49bd6331d7d02d0c09bc910a1075ba8165b56df9"
@@ -2398,16 +2372,6 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.3.tgz#07c05034a6c349fa06e24fa35aa76db4580ce4dd"
   integrity sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==
 
-leaflet.locatecontrol@0.72.0:
-  version "0.72.0"
-  resolved "https://registry.yarnpkg.com/leaflet.locatecontrol/-/leaflet.locatecontrol-0.72.0.tgz#7de5c109a0e10a928bae85e4996e5efa49a3c905"
-  integrity sha512-enAf10UG9Z1bV0siTP/+vG/ZVncDqSA3V8c6iZ3s6KWL5Ngkk4A4mk9Ssefj46ey98I9HSYWqoS+k2Y7EaKjwQ==
-
-leaflet@1.7.1:
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.7.1.tgz#10d684916edfe1bf41d688a3b97127c0322a2a19"
-  integrity sha512-/xwPEBidtg69Q3HlqPdU3DnrXQOvQU/CCHA1tcDQVzOwm91YMYaILjNp7L4Eaw5Z4sOYdbBz6koWyibppd8Zqw==
-
 lines-and-columns@^1.1.6:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.1.6.tgz#1c00c743b433cd0a4e80758f7b64a57440d9ff00"
@@ -2418,7 +2382,7 @@ loader-runner@^4.2.0:
   resolved "https://registry.yarnpkg.com/loader-runner/-/loader-runner-4.2.0.tgz#d7022380d66d14c5fb1d496b89864ebcfd478384"
   integrity sha512-92+huvxMvYlMzMt0iIOukcwYBFpkYJdpl2xsZ7LrlayO7E8SOv+JJUEK17B/dJIHAOLMfh2dZZ/Y18WgmGtYNw==
 
-loader-utils@^1.0.2, loader-utils@^1.1.0, loader-utils@^1.2.3:
+loader-utils@^1.2.3:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/loader-utils/-/loader-utils-1.4.0.tgz#c579b5e34cb34b1a74edc6c1fb36bfa371d5a613"
   integrity sha512-qH0WSMBtn/oHuwjy/NucEgbx5dbxxnxup9s4PVXJUDHZBQY+s0NWA9rJf53RBnQZxfch7euUui7hpoAPvALZdA==
@@ -3054,20 +3018,6 @@ punycode@^2.1.0:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-qr.js@0.0.0:
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/qr.js/-/qr.js-0.0.0.tgz#cace86386f59a0db8050fa90d9b6b0e88a1e364f"
-  integrity sha1-ys6GOG9ZoNuAUPqQ2baw6IoeNk8=
-
-qrcode.react@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/qrcode.react/-/qrcode.react-1.0.1.tgz#2834bb50e5e275ffe5af6906eff15391fe9e38a5"
-  integrity sha512-8d3Tackk8IRLXTo67Y+c1rpaiXjoz/Dd2HpcMdW//62/x8J1Nbho14Kh8x974t9prsLHN6XqVgcnRiBGFptQmg==
-  dependencies:
-    loose-envify "^1.4.0"
-    prop-types "^15.6.0"
-    qr.js "0.0.0"
-
 qs@6.7.0:
   version "6.7.0"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.7.0.tgz#41dc1a015e3d581f1621776be31afb2876a9b1bc"
@@ -3192,13 +3142,6 @@ react-is@^17.0.2:
   version "17.0.2"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
-
-react-leaflet@3.2.2:
-  version "3.2.2"
-  resolved "https://registry.yarnpkg.com/react-leaflet/-/react-leaflet-3.2.2.tgz#3d779662c32a1d8729e73d24e8ad96ee5b38beef"
-  integrity sha512-5W7iWjI9+CdTGVAICe8RUyK0n+uLshr+eLQa8eBCbmstPNpCHZJTUSbju4Ws5dkS/PUCr9t5VmoIE9CXuSBEhw==
-  dependencies:
-    "@react-leaflet/core" "^1.1.1"
 
 react-measure@2.5.2:
   version "2.5.2"
@@ -3748,11 +3691,6 @@ source-map-url@^0.4.0:
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/source-map-url/-/source-map-url-0.4.1.tgz#0af66605a745a5a2f91cf1bbf8a7afbc283dec56"
   integrity sha512-cPiFOTLUKvJFIg4SKVScy4ilPPW6rFgMgfuZJPNoDuMs3nC1HbMUycBoJw77xFIp6z1UJQJOfx6C9GMH80DiTw==
-
-source-map@0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.0.tgz#0fe96503ac86a5adb5de63f4e412ae4872cdbe86"
-  integrity sha1-D+llA6yGpa213mP05BKuSHLNvoY=
 
 source-map@^0.5.6, source-map@^0.5.7:
   version "0.5.7"

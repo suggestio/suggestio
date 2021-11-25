@@ -2,11 +2,11 @@ package io.suggest.maps.r.rad
 
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
+import io.suggest.maps.{RadiusDragEnd, RadiusDragStart, RadiusDragging}
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
-import io.suggest.maps.m.{RadiusDragEnd, RadiusDragStart, RadiusDragging}
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LeafletEventHandlerFnMap}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._

@@ -1,7 +1,7 @@
 package io.suggest.spa
 
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import diode.{Circuit, FastEq, ModelR, ModelRO, ModelRW}
+import diode.{ActionResult, Circuit, FastEq, ModelR, ModelRO, ModelRW}
 import io.suggest.async.IValueCompleter
 import io.suggest.sjs.common.model.TimeoutPromise
 import io.suggest.sjs.dom2.DomQuick
@@ -128,6 +128,17 @@ object CircuitUtil {
         .andThen { case _ => unsubscribeF() }
     }
 
+  }
+
+
+  /** Handler function, that drops every action. */
+  def blackholeActionHandler[M <: AnyRef]: Circuit[M]#HandlerFunction = {
+    (_, _) => Some( ActionResult.NoChange )
+  }
+
+  /** Handler function, that refuses everything (passes action to other action handlers, if any). */
+  def refuseActionHandler[M <: AnyRef]: Circuit[M]#HandlerFunction = {
+    (_, _) => None
   }
 
 }

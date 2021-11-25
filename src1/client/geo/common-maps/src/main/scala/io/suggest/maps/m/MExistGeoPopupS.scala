@@ -3,6 +3,7 @@ package io.suggest.maps.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
+import io.suggest.maps.OpenAdvGeoExistPopup
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._

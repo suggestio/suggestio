@@ -4,7 +4,7 @@ import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp, MRcvrsMapUrlArgs}
 import io.suggest.proto.http.model._
-import io.suggest.routes.{IJsRouter, routes}
+import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
@@ -27,14 +27,11 @@ trait IAdvRcvrsMapApi {
 
 
 /** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку.
-  * @param jsRoutes Функция, возвращающая инстанс js-роутера.
-  *                 Напрямую использовать инстанс пока нельзя: cordova-ios выбрасывает undefined слишком рано.
-  *                 Надо унифицировать js-роутеры, и можно будет убрать этот параметр полностью.
   */
-class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvrsMapApi {
+class AdvRcvrsMapApiHttpViaUrl() extends IAdvRcvrsMapApi {
 
   override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {
-    val __mkRoute = jsRoutes.controllers.Static.advRcvrsMapJson _
+    val __mkRoute = routes.controllers.Static.advRcvrsMapJson _
 
     val route = __mkRoute( args.hashSum )
     val req = HttpReq.routed(

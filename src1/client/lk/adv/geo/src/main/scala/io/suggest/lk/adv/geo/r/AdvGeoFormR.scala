@@ -11,7 +11,8 @@ import io.suggest.lk.adv.geo.r.pop.AdvGeoPopupsR
 import io.suggest.lk.adv.geo.r.rcvr.RcvrPopupR
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.maps.m.{MAdvGeoS, MExistGeoPopupS, MGeoMapPropsR, MMapS}
+import io.suggest.maps.MMapS
+import io.suggest.maps.m.{MAdvGeoS, MExistGeoPopupS, MGeoMapPropsR}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
 import io.suggest.maps.r._
 import io.suggest.react.ReactCommonUtil.Implicits._

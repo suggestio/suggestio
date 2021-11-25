@@ -1,7 +1,6 @@
 package io.suggest.maps.m
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -13,7 +12,7 @@ import scala.scalajs.js.UndefOr
 @js.native
 sealed trait MonkeyNodeId extends js.Object {
 
-  var nodeId: UndefOr[String] = js.native
+  var nodeId: js.UndefOr[String] = js.native
 
 }
 

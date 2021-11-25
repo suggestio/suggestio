@@ -1,10 +1,12 @@
 package io.suggest.maps.r
 
 import diode.react.ModelProxy
+import io.suggest.maps.{HandleLocationFound, HandleMapPopupClose, MapMoveEnd, MapZoomEnd}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateControlOptions}
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, Events, LeafletEventHandlerFnMap, LocationEvent, LocationEventHandlerFn, PopupEvent}
 import io.suggest.sjs.leaflet.map.LMap
@@ -61,8 +63,9 @@ object LGeoMapR {
             proxy.dispatchCB( MapZoomEnd(newZoom) )
           }
           override val moveend = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
-            val newZoom = event.target.asInstanceOf[LMap].getCenter()
-            proxy.dispatchCB( MapMoveEnd(newZoom) )
+            val newCenterLL = event.target.asInstanceOf[LMap].getCenter()
+            val newCenter = MapsUtil.latLng2geoPoint( newCenterLL )
+            proxy.dispatchCB( MapMoveEnd(newCenter) )
           }
         }
       )
@@ -114,6 +117,20 @@ object LGeoMapR {
       mapInstance.flyTo( centerLL, zoom )
     else
       mapInstance.setView( centerLL, zoom )
+
+    ReactCommonUtil.VdomNullElement
+  }
+
+
+  /** Map size invalidation component.
+    * Render() must be called, if map container silently changed himself.
+    */
+  lazy val InvalidateMapSize = ScalaFnComponent[Unit] { _ =>
+    val mapInstance = useMap()
+
+    DomQuick.setTimeout( 50 ) { () =>
+      mapInstance.invalidateSize( animate = false )
+    }
 
     ReactCommonUtil.VdomNullElement
   }

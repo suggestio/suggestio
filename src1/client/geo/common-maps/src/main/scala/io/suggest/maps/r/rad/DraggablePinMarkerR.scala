@@ -2,6 +2,7 @@ package io.suggest.maps.r.rad
 
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
+import io.suggest.maps.{RadCenterClick, RadCenterDragEnd, RadCenterDragStart, RadCenterDragging}
 import io.suggest.maps.m._
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._

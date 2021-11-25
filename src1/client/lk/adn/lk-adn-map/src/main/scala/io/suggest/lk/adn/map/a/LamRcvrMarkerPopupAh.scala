@@ -5,10 +5,11 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adn.map.m.MLamRcvrs
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.lk.m.NodeInfoPopupClose
-import io.suggest.maps.m.{HandleRcvrPopupTryResp, MRcvrPopupS, OpenMapRcvr}
+import io.suggest.maps.m.MRcvrPopupS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.maps.{HandleRcvrPopupTryResp, OpenMapRcvr}
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success

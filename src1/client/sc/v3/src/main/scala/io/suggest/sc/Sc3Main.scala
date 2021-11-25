@@ -9,9 +9,9 @@ import io.suggest.log.remote.RemoteLogAppender
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
-import io.suggest.sc.m.ScreenResetPrepare
+import io.suggest.sc.model.ScreenResetPrepare
 import io.suggest.log.{Log, LogSeverities, Logging}
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.view.styl.ScCssStatic
 import io.suggest.sc.view.jsrouter.SrvRouter
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.view.VUtil

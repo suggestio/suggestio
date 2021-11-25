@@ -2,7 +2,7 @@ package io.suggest.lk.adn.map.m
 
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.geo.json.GjFeature
-import io.suggest.maps.m.OpenAdvGeoExistPopup
+import io.suggest.maps.OpenAdvGeoExistPopup
 import io.suggest.primo.IApply1
 import io.suggest.spa.DAction
 

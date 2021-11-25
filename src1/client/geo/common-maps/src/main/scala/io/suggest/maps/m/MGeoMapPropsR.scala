@@ -1,6 +1,7 @@
 package io.suggest.maps.m
 
 import diode.FastEq
+import io.suggest.maps.MMapS
 import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.LMap
 import io.suggest.spa.OptFastEq

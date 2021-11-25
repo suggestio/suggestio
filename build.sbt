@@ -314,7 +314,7 @@ lazy val lkDtPeriodSjs = {
 lazy val lkAdvCommonSjs = {
   val name = "lk-adv-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/adv/common"))
-    .dependsOn(lkCommonSjs, commonReactSjs, mapsSjs)
+    .dependsOn(lkCommonSjs, commonReactSjs)
 }
 
 /** Form for geo-advertising of ads in geo-regions, tags, direct adv, etc. */
@@ -415,11 +415,17 @@ lazy val mapBoxGlSjs = {
     .dependsOn(commonSjs)
 }
 
+lazy val mapsHeadlessSjs = {
+  val name = "maps-headless-sjs"
+  Project(id = name, base = file(DIR0 + "client/geo/maps-headless"))
+    .dependsOn( commonSjs, commonReactSjs )
+}
+
 /** Suggest.io client-side utils and MVCs for geo.maps and related things. */
 lazy val mapsSjs = {
   val name = "maps-sjs"
   Project(id = name, base = file(DIR0 + "client/geo/common-maps"))
-    .dependsOn(commonSjs, leafletSjs, commonReactSjs, leafletReactSjs)
+    .dependsOn( mapsHeadlessSjs, leafletSjs, leafletReactSjs )
 }
 
 /** Tags editor react-components. */
@@ -446,7 +452,7 @@ lazy val lkAdnEditSjs = {
 lazy val lkAdsSjs = {
   Project(id = "lk-ads-sjs", base = file(DIR0 + "client/lk/ads"))
     // lkNodesSjs: integration by API now, full nodes sub-form popup integration in future.
-    .dependsOn(lkCommonSjs, jdRenderSjs, lkNodesFormSjs, reactStoneCutterSjs, reactScroll)
+    .dependsOn(lkCommonSjs, jdRenderSjs, lkNodesFormSjs, reactStoneCutterSjs )
 }
 
 /** Merged top-level js of personal cabinet.
@@ -490,12 +496,11 @@ lazy val showcaseCommonSjs = {
     .dependsOn(
       // Normal sc-common deps:
       commonSjs, commonReactSjs, reactMaterialUiSjs, lkCommonSjs, jdRenderSjs,
+      mapsHeadlessSjs,
       // TODO Unwanted [sc-common] deps, must be moved back to sc3Sjs, with all related code:
       beaconerSjs,
       cordovaSioUtilSjs,
-      mapsSjs,
       reactScroll,
-      reactQrCodeSjs,
       loginFormSjs,
       lkNodesFormSjs,
     )
@@ -507,6 +512,8 @@ lazy val sc3Sjs = {
     .enablePlugins(WebScalaJS)
     .dependsOn(
       showcaseCommonSjs,
+      reactQrCodeSjs,
+      mapsSjs,
     )
 }
 
@@ -524,7 +531,7 @@ lazy val showcaseSsr = crossProject(JSPlatform, JVMPlatform)
 /** Generate showcase JS for server-side rendering. */
 lazy val showcaseSsrJs = showcaseSsr.js
   .enablePlugins( WebScalaJS )
-  .dependsOn( sc3Sjs )
+  .dependsOn( showcaseCommonSjs )
 
 /** JVM-parts for showcase server-side rendering. */
 lazy val showcaseSsrJvm = showcaseSsr.jvm
@@ -580,7 +587,7 @@ lazy val sysEdgeEditSjs = {
 /** JD (Json Document) tree rendering components. */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( commonSjs, reactStoneCutterSjs, reactMeasureSjs, reactStoneCutterSjs, reactScroll )
+    .dependsOn( commonSjs, reactStoneCutterSjs, reactMeasureSjs, reactStoneCutterSjs )
 }
 
 /** JD editing components. */

@@ -3,9 +3,9 @@ package io.suggest.maps.r.rad
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
+import io.suggest.maps.RadAreaClick
 import io.suggest.maps.u.MapsUtil
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import io.suggest.maps.m.RadAreaClick
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.react.ReactDiodeUtil

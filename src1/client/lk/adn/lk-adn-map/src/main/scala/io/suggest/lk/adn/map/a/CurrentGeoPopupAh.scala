@@ -4,10 +4,11 @@ import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adn.map.m.HandleAdvGeoExistPopupResp
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
-import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistPopup}
+import io.suggest.maps.m.MExistGeoPopupS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.maps.{HandleMapPopupClose, OpenAdvGeoExistPopup}
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success

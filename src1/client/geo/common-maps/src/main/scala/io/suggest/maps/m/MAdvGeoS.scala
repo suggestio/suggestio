@@ -1,5 +1,6 @@
 package io.suggest.maps.m
 
+import io.suggest.maps.MMapS
 import japgolly.univeq._
 import monocle.macros.GenLens
 

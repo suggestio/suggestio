@@ -162,6 +162,7 @@ object HttpClient extends Log {
     }
 
     lazy val reqUri = new URI( httpReq.url )
+    val cookiesOpt = httpReq.data.config.cookies
 
     // Собрать все заголовки запроса воедино:
     val allHeaders = {
@@ -179,15 +180,15 @@ object HttpClient extends Log {
 
       // Если sessionToken доступен, то закинуть его в заголовки:
       for {
-        sessionCookieGetF   <- httpReq.data.config.sessionCookieGet
-        sessionCookie       <- sessionCookieGetF()
+        cookies             <- cookiesOpt
+        sessionCookie       <- cookies.sessionCookieGet()
         // Отфильтровать кукис по домену, чтобы ошибочно не отправить сессию куда-то не по адресу.
         // Поддомены - игнорируем: домен должен точно совпадать.
         if {
           val cookieDomainOpt = sessionCookie.parsed.domain
             .orElse {
               // Определить исходный домен из ссылки в js-роутере
-              httpReq.data.config.cookieDomainDflt.map(_())
+              cookies.cookieDomainDefault()
             }
           var reqDomainOpt = Option( reqUri.getHost )  // getHost returns null for file:/// URLs.
           val r = (for {
@@ -238,8 +239,8 @@ object HttpClient extends Log {
 
     // Если задан sessionTokenSet, то распарсить...
     httpReq.data.config
-      .sessionCookieSet
-      .fold [IHttpResultHolder[HttpResp]] (respHolder) { sessionTokenSetF =>
+      .cookies
+      .fold [IHttpResultHolder[HttpResp]] (respHolder) { cookies =>
         respHolder.mapResult { httpRespFut =>
           for (httpResp <- httpRespFut) yield {
             val setCookies = httpResp.getHeader( HttpConst.Headers.SET_COOKIE )
@@ -278,7 +279,7 @@ object HttpClient extends Log {
             })
               // Не более одного сессионного кукиса:
               .nextOption()
-              .foreach( sessionTokenSetF )
+              .foreach( cookies.sessionCookieSet )
 
             // вернуть исходный resp:
             httpResp

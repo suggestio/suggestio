@@ -2,13 +2,14 @@ package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.lk.adn.map.m.{MLamRcvrs, MRoot}
-import io.suggest.maps.m.{MExistGeoS, MGeoMapPropsR, MMapS}
+import io.suggest.maps.m.{MExistGeoS, MGeoMapPropsR}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
+import io.suggest.maps.MMapS
 import io.suggest.sjs.dt.period.r.DatePeriodR
 import japgolly.scalajs.react.vdom.html_<^._
 import org.js.react.leaflet.{LayerGroup, MapContainer}

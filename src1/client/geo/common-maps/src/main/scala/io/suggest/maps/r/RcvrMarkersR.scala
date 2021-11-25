@@ -7,9 +7,9 @@ import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
 import io.suggest.log.Log
+import io.suggest.maps.OpenMapRcvr
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.maps.m.MonkeyNodeId.forJsObject
-import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}

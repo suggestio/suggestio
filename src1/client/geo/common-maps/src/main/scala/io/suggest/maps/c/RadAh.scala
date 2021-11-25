@@ -3,6 +3,7 @@ package io.suggest.maps.c
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.geo.{CircleGs, IGeoPointField, MGeoPoint}
+import io.suggest.maps.{HandleLocationFound, HandleMapPopupClose, IRadClick, RadCenterDragEnd, RadCenterDragStart, RadCenterDragging, RadOnOff, RadiusDragEnd, RadiusDragStart, RadiusDragging}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 

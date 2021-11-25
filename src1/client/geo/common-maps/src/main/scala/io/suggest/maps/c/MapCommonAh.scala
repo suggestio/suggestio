@@ -3,8 +3,8 @@ package io.suggest.maps.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
+import io.suggest.maps.{HandleLocationFound, HandleMapPopupClose, ISetMapCenterForPopup, MMapS, MapMoveEnd, MapZoomEnd}
 import io.suggest.maps.m._
-import io.suggest.maps.u.MapsUtil
 import japgolly.univeq._
 
 /**
@@ -44,18 +44,17 @@ class MapCommonAh[M](
 
     // Карта была перемещена, у неё теперь новый центр.
     case m: MapMoveEnd =>
-      val mgp = MapsUtil.latLng2geoPoint( m.newCenterLL )
       val v0 = value
-      if (v0.center ~= mgp) {
+      if (v0.center ~= m.newCenter) {
         noChange
       } else {
         // Обновляем через updateSilent, т.к. не нужны никакие side-эффекты.
-        val v2 = (MMapS.centerReal replace Some(mgp))(v0)
+        val v2 = (MMapS.centerReal replace Some(m.newCenter))(v0)
         updatedSilent( v2 )
       }
 
     // Реакция на изменение zoom'а.
-    case ze: IMapZoomEnd =>
+    case ze: MapZoomEnd =>
       val v0 = value
       if (ze.newZoom ==* v0.zoom) {
         noChange

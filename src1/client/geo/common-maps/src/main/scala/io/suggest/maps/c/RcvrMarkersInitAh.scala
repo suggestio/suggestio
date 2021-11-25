@@ -3,12 +3,12 @@ package io.suggest.maps.c
 import diode._
 import diode.Implicits._
 import diode.data.Pot
-import io.suggest.maps.m.RcvrMarkersInit
 import io.suggest.maps.nodes.{MGeoNodesResp, MRcvrsMapUrlArgs}
 import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.maps.RcvrMarkersInit
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success

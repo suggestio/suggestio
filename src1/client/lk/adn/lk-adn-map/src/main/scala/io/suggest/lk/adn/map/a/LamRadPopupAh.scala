@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.a
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.maps.m.{HandleMapPopupClose, IRadClick}
+import io.suggest.maps.{HandleMapPopupClose, IRadClick}
 
 /**
   * Suggest.io

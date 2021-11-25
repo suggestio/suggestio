@@ -2,8 +2,7 @@ package io.suggest.maps.u
 
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.geo._
-import io.suggest.maps.MMapProps
-import io.suggest.maps.m.MMapS
+import io.suggest.maps.{MMapProps, MMapS}
 import io.suggest.sjs.leaflet.{LatLngExpression, Leaflet, PolygonLatLngs_t}
 import io.suggest.sjs.leaflet.map.{LatLng, Point}
 
@@ -57,23 +56,19 @@ object MapsUtil {
         * @return Опциональный результат. None, когда исходный список точек пуст.
         */
       def nearestTo(toPoint: MGeoPoint): Option[MGeoPoint] = {
-        val iter = gps.iterator
-        for (first <- iter.nextOption()) yield {
-          if (iter.isEmpty) {
+        val baseIter = gps.iterator
+        val buffIter = baseIter.buffered
+        for (first <- buffIter.headOption) yield {
+          if (baseIter.isEmpty) {
             first
           } else {
             val toPointLL = geoPoint2LatLng( toPoint )
-            (Iterator.single(first) ++ iter)
+            buffIter
               .minBy { currPoint =>
                 geoPoint2LatLng(currPoint) distanceTo toPointLL
               }
           }
         }
-      }
-
-      def nearestOrFirst(toPointOpt: Option[MGeoPoint]): Option[MGeoPoint] = {
-        toPointOpt
-          .fold( gps.iterator.nextOption() ) { nearestTo }
       }
 
     }
@@ -155,6 +150,43 @@ object MapsUtil {
     */
   def initialMapStateFrom( mapProps: MMapProps ): MMapS = {
     MMapS( mapProps )
+  }
+
+}
+
+
+class DistanceUtilLeafletJs extends IDistanceUtilJs {
+
+  override type T = LatLng
+
+  /** Partially-implemented distance-from calculation via Leaflet.LatLng() methods. */
+  sealed abstract class ILatLngDistanceFrom extends IDistanceFrom[LatLng] {
+    override def distanceTo(to: IDistanceFrom[T]): Double =
+      (geoPointImpl distanceTo to.geoPointImpl).toInt
+  }
+
+  /** Prepare one's point data be distance-measured.
+    *
+    * @return None, if not implemented/not available.
+    */
+  override def prepareDistanceTo(geoPoint: MGeoPoint): Some[IDistanceFrom[T]] = {
+    val _geoPoint = geoPoint
+    val lldf = new ILatLngDistanceFrom {
+      override def geoPoint = _geoPoint
+      override val geoPointImpl = MapsUtil.geoPoint2LatLng( _geoPoint )
+    }
+    Some( lldf )
+  }
+
+  /** Calculate center of polygon (center point of bounding rect.). */
+  override def geoCenterOfPolygon(poly: ILPolygonGs): Some[IDistanceFrom[T]] = {
+    val positions = MapsUtil.lPolygon2leafletCoords( poly )
+    val centerLL = MapsUtil.polyLatLngs2center( positions )
+    val lldf = new ILatLngDistanceFrom {
+      override lazy val geoPoint = MapsUtil.latLng2geoPoint( centerLL )
+      override def geoPointImpl = centerLL
+    }
+    Some( lldf )
   }
 
 }

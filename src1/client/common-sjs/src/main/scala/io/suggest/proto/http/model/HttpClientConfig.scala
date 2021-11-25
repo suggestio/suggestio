@@ -40,9 +40,7 @@ object HttpClientConfig {
 case class HttpClientConfig(
                              csrfToken          : Option[MCsrfToken]            = None,
                              baseHeaders        : Map[String, String]           = HttpReqData.mkBaseHeaders(),
-                             sessionCookieGet   : Option[() => Option[MCookieState]] = None,
-                             sessionCookieSet   : Option[MCookieState => Unit]  = None,
-                             cookieDomainDflt   : Option[() => String]          = None,
+                             cookies            : Option[IHttpCookies]          = None,
                              fetchApi           : Option[(RequestInfo, RequestInit) => Future[HttpResp]] = None,
                              forcePostBodyNonEmpty: Boolean                     = false,
                              language           : Option[MLanguage]             = None,
@@ -51,4 +49,12 @@ case class HttpClientConfig(
 trait IMHttpClientConfig {
   // Доп.костыли для csrf не требуются. CSRF уже вставлен в js-роутер.
   def httpClientConfig: () => HttpClientConfig = () => HttpClientConfig.empty
+}
+
+
+/** Cookies state access. */
+trait IHttpCookies {
+  def sessionCookieGet(): Option[MCookieState]
+  def sessionCookieSet(cookieState: MCookieState): Unit
+  def cookieDomainDefault(): Option[String]
 }

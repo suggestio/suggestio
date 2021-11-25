@@ -6,9 +6,9 @@ import io.suggest.log.Log
 import io.suggest.pick.JsBinaryUtil
 import io.suggest.radio.{MRadioSignal, MRadioSignalJs, MRadioSignalTypes}
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.m.dia.first.{MWzFrames, MWzPhases, WzDebugView}
-import io.suggest.sc.m.{SetDebug, UpdateUnsafeScreenOffsetBy}
-import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx, UnIndex}
+import io.suggest.sc.model.dia.first.{MWzFrames, MWzPhases, WzDebugView}
+import io.suggest.sc.model.{SetDebug, UpdateUnsafeScreenOffsetBy}
+import io.suggest.sc.model.inx.{GetIndex, MScSwitchCtx, UnIndex}
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DAction, DoNothing}
 
