@@ -4,6 +4,9 @@ import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -30,7 +33,7 @@ class HtmlBgTimerAh[M](
         // Эффект отмены текущего таймера.
         v0.timerId.fold( noChange ) { timerId0 =>
           val fx = Effect.action {
-            DomQuick.clearInterval( timerId0 )
+            js.timers.clearInterval( timerId0 )
             DaemonSleepTimerUpdate( None )
           }
           effectOnly(fx)
@@ -40,12 +43,12 @@ class HtmlBgTimerAh[M](
         // (Пере)выставить таймер.
         val setTimerFx = Effect.action {
           v0.timerId
-            .foreach( DomQuick.clearInterval )
+            .foreach( js.timers.clearInterval )
 
           // TODO Отработать opts.everyBoot и opts.stopOnExit - возможно, это реализуется через таймер на стороне
           //      установленного ServiceWorker'а или что-то такое, и этот контроллер надо унести туда же.
           val onTimeA = opts.onTime
-          val timerId = DomQuick.setInterval( opts.every.toMillis.toInt ) { () =>
+          val timerId = js.timers.setInterval( opts.every ) {
             dispatcher( onTimeA )
           }
           DaemonSleepTimerUpdate( Some( timerId ) )

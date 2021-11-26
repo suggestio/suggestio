@@ -6,6 +6,8 @@ import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
 
+import scala.scalajs.js.timers.SetTimeoutHandle
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -29,5 +31,5 @@ object MBufAppendS {
   */
 case class MBufAppendS(
                         accRev          : List[Seq[MLogMsg]]         = Nil,
-                        expTimerId      : Pot[Int]                  = Pot.empty,
+                        expTimerId      : Pot[SetTimeoutHandle]      = Pot.empty,
                       )

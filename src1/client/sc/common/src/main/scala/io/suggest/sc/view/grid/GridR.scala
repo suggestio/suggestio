@@ -7,7 +7,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.CssR
-import io.suggest.grid.{GridBuilderUtilJs, GridConst, GridScrollUtil}
+import io.suggest.grid.{GridBuilderUtilJs, GridConst, ScGridScrollUtil}
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdCss, JdCssStatic, JdR, JdRrr}
 import io.suggest.n2.edge.MEdgeFlags
@@ -236,7 +236,7 @@ class GridR(
 
           <.div(
             smFlex, GridCss.wrapper,
-            ^.id := GridScrollUtil.SCROLL_CONTAINER_ID,
+            ^.id := ScGridScrollUtil.SCROLL_CONTAINER_ID,
             ^.onScroll ==> onGridScroll,
 
             <.div(

@@ -7,6 +7,8 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
 
+import scala.scalajs.js.timers.SetTimeoutHandle
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -35,7 +37,7 @@ object MScSearchText {
 
   implicit final class ScSearchTextOpsExt( private val st: MScSearchText ) extends AnyVal {
 
-    def withSearchQueryTimer(searchQuery: Pot[String], searchTimerId: Option[Int]) = {
+    def withSearchQueryTimer(searchQuery: Pot[String], searchTimerId: Option[SetTimeoutHandle]) = {
       st.copy(
         searchQuery   = searchQuery,
         searchTimerId = searchTimerId,
@@ -56,5 +58,5 @@ object MScSearchText {
 case class MScSearchText(
                           query             : String                = "",
                           searchQuery       : Pot[String]           = Pot.empty,
-                          searchTimerId     : Option[Int]           = None
+                          searchTimerId     : Option[SetTimeoutHandle] = None,
                         )

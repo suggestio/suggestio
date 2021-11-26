@@ -9,6 +9,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -63,7 +65,7 @@ class ScMapDelayAh[M](
         if v0.listenMove
       } yield {
         // Разрешено прослушивание map moveEnd событий. Перезапускаем таймер.
-        DomQuick.clearTimeout( v0.timerId )
+        js.timers.clearTimeout( v0.timerId )
 
         // Выставить новый move-таймер
         _mapMoveListen(m, Some(m.newCenter) )
@@ -74,7 +76,7 @@ class ScMapDelayAh[M](
     // Клик по маркеру ресивера на карте. Отложить, чтобы карта не тормозила.
     case m: OpenMapRcvr =>
       for (v0 <- value)
-        DomQuick.clearTimeout( v0.timerId )
+        js.timers.clearTimeout( v0.timerId )
 
       val reason = MapReIndex( Some(m.nodeId), None )
       _listenTimeout( reason, false, RCVR_ID_CLICK_TIMEOUT )

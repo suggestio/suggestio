@@ -5,6 +5,7 @@ import io.suggest.perm.{BoolOptPermissionState, IPermissionState}
 import io.suggest.sjs.dom2.DomQuick
 
 import scala.concurrent.{CancellationException, Future}
+import scala.scalajs.js
 import scala.util.Random
 
 
@@ -16,7 +17,7 @@ class FakeNfcApiImpl extends INfcApi {
     NfcPendingState(
       result = p.fut,
       cancel = Some { () =>
-        DomQuick.clearTimeout( p.timerId )
+        js.timers.clearTimeout( p.timerId )
         p.promise.tryFailure( new CancellationException )
       },
     )

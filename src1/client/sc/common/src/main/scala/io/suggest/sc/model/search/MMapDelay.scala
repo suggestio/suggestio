@@ -4,6 +4,9 @@ import diode.{FastEq, UseValueEq}
 import io.suggest.sc.model.inx.MapReIndex
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
+
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -37,7 +40,7 @@ object MMapDelay {
   *                       При drag -- надо слушать до победного.
   */
 case class MMapDelay(
-                      timerId           : Int,
+                      timerId           : SetTimeoutHandle,
                       generation        : Long,
                       reason            : MapReIndex,
                       listenMove        : Boolean

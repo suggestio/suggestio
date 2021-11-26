@@ -6,19 +6,21 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil
 import io.suggest.perm.BoolOptPermissionState
 import io.suggest.sc.ScConstants
-import io.suggest.sc.controller.showcase.ScRoutingAh
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.model.dia.first.{MWzPhases, WzPhasePermRes}
 import io.suggest.sc.model.{GeoLocTimeOut, GeoLocTimerCancel, GeoLocTimerStart, GlPubSignal, MScRoot}
 import io.suggest.sc.model.in.{MGeoLocTimerData, MInternalInfo, MScInternals}
 import io.suggest.sc.model.inx.{GetIndex, MScSwitchCtx}
 import io.suggest.sc.model.search.MMapInitState
+import io.suggest.sc.util.ScRoutingUtil
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DoNothing
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
+import scala.scalajs.js
+import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.util.Success
 
 
@@ -42,9 +44,9 @@ class ScGeoTimerAh[M](
   }
 
   /** Effect for geo-timer timer cancelling. */
-  private def _clearTimerFx(timerId: Int): Effect = {
+  private def _clearTimerFx(timerId: SetTimeoutHandle): Effect = {
     Effect.action {
-      DomQuick.clearTimeout( timerId )
+      js.timers.clearTimeout( timerId )
       DoNothing
     }
   }
@@ -157,7 +159,7 @@ class ScGeoTimerAh[M](
         }
 
         modsAcc ::= MScRoot.index
-          .andThen( ScRoutingAh._inxSearchGeoMapInitLens )
+          .andThen( ScRoutingUtil._inxSearchGeoMapInitLens )
           .modify( mapInitModF )
       }
 

@@ -7,12 +7,14 @@ import cordova.plugins.fetch.CdvPluginFetch
 import cordova.plugins.inappbrowser.InAppBrowser
 import diode.react.ModelProxy
 import diode.Effect
+import io.suggest.adt
 import io.suggest.ble.cdv.CdvBleBeaconsApi
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
 import io.suggest.cordova.fetch.CdvFetchHttpResp
 import io.suggest.daemon.{MDaemonState, MDaemonStates}
+import io.suggest.dev.JsScreenUtil
 import io.suggest.geo.{GeoLocApi, Html5GeoLocApi}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
@@ -33,22 +35,27 @@ import io.suggest.proto.http.cookie.MCookieState
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReqData, IHttpCookies, IMHttpClientConfig, MCsrfToken}
 import io.suggest.qr.QrCodeRenderArgs
 import io.suggest.radio.beacon.{BeaconerAh, IBeaconsListenerApi}
+import io.suggest.react.ComponentFunctionR
 import io.suggest.sc.ads.MScNodeMatchInfo
-import io.suggest.sc.controller.dev.OnLineAh
+import io.suggest.sc.controller.dev.{OnLineAh, PlatformAh}
 import io.suggest.sc.controller.dia.{ScLoginDiaAh, ScNodesDiaAh}
+import io.suggest.sc.controller.inx.WelcomeAh
 import io.suggest.sc.controller.search.ScMapDelayAh
-import io.suggest.sc.controller.showcase.ScHwButtonsAh
+import io.suggest.sc.controller.showcase.{ScHwButtonsAh, ScRoutingAh}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.model.grid.{GridAfterUpdate, GridLoadAds}
 import io.suggest.sc.model.in.MScDaemon
-import io.suggest.sc.model.{MScRoot, OnlineCheckConn, ScDaemonWorkProcess, ScLoginFormShowHide, ScNodesShowHide}
+import io.suggest.sc.model.{MScRoot, OnlineCheckConn, RouteTo, ScDaemonWorkProcess, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.model.inx.{GetIndex, MScSwitchCtx, ReGetIndex}
-import io.suggest.sc.model.search.MGeoTabS
+import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
+import io.suggest.sc.util.Sc3ConfUtil
 import io.suggest.sc.util.api.ScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.view.dia.login.ScLoginR
 import io.suggest.sc.view.dia.nodes.{ScNodesNeedLoginR, ScNodesR}
+import io.suggest.sc.view.menu.EnterLkRowR
 import io.suggest.sc.view.search._
+import io.suggest.scroll.{IScrollApi, ReactScrollApi}
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil.mkLensZoomRW
@@ -61,6 +68,7 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
+import scalaz.@@
 
 import scala.util.Try
 
@@ -78,7 +86,19 @@ object Sc3Module {
 
 final class Sc3Module extends ScCommonModule { outer =>
 
+  lazy val sc3SpaRouter: Sc3SpaRouter = {
+    import io.suggest.spa.DiodeUtil.Implicits._
+
+    new Sc3SpaRouter(
+      renderSc3F = { sc3Page =>
+        sc3Circuit.runEffectAction( RouteTo(sc3Page) )
+        scRootRendered
+      }
+    )
+  }
+
   import io.suggest.ReactCommonModule._
+  import sc3SpaRouter.{state => scSpaRouterState}
 
   //lazy val sc3LeafletOverrides = new Sc3LeafletOverrides( sc3Circuit )
 
@@ -89,6 +109,40 @@ final class Sc3Module extends ScCommonModule { outer =>
 
 
   override lazy val sc3Circuit: ScCommonCircuit = new ScCommonCircuitA { circuit =>
+
+    override protected def initialModel: MScRoot = {
+      new InitialModel {
+        // Сначала надо подготовить конфиг, прочитав его со страницы (если он там есть).
+        override val scInit = Sc3ConfUtil.getFreshestInit()
+          .getOrElse {
+            logger.warn( ErrorMsgs.MISSING_DEFAULT_CONFIGURATION )
+            scInitDefault
+          }
+
+        // random seed изначально отсутствует в конфиге.
+        val (conf2, gen2) = scInit.conf.gen.fold {
+          val generation2 = System.currentTimeMillis()
+          val scInit2 = MSc3Init.conf.modify { conf0 =>
+            val conf1 = MSc3Conf.gen
+              .replace( Some(generation2) )(conf0)
+            Sc3ConfUtil.prepareSave( conf1 )
+          }(scInit)
+
+          Sc3ConfUtil.saveInitIfPossible( scInit2 )
+
+          scInit2.conf -> generation2
+        } { gen =>
+          scInit.conf -> gen
+        }
+
+        override val _mscreen = JsScreenUtil.getScreen()
+        override val scConf: MSc3Conf = conf2
+        override def generation = gen2
+        override def mplatform = PlatformAh.platformInit()
+      }
+        .scRoot
+    }
+
     private def scNodesDia = new ScNodesDiaAh(
       modelRW           = scNodesRW,
       getNodesCircuit   = () => ScNodesFormModule.lkNodesFormCircuit,
@@ -305,12 +359,34 @@ final class Sc3Module extends ScCommonModule { outer =>
     )
     def advRcvrsMapApi = wire[AdvRcvrsMapApiHttpViaUrl]
 
+    override def scRoutingAh: HandlerFunction = new ScRoutingAh(
+      modelRW               = rootRW,
+      routerCtl             = sc3SpaRouter.state.routerCtl,
+    )
+
+    override def isNeedBootPerms(): Boolean = {
+      platformRW.value.isCordova || (
+        sc3SpaRouter.state.canonicalRoute.fold(false)(_.needGeoLoc) ||
+        currRouteRW.value.exists(_.needGeoLoc)
+      )
+    }
+
+    override def isNeedGeoLocOnResume(): Boolean =
+      sc3SpaRouter.state.canonicalRoute.needGeoLoc
+
+    override def welcomeAh: HandlerFunction = wire[WelcomeAh[MScRoot]]
+
   }
 
 
+  override def enterLkRowROpt: Option[ComponentFunctionR[ModelProxy[MScRoot]] @@ adt.ScMenuLkEnterItem] = Some {
+    adt.ScMenuLkEnterItem( wire[EnterLkRowR].component.apply )
+  }
+
   lazy val searchMapR = wire[SearchMapR]
-  override def mkSearchMapF: Option[ModelProxy[MGeoTabS] => VdomNode] =
-    Some( searchMapR.component.apply )
+  override def searchMapOptF = Some {
+    adt.ScSearchMap( searchMapR.component.apply )
+  }
 
   /** Use react-qrcode for QR-code rendering. */
   override def qrCodeRenderF: Option[ModelProxy[QrCodeRenderArgs] => VdomNode] = {
@@ -329,7 +405,7 @@ final class Sc3Module extends ScCommonModule { outer =>
 
   /** Cordova + Browser implementation for HttpClientConfig maker. */
   override protected def _httpConfMaker: IScHttpConf = new IScHttpConf {
-    override def mkHttpClientConfig(csrf: Option[MCsrfToken]): HttpClientConfig = {
+    override def mkHttpClientConfig(csrfToken: Option[MCsrfToken]): HttpClientConfig = {
       val isCordova = sc3Circuit.platformRW.value.isCordova
 
       // Замена стандартной, ограниченной в хидерах, fetch на нативный http-client.
@@ -376,6 +452,7 @@ final class Sc3Module extends ScCommonModule { outer =>
         forcePostBodyNonEmpty = httpFetchApi.nonEmpty && isCordova,
         // For cordova: add some language-related information. In browser, cookie is set by server during lang-switch POST, not here.
         language = OptionUtil.maybeOpt( isCordova )( sc3Circuit.languageOrSystemRO.value ),
+        csrfToken = csrfToken,
       )
     }
   }
@@ -602,5 +679,7 @@ final class Sc3Module extends ScCommonModule { outer =>
 
 
   override def distanceUtilJsOpt = Some( wire[DistanceUtilLeafletJs] )
+
+  override def scrollApiOpt = Some( wire[ReactScrollApi] )
 
 }

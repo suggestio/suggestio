@@ -9,6 +9,7 @@ version := "0.0.0"
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
+  "com.github.japgolly.scalajs-react" %%% "extra" % Common.reactSjsVsn,
   "com.softwaremill.macwire"     %% "macros"     % Common.Vsn.MACWIRE % "provided",
   "io.monix"      %%% "minitest"                  % Common.minitestVsn  % Test
 )

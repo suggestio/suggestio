@@ -9,11 +9,13 @@ import io.suggest.radio.beacon.IBeaconsListenerApi
 import io.suggest.radio.{MRadioSignal, MRadioSignalJs, MRadioSignalTypes}
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 
 import java.time.Instant
 import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.scalajs.js
+import scala.scalajs.js.timers.SetIntervalHandle
 import scala.util.Success
 
 
@@ -44,7 +46,7 @@ abstract class CdvWifiWizard2BeaconsApi
   private def SCAN_ACTIVE_EVERY_SECONDS = 1
 
   /** State: interval timer id for  */
-  private var _intervalId: Option[Int] = None
+  private var _intervalId: Option[SetIntervalHandle] = None
 
   /** Is Wi-Fi enabled at the moment? */
   override def isPeripheralEnabled(): Future[Boolean] = {
@@ -64,7 +66,7 @@ abstract class CdvWifiWizard2BeaconsApi
 
   private def _stopCurrentInterval(): Unit = {
     for (ivlId <- _intervalId)
-      DomQuick.clearInterval( ivlId )
+      js.timers.clearInterval( ivlId )
   }
 
   def onTimer(opts: IBeaconsListenerApi.ListenOptions): Unit
@@ -79,9 +81,9 @@ abstract class CdvWifiWizard2BeaconsApi
   override def listenBeacons(opts: IBeaconsListenerApi.ListenOptions): Future[_] = {
     _stopCurrentInterval()
 
-    val intervalId = DomQuick.setInterval(
-      timeMs = (if (isActiveScan(opts)) SCAN_ACTIVE_EVERY_SECONDS else SCAN_PASSIVE_EVERY_SECONDS) * 1000,
-    ) { () =>
+    val intervalId = js.timers.setInterval(
+      (if (isActiveScan(opts)) SCAN_ACTIVE_EVERY_SECONDS else SCAN_PASSIVE_EVERY_SECONDS).seconds,
+    ) {
       onTimer( opts )
     }
 

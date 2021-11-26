@@ -4,7 +4,9 @@ import com.materialui.MuiTheme
 import com.softwaremill.macwire._
 import diode.react.ModelProxy
 import diode.Effect
+import io.suggest.adt.{ScMenuLkEnterItem, ScSearchMap}
 import io.suggest.geo.IDistanceUtilJs
+import io.suggest.grid.ScGridScrollUtil
 import io.suggest.id.login.v.session.LogOutDiaR
 import io.suggest.lk.IPlatformComponentsModule
 import io.suggest.lk.api.{ILkLangApi, LkLangApiHttpImpl}
@@ -14,8 +16,9 @@ import io.suggest.log.Log
 import io.suggest.nfc.INfcApi
 import io.suggest.proto.http.model.{HttpClientConfig, MCsrfToken}
 import io.suggest.qr.QrCodeRenderArgs
+import io.suggest.react.ComponentFunctionR
 import io.suggest.routes.IJsRouter
-import io.suggest.sc.model.RouteTo
+import io.suggest.sc.model.MScRoot
 import io.suggest.sc.model.search.MGeoTabS
 import io.suggest.sc.util.ScGeoUtil
 import io.suggest.sc.util.api.{IScStuffApi, IScUniApi, ScAppApiHttp, ScStuffApiHttp, ScUniApiHttpImpl}
@@ -29,17 +32,18 @@ import io.suggest.sc.view.grid._
 import io.suggest.sc.view.hdr._
 import io.suggest.sc.view.inx._
 import io.suggest.sc.view.dia.login.ScLoginR
-import io.suggest.sc.view.dia.nodes.{ScNodesNeedLoginR, ScNodesR}
+import io.suggest.sc.view.dia.nodes.ScNodesR
 import io.suggest.sc.view.menu._
 import io.suggest.sc.view.search._
 import io.suggest.sc.view.search.found._
 import io.suggest.sc.view.snack._
 import io.suggest.sc.view.styl._
-import io.suggest.spa.{DAction, DoNothing, SioPages}
+import io.suggest.scroll.IScrollApi
+import io.suggest.spa.{DAction, DoNothing}
 import japgolly.scalajs.react.React
-import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import scalaz.{@@, Tag}
 
 /**
   * Suggest.io
@@ -54,27 +58,14 @@ abstract class ScCommonModule extends Log { outer =>
   import io.suggest.ReactCommonModule._
   import io.suggest.lk.LkCommonModule._
 
-  lazy val sc3SpaRouter: Sc3SpaRouter = {
-    import io.suggest.spa.DiodeUtil.Implicits._
-    lazy val rendered: VdomElement = sc3Circuit.wrap( identity(_) )( scRootR.component.apply )
-
-    new Sc3SpaRouter(
-      renderSc3F = { sc3Page =>
-        sc3Circuit.runEffectAction( RouteTo(sc3Page) )
-        rendered
-      }
-    )
-  }
-
-  import sc3SpaRouter.{state => sc3SpaRouterState}
-  import sc3SpaRouter.state.routerCtl
 
   def sc3Circuit: ScCommonCircuit
 
   /** Partial implementation for Sc3Circuit with already defined stuff. */
   protected abstract class ScCommonCircuitA extends ScCommonCircuit {
-    override def spaRouterState = outer.sc3SpaRouter.state
     override def scGeoUtil = outer.scGeoUtil
+    override def scrollApiOpt = outer.scrollApiOpt
+    override def scGridScrollUtil = outer.scGridScrollUtil
 
     override def sc3UniApi: IScUniApi = {
       import ScHttpConf._
@@ -100,7 +91,6 @@ abstract class ScCommonModule extends Log { outer =>
 
   // React contexts
   lazy val muiThemeCtx = React.createContext[MuiTheme]( null )
-  lazy val sc3RouterCtlCtx = React.createContext[RouterCtl[SioPages.Sc3]]( sc3SpaRouter.state.routerCtl )
   lazy val platfromCssCtx = React.createContext[PlatformCssStatic]( sc3Circuit.platformCssRO.value )
   lazy val scCssCtx = React.createContext[ScCss]( sc3Circuit.scCssRO.value )
   lazy val jsRouterOptCtx = React.createContext[Option[IJsRouter]]( sc3Circuit.jsRouterRW.value.jsRouterOpt )
@@ -133,7 +123,7 @@ abstract class ScCommonModule extends Log { outer =>
 
 
   // search
-  def mkSearchMapF: Option[ModelProxy[MGeoTabS] => VdomNode]
+  def searchMapOptF: Option[ComponentFunctionR[ModelProxy[MGeoTabS]] @@ ScSearchMap]
   lazy val searchR = wire[SearchR]
   lazy val nfListR = wire[NfListR]
   lazy val nfRowsR = wire[NfRowsR]
@@ -145,7 +135,7 @@ abstract class ScCommonModule extends Log { outer =>
   lazy val menuR = wire[MenuR]
   lazy val menuItemR = wire[MenuItemR]
   lazy val versionR = wire[VersionR]
-  lazy val enterLkRowR = wire[EnterLkRowR]
+  def enterLkRowROpt: Option[ComponentFunctionR[ModelProxy[MScRoot]] @@ ScMenuLkEnterItem]
   lazy val aboutSioR = wire[AboutSioR]
   lazy val editAdR = wire[EditAdR]
   lazy val dlAppMenuItemR = wire[DlAppMenuItemR]
@@ -179,10 +169,9 @@ abstract class ScCommonModule extends Log { outer =>
 
   // sc3
   lazy val scThemes = wire[ScThemes]
-  lazy val scRootR = {
-    wire[ScRootR]
-  }
-
+  lazy val scRootR = wire[ScRootR]
+  lazy val scRootRendered: VdomElement =
+    sc3Circuit.wrap( identity(_) )( scRootR.component.apply )
 
   /** Interface for abstraction of HttpClientConfig generator. */
   protected trait IScHttpConf {
@@ -234,5 +223,8 @@ abstract class ScCommonModule extends Log { outer =>
 
   def distanceUtilJsOpt: Option[IDistanceUtilJs]
   def scGeoUtil = wire[ScGeoUtil]
+
+  def scrollApiOpt: Option[IScrollApi]
+  def scGridScrollUtil = wire[ScGridScrollUtil]
 
 }

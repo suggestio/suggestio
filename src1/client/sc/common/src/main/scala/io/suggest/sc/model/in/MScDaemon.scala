@@ -9,6 +9,8 @@ import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
 
+import scala.scalajs.js.timers.SetTimeoutHandle
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -45,6 +47,6 @@ case class MScDaemon(
                       cdvBgTimer     : MCBgTimerS          = MCBgTimerS.empty,
                       cdvBgFetch     : MCBgFetchS          = MCBgFetchS.empty,
                       htmlBgTimer    : MHtmlBgTimerS       = MHtmlBgTimerS.empty,
-                      fallSleepTimer : Pot[Int]            = Pot.empty,
+                      fallSleepTimer : Pot[SetTimeoutHandle] = Pot.empty,
                       state          : Pot[MDaemonState]   = Pot.empty,
                     )

@@ -8,6 +8,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -74,7 +76,7 @@ class STextAh[M](
       } else {
         // Если уже запущен таймер фильтра быстрых нажатий, то загасить его.
         for (oldTimerId <- v0.searchTimerId)
-          DomQuick.clearTimeout( oldTimerId )
+          js.timers.clearTimeout( oldTimerId )
 
         // Текст для поиска изменился.
         val v1 = (MScSearchText.query replace m.newText)(v0)

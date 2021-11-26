@@ -34,7 +34,7 @@ final class ScSsrUtil @Inject()(
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Create new thread pool for current usage. */
-  private def _graalCtxPool: GraalContextPool[Future] = {
+  private lazy val _graalCtxPool: GraalContextPool[Future] = {
     // https://github.com/oracle/graaljs/issues/495
     Thread.currentThread().setContextClassLoader( classOf[Context].getClassLoader )
 
@@ -42,7 +42,7 @@ final class ScSsrUtil @Inject()(
 
     val r = GraalContextPool
       .Builder
-      .fixedThreadPool( 2 )
+      .fixedThreadPool( 1 )
       .fixedContextPerThread()
       // Move async effects into cats-effect:
       /*.resultType[IO]( new AsyncES[IO] {
@@ -102,10 +102,12 @@ final class ScSsrUtil @Inject()(
           val langName = implicitly[Language].name
 
           (if (path contains "-loader.") {
+            // var global {} -- need for `raf` npm.js package. https://github.com/chrisdickinson/raf/issues/46
             val jsCode = """
-              |var exports = {};
+              |var exports = globalThis;
               |exports.require = ScalaJSBundlerLibrary.require;
               |var require = ScalaJSBundlerLibrary.require;
+              |var global = globalThis;
               |""".stripMargin
 
             Source.newBuilder( langName, jsCode, path )
@@ -117,7 +119,10 @@ final class ScSsrUtil @Inject()(
             .build()
         }
       }
-      .reduceLeft(_ >> _)
+      .reduce(_ >> _)
+    // Currently, ReactSsr.Setup adds global window{}. This fails react-stonecutter because https://github.com/dantrain/react-stonecutter/issues/7
+    // TODO When react-stonecutter will be replaced with something else (mui/Masonry?), these exprs should be re-done according to documentation.
+    //      ReactSsr.Setup( exprs.dropRight(1): _* ) >> exprs.last
   }
 
 
@@ -129,8 +134,8 @@ final class ScSsrUtil @Inject()(
   def renderShowcaseContent(args: MScSsrArgs): Future[Expr.Result[String]] = {
      // IO.defer
     val pool = _graalCtxPool
-    pool.eval( _renderActionSyncFn(args) )
-      .andThen { case _ => pool.unsafeShutdown() }
+    pool.eval( _renderActionSyncFn( args ) )
+      //.andThen { case _ => pool.unsafeShutdown() }
   }
 
 }

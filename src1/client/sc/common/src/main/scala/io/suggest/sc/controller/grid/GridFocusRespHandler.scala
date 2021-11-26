@@ -3,6 +3,7 @@ package io.suggest.sc.controller.grid
 import diode.{ActionResult, Effect}
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
+import io.suggest.grid.ScGridScrollUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.jd.render.u.JdUtil
@@ -27,7 +28,9 @@ import scalaz.{EphemeralStream, Tree, TreeLoc}
   * Created: 04.03.2020 16:43
   * Description: Resp-handler для обработки ответа по фокусировке одной карточки.
   */
-final class GridFocusRespHandler
+final class GridFocusRespHandler(
+                                  scGridScrollUtil: => ScGridScrollUtil,
+                                )
   extends IRespWithActionHandler
   with Log
 {
@@ -406,14 +409,15 @@ final class GridFocusRespHandler
       val gridCore2 = GridAh.resetFocus( Some(focGridKeyPath), gridCore1 )
 
       // Надо проскроллить выдачу на начало открытой карточки:
-      val scrollFx = GridAh.scrollToAdFx( focAddedLoc.getLabel, gridCore2.gridBuild )
+      val scrollFx = scGridScrollUtil.scrollToAdFx( focAddedLoc.getLabel, gridCore2.gridBuild )
       val resetRouteFx = ResetUrlRoute().toEffectPure
 
       val v2 = MScRoot.grid
         .andThen(MGridS.core)
         .replace( gridCore2 )( ctx.value0 )
 
-      val fxOpt = Some(scrollFx + resetRouteFx)
+      val fxOpt = (resetRouteFx :: scrollFx.toList)
+        .mergeEffects
       ActionResult(Some(v2), fxOpt)
     })
       // m.gridPtr = None не отрабатываем, т.к. gridKey должен уже быть выставлен на раннем этапе.

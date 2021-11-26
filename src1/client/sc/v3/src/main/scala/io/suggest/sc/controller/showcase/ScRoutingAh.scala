@@ -10,10 +10,11 @@ import io.suggest.sc.model._
 import io.suggest.sc.model.boot.{Boot, BootAfter, MBootServiceIds}
 import io.suggest.sc.model.dia.first.InitFirstRunWz
 import io.suggest.sc.model.grid._
-import io.suggest.sc.model.in.{MInternalInfo, MJsRouterS, MScInternals}
+import io.suggest.sc.model.in.{MJsRouterS, MScInternals}
 import io.suggest.sc.model.inx._
 import io.suggest.sc.model.menu.DlAppOpen
-import io.suggest.sc.model.search.{MGeoTabS, MMapInitState, MScSearch, NodeRowClick}
+import io.suggest.sc.model.search.{MMapInitState, NodeRowClick}
+import io.suggest.sc.util.ScRoutingUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.{DoNothing, SioPages}
@@ -21,89 +22,6 @@ import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
-
-/**
-  * Suggest.io
-  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 25.07.17 12:53
-  * Description: Outer SPA URL-router interaction controller.
-  */
-object ScRoutingAh {
-
-  /** Make current state data for URL.
-    * @param v0 MScRoot instance.
-    * @return Sc3 state URL snapshot.
-    */
-  def getMainScreenSnapShot(v0: MScRoot): SioPages.Sc3 = {
-    val inxState = v0.index.state
-    val searchOpened = v0.index.search.panel.opened
-
-    // If nothing in view (showcase not yet fully loaded), do not mess original values.
-    val bootingRoute = v0.internals.info.currRoute
-      .filter( _ => inxState.viewCurrent.isEmpty && v0.index.resp.isEmpty )
-    val currRcvrId = bootingRoute.fold(inxState.rcvrId)(_.nodeId)
-
-    // TODO Support for several tags inside URL
-    val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption
-
-    // Do not render coords in URL, if showcase index contexted in identified node, closed search panel and no selected tag.
-    // This helps for caching, also.
-    val locEnv2 = OptionUtil.maybe {
-      currRcvrId.isEmpty
-    } {
-      bootingRoute
-        .flatMap(_.locEnv)
-        .getOrElse {
-          v0.index.search.geo.mapInit.state.center
-        }
-    }
-
-    SioPages.Sc3(
-      nodeId        = currRcvrId,
-      locEnv        = locEnv2,
-      generation    = Some( inxState.generation ),
-      searchOpened  = searchOpened,
-      tagNodeId     = selTagIdOpt,
-      menuOpened    = v0.index.menu.opened,
-      focusedAdId   = for {
-        scAdLoc   <- v0.grid.core.ads.interactAdOpt
-        scAd      = scAdLoc.getLabel
-        adData    <- scAd.data.toOption
-        if adData.isOpened
-        nodeId    <- adData.doc.tagId.nodeId
-      } yield {
-        nodeId
-      },
-      firstRunOpen = v0.dialogs.first.view.nonEmpty,
-      dlAppOpen    = v0.index.menu.dlApp.opened,
-      settingsOpen = v0.dialogs.settings.opened,
-      login = for {
-        loginCircuit <- v0.dialogs.login.ident
-      } yield {
-        loginCircuit.currentPage()
-      },
-    )
-  }
-
-  def _inxSearchGeoMapInitLens = {
-    MScIndex.search
-      .andThen( MScSearch.geo )
-      .andThen( MGeoTabS.mapInit )
-  }
-
-
-  def root_internals_info_currRoute_LENS = {
-    MScRoot.internals
-      .andThen( MScInternals.info )
-      .andThen( MInternalInfo.currRoute )
-  }
-
-
-  def root_index_search_geo_init_state_LENS = MScRoot.index
-    .andThen( _inxSearchGeoMapInitLens )
-    .andThen( MMapInitState.state )
-
-}
 
 
 /** Controller class for SPA router interaction. */
@@ -114,6 +32,10 @@ final class ScRoutingAh(
   extends ActionHandler(modelRW)
   with Log
 { ah =>
+
+  private def root_index_search_geo_init_state_LENS = MScRoot.index
+    .andThen( ScRoutingUtil._inxSearchGeoMapInitLens )
+    .andThen( MMapInitState.state )
 
   override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
 
@@ -137,7 +59,7 @@ final class ScRoutingAh(
       val isBootCompletedOrForce = m.force || isBootCompleted
 
       // Grab current Sc3 state URL snapshot.
-      val currMainScreen = ScRoutingAh.getMainScreenSnapShot( v0 )
+      val currMainScreen = ScRoutingUtil.getMainScreenSnapShot( v0 )
 
       var isToReloadIndex = isFullyReady && v0.index.resp.isTotallyEmpty
       var needUpdateUi = false
@@ -148,7 +70,7 @@ final class ScRoutingAh(
       var fxsAcc = List.empty[Effect]
 
       // Save m.route into state, if route is different from changed value.
-      val currRouteLens = ScRoutingAh.root_internals_info_currRoute_LENS
+      val currRouteLens = ScRoutingUtil.root_internals_info_currRoute_LENS
       if ( !(currRouteLens.get(v0) contains[SioPages.Sc3] m.mainScreen) )
         modsAcc ::= currRouteLens.replace( Some(m.mainScreen) )
 
@@ -212,7 +134,7 @@ final class ScRoutingAh(
         )
       ) {
         for (nextGeoPoint <- m.mainScreen.locEnv) {
-          modsAcc ::= ScRoutingAh.root_index_search_geo_init_state_LENS
+          modsAcc ::= root_index_search_geo_init_state_LENS
             .modify {
               _.withCenterInitReal( nextGeoPoint )
             }
@@ -375,10 +297,10 @@ final class ScRoutingAh(
     // Action to make a SPA-router to update current URL:
     case m: ResetUrlRoute =>
       val v0 = value
-      def nextRoute0 = ScRoutingAh.getMainScreenSnapShot( v0 )
+      def nextRoute0 = ScRoutingUtil.getMainScreenSnapShot( v0 )
       var nextRoute2 = m.mods.fold(nextRoute0)( _(() => nextRoute0) )
 
-      val currRouteLens = ScRoutingAh.root_internals_info_currRoute_LENS
+      val currRouteLens = ScRoutingUtil.root_internals_info_currRoute_LENS
       val currRouteOpt = currRouteLens.get( v0 )
 
       if (!m.force && (currRouteOpt contains[SioPages.Sc3] nextRoute2)) {

@@ -29,7 +29,8 @@ object MScIndexArgs {
     (__ \ NODE_ID_FN).formatNullable[String] and
     (__ \ GEO_INTO_RCVR_FN).format[Boolean] and
     (__ \ RET_GEO_LOC_FN).format[Boolean] and
-    (__ \ RETURN_EPHEMERAL).formatNullable[Boolean].formatBooleanOrFalse
+    (__ \ RETURN_EPHEMERAL).formatNullable[Boolean].formatBooleanOrFalse and
+    (__ \ WITH_WELCOME_FN).formatNullable[Boolean].formatBooleanOrTrue
   )( apply, unlift(unapply) )
 
   @inline implicit def univEq: UnivEq[MScIndexArgs] = UnivEq.derive
@@ -50,12 +51,14 @@ object MScIndexArgs {
   *                   true, пока геолокация неизвестна вообще, и сервер может её подсказать.
   *                   false в остальных случаях.
   * @param returnEphemeral Return ephemeral "current location" node for coords.
+  * @param withWelcome Is to render welcome splash-screen or not?
   */
 case class MScIndexArgs(
                          nodeId       : Option[String]  = None,
                          geoIntoRcvr  : Boolean         = true,
                          retUserLoc   : Boolean         = false,
                          returnEphemeral: Boolean       = false,
+                         withWelcome  : Boolean         = true,
                        ) {
 
   override def toString = StringUtil.toStringHelper(this) { f =>

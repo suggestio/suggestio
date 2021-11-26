@@ -3,11 +3,10 @@ package io.suggest.sjs.common.vm.wnd
 import io.suggest.sjs.common.vm.wnd.compstyle.GetComputedStyleT
 import io.suggest.sjs.common.vm.wnd.dpr.DevPxRatioT
 import io.suggest.sjs.common.vm.wnd.nav.NavigatorVm
-import org.scalajs.dom
-import org.scalajs.dom.{MediaQueryList, Navigator, Window}
+import io.suggest.sjs.dom2.{DomExt, DomWindowExt}
+import org.scalajs.dom.{MediaQueryList, Window}
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -16,17 +15,25 @@ import scala.scalajs.js.UndefOr
  * Description: Безопасный доступ к необязательным полям window, таким как devicePixelRatio.
  * @see [[http://habrahabr.ru/post/159419/ Расовое авторитетное мнение Мицгола о devicePixelRatio, например.]]
  */
-trait WindowVmT
+case class WindowVm()
   extends DevPxRatioT
   with GetComputedStyleT
 {
-  override type T <: Window
+  override type T = Window
 
-  def stub = WindowStub(_underlying)
+  override def _underlying = DomExt.windowOpt getOrElse {
+    // Crunch for graalVM environment: emulate window object presence for some scala calls.
+    js.Object().asInstanceOf[Window]
+  }
+
+  def stub = DomWindowExt(_underlying)
+
+  def documentOpt = stub.documentU.toOption
 
   /** Безопасный доступ к навигатору. */
   def navigator: Option[NavigatorVm] = {
-    stub.navigator
+    stub
+      .navigator
       .toOption
       .map { NavigatorVm.apply }
   }
@@ -40,27 +47,4 @@ trait WindowVmT
       .toOption
   }
 
-}
-
-
-/** Дефолтовая реализация [[WindowVmT]]. */
-case class WindowVm(_underlying: Window = dom.window) extends WindowVmT {
-  override type T = Window
-}
-
-
-object WindowStub {
-  import scala.language.implicitConversions
-  implicit def apply(wnd: Window): WindowStub =
-    wnd.asInstanceOf[WindowStub]
-}
-@js.native
-sealed trait WindowStub extends js.Object {
-  def navigator: js.UndefOr[Navigator] = js.native
-  def matchMedia(mediaQuery: String): UndefOr[MediaQueryList] = js.native
-
-  var ontouchstart: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
-  var ontouchmove: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
-  var ontouchend: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
-  var ontouchcancel: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
 }

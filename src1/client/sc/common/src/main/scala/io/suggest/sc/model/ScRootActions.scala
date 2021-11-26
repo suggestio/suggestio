@@ -22,6 +22,7 @@ import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json.JsValue
 
+import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.util.Try
 
 /**
@@ -300,7 +301,7 @@ case class ScDaemonDozed( isActive: Boolean ) extends IScDaemonAction
 case class ScDaemonWorkProcess( isActive: Boolean ) extends IScDaemonAction
 
 /** Запущен/остановлен запасной таймер засыпания демона. */
-case class ScDaemonFallSleepTimerSet( timerId: Option[Int] ) extends IScDaemonAction
+case class ScDaemonFallSleepTimerSet( timerId: Option[SetTimeoutHandle] ) extends IScDaemonAction
 
 /** Срабатывание таймера пробуждения демона. */
 case class ScDaemonSleepAlarm(isActive: Boolean) extends IScDaemonAction

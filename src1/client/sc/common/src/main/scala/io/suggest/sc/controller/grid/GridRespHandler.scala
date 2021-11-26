@@ -1,9 +1,8 @@
 package io.suggest.sc.controller.grid
 
-import com.github.fisshy.react.scroll.AnimateScroll
 import diode.data.Pot
 import diode.{ActionResult, Effect}
-import io.suggest.grid.GridScrollUtil
+import io.suggest.grid.ScGridScrollUtil
 import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
 import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.MJdDataJs
@@ -18,6 +17,7 @@ import io.suggest.sc.view.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.scroll.IScrollApi
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
@@ -32,7 +32,9 @@ import scalaz.Tree
 
 /** Поддержка resp-handler'а для карточек плитки без фокусировки. */
 final class GridRespHandler(
+                             scrollApiOpt          : => Option[IScrollApi],
                              scNotificationsOpt    : => Option[ScNotifications],
+                             scGridScrollUtil      : => ScGridScrollUtil,
                            )
   extends IRespWithActionHandler
   with Log
@@ -367,15 +369,20 @@ final class GridRespHandler(
 
     // Опциональный эффект скролла вверх.
     if (isGridPatching) {
-      for (fx <- GridAh.repairScrollPosFx( g0, g2 ))
+      for (fx <- scGridScrollUtil.repairScrollPosFx( g0, g2 ))
         fxAcc ::= fx
     } else {
       // Возможно, требование скролла задано принудительно в исходном запросе перезагрузки плитки?
       val isScrollUp = isSilentOpt.fold(isCleanLoad)(!_)
       // А если вручную не задано, то определить нужность скроллинга автоматически:
-      if (isScrollUp) {
+      if (isScrollUp) for (scrollApi <- scrollApiOpt) {
         fxAcc ::= Effect.action {
-          AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions(isSmooth = true) )
+          scrollApi.scrollTo(
+            containerId = ScGridScrollUtil.SCROLL_CONTAINER_ID,
+            relative    = false,
+            toPx        = 0,
+            smooth      = true,
+          )
           DoNothing
         }
       }

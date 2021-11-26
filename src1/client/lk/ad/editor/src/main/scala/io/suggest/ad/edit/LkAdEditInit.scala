@@ -1,6 +1,5 @@
 package io.suggest.ad.edit
 
-import com.materialui.Mui
 import com.softwaremill.macwire._
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.init.routed.InitRouter
@@ -46,11 +45,11 @@ trait LkAdEditInit extends InitRouter {
 
     val rootRO = circuit.rootRO
 
-    val defaultTheme = Mui.Styles.createTheme()
-
     // Произвести рендер компонента формы:
+    val formTarget = VUtil
+      .getElementById[HTMLDivElement]( AdFormConstants.AD_EDIT_FORM_CONT_ID )
+      .get
     val formComponent = circuit.wrap(rootRO)( modules.lkAdEditFormR.component.apply )
-    val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdFormConstants.AD_EDIT_FORM_CONT_ID )
     formComponent.renderIntoDOM( formTarget )
 
     // Рендерить контейнер попапов...

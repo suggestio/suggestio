@@ -339,6 +339,7 @@ final class JsMessagesUtil @Inject() (
       MC.`Language` :: MC.`System._adjective` ::
       MC.`Requesting.permission` ::
       MC.`Current.location` ::
+      MC.`About.sio.node.id` ::
       MLanguages.values.iterator.map(_.singularMsgCode).toList
 
     (

@@ -1,13 +1,13 @@
 package controllers.sc
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.MGeoPoint
-import io.suggest.i18n.{I18nConst, MLanguages, MsgCodes}
+import io.suggest.geo.{MGeoLoc, MGeoPoint, MLocEnv}
+import io.suggest.i18n.{I18nConst, MLanguages}
 import io.suggest.maps.MMapProps
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.MNode
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
+import io.suggest.sc.sc3.{MSc3Conf, MSc3Init, MScCommonQs, MScQs}
 import io.suggest.spa.SioPages
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.MacroLogsImpl
@@ -25,12 +25,19 @@ import OptionUtil.BoolOptOps
 import com.google.inject.Inject
 import controllers.Assets
 import controllers.Assets.Asset
+import io.suggest.ble.MUidBeacon
+import io.suggest.es.model.MEsUuId
 import io.suggest.playx.CacheApiUtil
+import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
+import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.ssr.{MScSsrArgs, SsrSetState}
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc.SiteTpl
 import japgolly.univeq._
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
+import scalaz.NonEmptyList
+import util.showcase.ScSsrUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -66,8 +73,8 @@ final class ScSite @Inject() (
   private lazy val configuration = injector.instanceOf[Configuration]
   private lazy val assets = injector.instanceOf[Assets]
 
-  //private lazy val scSsrUtil = injector.instanceOf[ScSsrUtil]
-  //private lazy val scUniApi = injector.instanceOf[ScUniApi]
+  private lazy val scSsrUtil = injector.instanceOf[ScSsrUtil]
+  private lazy val scUniApi = injector.instanceOf[ScUniApi]
 
 
 
@@ -291,15 +298,6 @@ final class ScSite @Inject() (
     /** Рассчёт и кэширование хэша для сборки URL для JSON-карты ресиверов. */
     private def rcvrNodesUrlArgsFut = advGeoRcvrsUtil.rcvrsMapUrlArgs()(ctx)
 
-
-    /** Какой узел должен быть за about? */
-    private def aboutSioNodeIdFut: Future[String] = {
-      // TODO Надо, в зависимости от языка юзера, выдавать разные узлы.
-      // TODO Желательно кэшировать результат, если он вдруг асинхронный.
-      val aboutSioNodeId = ctx.messages( MsgCodes.`About.sio.node.id` )
-      Future.successful( aboutSioNodeId )
-    }
-
     def scriptCacheHashCodeFut: Future[Int] = {
       cacheApiUtil.getOrElseFut(_request.host + ":scv3ScriptCacheHashCode", 10.seconds) {
         Future {
@@ -315,7 +313,6 @@ final class ScSite @Inject() (
 
       // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
       val jsMessagesJs = jsMessagesUtil.sc( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
-      val _aboutSioNodeIdFut = aboutSioNodeIdFut
 
       val _scriptCacheHashCodeFut = scriptCacheHashCodeFut
 
@@ -330,7 +327,6 @@ final class ScSite @Inject() (
       // Собрать все результаты в итоговый скрипт.
       for {
         geoPoint0             <- _geoPoint0Fut
-        aboutSioNodeId        <- _aboutSioNodeIdFut
         scriptCacheHashCode   <- _scriptCacheHashCodeFut
         rcvrsMapUrlArgs       <- _rcvrsMapUrlArgsFut
         withServiceWorker     <- _withServiceWorkerFut
@@ -343,11 +339,10 @@ final class ScSite @Inject() (
             zoom   = MMapProps.ZOOM_DEFAULT
           ),
           conf = MSc3Conf(
-            aboutSioNodeId    = aboutSioNodeId,
             apiVsn            = _siteQsArgs.apiVsn,
             debug             = SC_JS_DEBUG,
             // Хост-порт для запросов через CDN:
-            rcvrsMapUrl       = rcvrsMapUrlArgs,
+            rcvrsMapUrl       = Some( rcvrsMapUrlArgs ),
             language          = Option( MLanguages.byCode( ctx.messages.lang.language ) ),
           )
         )
@@ -413,6 +408,7 @@ final class ScSite @Inject() (
                 geoIntoRcvr = false,
                 retUserLoc = false,
                 returnEphemeral = false,
+                withWelcome = false,
               )),
               foc = mainScreen.focusedAdId.map { focAdId =>
                 MScFocusArgs(

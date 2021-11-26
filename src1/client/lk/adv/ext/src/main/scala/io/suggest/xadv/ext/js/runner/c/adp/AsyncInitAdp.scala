@@ -3,7 +3,6 @@ package io.suggest.xadv.ext.js.runner.c.adp
 import io.suggest.sjs.common.async.AsyncUtil
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.sjs.dom2.DomQuick
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiInitException, DomUpdateException, UrlLoadTimeoutException}
 import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtxT}
@@ -11,6 +10,7 @@ import org.scalajs.dom
 import org.scalajs.dom.Element
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -103,7 +103,7 @@ trait AsyncInitAdp extends IAdapter with Log {
 
     // Среагировать на слишком долгую загрузку скрипта таймаутом.
     val t = SCRIPT_LOAD_TIMEOUT_MS
-    DomQuick.setTimeout(t) { () =>
+    js.timers.setTimeout(t) {
       if (!scriptLoadP.isCompleted) {
         p.failure( UrlLoadTimeoutException(SCRIPT_URL, t) )
         logger.error(msg = "timeout " + t + " ms occured during ensureReady() script inject")

@@ -37,14 +37,14 @@ trait LkAdnEditInit extends InitRouter {
     circuit
       .wrap(identityRootF)( module.lkAdnEditFormR.component.apply )
       .renderIntoDOM(
-        VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.FORM_CONTAINER_ID )
+        VUtil.getElementById[HTMLDivElement]( NodeEditConstants.FORM_CONTAINER_ID ).get
       )
 
     // Рендерить компонент сохранения в правый div.
     circuit
       .wrap(identityRootF)( module.rightBarR.component.apply )
       .renderIntoDOM(
-        VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.SAVE_BTN_CONTAINER_ID )
+        VUtil.getElementById[HTMLDivElement]( NodeEditConstants.SAVE_BTN_CONTAINER_ID ).get
       )
 
     // Рендерить компонент попапов формы.

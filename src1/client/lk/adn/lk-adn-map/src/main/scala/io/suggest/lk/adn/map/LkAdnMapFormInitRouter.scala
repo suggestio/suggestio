@@ -53,14 +53,14 @@ trait LkAdnMapFormInitRouter extends InitRouter {
     circuit
       .wrap(mrootRO)( module.lamFormR.component.apply )
       .renderIntoDOM(
-        VUtil.getElementByIdOrNull[HTMLDivElement]( AdnMapFormConstants.FORM_CONT_ID )
+        VUtil.getElementById[HTMLDivElement]( AdnMapFormConstants.FORM_CONT_ID ).get
       )
 
     // Виджет стоимости на правой панели:
     circuit
       .wrap(_.price)( PriceR.component.apply )
       .renderIntoDOM(
-        VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
+        VUtil.getElementById[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID ).get
       )
 
     // Рендер контейнера обычных попапов.

@@ -50,4 +50,7 @@ package object dom2 {
   @inline implicit def htmlScriptTagExt( scriptTag: dom.html.Script ): HtmlScriptTagExt =
     scriptTag.asInstanceOf[HtmlScriptTagExt]
 
+  @inline implicit def domDocumentExt( doc: dom.Document ): DocumentExt =
+    doc.asInstanceOf[DocumentExt]
+
 }

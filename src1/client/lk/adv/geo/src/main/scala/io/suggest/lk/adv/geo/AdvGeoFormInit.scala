@@ -40,12 +40,12 @@ trait AdvGeoFormInitRouter extends InitRouter {
 
     // Рендер всей формы:
     val formR = circuit.wrap(identity(_))( module.advGeoFormR.component.apply )
-    val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvGeoConstants.REACT_FORM_TARGET_ID )
+    val formTarget = VUtil.getElementById[HTMLDivElement]( AdvGeoConstants.REACT_FORM_TARGET_ID ).get
     formR.renderIntoDOM( formTarget )
 
     // Отдельно идёт рендер виджета цены PriceR:
     val priceR = circuit.wrap(_.adv.bill.price)( PriceR.component.apply )
-    val priceTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
+    val priceTarget = VUtil.getElementById[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID ).get
     priceR.renderIntoDOM( priceTarget )
 
   }

@@ -2,7 +2,7 @@ package io.suggest.sc.sc3
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.sc.MScApiVsn
+import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -21,7 +21,6 @@ import io.suggest.ueq.UnivEqUtil._
 object MSc3Conf {
 
   object Fields {
-    def ABOUT_SIO_NODE_ID           = "a"
     def RCVRS_MAP_URL               = "r"
     def API_VSN                     = "v"
     def DEBUG_FLAG                  = "d"
@@ -37,12 +36,11 @@ object MSc3Conf {
   implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = {
     val F = Fields
     (
-      (__ \ F.ABOUT_SIO_NODE_ID).format[String] and
       (__ \ F.API_VSN).format[MScApiVsn] and
       (__ \ F.DEBUG_FLAG).formatNullable[Boolean]
         // Если очень надо, отладка может быть ВКЛючена по-умолчанию, если явно не задана в конфиге: .getOrElseTrue
         .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
-      (__ \ F.RCVRS_MAP_URL).format[MRcvrsMapUrlArgs] and
+      (__ \ F.RCVRS_MAP_URL).formatNullable[MRcvrsMapUrlArgs] and
       (__ \ F.SERVER_GENERATED_AT).format[Long] and
       (__ \ F.CLIENT_UPDATED_AT).formatNullable[Long] and
       (__ \ F.GEN).formatNullable[Long] and
@@ -81,11 +79,9 @@ object MSc3Conf {
   *                 On cordova: always None in index.html. May be set by user via ScSettings.
   */
 final case class MSc3Conf(
-                           // TODO aboutSioNodeId унести в Messages(), чтобы при смене языка этот id тоже менялся.
-                           aboutSioNodeId     : String,
-                           apiVsn             : MScApiVsn,
-                           debug              : Boolean,
-                           rcvrsMapUrl        : MRcvrsMapUrlArgs,
+                           apiVsn             : MScApiVsn         = MScApiVsns.unknownVsn,
+                           debug              : Boolean           = false,
+                           rcvrsMapUrl        : Option[MRcvrsMapUrlArgs] = None,
                            serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
                            clientUpdatedAt    : Option[Long]      = None,
                            gen                : Option[Long]      = None,

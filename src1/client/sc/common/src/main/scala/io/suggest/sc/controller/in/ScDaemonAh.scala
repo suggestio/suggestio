@@ -11,12 +11,13 @@ import io.suggest.daemon.{DaemonBgModeSet, DaemonSleepTimerFinish, DaemonSleepTi
 import io.suggest.dev.MPlatformS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
-import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 
 import scala.concurrent.duration._
+import scala.scalajs.js
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -124,7 +125,7 @@ class ScDaemonAh[M](
 
         // На случай какой-либо задержки логики фонового сканирования, нужно гарантировать выключение демона через время.
         val fallSleepTimerFx = Effect.action {
-          val timerId = DomQuick.setTimeout( ScDaemonAh.FALL_SLEEP_AFTER.toMillis.toInt ) { () =>
+          val timerId = js.timers.setTimeout( ScDaemonAh.FALL_SLEEP_AFTER.toMillis.toInt ) {
             val a = if (platfromRO.value.osFamily.isUseBgModeDaemon)
               ScDaemonSleepAlarm( isActive = false )
             else
@@ -147,7 +148,7 @@ class ScDaemonAh[M](
 
         for (timerId <- v0.fallSleepTimer) {
           fxsAcc ::= Effect.action {
-            DomQuick.clearTimeout( timerId )
+            js.timers.clearTimeout( timerId )
             ScDaemonFallSleepTimerSet( None )
           }
         }
@@ -166,7 +167,7 @@ class ScDaemonAh[M](
           .toOption
 
         val v2 = m.timerId.fold {
-          MScDaemon.fallSleepTimer replace Pot.empty[Int]
+          MScDaemon.fallSleepTimer replace Pot.empty
         } { timerId2 =>
           MScDaemon.fallSleepTimer.modify( _.ready(timerId2) )
         }(v0)
@@ -184,9 +185,9 @@ class ScDaemonAh[M](
 
 
   /** Эффект очистки таймера без экшена. */
-  private def _clearFallSleepTimerSilentFx(timerId: Int): Effect = {
+  private def _clearFallSleepTimerSilentFx(timerId: SetTimeoutHandle): Effect = {
     Effect.action {
-      DomQuick.clearTimeout( timerId )
+      js.timers.clearTimeout( timerId )
       DoNothing
     }
   }

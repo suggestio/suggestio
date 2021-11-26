@@ -2,7 +2,8 @@ package io.suggest.sjs.common.view
 
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.sjs.common.vm.create.CreateDiv
-import org.scalajs.dom
+import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.sjs.dom2._
 import org.scalajs.dom.raw.HTMLDivElement
 import org.scalajs.dom.{Element, Node}
 
@@ -16,12 +17,6 @@ import scala.annotation.tailrec
  */
 object VUtil extends CssSzImplicits with CreateDiv {
 
-  def getElementByIdOrNull[T <: Element](id: String): T = {
-    dom.document
-      .getElementById(id)
-      .asInstanceOf[T]
-  }
-
   /**
    * Быстро и кратко записывать получение элементов из DOM по id.
    * @param id id элемента.
@@ -29,7 +24,11 @@ object VUtil extends CssSzImplicits with CreateDiv {
    * @return Опционально-найденный элемент DOM.
    */
   def getElementById[T <: Element](id: String): Option[T] = {
-    Option( getElementByIdOrNull[T](id) )
+    for {
+      document <- WindowVm().documentOpt
+      if document.getElementByIdU.nonEmpty
+      el <- Option( document.getElementById(id).asInstanceOf[T] )
+    } yield el
   }
 
 

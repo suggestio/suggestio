@@ -63,6 +63,9 @@ object ScConstants {
     /** Имя поля с данными экрана клиентского устройства. */
     final def SCREEN_FN         = "s"
 
+    /** Name of field with flag: is need to render welcome splash screen of don't. */
+    final def WITH_WELCOME_FN   = "wc"
+
     /** Имя поля с версией API выдачи. */
     final def VSN_FN            = "v"
 

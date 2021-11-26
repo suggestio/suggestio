@@ -9,11 +9,12 @@ import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.model.dia.first.{MWzFrames, MWzPhases, WzDebugView}
 import io.suggest.sc.model.{SetDebug, UpdateUnsafeScreenOffsetBy}
 import io.suggest.sc.model.inx.{GetIndex, MScSwitchCtx, UnIndex}
-import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DAction, DoNothing}
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+import scala.scalajs.js.timers.SetIntervalHandle
 import scala.util.Random
 
 /**
@@ -71,11 +72,13 @@ object Sc3JsApi extends Log {
       case opt: Option[_] =>
         emitCancel( opt.iterator )
       case intervalId: Int =>
-        DomQuick.clearInterval( intervalId )
+        dom.window.clearInterval( intervalId )
       case arr: IterableOnce[_] =>
         arr.iterator.foreach( emitCancel )
       case arr: js.Array[_] =>
         emitCancel( arr.iterator )
+      case other =>
+        js.timers.clearInterval( other.asInstanceOf[SetIntervalHandle] )
     }
   }
 
@@ -88,12 +91,12 @@ object Sc3JsApi extends Log {
 
       val rnd = new Random()
       (1 to count)
-        .foldLeft( List.empty[Int] ) { (acc, i) =>
+        .foldLeft( List.empty[SetIntervalHandle] ) { (acc, i) =>
           val bcnTxPower = -70 - rnd.nextInt(30)
           // Генерация псевдо-случайного id вида "aa112233445566778899-000000000456"
           val tailId = 100000000000L + rnd.nextLong(1000000000L) + i
           val bcnUid = "bb112233445566778899-" + tailId.toString
-          val ivlId = DomQuick.setInterval( 800 + rnd.nextInt(800) ) { () =>
+          val ivlId = js.timers.setInterval( 800 + rnd.nextInt(800) ) {
             val radioType = MRadioSignalTypes.BluetoothEddyStone
             val action = RadioSignalsDetected(
               signals = MRadioSignalJs(
@@ -152,7 +155,7 @@ object Sc3JsApi extends Log {
       // For wifi scan imitation - used single interval for list of networks.
       if (ids.nonEmpty) {
         val seed = rnd.nextInt( 20 )
-        DomQuick.setInterval( (2 + rnd.nextInt(4)) * 1000 ) { () =>
+        js.timers.setInterval( (2 + rnd.nextInt(4)) * 1000 ) {
           val radioType = MRadioSignalTypes.WiFi
           val exampleNames = _WIFI_SSID_EXAMPLES
           val exampleNamesCount = exampleNames.length

@@ -2,6 +2,7 @@ package io.suggest.log.buffered
 
 import io.suggest.log.{ILogAction, MLogMsg}
 
+import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.util.Try
 
 /**
@@ -16,7 +17,7 @@ sealed trait IBufLogAppendAction extends ILogAction
 case class LogAppend( logMsgs: Seq[MLogMsg] ) extends IBufLogAppendAction
 
 /** Результат обновления таймера. */
-case class ExpTimerUpdate( timerId: Try[Option[Int]] ) extends IBufLogAppendAction
+case class ExpTimerUpdate( timerId: Try[Option[SetTimeoutHandle]] ) extends IBufLogAppendAction
 
 /** Срабатывание таймера. */
 case object ExpTimerAlarm extends IBufLogAppendAction

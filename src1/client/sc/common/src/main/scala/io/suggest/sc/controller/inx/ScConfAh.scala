@@ -2,6 +2,7 @@ package io.suggest.sc.controller.inx
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.maps.RcvrMarkersInit
+import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 import io.suggest.sc.model.{SaveConf, SetDebug}
 import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.sc.util.Sc3ConfUtil
@@ -38,10 +39,10 @@ class ScConfAh[M](
         // Отработать rcvrMapUrl:
         for {
           rcvrsMapUrlArgs2 <- confUpdate.rcvrsMap
-          if rcvrsMapUrlArgs2 !=* v0.rcvrsMapUrl
+          if !(v0.rcvrsMapUrl contains[MRcvrsMapUrlArgs] rcvrsMapUrlArgs2)
         } {
           // Закинуть новый URL ресиверов в состояние:
-          modsAcc ::= (MSc3Conf.rcvrsMapUrl replace rcvrsMapUrlArgs2)
+          modsAcc ::= (MSc3Conf.rcvrsMapUrl replace Some(rcvrsMapUrlArgs2))
 
           // Организовать эффект или таймер для обновления карты. Таймер нужен, чтобы карта не обновлялась слишком часто:
           fxAcc ::= Effect.action {

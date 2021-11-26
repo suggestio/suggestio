@@ -1,7 +1,10 @@
 package io.suggest.sc.model.in
 
 import io.suggest.sc.model.GeoLocTimerStart
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq.UnivEq
+
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 
 object MGeoLocTimerData {
@@ -15,6 +18,6 @@ object MGeoLocTimerData {
   * @param reason timer data.
   */
 final case class MGeoLocTimerData(
-                                   timerId      : Int,
+                                   timerId      : SetTimeoutHandle,
                                    reason       : GeoLocTimerStart,
                                  )

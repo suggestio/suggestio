@@ -6,6 +6,7 @@ import monocle.macros.GenLens
 import org.scalajs.dom
 
 import scala.scalajs.js
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -34,6 +35,6 @@ object MGlSourceS {
   */
 case class MGlSourceS(
                        args           : GlLeafletLocateArgs,
-                       timeoutId      : Option[() => Int] = None,
+                       timeoutId      : Option[() => SetTimeoutHandle] = None,
                      )
   extends IGlSourceS

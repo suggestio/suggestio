@@ -7,6 +7,7 @@ import io.suggest.sjs.common.model.TimeoutPromise
 import io.suggest.sjs.dom2.DomQuick
 
 import scala.concurrent.{Future, Promise}
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -109,7 +110,7 @@ object CircuitUtil {
         // If promise already completed, cancel timeout timer (if defined).
         if (doneP.isCompleted)
           for (tp <- _timeoutPromiseOpt) {
-            DomQuick.clearTimeout( tp.timerId )
+            js.timers.clearTimeout( tp.timerId )
             _timeoutPromiseOpt = None
           }
       }

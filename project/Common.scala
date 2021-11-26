@@ -210,7 +210,7 @@ object Common {
     /** Версия react-scroll для управления скроллингом.
       * @see [[https://github.com/fisshy/react-scroll]]
       */
-    val REACT_SCROLL = "1.8.1"
+    val REACT_SCROLL = "1.8.4"
 
     /** Упрощённое API-обёртка над WebBluetooth для работы с маячками eddystone прямо из браузера.
       * @see [[https://github.com/zurfyx/eddystone-web-bluetooth]]

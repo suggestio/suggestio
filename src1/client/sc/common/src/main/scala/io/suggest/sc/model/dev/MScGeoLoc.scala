@@ -11,6 +11,8 @@ import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
 
+import scala.scalajs.js.timers.SetTimeoutHandle
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -137,7 +139,7 @@ object MGeoLocWatcher {
   * @param generation "Поколение" для защиты от ложных срабатываний уже отмененных таймеров.
   */
 case class Suppressor(
-                       timerId      : Int,
+                       timerId      : SetTimeoutHandle,
                        generation   : Long,
                        minWatch     : GeoLocType
                      )

@@ -39,7 +39,7 @@ object RcvrMarkersInitAh {
 /** Diode action handler для обслуживания карты ресиверов. */
 class RcvrMarkersInitAh[M](
                             api             : IAdvRcvrsMapApi,
-                            argsRO          : ModelRO[MRcvrsMapUrlArgs],
+                            argsRO          : ModelRO[Option[MRcvrsMapUrlArgs]],
                             modelRW         : ModelRW[M, Pot[MGeoNodesResp]],
                             isOnlineRoOpt   : Option[ModelRO[Boolean]]        = None,
                           )
@@ -66,10 +66,15 @@ class RcvrMarkersInitAh[M](
           .fold {
             // Нет значения и нет ошибок. Организовать бы запуск запроса...
             // Есть связь с инетом. Запуск запроса на исполнение.
-            val v2 = v0.pending()
-            val m2 = RcvrMarkersInit.resp.replace( v2 )(m)
-            val fx = RcvrMarkersInitAh.startInitFx( argsRO.value, api, m2 )
-            updatedSilent( v2, fx )
+            argsRO.value.fold {
+              logger.info( ErrorMsgs.INACTUAL_NOTIFICATION, msg = m )
+              noChange
+            } { args =>
+              val v2 = v0.pending()
+              val m2 = RcvrMarkersInit.resp.replace( v2 )(m)
+              val fx = RcvrMarkersInitAh.startInitFx( args, api, m2 )
+              updatedSilent( v2, fx )
+            }
 
           } { ex =>
             logger.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )

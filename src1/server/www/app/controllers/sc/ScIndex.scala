@@ -413,8 +413,13 @@ final class ScIndex @Inject()(
 
 
       /** Получение карточки приветствия. */
-      val welcomeOptFut: Future[Option[MWelcomeRenderArgs]] =
-        welcomeUtil.getWelcomeRenderArgs(mnode, ctx.deviceScreenOpt)(ctx)
+      val welcomeOptFut: Future[Option[MWelcomeRenderArgs]] = {
+        if (_scIndexArgs.withWelcome) {
+          welcomeUtil.getWelcomeRenderArgs(mnode, ctx.deviceScreenOpt)(ctx)
+        } else {
+          Future.successful(None)
+        }
+      }
 
       /** Определение заголовка выдачи. */
       def title: String = {

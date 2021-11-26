@@ -6,11 +6,11 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.controller.showcase.ScRoutingAh
 import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexInfo, MScIndexes}
 import io.suggest.sc.model.inx.save.MIndexesRecentOuter
 import io.suggest.sc.model.search.{MNodesFoundS, MSearchCssProps, MSearchRespInfo}
 import io.suggest.sc.model.{LoadIndexRecents, MScRoot, NodeRecentNodeClick, ResetUrlRoute, SaveRecentIndex}
+import io.suggest.sc.util.ScRoutingUtil
 import io.suggest.sc.util.api.IScStuffApi
 import io.suggest.sc.view.search.SearchCss
 import io.suggest.spa.DiodeUtil.Implicits.PotOpsExt
@@ -72,7 +72,7 @@ final class NodesRecentAh[M](
           val routeFx = Effect.action {
             // Patch current showcase route with data from previous state:
             val mroot = scRootRO.value
-            val currentRoute = ScRoutingAh.root_internals_info_currRoute_LENS.get( mroot )
+            val currentRoute = ScRoutingUtil.root_internals_info_currRoute_LENS.get( mroot )
             var nextRoute = currentRoute
               .fold( inxRecent.state )( _ silentSwitchingInto inxRecent.state )
 

@@ -5,7 +5,7 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.{Css, CssR}
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.{ComponentFunctionR, ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.model.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.model.search._
 import io.suggest.sc.model.MScRoot
@@ -13,9 +13,11 @@ import io.suggest.sc.view.search.found.NodesFoundR
 import io.suggest.sc.view.styl.{ScCss, ScCssStatic}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import ReactCommonUtil.Implicits._
+import io.suggest.adt.ScSearchMap
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import scalaz.{@@, Tag}
 
 /**
   * Suggest.io
@@ -26,7 +28,7 @@ import scalacss.ScalaCssReact._
 final class SearchR(
                      nodesFoundR              : NodesFoundR,
                      geoMapOuterR             : GeoMapOuterR,
-                     mkSearchMapF             : Option[ModelProxy[MGeoTabS] => VdomNode],
+                     searchMapOptF            : Option[ComponentFunctionR[ModelProxy[MGeoTabS]] @@ ScSearchMap],
                      scCssP                   : React.Context[ScCss],
                    ) {
 
@@ -60,7 +62,9 @@ final class SearchR(
 
       // Непосредственно, панель поиска:
       // Рендер вкладки карты:
-      val geoMap = mkSearchMapF.whenDefinedNode( _(mrootProxy.zoom(_.index.search.geo)) )
+      val geoMap = searchMapOptF.whenDefinedNode { searchMapF =>
+        Tag.unwrap( searchMapF )( mrootProxy.zoom(_.index.search.geo) )
+      }
 
       // Тело текущего таба.
       val tabContentInner = <.div(

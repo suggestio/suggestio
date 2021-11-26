@@ -145,7 +145,7 @@ final class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot]
     val rcvrsInitAh = new RcvrMarkersInitAh(
       api     = rcvrsMapApi,
       modelRW = rcvrsRw.zoomRW(_.nodesResp) { _.withNodesResp(_) },
-      argsRO  = confRO.zoom(_.rcvrsMap),
+      argsRO  = confRO.zoom { conf => Some(conf.rcvrsMap) },
     )
 
     val rcvrMarkerPopupAh = new LamRcvrMarkerPopupAh(

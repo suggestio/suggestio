@@ -27,7 +27,7 @@ object JsScreenUtil extends Log {
         MPxRatios.default
       }( MPxRatios.forRatio(_) )
 
-    vszOpt.fold{
+    vszOpt.fold {
       // Наврядли этот код будет вызываться когда-либо.
       (MScreen.pxRatio replace pxRatio)(MScreen.default)
     } { sz2d =>

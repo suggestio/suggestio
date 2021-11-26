@@ -500,7 +500,6 @@ lazy val showcaseCommonSjs = {
       // TODO Unwanted [sc-common] deps, must be moved back to sc3Sjs, with all related code:
       beaconerSjs,
       cordovaSioUtilSjs,
-      reactScroll,
       loginFormSjs,
       lkNodesFormSjs,
     )
@@ -513,6 +512,7 @@ lazy val sc3Sjs = {
     .dependsOn(
       showcaseCommonSjs,
       reactQrCodeSjs,
+      reactScroll,
       mapsSjs,
     )
 }

@@ -190,7 +190,7 @@ final class LeafletGeoLocAh[M](
       timer0 <- leafletLoc0.timeoutId
     } yield {
       Effect.action {
-        DomQuick.clearTimeout( timer0() )
+        js.timers.clearTimeout( timer0() )
         DoNothing
       }
     }

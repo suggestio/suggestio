@@ -43,7 +43,7 @@ trait LkAdsInit extends InitRouter {
     // Линкуем с компонентом и html-страницей.
     circuit
       .wrap(identity(_))( mproxy => modules.lkAdsFormR(mproxy) )
-      .renderIntoDOM( VUtil.getElementByIdOrNull[HTMLDivElement]( LkAdsFormConst.FORM_CONT_ID ) )
+      .renderIntoDOM( VUtil.getElementById[HTMLDivElement]( LkAdsFormConst.FORM_CONT_ID ).get )
 
     // Подписаться на события скроллинга. scroll-контейнер пока висит на уровне html-тега.
     dom

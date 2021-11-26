@@ -9,12 +9,11 @@ import io.suggest.cordova.background.mode.CordovaBgModeAh
 import io.suggest.daemon.{IDaemonAction, IDaemonSleepAction}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
-import io.suggest.dev.{JsScreenUtil, MPlatformS, MScScreenS, MScreenInfo}
-import io.suggest.i18n.MsgCodes
+import io.suggest.dev.{MPlatformS, MScScreenS, MScreen, MScreenInfo}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
-import io.suggest.maps.{IMapsAction, IRcvrMarkersInitAction, MMapS}
+import io.suggest.maps.{IMapsAction, IRcvrMarkersInitAction, MMapProps, MMapS}
 import io.suggest.maps.MMapS.MMapSFastEq4Map
 import io.suggest.msg._
 import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAh
@@ -40,18 +39,16 @@ import io.suggest.sc.model.menu.{IScAppAction, MDlAppDia, MMenuS}
 import io.suggest.sc.model.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.model.search._
 import io.suggest.sc.sc3.{IScRespAction, MSc3Conf, MSc3Init}
-import io.suggest.sc.util.{Sc3ConfUtil, ScGeoUtil}
+import io.suggest.sc.util.ScGeoUtil
 import io.suggest.sc.util.api.{IScAppApi, IScStuffApi, IScUniApi}
 import io.suggest.sc.view.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2._
 import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, IHwBtnAction, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
-import org.scalajs.dom
-import io.suggest.event.DomEvents
-import io.suggest.geo.GeoLocApi
+import io.suggest.geo.{GeoLocApi, MGeoPoint}
+import io.suggest.grid.ScGridScrollUtil
 import io.suggest.id.login.c.session.SessionAh
 import io.suggest.id.login.m.ILogoutAction
 import io.suggest.jd.render.m.{IGridAction, IJdAction}
@@ -64,13 +61,14 @@ import io.suggest.os.notify.IOsNotifyAction
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.controller.android.{IIntentAction, ScIntentsAh}
-import io.suggest.sc.controller.showcase.{ScErrorAh, ScRespAh, ScRoutingAh}
+import io.suggest.sc.controller.showcase.{ScErrorAh, ScRespAh}
 import io.suggest.sc.controller.in.{BootAh, ScDaemonAh, ScLangAh}
 import io.suggest.sc.model.dia.first.IWz1Action
 import io.suggest.sc.model.inx.save.MIndexesRecentOuter
 import io.suggest.sc.model.styl.MScCssArgs
 import io.suggest.sc.view.styl.ScCss
 import io.suggest.sc.view.toast.ScNotifications
+import io.suggest.scroll.IScrollApi
 import io.suggest.spa.delay.{ActionDelayerAh, IDelayAction}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -92,7 +90,6 @@ abstract class ScCommonCircuit
   with ReactConnector[MScRoot]
 { circuit =>
 
-  def spaRouterState: MSpaRouterState
   def sc3UniApi: IScUniApi
   def scAppApi: IScAppApi
   def scStuffApi: IScStuffApi
@@ -103,7 +100,10 @@ abstract class ScCommonCircuit
   /** Leaflet monkey-patched internal location API calls controller. */
   def leafletGeoLocAhOpt: Option[ILeafletGeoLocAh[MScRoot]]
   def scGeoUtil: ScGeoUtil
-
+  def isNeedBootPerms(): Boolean
+  def isNeedGeoLocOnResume(): Boolean
+  def scrollApiOpt: Option[IScrollApi]
+  def scGridScrollUtil: ScGridScrollUtil
 
   import MScIndex.MScIndexFastEq
   import model.in.MScInternals.MScInternalsFastEq
@@ -123,122 +123,93 @@ abstract class ScCommonCircuit
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
 
-  override protected def initialModel: MScRoot = {
-    // Сначала надо подготовить конфиг, прочитав его со страницы (если он там есть).
-    val scInit = Sc3ConfUtil.getFreshestInit()
-      .getOrElse {
-        val emsg = ErrorMsgs.GRID_CONFIGURATION_INVALID
-        logger.error( emsg )
-        // TODO Отработать отсутствие конфига в html-странице.
-        throw new NoSuchElementException( emsg )
-      }
+  /** Abstracted code of initialModel() method. */
+  protected trait InitialModel {
 
-    val mscreen = JsScreenUtil.getScreen()
-    val mplatform = PlatformAh.platformInit()
-
-    val screenInfo = MScreenInfo(
-      screen        = mscreen,
-      //unsafeOffsets = HwScreenUtil.etScreenUnsafeAreas( mscreen ),
+    def scInitDefault = MSc3Init(
+      mapProps = MMapProps(
+        center = MGeoPoint.Examples.RU_SPB_CENTER,
+        zoom   = MMapProps.ZOOM_DEFAULT,
+      ),
+      conf = MSc3Conf()
     )
 
-    // random seed изначально отсутствует в конфиге.
-    val (conf2, gen2) = scInit.conf.gen.fold {
-      val generation2 = System.currentTimeMillis()
-      val scInit2 = MSc3Init.conf.modify { conf0 =>
-        val conf1 = MSc3Conf.gen
-          .replace( Some(generation2) )(conf0)
-        Sc3ConfUtil.prepareSave( conf1 )
-      }(scInit)
+    def scInit: MSc3Init
 
-      Sc3ConfUtil.saveInitIfPossible( scInit2 )
+    def scConf: MSc3Conf
+    def generation: Long
+    def _mscreen: MScreen
 
-      scInit2.conf -> generation2
-    } { gen =>
-      scInit.conf -> gen
-    }
+    def mplatform: MPlatformS
 
-    def searchCssEmpty(isBar: Boolean) = SearchCss( MSearchCssProps(
-      screenInfo = screenInfo,
-      searchBar = isBar,
-    ))
+    def scRoot: MScRoot = {
+      val mscreen = _mscreen
+      val screenInfo = MScreenInfo(
+        screen        = mscreen,
+        //unsafeOffsets = HwScreenUtil.etScreenUnsafeAreas( mscreen ),
+      )
 
-    MScRoot(
-      dev = MScDev(
-        screen = MScScreenS(
-          info = screenInfo,
+      def searchCssEmpty(isBar: Boolean) = SearchCss( MSearchCssProps(
+        screenInfo = screenInfo,
+        searchBar = isBar,
+      ))
+      val _mplatform = mplatform
+
+      MScRoot(
+        dev = MScDev(
+          screen = MScScreenS(
+            info = screenInfo,
+          ),
+          platform = _mplatform,
+          platformCss   = PlatformCssStatic(
+            isRenderIos = _mplatform.isUseIosStyles,
+          ),
         ),
-        platform = mplatform,
-        platformCss   = PlatformCssStatic(
-          isRenderIos = mplatform.isUseIosStyles,
-        ),
-      ),
-      index = MScIndex(
-        resp = Pot.empty,
-        search = MScSearch(
-          geo = MGeoTabS(
-            mapInit = MMapInitState(
-              state = MMapS(scInit.mapProps)
+        index = MScIndex(
+          resp = Pot.empty,
+          search = MScSearch(
+            geo = MGeoTabS(
+              mapInit = MMapInitState(
+                state = MMapS(scInit.mapProps)
+              ),
+              css = searchCssEmpty(true),
             ),
-            css = searchCssEmpty(true),
           ),
-        ),
-        scCss = ScCss(
-          MScCssArgs.from( None, screenInfo )
-        ),
-        state = MScIndexState(
-          generation = gen2,
-        )
-      ),
-      grid = {
-        val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen.wh)
-        val jdConf = MJdConf(
-          isEdit            = false,
-          gridColumnsCount  = gridColsCount,
-          szMult            = gridSzMult
-        )
-        MGridS(
-          core = MGridCoreS(
-            jdConf    = jdConf,
-            jdRuntime = JdUtil.prepareJdRuntime(jdConf).make,
+          scCss = ScCss(
+            MScCssArgs.from( None, screenInfo )
+          ),
+          state = MScIndexState(
+            generation = generation,
           )
-        )
-      },
-      internals = MScInternals(
-        conf = conf2,
-        info = MInternalInfo(
-          indexesRecents = MIndexesRecentOuter(
-            searchCss = searchCssEmpty(false),
-            saved = Pot.empty[MScIndexes],
+        ),
+        grid = {
+          val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen.wh)
+          val jdConf = MJdConf(
+            isEdit            = false,
+            gridColumnsCount  = gridColsCount,
+            szMult            = gridSzMult
+          )
+          MGridS(
+            core = MGridCoreS(
+              jdConf    = jdConf,
+              jdRuntime = JdUtil.prepareJdRuntime(jdConf).make,
+            )
+          )
+        },
+        internals = MScInternals(
+          conf = scConf,
+          info = MInternalInfo(
+            indexesRecents = MIndexesRecentOuter(
+              searchCss = searchCssEmpty(false),
+              saved = Pot.empty[MScIndexes],
+            ),
           ),
         ),
-      ),
-    )
-  }
-
-  // Сразу подписаться на глобальные ошибки:
-  {
-    import io.suggest.sjs.common.vm.evtg.EventTargetVm._
-    dom.window.addEventListener4s( DomEvents.ERROR ) { e: dom.ErrorEvent =>
-      def _s(f: => js.UndefOr[_]): String =
-        Try(f.fold("")(_.toString)) getOrElse ""
-
-      val msg = (_s(e.messageU), _s(e.filenameU), (_s(e.linenoU), _s(e.colnoU)) )
-      val errCode = MsgCodes.`Malfunction`
-
-      logger.error(
-        errCode,
-        msg = (msg, _s(e.error.map(_.name)), _s(e.error.flatMap(_.message)), _s(e.error.flatMap(_.stack)) ),
       )
-
-      val action = SetErrorState(
-        MScErrorDia(
-          messageCode = errCode,
-          hint        = Some( msg.toString ),
-        )
-      )
-      this.runEffectAction( action )
     }
+
   }
+
 
   // Кэш zoom'ов модели:
   private[sc] val rootRW          = zoomRW(identity) { (_, new2) => new2 } ( MScRootFastEq )
@@ -273,7 +244,7 @@ abstract class ScCommonCircuit
     acc
   }( FastEq.ValueEq )
 
-  private def indexWelcomeRW      = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
+  def indexWelcomeRW              = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
   private[sc] def scCssRO         = mkLensZoomRO(indexRW, MScIndex.scCss)
 
   private val searchRW            = mkLensZoomRW(indexRW, MScIndex.search)( MScSearchFastEq )
@@ -382,9 +353,11 @@ abstract class ScCommonCircuit
     // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
     val mixed: LazyList[IRespWithActionHandler] = (
       new GridRespHandler(
-        scNotificationsOpt = osScNotificationsOpt
+        scNotificationsOpt  = osScNotificationsOpt,
+        scrollApiOpt        = scrollApiOpt,
+        scGridScrollUtil    = scGridScrollUtil,
       ) #::
-        new GridFocusRespHandler #::
+        new GridFocusRespHandler( scGridScrollUtil ) #::
         new IndexRah #::
         new NodesSearchRah( screenInfoRO ) #::
         LazyList.empty
@@ -403,10 +376,7 @@ abstract class ScCommonCircuit
     )
   }
 
-  private def scRoutingAh: HandlerFunction = new ScRoutingAh(
-    modelRW               = rootRW,
-    routerCtl             = spaRouterState.routerCtl,
-  )
+  def scRoutingAh: HandlerFunction
 
   private def indexesRecentAh: HandlerFunction = new NodesRecentAh(
     modelRW               = mkLensZoomRW( internalsInfoRW, MInternalInfo.inxRecents ),
@@ -441,7 +411,8 @@ abstract class ScCommonCircuit
     api           = sc3UniApi,
     scRootRO      = rootRW,
     screenRO      = screenRO,
-    modelRW       = gridRW
+    modelRW       = gridRW,
+    scGridScrollUtil = scGridScrollUtil,
   )
 
   private def scScreenAh: HandlerFunction = new ScScreenAh(
@@ -465,7 +436,7 @@ abstract class ScCommonCircuit
     rootRO            = rootRW,
     dispatcher        = this,
     scNotifications   = scNotifications,
-    needGeoLocRO      = () => spaRouterState.canonicalRoute.needGeoLoc,
+    needGeoLocRO      = isNeedGeoLocOnResume,
   )
 
   private def delayerAh: HandlerFunction = new ActionDelayerAh(
@@ -485,12 +456,7 @@ abstract class ScCommonCircuit
   private def bootAh: HandlerFunction = new BootAh(
     modelRW = bootRW,
     circuit = this,
-    needBootPermsRO = { () =>
-      platformRW.value.isCordova || (
-        spaRouterState.canonicalRoute.fold(false)(_.needGeoLoc) ||
-        currRouteRW.value.exists(_.needGeoLoc)
-      )
-    },
+    needBootPermsRO = isNeedBootPerms,
   )
 
   private def jdAh: HandlerFunction = new JdAh(
@@ -571,7 +537,7 @@ abstract class ScCommonCircuit
   )
 
   def logOutAh: HandlerFunction
-  private def welcomeAh: HandlerFunction = new WelcomeAh( indexWelcomeRW )
+  def welcomeAh: HandlerFunction
   private def sessionAh: HandlerFunction = new SessionAh(
     modelRW = loginSessionRW,
   )

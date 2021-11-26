@@ -192,7 +192,7 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
       api       = advRcvrsMapApi,
       modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) },
-      argsRO    = otherRW.zoom(_.rcvrsMap),
+      argsRO    = otherRW.zoom { other => Some(other.rcvrsMap) },
     )
 
     val radAh = new RadAh(

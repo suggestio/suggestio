@@ -4,14 +4,13 @@ import io.suggest.flash.FlashConstants._
 import io.suggest.init.routed.InitRouter
 import io.suggest.log.Log
 import io.suggest.sjs.common.util.SafeSyncVoid
-import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
-import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery._
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -79,21 +78,22 @@ class FlashInit extends SafeSyncVoid with Log {
     // Нужно сворачивать уведомление по клику или таймауту.
     val closedP = Promise[None.type]()
     // Код сворачивания вызывается через это замыкание:
-    val doClose = { () =>
+    def doClose = {
       if (!closedP.isCompleted) {
         _closeBar(bar)
         // Анимации требуется некоторое время, чтобы завершиться, поэтому запускаем исполнения Promise'а в очередь.
-        DomQuick.setTimeout(SLIDE_DURATION_MS) { () =>
+        js.timers.setTimeout(SLIDE_DURATION_MS) {
           closedP.success(None)
         }
       }
     }
+
     // Сворачивать при таймауте.
-    val timeoutId = DomQuick.setTimeout(SHOW_TIMEOUT_MS)(doClose)
+    val timeoutId = js.timers.setTimeout(SHOW_TIMEOUT_MS)( doClose )
     // Сворачивать при клике.
-    bar.click { (e: JQueryEventObject) =>
-      dom.window.clearTimeout(timeoutId)
-      doClose()
+    bar.click { (_: JQueryEventObject) =>
+      js.timers.clearTimeout( timeoutId )
+      doClose
     }
     // Вернуть новый фьючерс как аккамулятор
     val fut1 = closedP.future

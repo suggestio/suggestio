@@ -3,9 +3,13 @@ package io.suggest.sc.view.menu
 import com.materialui.{MuiDivider, MuiDrawerAnchor, MuiList, MuiListItem, MuiSwipeableDrawer}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.adt.ScMenuLkEnterItem
 import io.suggest.common.empty.OptionUtil
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ComponentFunctionR, ReactCommonUtil}
+import io.suggest.react.ReactCommonUtil.Implicits.VdomElOptionExt
+import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
 import io.suggest.sc.model.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.model.MScRoot
 import io.suggest.sc.view.dia.dlapp.DlAppMenuItemR
@@ -15,6 +19,8 @@ import io.suggest.sc.view.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import japgolly.univeq._
+import scalaz.{@@, Tag}
 
 import scala.scalajs.js
 
@@ -25,7 +31,7 @@ import scala.scalajs.js
   * Description: Главный компонент левой панели меню выдачи.
   */
 class MenuR(
-             enterLkRowR              : EnterLkRowR,
+             enterLkRowROpt           : Option[ComponentFunctionR[ModelProxy[MScRoot]] @@ ScMenuLkEnterItem],
              editAdR                  : EditAdR,
              aboutSioR                : AboutSioR,
              dlAppMenuItemR           : DlAppMenuItemR,
@@ -36,6 +42,7 @@ class MenuR(
              indexesRecentR           : IndexesRecentR,
              logOutR                  : LogOutR,
              scCssP                   : React.Context[ScCss],
+             crCtxP                   : React.Context[MCommonReactCtx],
            ) {
 
   type Props = ModelProxy[MScRoot]
@@ -73,13 +80,15 @@ class MenuR(
           ),
 
           // Строка входа в личный кабинет. В кордове - скрыта.
-          enterLkRowR.component( propsProxy ),
+          enterLkRowROpt.whenDefinedEl { enterLkRowR =>
+            Tag.unwrap( enterLkRowR )(propsProxy)
+          },
 
           // Кнопка редактирования карточки.
           editAdR.component( propsProxy ),
 
           // Рендер кнопки "О проекте"
-          propsProxy.wrap( _.internals.conf.aboutSioNodeId )( aboutSioR.component.apply ),
+          aboutSioR.component( propsProxy ),
 
           // Пункт скачивания мобильного приложения.
           ReactCommonUtil.maybeNode( propsProxy.value.dev.platform.isDlAppAvail ) {

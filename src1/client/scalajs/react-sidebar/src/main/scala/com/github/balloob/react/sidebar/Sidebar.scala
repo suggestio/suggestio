@@ -1,9 +1,8 @@
 package com.github.balloob.react.sidebar
 
-import io.suggest.sjs.common.vm.wnd.WindowStub
+import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
-import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -43,7 +42,7 @@ class SidebarForceIosJs(props: SidebarProps) extends SidebarJs(props) {
   override def componentDidMount(): Unit = {
     setState(new SidebarState {
       // TODO Возможно, надо отключать в браузере на iOS, но не в кордове.
-      override val dragSupported = WindowStub(dom.window).ontouchstart.nonEmpty
+      override val dragSupported = WindowVm().stub.ontouchstart.nonEmpty
     })
     saveSidebarWidth()
   }

@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.model
 
 import scala.concurrent.Promise
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -10,7 +11,7 @@ import scala.concurrent.Promise
   */
 case class TimeoutPromise[T](
   promise : Promise[T],
-  timerId : Int
+  timerId : SetTimeoutHandle,
 ) {
 
   lazy val fut = promise.future

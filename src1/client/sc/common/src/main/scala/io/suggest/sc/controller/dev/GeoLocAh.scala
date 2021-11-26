@@ -153,7 +153,7 @@ final class GeoLocAh[M](
           } yield {
             // Отменить старый таймер подавления
             for (s <- v0.suppressor) {
-              DomQuick.clearTimeout(s.timerId)
+              js.timers.clearTimeout(s.timerId)
             }
 
             // Найти и отрубить гео-watcher'ы, которые теперь подавляются.
@@ -168,7 +168,7 @@ final class GeoLocAh[M](
             // Запустить новый таймер подавления
             val generation = System.currentTimeMillis()
             // Здесь можно сделать эффект поверх future, заместо прямого дёрганья dispatcher'а.
-            val timerId = DomQuick.setTimeout(ttlMs) { () =>
+            val timerId = js.timers.setTimeout(ttlMs) {
               dispatcher( GlSuppressTimeout(generation) )
             }
 
@@ -465,7 +465,7 @@ final class GeoLocAh[M](
   /** Выполнить действия выключения геолокации. */
   private def _doDisableFx(v0: MScGeoLoc, isHard: Boolean, withException: Exception = null) = {
     for (s <- v0.suppressor)
-      DomQuick.clearTimeout(s.timerId)
+      js.timers.clearTimeout( s.timerId )
 
     val (clearFxOpt, watchersClean) = clearWatchers( v0.watchers )
     val v2 = v0.copy(

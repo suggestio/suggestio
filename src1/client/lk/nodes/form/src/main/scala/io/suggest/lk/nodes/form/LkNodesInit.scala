@@ -43,7 +43,7 @@ trait LkNodesInitRouter extends InitRouter {
 
     // Рендер формы.
     val formR = circuit.wrap(identity(_))( modules.lkNodesFormR.component.apply )
-    val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( LkNodesConst.FORM_CONT_ID )
+    val formTarget = VUtil.getElementById[HTMLDivElement]( LkNodesConst.FORM_CONT_ID ).get
     formR.renderIntoDOM(formTarget )
   }
 

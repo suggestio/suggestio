@@ -1,7 +1,10 @@
 package io.suggest.daemon
 
 import japgolly.univeq.UnivEq
+import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
+
+import scala.scalajs.js.timers.SetIntervalHandle
 
 /**
   * Suggest.io
@@ -25,5 +28,5 @@ object MHtmlBgTimerS {
   * @param timerId id запущенного таймера.
   */
 case class MHtmlBgTimerS(
-                          timerId       : Option[Int]         = None,
+                          timerId       : Option[SetIntervalHandle]         = None,
                         )

@@ -7,11 +7,11 @@ import io.suggest.proto.http.model.{HttpResp, IHttpRespHolder, MHttpCaches}
 import io.suggest.log.Log
 import io.suggest.proto.http.client.adp.HttpAdpInstance
 import io.suggest.sjs.common.async.AsyncUtil._
-import io.suggest.sjs.dom2.DomQuick
 import org.scalajs.dom.experimental.Request
 
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.duration._
+import scala.scalajs.js
 import scala.util.Try
 
 /**
@@ -29,12 +29,13 @@ object HttpCaching extends Log {
   // Отложенный - на случай отсутствия данных на старте.
   // TODO Надо чистить кэш после завершения *уже*успешных* запросов. Т.е. только в онлайне. И далее 1-2-3 раза сутки по таймеру до закрытия вкладки.
   Future {
-    if ( MHttpCaches.isAvailable() )
-      DomQuick.setTimeout(15.seconds.toMillis.toInt) { () =>
+    if ( MHttpCaches.isAvailable() ) {
+      js.timers.setTimeout( 15.seconds ) {
         // Повторно проверяем кэш, т.к. он мог отвалится за это время, т.к. после запуска были запросы-ответы.
         if ( MHttpCaches.isAvailable() )
           MHttpCaches.gc()
       }
+    }
   }
 
 

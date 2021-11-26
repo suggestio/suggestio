@@ -1,13 +1,11 @@
 package io.suggest.sc.controller.grid
 
-import com.github.fisshy.react.scroll.AnimateScroll
 import diode._
 import diode.data.{PendingBase, Pot}
-import io.suggest.ad.blk.BlockPaddings
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult, MGridRenderInfo}
-import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
+import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, MGridCalcConf, ScGridScrollUtil}
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.JdTag
@@ -26,15 +24,12 @@ import io.suggest.log.Log
 import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.model.inx.MScSwitchCtx
-import io.suggest.sc.view.styl.ScCss
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil.TreeLocOps
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.DoNothing
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
-import org.scalajs.dom
 import scalaz.{NonEmptyList, Tree, TreeLoc}
 
 import scala.util.Success
@@ -170,34 +165,6 @@ object GridAh extends Log {
   }
 
 
-  /** Эффект скроллинга к указанной карточке. */
-  // TODO Унести на уровень view (в GridR), законнектится на поле MGridS().interactWith для инфы по скроллу.
-  def scrollToAdFx(toAd    : MScAdData,
-                   gbRes   : MGridBuildResult
-                  ): Effect = {
-    // Карточка уже открыта, её надо свернуть назад в main-блок.
-    // Нужно узнать координату в плитке карточке
-    Effect.action {
-      toAd
-        .gridItems
-        .iterator
-        .flatMap { gridItem =>
-          gbRes.coordsById.get( gridItem.jdDoc.tagId )
-        }
-        // Взять только самый верхний блок карточки. Он должен быть первым по порядку:
-        .nextOption()
-        .foreach { toXY =>
-          AnimateScroll.scrollTo(
-            // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
-            to = Math.max(0, toXY.y - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),
-            options = GridScrollUtil.scrollOptions(isSmooth = true)
-          )
-        }
-
-      DoNothing
-    }
-  }
-
 
   /** Найти карточку с указанным id в состоянии, вернув её и её индекс. */
   def findAd(m: GridBlockClick, v0: MGridAds): Option[TreeLoc[MScAdData]] = {
@@ -217,41 +184,6 @@ object GridAh extends Log {
       }
   }
 
-
-  /** Нечистый метод чтения текущего скролла через ковыряния внутри view'а,
-    * чтобы не усложнять модели и всю логику обработки скролла.
-    * Следует дёргать внутри Effect().
-    */
-  def getGridScrollTop(): Option[Double] = {
-    Option( dom.document.getElementById( GridScrollUtil.SCROLL_CONTAINER_ID ) )
-      .map( _.scrollTop )
-  }
-
-  /** Восстановление скролла после добавления
-    *
-    * @param g0 Начальное состояние плитки.
-    * @param g2 Новое состояние плитки.
-    * @return
-    */
-  def repairScrollPosFx(g0: MGridS, g2: MGridS): Option[Effect] = {
-    // Нужно скроллить НЕанимированно, т.к. неявная коррекция выдачи должна проходить мгновенно и максимально незаметно.
-    // Для этого надо вычислить разницу высоты между старой плиткой и новой плиткой, и скорректировать текущий скролл
-    // на эту разницу без какой-либо анимации TODO (за искл. около-нулевого исходного скролла).
-    val gridHeightPx0 = g0.core.gridBuild.gridWh.height
-    val gridHeightPx2 = g2.core.gridBuild.gridWh.height
-    val gridHeightDeltaPx = gridHeightPx2 - gridHeightPx0
-    Option.when( Math.abs(gridHeightDeltaPx) > 2 ) {
-      // Есть какой-то заметный глазу скачок высоты плитки. Запустить эффект сдвига скролла плитки.
-      Effect.action {
-        // Нужно понять, есть ли скролл прямо сейчас: чтобы не нагружать состояние лишним мусором, дёргаем элемент напрямую.
-        if ( getGridScrollTop().exists(_ > 1) ) {
-          AnimateScroll.scrollMore( gridHeightDeltaPx, GridScrollUtil.scrollOptions(isSmooth = false) )
-        }
-
-        DoNothing
-      }
-    }
-  }
 
   def _isMatches(onlyMatching: MScNodeMatchInfo, scAnm: MScNodeMatchInfo): Boolean = {
     onlyMatching.ntype.fold(true) { onlyMatchingType =>
@@ -328,7 +260,8 @@ class GridAh[M](
                  api             : IScUniApi,
                  scRootRO        : ModelRO[MScRoot],
                  screenRO        : ModelRO[MScreen],
-                 modelRW         : ModelRW[M, MGridS]
+                 modelRW         : ModelRW[M, MGridS],
+                 scGridScrollUtil: => ScGridScrollUtil,
                )
   extends ActionHandler(modelRW)
   with Log
@@ -474,7 +407,7 @@ class GridAh[M](
                     )
                   )(v0)
                   // Эффект скролла: нужно подправить плитку, чтобы не было рывка.
-                  val fxOpt = GridAh.repairScrollPosFx( v0, v2 )
+                  val fxOpt = scGridScrollUtil.repairScrollPosFx( v0, v2 )
                   ah.updatedMaybeEffect(v2, fxOpt)
                 }
               )
@@ -541,7 +474,8 @@ class GridAh[M](
       } yield {
         if (adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOpened)) {
           // Клик по всегда развёрнутой карточке должен приводить к скроллу к началу карточки без загрузки.
-          val scrollFx = GridAh.scrollToAdFx( scAdData, v0.core.gridBuild )
+          val scrollFxOpt = scGridScrollUtil.scrollToAdFx( scAdData, v0.core.gridBuild )
+
           val v2 = (
             MGridS.core.modify { gridCore0 =>
               // Состояние обновляем на данную карточку, чтобы sc-nodes-форма могла корректно определить текущую выбранную карточку.
@@ -552,7 +486,8 @@ class GridAh[M](
               GridAh.resetFocus( m.gridPath, gridCore1)
             }
           )(v0)
-          updatedSilent(v2, scrollFx)
+
+          ah.updatedSilentMaybeEffect( v2, scrollFxOpt )
 
         } else if (adData.isOpened) {
           // Карточка уже раскрыта. Синхронное сокрытие карточки.
@@ -588,16 +523,19 @@ class GridAh[M](
           )(v0)
 
           // В фоне - запустить скроллинг к началу карточки.
-          val scrollFx      = GridAh.scrollToAdFx( scAdData, gridBuild2 )
+          val scrollFxOpt   = scGridScrollUtil.scrollToAdFx( scAdData, gridBuild2 )
           val resetRouteFx  = ResetUrlRoute().toEffectPure
-          val fxs           = scrollFx + resetRouteFx
+          val fxs           = (resetRouteFx :: scrollFxOpt.toList)
+            .reverse
+            .mergeEffects
+            .get
           updated(v2, fxs)
 
         } else if ( m.noOpen ) {
           // Ничего загружать не требуется, только прокрутить к указанной карточке.
           // Возможно, это переход "назад" из другой выдачи.
-          val fx = GridAh.scrollToAdFx( scAdData, v0.core.gridBuild )
-          effectOnly(fx)
+          val fxOpt = scGridScrollUtil.scrollToAdFx( scAdData, v0.core.gridBuild )
+          ah.maybeEffectOnly( fxOpt )
 
         } else {
           // Запуск запроса за данными карточки на сервер.
@@ -694,8 +632,8 @@ class GridAh[M](
 
               } { openedAdLoc =>
                 // Нужно просто прокрутить к уже раскрытой карточке.
-                val fx = GridAh.scrollToAdFx( openedAdLoc.getLabel, v0.core.gridBuild )
-                effectOnly(fx)
+                val fxOpt = scGridScrollUtil.scrollToAdFx( openedAdLoc.getLabel, v0.core.gridBuild )
+                ah.maybeEffectOnly( fxOpt )
               }
           }
         }

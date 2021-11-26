@@ -12,6 +12,8 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
 
+import scala.scalajs.js.timers.SetIntervalHandle
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -72,7 +74,7 @@ case class MBeaconerS(
                        notifyAllTimer       : Option[MTsTimerId]         = None,
                        beacons              : Map[String, MRadioData]    = Map.empty,
                        nearbyReport         : BeaconsNearby_t            = Nil,
-                       gcIntervalId         : Option[Int]                = None,
+                       gcIntervalId         : Option[SetIntervalHandle]  = None,
                        envFingerPrint       : Option[Int]                = None,
                        apis                 : Pot[Map[MRadioSignalType, IBeaconsListenerApi]] = Pot.empty,
                        opts                 : MBeaconerOpts              = MBeaconerOpts.default,

@@ -3,6 +3,7 @@ package io.suggest.sc.controller.showcase
 import cordova.plugins.appminimize.CdvAppMinimize
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.sc.model.MScRoot
+import io.suggest.sc.util.ScRoutingUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.{DoNothing, HwBackBtn}
 import org.scalajs.dom
@@ -36,7 +37,7 @@ final class ScHwButtonsAh[M](
           if (
             plat.isCordova &&
               // TODO m.RouteTo.isBack - нажата кнопка Back?
-              ScRoutingAh.root_internals_info_currRoute_LENS
+              ScRoutingUtil.root_internals_info_currRoute_LENS
                 .get(v0)
                 .exists { m => !m.isSomeThingOpened }
           ) {

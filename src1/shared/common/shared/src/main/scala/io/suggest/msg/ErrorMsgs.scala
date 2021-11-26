@@ -113,6 +113,8 @@ object ErrorMsgs {
 
   def GRID_CONFIGURATION_INVALID = "Grid.configuration.invalid"
 
+  def MISSING_DEFAULT_CONFIGURATION = "Missing.default.configuration"
+
   def CANONICAL_URL_FAILURE = "Canonical.url.failure"
 
   def LK_ADS_FORM_FAILED = "Lk.ads.form.failed"

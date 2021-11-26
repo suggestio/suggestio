@@ -6,12 +6,13 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.err.MExceptionInfo
 import io.suggest.log.{ILogAppender, LogSeverities, MLogMsg}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 
 import scala.concurrent.duration._
+import scala.scalajs.js
+import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.util.Try
 
 /**
@@ -81,7 +82,7 @@ class BufLogAppendAh[M](
         },
         {timerIdOpt =>
           val v2 = MBufAppendS.expTimerId.modify { timerId0 =>
-            timerIdOpt.fold( Pot.empty[Int] )( timerId0.ready )
+            timerIdOpt.fold( Pot.empty[SetTimeoutHandle] )( timerId0.ready )
           }(v0)
           updatedSilent(v2)
         }
@@ -121,8 +122,9 @@ class BufLogAppendAh[M](
       Effect.action {
         val timerIdTry = Try {
           v0.expTimerId
-            .foreach( DomQuick.clearTimeout )
-          val timerId = DomQuick.setTimeout( EXPIRE_INTERVAL.toMillis.toInt ) { () =>
+            .foreach( js.timers.clearTimeout )
+
+          val timerId = js.timers.setTimeout( EXPIRE_INTERVAL ) {
             dispatcher( ExpTimerAlarm )
           }
           Some(timerId)

@@ -2,6 +2,8 @@ package io.suggest.daemon
 
 import io.suggest.spa.DAction
 
+import scala.scalajs.js.timers.SetIntervalHandle
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -34,4 +36,4 @@ case class DaemonSleepTimerSet( options: Option[MDaemonSleepTimer] ) extends IDa
 case object DaemonSleepTimerFinish extends IDaemonSleepAction
 
 
-protected[daemon] case class DaemonSleepTimerUpdate( timerId: Option[Int] ) extends IDaemonSleepAction
+protected[daemon] case class DaemonSleepTimerUpdate( timerId: Option[SetIntervalHandle] ) extends IDaemonSleepAction

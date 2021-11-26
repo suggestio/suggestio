@@ -15,7 +15,10 @@ import org.scalajs.dom.raw.WebSocket
 import org.scalajs.dom.{CloseEvent, ErrorEvent, MessageEvent}
 import play.api.libs.json.Json
 
+import scala.scalajs.js
 import scala.util.{Success, Try}
+import scala.concurrent.duration._
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -211,9 +214,9 @@ class WsPoolAh[M](
 
 
   /** Сборка таймера авто-закрытия указанного ws-коннекшена через указанное время (в секундах). */
-  private def _closeTimerOpt(key: MWsConnTg, closeAfterSecOpt: Option[Int]): Option[Int] = {
+  private def _closeTimerOpt(key: MWsConnTg, closeAfterSecOpt: Option[Int]): Option[SetTimeoutHandle] = {
     for (closeAfterSeconds <- closeAfterSecOpt) yield {
-      DomQuick.setTimeout( closeAfterSeconds * 1000 ) { () =>
+      js.timers.setTimeout( closeAfterSeconds.seconds ) {
         dispatcher( WsCloseConn(key) )
       }
     }
@@ -223,7 +226,7 @@ class WsPoolAh[M](
     for (ws <- connS.conn) {
       // Отменить autoclose-таймер, если есть:
       for (timerId <- connS.closeTimer) {
-        DomQuick.clearTimeout( timerId )
+        js.timers.clearTimeout( timerId )
       }
 
       _safeCloseWs(ws)

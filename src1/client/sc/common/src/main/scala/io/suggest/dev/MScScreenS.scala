@@ -2,8 +2,11 @@ package io.suggest.dev
 
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -38,5 +41,5 @@ object MScScreenS {
   */
 case class MScScreenS(
                        info             : MScreenInfo,
-                       rszTimer         : Option[Int]       = None
+                       rszTimer         : Option[SetTimeoutHandle]       = None
                      )

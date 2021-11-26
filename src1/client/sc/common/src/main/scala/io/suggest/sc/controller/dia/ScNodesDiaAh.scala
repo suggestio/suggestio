@@ -15,9 +15,11 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.ScCommonCircuit
 import io.suggest.sc.model.{ScNodesBcnrSubscribeStatus, ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.model.dia.MScNodes
-import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
+
+import scala.scalajs.js
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -187,12 +189,12 @@ class ScNodesDiaAh[M](
 
         // Подписаться на события beaconer:
         val fx = Effect.action {
-          var timerId = Option.empty[Double]
+          var timerId = Option.empty[SetTimeoutHandle]
 
           val unSubsCribeF = sc3Circuit.subscribe( sc3Circuit.beaconsRO ) { _ =>
             if (timerId.isEmpty) {
               timerId = Some {
-                DomQuick.setTimeout( BEACONS_REACTION_DELAY_MS ) { () =>
+                js.timers.setTimeout( BEACONS_REACTION_DELAY_MS ) {
                   timerId = None
                   handleBeaconsDetected()
                 }

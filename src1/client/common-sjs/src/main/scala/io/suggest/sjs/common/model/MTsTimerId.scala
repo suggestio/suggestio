@@ -1,6 +1,9 @@
 package io.suggest.sjs.common.model
 
 import japgolly.univeq.UnivEq
+import io.suggest.ueq.JsUnivEqUtil._
+
+import scala.scalajs.js.timers.SetTimeoutHandle
 
 /**
   * Suggest.io
@@ -17,6 +20,6 @@ object MTsTimerId {
 }
 
 case class MTsTimerId(
-                       timerId    : Int,
+                       timerId    : SetTimeoutHandle,
                        timestamp  : Long = System.currentTimeMillis()
                      )

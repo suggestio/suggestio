@@ -7,6 +7,8 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq.UnivEq
 
+import scala.scalajs.js.timers.SetTimeoutHandle
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -38,10 +40,10 @@ object MWsConnS {
 case class MWsConnS(
                      target         : MWsConnTg,
                      conn           : Pot[WebSocket]    = Pot.empty,
-                     closeTimer     : Option[Int]       = None
+                     closeTimer     : Option[SetTimeoutHandle] = None
                    ) {
 
   def withConn(conn: Pot[WebSocket])          = copy(conn = conn)
-  def withCloseTimer(closeTimer: Option[Int]) = copy(closeTimer = closeTimer)
+  def withCloseTimer(closeTimer: Option[SetTimeoutHandle]) = copy(closeTimer = closeTimer)
 
 }

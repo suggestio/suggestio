@@ -1,6 +1,6 @@
 package io.suggest.sc
 
-import io.suggest.event.WndEvents
+import io.suggest.event.{DomEvents, WndEvents}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.log.buffered.BufLogAppender
@@ -9,8 +9,9 @@ import io.suggest.log.remote.RemoteLogAppender
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
-import io.suggest.sc.model.ScreenResetPrepare
+import io.suggest.sc.model.{ScreenResetPrepare, SetErrorState}
 import io.suggest.log.{Log, LogSeverities, Logging}
+import io.suggest.sc.model.dia.err.MScErrorDia
 import io.suggest.sc.view.styl.ScCssStatic
 import io.suggest.sc.view.jsrouter.SrvRouter
 import io.suggest.sjs.JsApiUtil
@@ -26,10 +27,10 @@ import org.scalajs.dom
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
-import io.suggest.spa.DiodeUtil.Implicits.CircuitOpsExt
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react.ReactDOM
 
+import scala.scalajs.js
 import scala.util.Try
 
 /**
@@ -204,6 +205,34 @@ object Sc3Main extends Log {
     }
       .logFailure( ErrorMsgs.IMG_EXPECTED, LkPreLoader )
 
+    // Сразу подписаться на глобальные ошибки:
+    Try {
+      import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+      import io.suggest.sjs.dom2._
+
+      dom.window.addEventListener4s( DomEvents.ERROR ) { e: dom.ErrorEvent =>
+        def _s(f: => js.UndefOr[_]): String =
+          Try(f.fold("")(_.toString)) getOrElse ""
+
+        val msg = (_s(e.messageU), _s(e.filenameU), (_s(e.linenoU), _s(e.colnoU)) )
+        val errCode = MsgCodes.`Malfunction`
+
+        logger.error(
+          errCode,
+          msg = (msg, _s(e.error.map(_.name)), _s(e.error.flatMap(_.message)), _s(e.error.flatMap(_.stack)) ),
+        )
+
+        val action = SetErrorState(
+          MScErrorDia(
+            messageCode = errCode,
+            hint        = Some( msg.toString ),
+          )
+        )
+        modules.sc3Circuit.dispatch( action )
+      }
+    }
+      .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR )
+
     // Подписать circuit на глобальные события window:
     Try {
       for {
@@ -230,6 +259,7 @@ object Sc3Main extends Log {
       }
     }
       .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
+
   }
 
 }

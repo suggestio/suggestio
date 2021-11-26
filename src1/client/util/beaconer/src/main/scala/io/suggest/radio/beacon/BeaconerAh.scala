@@ -20,6 +20,9 @@ import japgolly.univeq._
 
 import java.time.Instant
 import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration._
+import scala.scalajs.js
+import scala.scalajs.js.timers.SetIntervalHandle
 import scala.util.Success
 
 /**
@@ -312,7 +315,7 @@ class BeaconerAh[M](
                   __runNext()
               }
               // Timer for waiting failing API to stop and finalize self.
-              DomQuick.setTimeout(2000)(__runNext)
+              js.timers.setTimeout( 2.seconds )( __runNext() )
 
               runNextFut
             }
@@ -366,14 +369,14 @@ class BeaconerAh[M](
     *
     * @return Updated interval id of GC timer.
     */
-  def ensureGcInterval(beaconsEmpty: Boolean, gcIntervalOpt: Option[Int]): Option[Int] = {
+  def ensureGcInterval(beaconsEmpty: Boolean, gcIntervalOpt: Option[SetIntervalHandle]): Option[SetIntervalHandle] = {
     gcIntervalOpt.fold {
       // Timer not started.
       if (beaconsEmpty) {
         gcIntervalOpt
       } else {
         // Have some beacons, timer not yet started. Start it.
-        val ivlId = DomQuick.setInterval( BeaconerAh.GC_LOST_EVERY_MS ) { () =>
+        val ivlId = js.timers.setInterval( BeaconerAh.GC_LOST_EVERY_MS ) {
           dispatcher.dispatch( DoGc )
         }
         Some(ivlId)
@@ -383,7 +386,7 @@ class BeaconerAh[M](
       // Have GC-timer.
       if (beaconsEmpty) {
         // No beacons, GC timer makes no sense: nothing to GC
-        DomQuick.clearInterval( intervalId )
+        js.timers.clearInterval( intervalId )
         None
       } else {
         // Have started gc-timer, have beacons for GC. Continue with no changes.
@@ -642,7 +645,7 @@ class BeaconerAh[M](
       } else if (isEnabledNow && isDisabled2) {
         // Stop notify timer TODO Wrap into effect.
         for (timerInfo <- v0.notifyAllTimer)
-          DomQuick.clearTimeout( timerInfo.timerId )
+          js.timers.clearTimeout( timerInfo.timerId )
 
         var fxAcc = List.empty[Effect]
 
