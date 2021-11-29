@@ -46,9 +46,7 @@
         href="android-app://@ScConstants.App.APP_ID/@ctxUtil.PROTO/@ctxUtil.HOST_PORT@controllers.sc.routes.ScSite.geoSite( args.mainScreen )" />
 
   @if(!args.syncRender) {
-    @* Раскомментить, когда будет рабочий SyncSite для новой выдачи.
     <meta name="fragment" content="!"/>
-    *@
 
     <link rel="manifest" href="@cdn.forCall(routes.ScApp.webAppManifest( MPwaManifestQs(args.apiVsn) ))"/>
     @* TODO startUrl meta tag и другие для iOS, не умеющей в manifest. *@

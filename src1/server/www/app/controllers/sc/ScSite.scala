@@ -88,6 +88,7 @@ final class ScSite @Inject() (
   /** Изначальное значение флага отладки js-выдачи управляется флагом в конфиге. */
   private lazy val SC_JS_DEBUG = configuration.getOptional[Boolean]("sc.js.debug").getOrElseFalse
 
+  private lazy val SSR_ENABLED = configuration.getOptional[Boolean]("sc.ssr.enabled").getOrElseTrue
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
   protected abstract class SiteLogic extends scCtlApi.LogicCommonT { siteLogic =>
@@ -391,10 +392,8 @@ final class ScSite @Inject() (
           override def _mainScreen = mainScreen
 
           /** Sync server-side showcase content rendering for web-crawlers. */
-          override def inlineIndexFut: Future[Option[Html]] = {
-            Future successful None
-            // TODO Render static markup: for react-hydrate & web-crawlers.
-
+          override def inlineIndexFut: Future[Option[Html]] = if (SSR_ENABLED && userAgentParsedOpt.exists(_.getType == UserAgentType.ROBOT)) {
+            // Render static markup: for react-hydrate & web-crawlers.
             val ssrScreen = siteLogic.userAgentParsedOpt
               .map { userAgent =>
                 userAgent.getType match {
@@ -488,6 +487,8 @@ final class ScSite @Inject() (
                 LOGGER.warn(s"$logPrefix Erorr to prepare or start SSR rendering", ex)
                 None
               }
+          } else {
+            Future.successful( None )
           }
         }
 

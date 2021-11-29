@@ -13,10 +13,10 @@ import io.suggest.sc.ssr.{MScSsrArgs, ScSsrProto, SsrLangData}
 import io.suggest.sjs.SjsUtil
 import io.suggest.ueq.UnivEqUtilJvm._
 import japgolly.scalagraal.ScalaGraalEffect.AsyncES
-import play.api.{Environment, Mode}
+import play.api.{Application, Mode}
 import japgolly.univeq._
 import models.mctx.ContextFactory
-import models.req.{IReqHdr, ISioUser, MSioUsers}
+import models.req.{IReqHdr, MSioUsers}
 import org.graalvm.polyglot.{Context, PolyglotAccess, Source}
 import play.api.http.{HeaderNames, HttpVerbs}
 import play.api.i18n.{Lang, MessagesApi}
@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 @Singleton // singleton, because pool is here.
 final class ScSsrUtil @Inject()(
@@ -41,7 +40,7 @@ final class ScSsrUtil @Inject()(
   extends MacroLogsImpl
 {
 
-  private lazy val env = injector.instanceOf[Environment]
+  private lazy val current = injector.instanceOf[Application]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private def contextFactory = injector.instanceOf[ContextFactory]
@@ -50,9 +49,9 @@ final class ScSsrUtil @Inject()(
   private def scJsRouterTpl = injector.instanceOf[ScJsRouterTpl]
   private lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
 
-  def POOL_SIZE = 1
-  def JS_DEBUG = false
-  def JS_DEBUG_PORT_START = 24242
+  def POOL_SIZE = current.configuration.getOptional[Int]("sc.ssr.js.pool.size").getOrElse(1)
+  def JS_DEBUG = current.configuration.getOptional[Boolean]("sc.ssr.js.inspect.enabled").getOrElse(false)
+  def JS_DEBUG_PORT_START = current.configuration.getOptional[Int]("sc.ssr.js.inspect.port.from").getOrElse(1)
   def JS_DEBUG_URL_HOST = "localhost"
 
   /** Create new thread pool for current usage. */
@@ -137,7 +136,7 @@ final class ScSsrUtil @Inject()(
   def sjsScripts = {
     val r = SjsUtil.jsScripts(
       fileNamePrefix = "showcasessr",          // TODO Deduplicate costant with /build.sbt -> val showcaseSsrJs.withId(args)
-      playIsProd = env.mode ==* Mode.Prod,      // TODO Need to check sbt scalaJSStage ? FullOptStage | FastOptStage
+      playIsProd = current.mode ==* Mode.Prod,      // TODO Need to check sbt scalaJSStage ? FullOptStage | FastOptStage
     )
     LOGGER.trace(s"sjsScripts(): => ${r.mkString(" | ")}")
     r
@@ -217,7 +216,7 @@ final class ScSsrUtil @Inject()(
 
             Source.newBuilder( langName, jsCode, path )
           } else {
-            val url = env.resource( path )
+            val url = current.environment.resource( path )
             LOGGER.trace(s"graalSetupExpr: $path passed as file URL: ${url.orNull})")
             Source.newBuilder( langName, url.get )
           })

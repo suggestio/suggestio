@@ -2,7 +2,6 @@
 @import ctx.api.ctxUtil
 
 User-Agent: *
-Disallow: /help
 
 Sitemap: @ctxUtil.SC_URL_PREFIX@routes.Static.siteMapXml()
 Host: @ctxUtil.SC_HOST_PORT
