@@ -3,7 +3,7 @@ package io.suggest.sc.controller.grid
 import diode.data.Pot
 import diode.{ActionResult, Effect}
 import io.suggest.grid.ScGridScrollUtil
-import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
+import io.suggest.grid.build.MGridRenderInfo
 import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.jd.render.u.JdUtil
@@ -35,6 +35,7 @@ final class GridRespHandler(
                              scrollApiOpt          : => Option[IScrollApi],
                              scNotificationsOpt    : => Option[ScNotifications],
                              scGridScrollUtil      : => ScGridScrollUtil,
+                             gridRenderInfo        : MGridRenderInfo,
                            )
   extends IRespWithActionHandler
   with Log
@@ -292,19 +293,18 @@ final class GridRespHandler(
     val jdRuntime2 = GridAh.mkJdRuntime(gridAds2, g0.core)
     val g2 = g0.copy(
       core = {
-        var gbRes = GridAh.rebuildGrid( gridAds2, g0.core.jdConf, jdRuntime2 )
+        val gbRes = GridAh.rebuildGrid( gridAds2, g0.core.jdConf, jdRuntime2 )
 
-        if (isGridPatching) {
-          gbRes = MGridBuildResult.nextRender
-            .andThen( MGridRenderInfo.animFromBottom )
-            .replace( true )(gbRes)
-        }
+        var gRenderInfo = gridRenderInfo
+        if (isGridPatching && !gRenderInfo.animFromBottom)
+          gRenderInfo = (MGridRenderInfo.animFromBottom replace true)( gRenderInfo )
 
         g0.core.copy(
           jdRuntime   = jdRuntime2,
           ads         = gridAds2,
           // Отребилдить плитку:
           gridBuild   = gbRes,
+          info        = gRenderInfo,
         )
       },
       hasMoreAds = {

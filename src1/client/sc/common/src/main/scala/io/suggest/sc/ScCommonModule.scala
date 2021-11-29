@@ -1,12 +1,13 @@
 package io.suggest.sc
 
-import com.materialui.MuiTheme
+import com.materialui.{Mui, MuiTheme}
 import com.softwaremill.macwire._
 import diode.react.ModelProxy
 import diode.Effect
 import io.suggest.adt.{ScMenuLkEnterItem, ScSearchMap}
 import io.suggest.geo.IDistanceUtilJs
-import io.suggest.grid.ScGridScrollUtil
+import io.suggest.grid.{IGridRenderer, ScGridScrollUtil}
+import io.suggest.grid.build.MGridRenderInfo
 import io.suggest.id.login.v.session.LogOutDiaR
 import io.suggest.lk.IPlatformComponentsModule
 import io.suggest.lk.api.{ILkLangApi, LkLangApiHttpImpl}
@@ -17,7 +18,7 @@ import io.suggest.nfc.INfcApi
 import io.suggest.proto.http.model.{HttpClientConfig, MCsrfToken}
 import io.suggest.qr.QrCodeRenderArgs
 import io.suggest.react.ComponentFunctionR
-import io.suggest.routes.IJsRouter
+import io.suggest.routes.IJsRoutes
 import io.suggest.sc.model.MScRoot
 import io.suggest.sc.model.search.MGeoTabS
 import io.suggest.sc.util.ScGeoUtil
@@ -61,11 +62,15 @@ abstract class ScCommonModule extends Log { outer =>
 
   def sc3Circuit: ScCommonCircuit
 
+  /** Defaults for grid rendering, used on each grid build and may be modified by controllers. */
+  val gridRenderInfo: MGridRenderInfo
+
   /** Partial implementation for Sc3Circuit with already defined stuff. */
   protected abstract class ScCommonCircuitA extends ScCommonCircuit {
     override def scGeoUtil = outer.scGeoUtil
     override def scrollApiOpt = outer.scrollApiOpt
     override def scGridScrollUtil = outer.scGridScrollUtil
+    override def gridRenderInfo = outer.gridRenderInfo
 
     override def sc3UniApi: IScUniApi = {
       import ScHttpConf._
@@ -90,10 +95,10 @@ abstract class ScCommonModule extends Log { outer =>
   }
 
   // React contexts
-  lazy val muiThemeCtx = React.createContext[MuiTheme]( null )
+  lazy val muiThemeCtx = React.createContext[MuiTheme]( Mui.Styles.createTheme() )
   lazy val platfromCssCtx = React.createContext[PlatformCssStatic]( sc3Circuit.platformCssRO.value )
   lazy val scCssCtx = React.createContext[ScCss]( sc3Circuit.scCssRO.value )
-  lazy val jsRouterOptCtx = React.createContext[Option[IJsRouter]]( sc3Circuit.jsRouterRW.value.jsRouterOpt )
+  lazy val jsRouterOptCtx = React.createContext[Option[IJsRoutes]]( sc3Circuit.jsRouterRW.value.jsRoutesOpt )
 
 
   // Допы для lk-common
@@ -118,6 +123,7 @@ abstract class ScCommonModule extends Log { outer =>
 
 
   // grid
+  def gridRenderer: IGridRenderer
   lazy val gridR   = wire[GridR]
   lazy val locationButtonR = wire[LocationButtonR]
 
@@ -153,7 +159,7 @@ abstract class ScCommonModule extends Log { outer =>
   // snack
   lazy val scErrorDiaR = wire[ScErrorDiaR]
   lazy val indexSwitchAskR = wire[IndexSwitchAskR]
-  lazy val scSnacksR = wire[ScSnacksR]
+  def scSnacksROpt: Option[ScSnacksR]
   lazy val offlineSnackR = wire[OfflineSnackR]
 
   // dia.settings
@@ -170,7 +176,7 @@ abstract class ScCommonModule extends Log { outer =>
   // sc3
   lazy val scThemes = wire[ScThemes]
   lazy val scRootR = wire[ScRootR]
-  lazy val scRootRendered: VdomElement =
+  def scRootRendered: VdomElement =
     sc3Circuit.wrap( identity(_) )( scRootR.component.apply )
 
   /** Interface for abstraction of HttpClientConfig generator. */

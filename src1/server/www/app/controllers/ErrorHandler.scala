@@ -5,7 +5,7 @@ import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.ctx.CtxData
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
-import models.mctx.{Context, Context2Factory}
+import models.mctx.{Context, ContextFactory}
 import models.req.IReqHdr
 import play.api._
 import play.api.http.DefaultHttpErrorHandler
@@ -31,7 +31,7 @@ final class ErrorHandler @Inject() (
                                      config                          : Configuration,
                                      sourceMapper                    : OptionalSourceMapper,
                                      router                          : Provider[Router],
-                                     contextFactory                  : Context2Factory,
+                                     contextFactory                  : ContextFactory,
                                      aclUtil                         : AclUtil,
                                      override val messagesApi        : MessagesApi,
                                      implicit private val ec         : ExecutionContext,

@@ -9,10 +9,10 @@ package io.suggest.i18n
 object I18nConst {
 
   /** Имя объекта lk-messages на стороне js. */
-  final val MESSAGES_JSNAME = "_SioMessages"
+  final val JSMESSAGES_NAME = "_SioMessages"
 
   /** Глобальное имя на клиенте, в которое будет залита функция локализации. */
-  def WINDOW_JSMESSAGES_NAME = "window." + MESSAGES_JSNAME
+  def WINDOW_JSMESSAGES_NAME = "window." + JSMESSAGES_NAME
 
   def LANG_SUBMIT_FN = "lang"
 

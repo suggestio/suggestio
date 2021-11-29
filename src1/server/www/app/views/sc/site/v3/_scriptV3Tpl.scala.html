@@ -13,9 +13,8 @@
 
 @_formStateInputTpl( args.state0 )
 
-<div id="@ScConstants.Layout.ROOT_ID">
-  @args.inlineIndex
-</div>
+@* sio-mart-root div must not contain unexpected spaces inside, so react SSR + hydrateOrRender() will not claim warning inside js-console. *@
+<div id="@ScConstants.Layout.ROOT_ID">@args.inlineIndex</div>
 
 @* id-атрибут у script-тега нарушает HTML-валидацию, но это плевать. *@
 <script id="@ScConstants.JsRouter.DOM_ID" type="text/javascript" async

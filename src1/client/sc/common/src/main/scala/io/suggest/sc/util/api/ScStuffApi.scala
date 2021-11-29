@@ -101,7 +101,7 @@ final class ScStuffApiHttp(
       )
       .resultFut
       .nativeJsonFut[js.Dictionary[String]]
-      .map( new JsonPlayMessages(_) )
+      .map( JsonPlayMessages(_) )
   }
 
 }

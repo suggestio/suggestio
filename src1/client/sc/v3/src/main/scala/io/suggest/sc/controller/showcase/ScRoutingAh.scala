@@ -49,7 +49,7 @@ final class ScRoutingAh(
       // Possibly, js-роутер or cordova-fetch no yet ready, and it is needed to delay full processing.
       // Awaiting for cordova-fetch is needed, because cordova (AFNetworking) on iOS 12.x is initializing too long.
       val isFullyReady = v0.dev.platform.isReady &&
-        v0.internals.jsRouter.jsRouter.isReady &&
+        v0.internals.jsRouter.jsRoutes.isReady &&
         !v0.dialogs.first.isVisible
 
       // Is need to retry, when js-router become ready?

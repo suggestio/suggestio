@@ -15,6 +15,6 @@
 )
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@
-if(typeof window.@ASYNC_INIT_FNAME == 'function') {
-  window.@(ASYNC_INIT_FNAME)();
+if(typeof @ASYNC_INIT_FNAME == 'function') {
+  @(ASYNC_INIT_FNAME)();
 }

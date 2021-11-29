@@ -1,14 +1,18 @@
 package io.suggest.sc.ssr
 
+import com.softwaremill.macwire._
 import diode.data.Pot
 import io.suggest.dev.{MPlatformS, MScreen}
+import io.suggest.grid.PlainGridRenderer
+import io.suggest.grid.build.MGridRenderInfo
 import io.suggest.proto.http.model.{HttpClientConfig, MCsrfToken}
+import io.suggest.routes.routes
 import io.suggest.sc.model.MScRoot
 import io.suggest.sc.{ScCommonCircuit, ScCommonModule}
 import io.suggest.spa.CircuitUtil
 
 /** Linking for SSR-oriented showcase. */
-object ScSsrModule extends ScCommonModule {
+object ScSsrModule extends ScCommonModule { outer =>
 
   override def distanceUtilJsOpt = None
   override def nfcApiOpt = None
@@ -19,6 +23,10 @@ object ScSsrModule extends ScCommonModule {
   override def scLoginROpt = None
   override def enterLkRowROpt = None
   override def scrollApiOpt = None
+  override def scSnacksROpt = None
+
+  override val gridRenderInfo = MGridRenderInfo.forSsr
+  override def gridRenderer = wire[PlainGridRenderer]
 
   /** HTTP Client config generator abstraction. */
   override protected def _httpConfMaker: IScHttpConf = {
@@ -39,13 +47,17 @@ object ScSsrModule extends ScCommonModule {
         override val scInit = scInitDefault
         override def scConf = scInit.conf
         override def generation = 0L
-        override def _mscreen = MScreen.default
+        override def _mscreen = MScreen.defaulted(
+          height = 2000,
+        )
         override def mplatform = MPlatformS(
           isUsingNow  = true,
           isReadyPot  = Pot.empty.ready(true),
           isCordova   = false,
           osFamily    = None,
         )
+        // jsRoutes must already be here in global variable.
+        override def _jsRoutesPot = super._jsRoutesPot.ready( routes )
       }
         .scRoot
     }

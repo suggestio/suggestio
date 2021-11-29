@@ -3,6 +3,7 @@ package io.suggest.sc.model
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.{ActionResult, Effect}
 import diode.data.Pot
+import io.suggest.dev.MScreenInfo
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.i18n.MLanguage
 import io.suggest.lk.nodes.form.m.MLkNodesMode
@@ -56,7 +57,7 @@ trait IScScreenAction extends IScRootAction
 case object ScreenResetPrepare extends IScScreenAction
 
 /** Сработал таймер непосредственного запуска действий при ресайзе. */
-case object ScreenResetNow extends IScScreenAction
+case class ScreenResetNow( scScreenPot: Pot[MScreenInfo] = Pot.empty ) extends IScScreenAction
 
 case class UpdateUnsafeScreenOffsetBy(incDecBy: Int) extends IScScreenAction
 

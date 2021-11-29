@@ -226,7 +226,7 @@ final class ScFocusedAds @Inject()(
     protected def withCssClasses = "focused" :: Nil
 
     /** Контекстно-зависимая сборка данных статистики. */
-    override def scStat: Future[Stat2] = {
+    override def scStatFut: Future[Stat2] = {
       val _rcvrOptFut   = mNodes.maybeGetByEsIdCached( _qs.search.rcvrId )
       val _prodOptFut   = mNodes.maybeGetByEsIdCached( _qs.search.prodId )
 

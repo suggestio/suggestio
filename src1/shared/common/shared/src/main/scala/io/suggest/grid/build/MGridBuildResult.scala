@@ -14,14 +14,10 @@ import monocle.macros.GenLens
   *
   * @param coords Координаты блоков.
   * @param gridWh Размеры собранной плитки.
-  * @param nextRender Параметр одного следующего рендера.
-  *                   Оно НЕ выставляется при каждом ребилде, но можно явно модифицировать через lens/copy()
-  *                   после выполнения GridBuilder'а.
   */
 final case class MGridBuildResult(
                                    coords       : List[MGbItemRes],
                                    gridWh       : MSize2di,
-                                   nextRender   : MGridRenderInfo                 = MGridRenderInfo.default,
                                  ) {
 
   lazy val coordsById: Map[MJdTagId, MCoords2di] = {
@@ -45,8 +41,6 @@ object MGridBuildResult {
     gridWh = MSize2di(0, 0),
   )
 
-  def nextRender = GenLens[MGridBuildResult](_.nextRender)
-
   @inline implicit def univEq: UnivEq[MGridBuildResult] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
@@ -58,8 +52,8 @@ object MGridBuildResult {
 
 object MGridRenderInfo {
 
-  // Обычно, нужен дефолтовый инстанс.
-  lazy val default = apply()
+  def forBrowser = apply()
+  def forSsr = apply( animate = false )
 
   def animate = GenLens[MGridRenderInfo]( _.animate )
   def animFromBottom = GenLens[MGridRenderInfo]( _.animFromBottom )

@@ -2,7 +2,6 @@ package io.suggest.sc.view.jsrouter
 
 import io.suggest.routes.routes
 import io.suggest.sjs.common.vm.doc.SafeBody
-import org.scalajs.dom
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
@@ -22,21 +21,19 @@ object SrvRouter {
    * @return Фьючерс с роутером.
    */
   def ensureJsRouter(): Future[routes.type] = {
-    val wnd = dom.window : WindowWithScRouterSafe
-
-    if (wnd.jsRoutes.nonEmpty) {
+    if (GlobalScRouterSafe.jsRoutes.nonEmpty) {
       // Роутер уже на странице и готов к работе. Такое возможно, если скрипт роутера был загружен до начала исполнения этого модуля.
-      Future.successful( wnd.jsRoutes.get )
+      Future.successful( GlobalScRouterSafe.jsRoutes.get )
 
     } else {
       // Нет готового js-роутера. Нужно запросить его с сервера.
       val p = Promise[routes.type]()
       // Возможно, код уже запрашивается с сервера, и тогда routes AsyncInit функция будет уже выставлена.
-      val asyncInitOpt = wnd.sioScJsRoutesAsyncInit
+      val asyncInitOpt = GlobalScRouterSafe.sioScJsRoutesAsyncInit
 
       /** Функция для исполнения фьючерса. */
       def pSuccessF(): Unit = {
-        for ( jsRouter <- wnd.jsRoutes if !p.isCompleted )
+        for ( jsRouter <- GlobalScRouterSafe.jsRoutes if !p.isCompleted )
           p.success( jsRouter )
       }
 
@@ -45,7 +42,7 @@ object SrvRouter {
         {() =>
           pSuccessF()
           // Callback-функция инициализации больше не требуется. Освободить память браузера от нее.
-          wnd.sioScJsRoutesAsyncInit = js.undefined
+          GlobalScRouterSafe.sioScJsRoutesAsyncInit = js.undefined
         }
       } { prevFun =>
         // Уже кто-то ожидает инициализации. Добавлять script-тег не требуется, т.к. он должен быть уже добавлен.
@@ -56,7 +53,7 @@ object SrvRouter {
       }
 
       // TODO Выставить таймаут ожидания ответа сервера и другие детекторы ошибок?
-      wnd.sioScJsRoutesAsyncInit = fun
+      GlobalScRouterSafe.sioScJsRoutesAsyncInit = fun
 
       // Если нет тега jsRouter'а, то добавить тег на страницу.
       if (JsRouterTag.find().isEmpty) {

@@ -7,25 +7,31 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.CssR
-import io.suggest.grid.{GridBuilderUtilJs, GridConst, ScGridScrollUtil}
+import io.suggest.grid.{GridBuilderUtilJs, GridConst, IGridRenderer, ScGridScrollUtil}
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdCss, JdCssStatic, JdR, JdRrr}
 import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
+import io.suggest.react.r.CatchR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.model.grid.{GridAdKey_t, GridBlockClick, GridScroll, MGridCoreS, MGridS}
+import io.suggest.sc.ScConstants.ScJsState
+import io.suggest.sc.model.MScRoot
+import io.suggest.sc.model.grid.{GridAdKey_t, GridBlockClick, GridScroll, MGridCoreS}
 import io.suggest.sc.util.ScGridItemEventListener
 import io.suggest.sc.view.styl.{ScCss, ScCssStatic}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.tv.SmartTvUtil
 import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.spa.SioPages
+import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
+import japgolly.scalajs.react.vdom.TagOf
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import japgolly.univeq._
 import org.scalajs.dom
+import play.api.libs.json.Json
 
 /**
   * Suggest.io
@@ -35,13 +41,14 @@ import org.scalajs.dom
   */
 class GridR(
              jdCssStatic                : JdCssStatic,
+             gridRenderer               : IGridRenderer,
              scCssP                     : React.Context[ScCss],
              jdRrr                      : JdRrr,
              jdR                        : JdR,
            ) {
 
 
-  type Props_t = MGridS
+  type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
 
 
@@ -62,7 +69,7 @@ class GridR(
       val scrollTop = e.target.scrollTop
       $.props >>= { propsProxy: Props =>
         Callback.when {
-          val props = propsProxy.value
+          val props = propsProxy.value.grid
           props.hasMoreAds &&
           !props.core.ads.adsTreePot.isPending && {
             // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
@@ -96,35 +103,33 @@ class GridR(
 
 
     def render(p: Props, s: State): VdomElement = {
-      // Рендер jd-css:
-      val jdCssStatic1 = CssR.compProxied( p.resetZoom( jdCssStatic ) )
-      val jdCss1 = s.jdCssC( CssR.compProxied.apply )
-
       // Непосредственный рендер плитки - коннекшен в отдельный компонент, снаружи от рендера connect-зависимого контейнера плитки.
-      val gridCore = s.gridCoreC { mgridProxy =>
-        val mgrid = mgridProxy.value
+      val gridCore = s.gridCoreC { mgridCoreProxy =>
+        val mgridCore = mgridCoreProxy.value
+        val mroot = p.value
 
-        CSSGrid {
-          GridBuilderUtilJs.mkCssGridArgs(
-            gbRes     = mgrid.gridBuild,
-            conf      = mgrid.jdConf,
-            tagName   = GridComponents.DIV
-          )
-        } {
-          // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
-          // для кликов подсвечиваются только ссылки.
-          // Поэтому для SmartTV используется <A>-тег, хотя это вызовет ошибку ссылка-внутри-ссылки и ругань react-dev.
-          val gridElTag: TagOf[html.Element] =
-            if (SmartTvUtil.isSmartTvUserAgentCached) <.a
-            else <.div
+        gridRenderer( mgridCore ) {
+          for {
+            adPtrsTree <- mgridCore.ads.adsTreePot.iterator
 
-          (for {
-            adPtrsTree <- mgrid.ads.adsTreePot.iterator
+            isLinkContainer = gridRenderer.preferLinkContainer || SmartTvUtil.isSmartTvUserAgentCached
+            // Prepare possible js-routes generator:
+            linkJsRoutesOpt = mroot.internals.jsRouter.jsRoutesOpt
+              .filter( _ => isLinkContainer )
+
+            // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
+            // для кликов подсвечиваются только ссылки.
+            // Поэтому для SmartTV используется <A>-тег, хотя это вызовет ошибку ссылка-внутри-ссылки и ругань react-dev.
+            gridElTag: TagOf[html.Element] = {
+              if (isLinkContainer) <.a
+              else <.div
+            }
+
             scAdDataLoc <- adPtrsTree.loc.onlyLowest.iterator
             scAdData = scAdDataLoc.getLabel
             // TODO Pot().iterator: Надо отрабатывать рендером pending и прочие состояния конкретной карточки.
             adData <- scAdData.data.iterator
-            
+
             // TODO Нужно тут как-то перехватывать возможные ошибки рендера текущей карточки, чтобы нарушение в рендере одной карточки не приводило к падению всего.
 
             // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
@@ -158,34 +163,68 @@ class GridR(
 
           } yield {
             // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
-            gridElTag(
+            val resultTag = gridElTag(
               ^.key := gridItem.gridKey,
 
-              // TODO routerCtl.urlFor() внутри <a.href> ?
+              // Render a.href, if link container is used. Do not using RouterCtl[] here, because this is mostly
+              // server-side feature, optional and rare for browser-side flow (because it produces nested
+              // anchor's: outer block href + possible inside-content links).
+              (for {
+                jsRoutes <- linkJsRoutesOpt
+                if isLinkContainer
+                adIdOpt = adData.doc.tagId.nodeId
+                if adIdOpt.nonEmpty
+              } yield {
+                val route = jsRoutes.controllers.sc.ScSite.geoSite(
+                  PlayJsonSjsUtil.toNativeJsonObj(
+                    Json.toJsObject(
+                      SioPages.Sc3(
+                        nodeId      = mroot.index.state.rcvrId,
+                        focusedAdId = adIdOpt,
+                      )
+                    )
+                  ),
+                )
 
-              // Реакция на клики, когда nodeId задан.
+                val url = route.url
+                // TODO Don't know, if absolute URLs are needed here, because abs.url may lead crawlers from base 3p-domain into suggest.io.
+                //      val url = if (HttpClient.PREFER_ABS_URLS ) route.absoluteURL( HttpClient.PREFER_SECURE_URLS ) else route.url
+
+                ^.href := ScJsState.fixJsRouterUrl( url )
+              })
+                .whenDefined,
+
               ^.onClick ==> onGridItemClick( scAdDataPath, gridItem.gridKey ),
 
               // Выставить класс для ремонта z-index контейнера блока.
               jdRrr.fixZIndexIfBlock( gridItem.jdDoc.template.rootLabel ),
 
-              jdR {
-                // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
-                mgridProxy.resetZoom(
-                  MJdArgs(
-                    data        = (MJdDataJs.doc replace gridItem.jdDoc)(adData),
-                    jdRuntime   = mgrid.jdRuntime,
-                    conf        = mgrid.jdConf,
-                    renderArgs  = jdRenderArgs,
+              CatchR.component {
+                p.resetZoom( gridItem.jdDoc.tagId.toString )
+              } (
+                jdR {
+                  // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
+                  mgridCoreProxy.resetZoom(
+                    MJdArgs(
+                      data        = (MJdDataJs.doc replace gridItem.jdDoc)(adData),
+                      jdRuntime   = mgridCore.jdRuntime,
+                      conf        = mgridCore.jdConf,
+                      renderArgs  = jdRenderArgs,
+                    )
                   )
-                )
-              },
+                },
+              ),
 
             )
-          })
-            .toVdomArray
+
+            gridItem.gridKey -> resultTag
+          }
         }
       }
+
+      // Рендер jd-css:
+      val jdCssStatic1 = CssR.compProxied( p.resetZoom( jdCssStatic ) )
+      val jdCss1 = s.jdCssC( CssR.compProxied.apply )
 
       val smFlex = ScCssStatic.smFlex: TagMod
 
@@ -258,19 +297,18 @@ class GridR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
-      // Наконец, сборка самого состояния.
+    .initialStateFromProps { mrootProxy =>
+      val gridCoreProxy = mrootProxy.zoom(_.grid.core)
+
       State(
-        jdCssC = propsProxy.connect(_.core.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
+        jdCssC = gridCoreProxy.connect(_.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
 
-        gridSzC = propsProxy.connect { props =>
-          props.core.gridBuild.gridWh
-        }( FastEq.ValueEq ),
+        gridSzC = gridCoreProxy.connect( _.gridBuild.gridWh )( FastEq.ValueEq ),
 
-        gridCoreC = propsProxy.connect(_.core),
+        gridCoreC = gridCoreProxy.connect( identity ),
 
-        loaderPotC = propsProxy.connect { props =>
-          OptionUtil.SomeBool( props.core.ads.adsTreePot.isPending )
+        loaderPotC = gridCoreProxy.connect { props =>
+          OptionUtil.SomeBool( props.ads.adsTreePot.isPending )
         }( FastEq.AnyRefEq ),
 
       )

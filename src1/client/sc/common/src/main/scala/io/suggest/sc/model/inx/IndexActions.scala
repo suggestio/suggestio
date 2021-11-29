@@ -29,7 +29,7 @@ case object UnIndex extends IIndexAction
 
 
 /** Команда к ребилду текущего инстанса ScCss. */
-case object ScCssReBuild extends IIndexAction
+case class ScCssReBuild( silent: Boolean = false ) extends IIndexAction
 
 
 /** Управление открытием-сокрытием какой-либо боковой панели.
@@ -38,7 +38,7 @@ case object ScCssReBuild extends IIndexAction
   * @param open Открыть панель?
   *             None означает инверсию состояния панели.
   */
-case class SideBarOpenClose(bar: MScSideBar, open: Option[Boolean]) extends IIndexAction
+case class SideBarOpenClose(bar: MScSideBar, open: Option[Boolean], silent: Boolean = false) extends IIndexAction
 
 /** Клик по элементу списка в InxSwitch.
   * @param nodeId None значит кнопку закрытия или автоматический выбор первого узла. */

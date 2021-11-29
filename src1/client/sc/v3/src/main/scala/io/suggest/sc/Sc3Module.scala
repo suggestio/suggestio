@@ -16,6 +16,8 @@ import io.suggest.cordova.fetch.CdvFetchHttpResp
 import io.suggest.daemon.{MDaemonState, MDaemonStates}
 import io.suggest.dev.JsScreenUtil
 import io.suggest.geo.{GeoLocApi, Html5GeoLocApi}
+import io.suggest.grid.StoneCutterGridRenderer
+import io.suggest.grid.build.MGridRenderInfo
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConfig}
@@ -55,7 +57,8 @@ import io.suggest.sc.view.dia.login.ScLoginR
 import io.suggest.sc.view.dia.nodes.{ScNodesNeedLoginR, ScNodesR}
 import io.suggest.sc.view.menu.EnterLkRowR
 import io.suggest.sc.view.search._
-import io.suggest.scroll.{IScrollApi, ReactScrollApi}
+import io.suggest.sc.view.snack.ScSnacksR
+import io.suggest.scroll.ReactScrollApi
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil.mkLensZoomRW
@@ -86,6 +89,10 @@ object Sc3Module {
 
 final class Sc3Module extends ScCommonModule { outer =>
 
+  override val gridRenderInfo = MGridRenderInfo.forBrowser
+  override def gridRenderer = wire[StoneCutterGridRenderer]
+
+  override lazy val scRootRendered = super.scRootRendered
   lazy val sc3SpaRouter: Sc3SpaRouter = {
     import io.suggest.spa.DiodeUtil.Implicits._
 
@@ -681,5 +688,6 @@ final class Sc3Module extends ScCommonModule { outer =>
   override def distanceUtilJsOpt = Some( wire[DistanceUtilLeafletJs] )
 
   override def scrollApiOpt = Some( wire[ReactScrollApi] )
+  lazy val scSnacksROpt = Some( wire[ScSnacksR] )
 
 }

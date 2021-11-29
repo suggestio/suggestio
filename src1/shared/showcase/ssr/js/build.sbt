@@ -8,8 +8,9 @@ enablePlugins( ScalaJSBundlerPlugin )
 //  > https://github.com/scalacenter/scalajs-bundler/issues/250#issuecomment-395658194
 
 libraryDependencies ++= Seq(
- "com.github.japgolly.scala-graal" %%% "core-js"       % Common.Vsn.SCALA_GRAAL,
- "com.github.japgolly.scala-graal" %%% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
+  "com.softwaremill.macwire"     %% "macros"     % Common.Vsn.MACWIRE % "provided",
+  "com.github.japgolly.scala-graal" %%% "core-js"       % Common.Vsn.SCALA_GRAAL,
+  "com.github.japgolly.scala-graal" %%% "ext-boopickle" % Common.Vsn.SCALA_GRAAL,
 )
 
 scalaJSLinkerConfig ~= { _.withSourceMap(false) }

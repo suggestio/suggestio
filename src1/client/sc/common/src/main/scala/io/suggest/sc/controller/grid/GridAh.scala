@@ -262,6 +262,7 @@ class GridAh[M](
                  screenRO        : ModelRO[MScreen],
                  modelRW         : ModelRW[M, MGridS],
                  scGridScrollUtil: => ScGridScrollUtil,
+                 gridRenderInfo  : MGridRenderInfo,
                )
   extends ActionHandler(modelRW)
   with Log
@@ -394,16 +395,20 @@ class GridAh[M](
                   // Нет маячков в qs, но видимо ранее они были.
                   // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
                   val jdRuntime2 = GridAh.mkJdRuntime( gridAds2, v0.core )
-                  val gbRes2 = MGridBuildResult.nextRender
-                    .andThen( MGridRenderInfo.animate )
-                    .replace( false )(
-                      GridAh.rebuildGrid( gridAds2, v0.core.jdConf, jdRuntime2 )
-                    )
+                  val gbRes2 = GridAh.rebuildGrid( gridAds2, v0.core.jdConf, jdRuntime2 )
+
+                  val gRenderInfo = gridRenderInfo
+                  val isAnimateGrid = false
+                  val gRenderInfo2 =
+                    if (gRenderInfo.animate ==* isAnimateGrid) gRenderInfo
+                    else (MGridRenderInfo.animate replace false)( gRenderInfo )
+
                   val v2 = MGridS.core.modify(
                     _.copy(
                       jdRuntime = jdRuntime2,
                       ads       = gridAds2,
                       gridBuild = gbRes2,
+                      info      = gRenderInfo2,
                     )
                   )(v0)
                   // Эффект скролла: нужно подправить плитку, чтобы не было рывка.

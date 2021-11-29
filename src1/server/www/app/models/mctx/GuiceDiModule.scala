@@ -15,7 +15,7 @@ class GuiceDiModule extends AbstractModule {
     // Поддержка assisted-сборки и инжекции Context2Factory.
     install(
       new FactoryModuleBuilder()
-        .build( classOf[Context2Factory] )
+        .build( classOf[ContextFactory] )
     )
   }
 

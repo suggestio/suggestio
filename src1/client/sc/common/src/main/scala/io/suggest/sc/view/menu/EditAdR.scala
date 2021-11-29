@@ -9,7 +9,7 @@ import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.routes.IJsRouter
+import io.suggest.routes.IJsRoutes
 import io.suggest.sc.model.MScRoot
 import io.suggest.sc.view.styl.{ScCss, ScCssStatic}
 import scalacss.ScalaCssReact._
@@ -24,7 +24,7 @@ class EditAdR(
                menuItemR     : MenuItemR,
                scCssP        : React.Context[ScCss],
                crCtxProv     : React.Context[MCommonReactCtx],
-               jsRouterOptP  : React.Context[Option[IJsRouter]],
+               jsRoutesOptP  : React.Context[Option[IJsRoutes]],
              ) {
 
   type Props_t = MScRoot
@@ -59,7 +59,7 @@ class EditAdR(
       )
 
       // Ссылка на вход или на личный кабинет
-      jsRouterOptP.consume { jsRouterOpt =>
+      jsRoutesOptP.consume { jsRouterOpt =>
         jsRouterOpt.whenDefinedEl { jsRouter =>
           s.adIdOptC { adIdOptProxy =>
             adIdOptProxy.value.whenDefinedEl { adId =>

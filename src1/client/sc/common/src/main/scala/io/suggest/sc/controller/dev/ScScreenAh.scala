@@ -36,7 +36,7 @@ final class ScScreenAh[M](
         val tp = DomQuick.timeoutPromise(RSZ_TIMER_MS)
         val fx = Effect {
           for (_ <- tp.fut) yield {
-            ScreenResetNow
+            ScreenResetNow()
           }
         }
         val v2 = MScScreenS.rszTimer.replace( Some(tp.timerId) )(v0)
@@ -49,29 +49,37 @@ final class ScScreenAh[M](
 
 
     // Сигнал срабатывания таймера отложенной реакции на изменение размеров экрана.
-    case ScreenResetNow =>
+    case m: ScreenResetNow =>
       // TODO Opt Проверять, изменился ли экран по факту? Может быть изменился и вернулся назад за время таймера?
+      m.scScreenPot.fold {
+        val detectFx = Effect.action {
+          val screen2 = JsScreenUtil.getScreen()
+          val screenInfo2 = MScreenInfo(
+            screen = screen2,
+            unsafeOffsets = HwScreenUtil.getScreenUnsafeAreas( screen2 ),
+          )
+          m.copy( m.scScreenPot.ready(screenInfo2) )
+        }
+        effectOnly( detectFx )
 
-      // Уведомить контроллер плитки, что пора пересчитать плитку.
-      val gridReConfFx = GridRebuild(force = false).toEffectPure
-      // Забыть о сработавшем таймере.
-      val screen2 = JsScreenUtil.getScreen()
-      val uo2 = HwScreenUtil.getScreenUnsafeAreas( screen2 )
+      } { scScreen2 =>
+        val v0 = value
 
-      val v0 = value
+        val v2 = v0.copy(
+          info = scScreen2,
+          rszTimer = None
+        )
 
-      val v2 = v0.copy(
-        info = v0.info.copy(
-          screen        = screen2,
-          unsafeOffsets = uo2
-        ),
-        rszTimer = None
-      )
+        // Уведомить контроллер плитки, что пора пересчитать плитку.
+        val gridReConfFx = GridRebuild(force = false).toEffectPure
+        val scCssFx = ScCssReBuild().toEffectPure
 
-      // Аккамулируем эффект. Сначала перестройка основной вёрстки.
-      val fx = ScCssReBuild.toEffectPure + gridReConfFx
+        // Аккамулируем эффект. Сначала перестройка основной вёрстки.
+        val fx = scCssFx + gridReConfFx
 
-      updated(v2, fx)
+        // update will be done via effects.
+        updated( v2, fx )
+      }
 
 
     // Отладка: управление коэфф сдвига выдачи.
@@ -99,18 +107,20 @@ final class ScScreenAh[M](
 
       // По идее, ребилдить можно прямо тут, но zoom-модель не позволяет отсюда получить доступ к scCss.
       // Выполнить ребилд ScCss в фоне:
-      var fx: Effect = ScCssReBuild.toEffectPure
+      var fx: Effect = ScCssReBuild( silent = false ).toEffectPure
 
       // Если закрыта левая панель меню, то нужно её раскрыть (нужна как ориентир, иначе непонятно).
       if (!rootRO.value.index.menu.opened) {
         val menuOpenFx = SideBarOpenClose(
           bar = MScSideBars.Menu,
           open = OptionUtil.SomeBool.someTrue,
+          silent = true,
         ).toEffectPure
         fx = menuOpenFx >> fx
       }
 
-      updated(v2, fx)
+      // Update will be done .
+      updatedSilent(v2, fx)
 
   }
 

@@ -388,7 +388,7 @@ final class ScAdsTile @Inject() (
     }
 
     /** Статистика этой вот плитки. */
-    override def scStat: Future[Stat2] = {
+    override def scStatFut: Future[Stat2] = {
       val rcvrIdOpt = _qs.search.rcvrId
       val prodIdOpt = _qs.search.prodId
 

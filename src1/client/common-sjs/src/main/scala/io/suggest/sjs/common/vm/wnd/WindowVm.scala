@@ -4,6 +4,7 @@ import io.suggest.sjs.common.vm.wnd.compstyle.GetComputedStyleT
 import io.suggest.sjs.common.vm.wnd.dpr.DevPxRatioT
 import io.suggest.sjs.common.vm.wnd.nav.NavigatorVm
 import io.suggest.sjs.dom2.{DomExt, DomWindowExt}
+import org.scalajs.dom
 import org.scalajs.dom.{MediaQueryList, Window}
 
 import scala.scalajs.js
@@ -27,6 +28,9 @@ case class WindowVm()
   }
 
   def stub = DomWindowExt(_underlying)
+
+  def locationOpt = DomExt.windowOpt
+    .flatMap {_ => Option(dom.window.location) }
 
   def documentOpt = stub.documentU.toOption
 

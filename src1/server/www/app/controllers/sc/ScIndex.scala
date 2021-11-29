@@ -668,7 +668,7 @@ final class ScIndex @Inject()(
     }
 
 
-    override def scStat: Future[Stat2] = {
+    override def scStatFut: Future[Stat2] = {
       // Запуск асинхронных задач в фоне.
       val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
       val _indexNodeFut     = indexNodeFutVal

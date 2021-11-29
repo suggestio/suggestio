@@ -2,7 +2,7 @@ package io.suggest.grid
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t, ItemProps, LayoutFunRes, PropsCommon}
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandModes}
-import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGbSidePx, MGbSize, MGridBuildArgs, MGridBuildResult}
+import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGbSidePx, MGbSize, MGridBuildArgs, MGridBuildResult, MGridRenderInfo}
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
@@ -191,7 +191,8 @@ object GridBuilderUtilJs {
   def mkCssGridArgs(
                      gbRes            : MGridBuildResult,
                      conf             : MJdConf,
-                     tagName          : GridComponent_t
+                     tagName          : GridComponent_t,
+                     info             : MGridRenderInfo   = MGridRenderInfo.forBrowser,
                    ): CssGridProps = {
     // Каррируем функцию вне тела new CssGridProps{}, чтобы sjs-компилятор меньше мусорил левыми полями.
     // https://github.com/scala-js/scala-js/issues/2748
@@ -203,9 +204,9 @@ object GridBuilderUtilJs {
     // Рассчёт расстояния между разными блоками.
     val cellPaddingPx = Math.round(conf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
 
-    val ees = if (!gbRes.nextRender.animate) {
+    val ees = if (!info.animate) {
       EnterExitStyle.simple
-    } else if (gbRes.nextRender.animFromBottom) {
+    } else if (info.animFromBottom) {
       // Требуется явный рендер снизу, чтобы юзер заметил, что наверху что-то появилось.
       EnterExitStyle.fromBottom
 
@@ -239,7 +240,7 @@ object GridBuilderUtilJs {
     }
 
     new CssGridProps {
-      override val duration     = if (gbRes.nextRender.animate) 600 else 0
+      override val duration     = if (info.animate) 600 else 0
       override val component    = tagName
       override val columns      = conf.gridColumnsCount
       override val columnWidth  = Math.round(BlockWidths.min.value * szMultD).toInt

@@ -17,6 +17,7 @@ import io.suggest.proto.http.model.{HttpReq, HttpReqAdp, HttpResp, IHttpResultHo
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sec.SessionConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.univeq._
 import io.suggest.text.{StringUtil, UrlUtil2}
 import org.scalajs.dom
@@ -33,7 +34,7 @@ object HttpClient extends Log {
 
   private def myProto: Option[String] = {
     for {
-      location <- Option( dom.window.location )
+      location <- WindowVm().locationOpt
       if !js.isUndefined( location )
       proto <- Option( location.protocol )
       if !js.isUndefined(proto) &&
@@ -54,7 +55,7 @@ object HttpClient extends Log {
     * Для браузера хватает относительных ссылок, а вот cordova держит webview в локальном контексте. */
   val PREFER_ABS_URLS: Boolean = {
     // Подготовить Xhr к работе. Если cordova-приложение или какой-то локальный запуск, то нужно использовать absoluter urls для реквестов.
-    val domLocationOpt = Option( dom.window.location )
+    val domLocationOpt = WindowVm().locationOpt
       .filterNot(js.isUndefined)
 
     val isHttp = myHttpProto.nonEmpty

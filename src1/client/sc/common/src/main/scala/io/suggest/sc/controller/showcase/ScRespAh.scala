@@ -4,14 +4,20 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.sjs.common.async.AsyncUtil._
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.empty.OptionUtil
+import io.suggest.dev.{MScScreenS, MScreenInfo}
+import io.suggest.i18n.MLanguage
 import io.suggest.log.Log
-import io.suggest.msg.ErrorMsgs
+import io.suggest.msg.{ErrorMsgs, JsonPlayMessages}
 import io.suggest.sc.controller.{IRespActionHandler, IRespHandler, MRhCtx}
-import io.suggest.sc.model.inx.ReGetIndex
+import io.suggest.sc.model.dev.MScDev
+import io.suggest.sc.model.in.{MInternalInfo, MScInternals}
+import io.suggest.sc.model.inx.{MScIndex, ReGetIndex}
 import io.suggest.sc.model.{HandleScApiResp, MScRoot, OnlineCheckConn}
 import io.suggest.sc.ssr.SsrSetState
+import io.suggest.sc.view.styl.ScCss
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 import scala.util.Success
 
@@ -25,9 +31,7 @@ class ScRespAh(
   with Log
 { ah =>
 
-  private def _handleScApiResp(m: HandleScApiResp): ActionResult[MScRoot] = {
-      val value0 = value
-
+  private def _handleScApiResp(m: HandleScApiResp, value0: MScRoot = value): ActionResult[MScRoot] = {
       val rhCtx0 = MRhCtx(value0, m, modelRW)
       val respHandler = scRespHandlers
         .find { rh =>
@@ -114,16 +118,58 @@ class ScRespAh(
       _handleScApiResp( m )
 
     // Showcase running on server-side, and ScSite controller wants to render to HTML some stuff.
-    // Rendering is synchronous, so everything in VDOM should be updated right with no background requests.
-    // Everything MUST
+    // Rendering is synchronous, so showcase state & VDOM should be updated right now/ATM with no background tasks.
     case m: SsrSetState =>
+      var v0 = value
+
+      // Switch screen and ScCss to needed values.
+      for {
+        screen2 <- m.scQs.common.screen
+        if v0.dev.screen.info.screen !=* screen2
+      } {
+        v0 = MScRoot.dev
+          .andThen( MScDev.screen )
+          .andThen( MScScreenS.info )
+          .andThen( MScreenInfo.screen )
+          .replace( screen2 )(v0)
+
+        // ScCssRebuild minimalistic:
+        val scCssArgs = MScRoot.scCssArgsFrom( v0 )
+        if (v0.index.scCss.args != scCssArgs) {
+          val scCss2 = ScCss( scCssArgs )
+          val v2 = MScRoot.index
+            .andThen( MScIndex.scCss )
+            .replace( scCss2 )(v0)
+          v0 = v2
+        }
+      }
+
+      // Switch UI language, if langData is defined in original request:
+      for {
+        langData <- m.lang
+        rctx_LENS = MScRoot.internals
+          .andThen( MScInternals.info )
+          .andThen( MInternalInfo.reactCtx )
+        // This check must be done server-side (inside related actor/contoller), not here to obey server's decision about language.
+        if !(rctx_LENS.get(v0).language contains[MLanguage] langData.lang)
+        // Reset messages. Related React.Contexts will be re-rendered after final update(): ActionResult[].
+        v2 = rctx_LENS.modify { rCtx0 =>
+          rCtx0.copy(
+            language = Some( langData.lang ),
+            langSwitch = rCtx0.langSwitch.ready( JsonPlayMessages(langData.messagesMap) )
+          )
+        }(v0)
+      } {
+        v0 = v2
+      }
+
       val m2 = HandleScApiResp(
         reqTimeStamp = None,
         qs = m.scQs,
         tryResp = Success( m.scResp ),
         reason = ReGetIndex(),  // TODO What should be defined as reason here?
       )
-      _handleScApiResp( m2 )
+      _handleScApiResp( m2, v0 )
 
   }
 

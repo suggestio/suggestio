@@ -29,7 +29,7 @@ class JsRouterInitAh[M <: AnyRef](
       val v0 = value
 
       if (m.status.isEmpty && !m.status.isFailed) {
-        if (v0.jsRouter.isReady || v0.jsRouter.isPending) {
+        if (v0.jsRoutes.isReady || v0.jsRoutes.isPending) {
           // Инициализация уже запущена или выполнена ранее.
           noChange
 

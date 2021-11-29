@@ -383,7 +383,7 @@ final class PlatformAh[M](
               )
 
             // Принудительно пересчитать экран. В cordova данные экрана определяются через cordova-plugin-device.
-            fxAcc ::= ScreenResetNow.toEffectPure
+            fxAcc ::= ScreenResetNow().toEffectPure
 
             // Инициализировать поддержку нотификаций:
             fxAcc ::= NotifyStartStop(isStart = true).toEffectPure

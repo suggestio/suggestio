@@ -6,7 +6,6 @@ import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.univeq.UnivEq
 
 import scala.scalajs.js
-import scala.scalajs.js.WrappedDictionary
 import scala.scalajs.js.annotation.JSGlobal
 import scala.util.Try
 
@@ -43,7 +42,7 @@ sealed trait IJsMessagesSingleLang extends js.Object {
   * Фасад к нативному глобальному инстансу window._SioMessages.
   */
 @js.native
-@JSGlobal( I18nConst.MESSAGES_JSNAME )
+@JSGlobal( I18nConst.JSMESSAGES_NAME )
 object JsMessagesSingleLangNative extends IJsMessagesSingleLang
 
 
@@ -102,9 +101,9 @@ object Messages extends Messages {
 
 
 /** JSON-based messages v2. Implements abities purely to switch language in runtime. */
-final class JsonPlayMessages(
-                              private val langMessages      : WrappedDictionary[String],
-                            )
+final case class JsonPlayMessages(
+                                   private val langMessages      : collection.Map[String, String],
+                                 )
   extends Messages
 {
 

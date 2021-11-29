@@ -22,12 +22,12 @@ object MJsRouterS {
 
   implicit object MJsRouterSFastEq extends FastEq[MJsRouterS] {
     override def eqv(a: MJsRouterS, b: MJsRouterS): Boolean = {
-      (a.jsRouter ===* b.jsRouter) &&
+      (a.jsRoutes ===* b.jsRoutes) &&
       (a.delayedRouteTo ===* b.delayedRouteTo)
     }
   }
 
-  def jsRouter = GenLens[MJsRouterS](_.jsRouter)
+  def jsRouter = GenLens[MJsRouterS](_.jsRoutes)
   def delayedRouteTo = GenLens[MJsRouterS](_.delayedRouteTo)
 
 }
@@ -35,15 +35,15 @@ object MJsRouterS {
 
 /** Контейнер состояния js-роутера.
   *
-  * @param jsRouter Состояние js-роутера.
+  * @param jsRoutes Состояние js-роутера.
   * @param delayedRouteTo Возможно, что RouteTo пришла до готовности js-роутера к обработке запросов,
   *                       поэтому TailAh пришлось частично отложить экшен до готовности js-роутера.
   */
 case class MJsRouterS(
-                       jsRouter         : Pot[routes.type]    = Pot.empty,
+                       jsRoutes         : Pot[routes.type]        = Pot.empty,
                        delayedRouteTo   : Option[RouteTo]         = None,
                      ) {
 
-  lazy val jsRouterOpt = jsRouter.toOption
+  lazy val jsRoutesOpt = jsRoutes.toOption
 
 }

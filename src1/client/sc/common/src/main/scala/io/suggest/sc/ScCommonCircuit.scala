@@ -21,19 +21,19 @@ import io.suggest.sc.controller.dev.{GeoLocAh, PlatformAh, ScGeoTimerAh, ScScree
 import io.suggest.sc.controller._
 import io.suggest.sc.controller.dia.{ScErrorDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.controller.grid.{GridAh, GridFocusRespHandler, GridRespHandler, LocationButtonAh}
-import io.suggest.sc.controller.inx.{ConfUpdateRah, IndexAh, IndexRah, NodesRecentAh, ScConfAh, WelcomeAh}
+import io.suggest.sc.controller.inx.{ConfUpdateRah, IndexAh, IndexRah, NodesRecentAh, ScConfAh}
 import io.suggest.sc.controller.jsrr.JsRouterInitAh
 import io.suggest.sc.controller.menu.DlAppAh
 import io.suggest.sc.controller.search._
 import io.suggest.sc.index.MScIndexes
 import io.suggest.sc.model._
 import io.suggest.sc.model.boot.MScBoot.MScBootFastEq
-import io.suggest.sc.model.boot.{Boot, IBootAction, MBootServiceIds, MSpaRouterState}
+import io.suggest.sc.model.boot.{Boot, IBootAction, MBootServiceIds}
 import io.suggest.sc.model.dev.{MScDev, MScOsNotifyS}
 import io.suggest.sc.model.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.model.dia.err.MScErrorDia
 import io.suggest.sc.model.grid.{MGridCoreS, MGridS, MScAdData}
-import io.suggest.sc.model.in.{MInternalInfo, MScDaemon, MScInternals}
+import io.suggest.sc.model.in.{MInternalInfo, MJsRouterS, MScDaemon, MScInternals}
 import io.suggest.sc.model.inx.{IIndexAction, IWelcomeAction, MScIndex, MScIndexState}
 import io.suggest.sc.model.menu.{IScAppAction, MDlAppDia, MMenuS}
 import io.suggest.sc.model.search.MGeoTabS.MGeoTabSFastEq
@@ -49,6 +49,7 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import io.suggest.geo.{GeoLocApi, MGeoPoint}
 import io.suggest.grid.ScGridScrollUtil
+import io.suggest.grid.build.MGridRenderInfo
 import io.suggest.id.login.c.session.SessionAh
 import io.suggest.id.login.m.ILogoutAction
 import io.suggest.jd.render.m.{IGridAction, IJdAction}
@@ -60,6 +61,7 @@ import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.IOsNotifyAction
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.react.r.ComponentCatch
+import io.suggest.routes.routes
 import io.suggest.sc.controller.android.{IIntentAction, ScIntentsAh}
 import io.suggest.sc.controller.showcase.{ScErrorAh, ScRespAh}
 import io.suggest.sc.controller.in.{BootAh, ScDaemonAh, ScLangAh}
@@ -104,6 +106,7 @@ abstract class ScCommonCircuit
   def isNeedGeoLocOnResume(): Boolean
   def scrollApiOpt: Option[IScrollApi]
   def scGridScrollUtil: ScGridScrollUtil
+  def gridRenderInfo: MGridRenderInfo
 
   import MScIndex.MScIndexFastEq
   import model.in.MScInternals.MScInternalsFastEq
@@ -139,6 +142,7 @@ abstract class ScCommonCircuit
     def scConf: MSc3Conf
     def generation: Long
     def _mscreen: MScreen
+    def _jsRoutesPot: Pot[routes.type] = Pot.empty
 
     def mplatform: MPlatformS
 
@@ -193,6 +197,7 @@ abstract class ScCommonCircuit
             core = MGridCoreS(
               jdConf    = jdConf,
               jdRuntime = JdUtil.prepareJdRuntime(jdConf).make,
+              info      = gridRenderInfo,
             )
           )
         },
@@ -203,6 +208,9 @@ abstract class ScCommonCircuit
               searchCss = searchCssEmpty(false),
               saved = Pot.empty[MScIndexes],
             ),
+          ),
+          jsRouter = MJsRouterS(
+            jsRoutes = _jsRoutesPot,
           ),
         ),
       )
@@ -356,6 +364,7 @@ abstract class ScCommonCircuit
         scNotificationsOpt  = osScNotificationsOpt,
         scrollApiOpt        = scrollApiOpt,
         scGridScrollUtil    = scGridScrollUtil,
+        gridRenderInfo      = gridRenderInfo,
       ) #::
         new GridFocusRespHandler( scGridScrollUtil ) #::
         new IndexRah #::
@@ -413,6 +422,7 @@ abstract class ScCommonCircuit
     screenRO      = screenRO,
     modelRW       = gridRW,
     scGridScrollUtil = scGridScrollUtil,
+    gridRenderInfo = gridRenderInfo,
   )
 
   private def scScreenAh: HandlerFunction = new ScScreenAh(

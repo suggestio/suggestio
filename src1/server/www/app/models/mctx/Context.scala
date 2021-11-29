@@ -151,7 +151,7 @@ trait IContextUtilDi {
 /** Трейт-аддон для контроллеров, которым нужен доступ к сборке контекстов. */
 trait ContextT { this: ITargets =>
 
-  def contextFactory: Context2Factory
+  def contextFactory: ContextFactory
 
   /**
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
@@ -314,7 +314,7 @@ final class ContextApi @Inject() (
 
 /** Guice factory для сборки контекстов с использованием DI.
   * У шаблонов бывает необходимость залезть в util/models к статическим вещам. */
-trait Context2Factory {
+trait ContextFactory {
   /**
    * Сборка контекста, код метода реализуется автоматом через Guice Assisted inject.
    * @see [[GuiceDiModule]] для тюнинга assisted-линковки контекста.

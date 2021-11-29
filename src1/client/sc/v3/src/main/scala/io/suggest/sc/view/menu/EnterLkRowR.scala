@@ -10,7 +10,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.routes.IJsRouter
+import io.suggest.routes.IJsRoutes
 import io.suggest.sc.model.boot.MSpaRouterState
 import io.suggest.sc.model.{MScRoot, ScLoginFormShowHide}
 import io.suggest.sc.view.styl.{ScCss, ScCssStatic}
@@ -29,7 +29,7 @@ class EnterLkRowR(
                    menuItemR     : MenuItemR,
                    scCssP        : React.Context[ScCss],
                    crCtxProv     : React.Context[MCommonReactCtx],
-                   jsRouterOptP  : React.Context[Option[IJsRouter]],
+                   jsRoutesOptP  : React.Context[Option[IJsRoutes]],
                    spaRouterState: MSpaRouterState,
                  )
   extends Log
@@ -85,7 +85,7 @@ class EnterLkRowR(
 
       s.internalLogin { internalLoginProxy =>
         internalLoginProxy.value.whenDefinedEl { isInternalLogin =>
-          jsRouterOptP.consume { jsRouterOpt =>
+          jsRoutesOptP.consume { jsRouterOpt =>
             val linkAcc = <.a(
               R.rowLink,
               listItem,

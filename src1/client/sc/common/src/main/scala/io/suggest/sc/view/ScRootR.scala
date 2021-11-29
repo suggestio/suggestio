@@ -12,7 +12,7 @@ import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits.VdomElOptionExt
-import io.suggest.routes.IJsRouter
+import io.suggest.routes.IJsRoutes
 import io.suggest.sc.model.MScRoot
 import io.suggest.sc.view.dia.dlapp.DlAppDiaR
 import io.suggest.sc.view.dia.login.ScLoginR
@@ -37,7 +37,6 @@ import scalacss.ScalaCssReact._
   * Description: Корневой wrap-компонент react-выдачи.
   */
 class ScRootR (
-                // ниже - только DI
                 gridR                   : GridR,
                 searchR                 : SearchR,
                 headerR                 : HeaderR,
@@ -47,14 +46,14 @@ class ScRootR (
                 scLoginROpt             : Option[ScLoginR],
                 scNodesROpt             : Option[ScNodesR],
                 scSettingsDiaR          : ScSettingsDiaR,
-                scSnacksR               : ScSnacksR,
+                scSnacksROpt            : Option[ScSnacksR],
                 scThemes                : ScThemes,
                 logOutDiaROpt           : Option[LogOutDiaR],
                 locationButtonR         : LocationButtonR,
                 crCtxP                  : React.Context[MCommonReactCtx],
                 muiThemeCtxP            : React.Context[MuiTheme],
                 scCssP                  : React.Context[ScCss],
-                jsRouterOptP            : React.Context[Option[IJsRouter]],
+                jsRoutesOptP            : React.Context[Option[IJsRoutes]],
               ) {
 
   type Props = ModelProxy[MScRoot]
@@ -65,8 +64,8 @@ class ScRootR (
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
                                     colorsC                   : ReactConnectProxy[MColors],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
-                                  // TODO Может есть более эффективный метод проброса? Роутер инициализируется при запуске системы, и больше не меняется.
-                                    jsRouterOptC              : ReactConnectProxy[Option[IJsRouter]],
+                                    // TODO Может есть более эффективный метод проброса? Роутер инициализируется при запуске системы, и больше не меняется.
+                                    jsRoutesOptC              : ReactConnectProxy[Option[IJsRoutes]],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -92,7 +91,7 @@ class ScRootR (
             mrootProxy.wrap(_.index)( welcomeR.component.apply ),
 
             // Рендер плитки карточек узла:
-            mrootProxy.wrap( _.grid )( gridR.component.apply ),
+            gridR.component( mrootProxy ),
 
             // Location floating button over grid.
             locationButtonR.component( mrootProxy ),
@@ -144,7 +143,7 @@ class ScRootR (
             mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply )
           },
           // Snackbar
-          scSnacksR.component( mrootProxy ),
+          scSnacksROpt.whenDefinedEl( _.component( mrootProxy ) ),
           // Settings dialog
           scSettingsDiaR.component( mrootProxy ),
           // Nodes management form.
@@ -167,8 +166,8 @@ class ScRootR (
       val scWithCrCtx = s.commonReactCtxC { commonReactCtxProxy =>
         crCtxP.provide( commonReactCtxProxy.value )( sc )
       }
-      val scWithJsRouterCtx = s.jsRouterOptC { jsRouterOptProxy =>
-        jsRouterOptP.provide( jsRouterOptProxy.value )(scWithCrCtx)
+      val scWithJsRouterCtx = s.jsRoutesOptC { jsRouterOptProxy =>
+        jsRoutesOptP.provide( jsRouterOptProxy.value )(scWithCrCtx)
       }
       val result = s.scCssC { scCssProxy =>
         scCssP.provide( scCssProxy.value )( scWithJsRouterCtx )
@@ -198,7 +197,7 @@ class ScRootR (
 
         commonReactCtxC = propsProxy.connect( _.internals.info.reactCtx.context )( FastEq.AnyRefEq ),
 
-        jsRouterOptC = propsProxy.connect( _.internals.jsRouter.jsRouterOpt ),
+        jsRoutesOptC = propsProxy.connect( _.internals.jsRouter.jsRoutesOpt ),
 
       )
     }

@@ -48,13 +48,20 @@ object MScreen {
 
   @inline implicit def univEq: UnivEq[MScreen] = UnivEq.derive
 
-  def default = MScreen(
-    wh = MSize2di(
-      width   = 1024,
-      height  = 768,
-    ),
-    pxRatio = MPxRatios.default
+  def defaulted(width: Int = 1024, height: Int = 768): MScreen = {
+    MScreen(
+      wh = MSize2di(
+        width   = 1024,
+        height  = height,
+      ),
+      pxRatio = MPxRatios.default
+    )
+  }
+
+  def default = defaulted(
+    height = 768,
   )
+
 
   def wh        = GenLens[MScreen](_.wh)
   def pxRatio   = GenLens[MScreen](_.pxRatio)

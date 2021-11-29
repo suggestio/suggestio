@@ -6,7 +6,7 @@ import io.suggest.model.SlickHolder
 import io.suggest.playx.AppModeExt
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import models.mctx.{Context2Factory, ContextT}
+import models.mctx.{ContextFactory, ContextT}
 import models.req.MUserInits
 import play.api.Application
 import play.api.data.Form
@@ -41,7 +41,7 @@ final class SioControllerApi @Inject()(
                                         val injector                  : Injector,
                                         val slickHolder               : SlickHolder,
                                         val current                   : Application,
-                                        override val contextFactory   : Context2Factory,
+                                        override val contextFactory   : ContextFactory,
                                         val langs                     : Langs,
                                         implicit val ec               : ExecutionContext,
                                       )

@@ -26,10 +26,12 @@ final class ScJsRouter @Inject() (
   private lazy val scJsRouterTpl = injector.instanceOf[ScJsRouterTpl]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
 
+  def jsRouterBody(implicit ctx: Context): String =
+    scJsRouterTpl().body
 
   def jsRouterCacheHash(implicit ctx: Context): Int = {
     // Рендер зависит только от констант и прочего DI-инстансов в контексте: request.host, .api и т.д.
-    jsRouterCacheHash( scJsRouterTpl().body )
+    jsRouterCacheHash( jsRouterBody )
   }
   def jsRouterCacheHash(jsRouterTplBody: String): Int = {
     jsRouterTplBody.hashCode
@@ -44,10 +46,8 @@ final class ScJsRouter @Inject() (
     *         Редирект, если роутер кэшируется по другому адресу.
     */
   def scJsRouterCache(cachedHashCode: Int) = ignoreAuth() { implicit request =>
-    val renderedHtml = scJsRouterTpl()
-    val renderedHtmlString = renderedHtml.body
-
-    val realHashCode = jsRouterCacheHash( renderedHtmlString )
+    val renderedJsString = jsRouterBody
+    val realHashCode = jsRouterCacheHash( renderedJsString )
 
     lazy val logPrefix = s"scJsRouter($cachedHashCode):"
 
@@ -70,7 +70,7 @@ final class ScJsRouter @Inject() (
         NotModified
 
       } else {
-        Ok( renderedHtmlString )
+        Ok( renderedJsString )
           .as( JAVASCRIPT )
           .withHeaders(
             ETAG          -> realHashCodeStringQuouted,

@@ -7,6 +7,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.routes.routes
+import io.suggest.sc.ScConstants.ScJsState
 import io.suggest.sc.model.{MScRoot, ResetUrlRoute}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -46,13 +47,13 @@ class AboutSioR(
 
     private def _onAboutLinkClick(nodeId: String)(e: ReactMouseEvent): Callback = {
       Callback.unless( ReactMouseEvent targetsNewTab_? e ) {
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $,
+        e.preventDefaultCB >> ReactDiodeUtil.dispatchOnProxyScopeCB( $,
           // We do not use routerCtl.set() here, because AboutSioR must be portable and live without external SPA-router.
           ResetUrlRoute(
             mods = Some { _ =>
-              _mkAboutUrlState(Some(nodeId))
+              _mkAboutUrlState( Some(nodeId) )
             },
-            via  = SetRouteVia.HistoryPush,
+            via = SetRouteVia.HistoryPush,
           )
         )
       }
@@ -94,16 +95,16 @@ class AboutSioR(
 
                 // Also allow render without JS-router available.
                 jsRoutesProxy.value.toOption.whenDefined { jsRoutes =>
-                  ^.href := HttpClient.mkAbsUrlIfPreferred(
-                    jsRoutes.controllers.sc.ScSite.geoSite(
-                      PlayJsonSjsUtil.toNativeJsonObj(
-                        Json.toJsObject( _mkAboutUrlState(nodeIdOpt) )
+                  ^.href := ScJsState.fixJsRouterUrl(
+                    HttpClient.mkAbsUrlIfPreferred(
+                      jsRoutes.controllers.sc.ScSite.geoSite(
+                        PlayJsonSjsUtil.toNativeJsonObj(
+                          Json
+                            .toJsObject( _mkAboutUrlState(nodeIdOpt) ) )
                       )
-                    )
-                      .absoluteURL( HttpClient.PREFER_SECURE_URLS )
+                        .absoluteURL( HttpClient.PREFER_SECURE_URLS ) )
                   )
                 },
-
               )
             },
 
@@ -123,7 +124,7 @@ class AboutSioR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        jsRoutesC = propsProxy.connect( _.internals.jsRouter.jsRouter ),
+        jsRoutesC = propsProxy.connect( _.internals.jsRouter.jsRoutes ),
       )
     }
     .renderBackend[Backend]

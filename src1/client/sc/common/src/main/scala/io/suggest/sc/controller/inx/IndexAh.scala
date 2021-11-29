@@ -706,7 +706,7 @@ class IndexAh[M](
             for (fx <- __osStatusBarColorFxOpt(isOpen2))
               fxAcc += fx
 
-            updated(v2, fxAcc)
+            ah.updateMaybeSilentFx( m.silent )( v2, fxAcc )
           }
 
         case MScSideBars.Menu =>
@@ -726,7 +726,7 @@ class IndexAh[M](
             if (isOpen2 && v2.search.panel.opened)
               v2 = (IndexAh._inx_search_panel_opened_LENS replace false)(v2)
 
-            updated( v2, fxAcc )
+            ah.updateMaybeSilentFx( m.silent )(v2, fxAcc )
           }
       }
 
@@ -841,7 +841,7 @@ class IndexAh[M](
 
 
     // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.
-    case ScCssReBuild =>
+    case m: ScCssReBuild =>
       val v0 = value
       val scCssArgs = MScRoot.scCssArgsFrom( rootRO.value )
       if (v0.scCss.args != scCssArgs) {
@@ -858,7 +858,7 @@ class IndexAh[M](
             .replace( searchCss2 )
         )(v0)
 
-        updated( v2 )
+        ah.updateMaybeSilent( m.silent )( v2 )
 
       } else {
         noChange
@@ -1015,6 +1015,7 @@ class IndexAh[M](
         )
       )(v0)
       updated(v2)
+
 
   }
 

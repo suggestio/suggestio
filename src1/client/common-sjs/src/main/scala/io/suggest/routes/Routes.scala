@@ -16,12 +16,12 @@ import scala.scalajs.js.annotation.JSGlobal
  * одновременно или всегда. В шаблоне, чей init-контроллер должен обращаться к какой-то роутере, должен присутствовать
  * вызов к сборке соответствующего javascriptRouter'а.
  */
-object IJsRouter {
-  @inline implicit def univEq[T <: IJsRouter]: UnivEq[T] = UnivEq.force
+object IJsRoutes {
+  @inline implicit def univEq[T <: IJsRoutes]: UnivEq[T] = UnivEq.force
 }
 
 @js.native
-trait IJsRouter extends js.Object {
+trait IJsRoutes extends js.Object {
 
   /** Все экспортированные контроллеры. */
   def controllers: Controllers = js.native
@@ -30,7 +30,7 @@ trait IJsRouter extends js.Object {
 
 @JSGlobal( GLOBAL_NAME )
 @js.native
-object routes extends IJsRouter
+object routes extends IJsRoutes
 
 
 /** Интерфейс routes.controllers с доступом к static-контроллеру. */

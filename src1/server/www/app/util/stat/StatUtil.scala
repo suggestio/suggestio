@@ -14,7 +14,7 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import models.mctx.{Context, ContextUtil}
 import models.req.{IReqHdr, ISioUser}
-import net.sf.uadetector.OperatingSystemFamily
+import net.sf.uadetector.{OperatingSystemFamily, ReadableUserAgent}
 import net.sf.uadetector.service.UADetectorServiceFactory
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.inject.Injector
@@ -116,6 +116,33 @@ final class StatUtil @Inject()(
   }
 
 
+  def userAgentHeader()(implicit ctx: Context): Option[String] = {
+    for {
+      ua <- ctx.request
+        .headers
+        .get(USER_AGENT)
+      uaTrimmed = ua.trim
+      if uaTrimmed.nonEmpty
+    } yield {
+      uaTrimmed
+    }
+  }
+
+  def parseUserAgent( userAgent: String ): Option[ReadableUserAgent] = {
+    // try-catch для самозащиты от возможных багов в православной либе uadetector.
+    Try {
+      val uaParser = UADetectorServiceFactory.getResourceModuleParser
+      Option( uaParser.parse( userAgent ) )
+    }
+      .recover {
+        case ex: Throwable =>
+          LOGGER.warn(s"agent: Unable to use UADetector for parsing UA: $userAgent", ex)
+          None
+      }
+      .toOption
+      .flatten
+  }
+
   /** Что-то типа builder'а для создания и сохранения одного элемента статистики второго поколения. */
   abstract class Stat2 {
 
@@ -127,32 +154,8 @@ final class StatUtil @Inject()(
     /** Сохраняемые stat actions. */
     def statActions: List[MAction]
 
-    lazy val uaOpt = {
-      for {
-        ua <- ctx.request
-          .headers
-          .get(USER_AGENT)
-        uaTrimmed = ua.trim
-        if uaTrimmed.nonEmpty
-      } yield {
-        uaTrimmed
-      }
-    }
-
-    lazy val browser = uaOpt.flatMap { ua =>
-      // try-catch для самозащиты от возможных багов в православной либе uadetector.
-      Try {
-        val uaParser = UADetectorServiceFactory.getResourceModuleParser
-        Option( uaParser.parse(ua) )
-      }
-        .recover {
-          case ex: Throwable =>
-            LOGGER.warn(s"agent: Unable to use UADetector for parsing UA: $ua", ex)
-            None
-        }
-        .toOption
-        .flatten
-    }
+    lazy val userAgentOpt = userAgentHeader()(ctx)
+    lazy val userAgentParsedOpt = userAgentOpt.flatMap( parseUserAgent )
 
 
     /** stat action для описания текущего юзера. Можно получить его через userSaOptFut() или userSaOptFutFromRequest(). */
@@ -183,7 +186,7 @@ final class StatUtil @Inject()(
             CordovaApp :: acc0
           } else {
             if (!(xRqWith startsWith HttpConst.Headers.XRequestedWith.XRW_VALUE))
-              LOGGER.debug(s"uaTypes(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+              LOGGER.debug(s"uaTypes(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$userAgentOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
 
             acc0
           }
@@ -197,7 +200,7 @@ final class StatUtil @Inject()(
       */
     def sioOsFamily: Option[MOsFamily] = {
       for {
-        agent     <- browser
+        agent     <- userAgentParsedOpt
         os        <- Option( agent.getOperatingSystem )
         osFamily  <- Option( os.getFamily )
         mOsFamily <- osFamilyConv.lift( osFamily )
@@ -208,13 +211,13 @@ final class StatUtil @Inject()(
 
     /** Скомпиленные под статистику данные юзер-агента. */
     def mua = {
-      val _browser  = browser
-      val _browserOs = browser.flatMap { _agent =>
+      val _browser  = userAgentParsedOpt
+      val _browserOs = userAgentParsedOpt.flatMap { _agent =>
         Option( _agent.getOperatingSystem )
       }
 
       MUa(
-        ua      = uaOpt,
+        ua      = userAgentOpt,
         browser = for {
           agent <- _browser
           agentName <- Option(agent.getName)

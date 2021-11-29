@@ -79,11 +79,11 @@ final class ScCtlUtil @Inject()(
     }
 
     /** Контекстно-зависимая сборка данных статистики. */
-    def scStat: Future[Stat2]
+    def scStatFut: Future[Stat2]
 
     /** Сохранение подготовленной статистики обычно везде очень одинаковое. */
     def saveScStat(): Future[_] = {
-      scStat
+      scStatFut
         .flatMap(statUtil.saveStat)
     }
 

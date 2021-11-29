@@ -9,13 +9,15 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 
 object ScSsrMain {
 
-  val component: VdomElement = ScSsrModule.scRootRendered //sc3SpaRouter.state.router()
+  lazy val component = ScSsrModule.scRootRendered
 
   /** API function to call from JVM. */
   @JSExportTopLevel( ScSsrProto.Manifest.RenderActionSync )
-  def renderActionSync(args: Pickled[MScSsrArgs]): String = {
-    // Notify showcase circuit about new state:
-    ScSsrModule.sc3Circuit.dispatch( args.value.action )
+  def renderActionSync(argsPick: Pickled[MScSsrArgs]): String = {
+    val args = argsPick.value
+
+    // Notify showcase circuit about new index/grid state:
+    ScSsrModule.sc3Circuit.dispatch( args.action )
 
     // Execute HTML rendering:
     ReactBrowserDOMServer.renderToString( component.rawElement )

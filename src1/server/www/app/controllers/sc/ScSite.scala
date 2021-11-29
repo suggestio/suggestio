@@ -25,15 +25,18 @@ import OptionUtil.BoolOptOps
 import com.google.inject.Inject
 import controllers.Assets
 import controllers.Assets.Asset
+import io.suggest.ad.blk.{BlockHeights, BlockPaddings, BlockWidths}
 import io.suggest.ble.MUidBeacon
+import io.suggest.dev.MScreen
 import io.suggest.es.model.MEsUuId
 import io.suggest.playx.CacheApiUtil
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.ssr.{MScSsrArgs, SsrSetState}
+import io.suggest.sc.ssr.{MScSsrArgs, ScSsrProto, SsrSetState}
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc.SiteTpl
 import japgolly.univeq._
+import net.sf.uadetector.{ReadableUserAgent, UserAgentType}
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
 import scalaz.NonEmptyList
@@ -87,7 +90,7 @@ final class ScSite @Inject() (
 
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
-  protected abstract class SiteLogic extends scCtlApi.LogicCommonT {
+  protected abstract class SiteLogic extends scCtlApi.LogicCommonT { siteLogic =>
 
     /** Сюда передаются исходные параметры запроса сайта (qs). */
     def _siteQsArgs: SiteQsArgs
@@ -200,7 +203,12 @@ final class ScSite @Inject() (
       }
     }
 
-    override def scStat: Future[Stat2] = {
+    // User agent data shared between SSR and for statistics.
+    lazy val userAgentOpt = statUtil.userAgentHeader()(ctx)
+    lazy val userAgentParsedOpt = userAgentOpt.flatMap( statUtil.parseUserAgent )
+
+    /** scStatFut is a val, because userAgent parsing results are used for showcase-SSR. */
+    override lazy val scStatFut: Future[Stat2] = {
       val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
       val _nodeOptFut       = nodeOptFutVal
       val _domainNodeOptFut = ctx.domainNode3pOptFut
@@ -210,6 +218,8 @@ final class ScSite @Inject() (
         _domainNodeOpt    <- _domainNodeOptFut
       } yield {
         new Stat2 {
+          override lazy val userAgentOpt = siteLogic.userAgentOpt
+          override lazy val userAgentParsedOpt = siteLogic.userAgentParsedOpt
           override def components = MComponents.Site :: super.components
           override def userSaOpt = _userSaOpt
           override def statActions: List[MAction] = {
@@ -384,7 +394,28 @@ final class ScSite @Inject() (
           override def inlineIndexFut: Future[Option[Html]] = {
             Future successful None
             // TODO Render static markup: for react-hydrate & web-crawlers.
-            /*
+
+            val ssrScreen = siteLogic.userAgentParsedOpt
+              .map { userAgent =>
+                userAgent.getType match {
+                  // Mobile browser screen should be shrinked.
+                  case UserAgentType.MOBILE_BROWSER =>
+                    MScreen.defaulted(
+                      // TODO Check UA for pads (ipads, etc), where screen is wider...
+                      width = BlockWidths.max.value + 2 * BlockPaddings.max.value,
+                      height = BlockHeights.max.value + 120, // should be at least 100% expected mobile screen.
+                    )
+                  // Web-crawlers and desktop screens are default:
+                  case _ => //UserAgentType.ROBOT | UserAgentType.BROWSER =>
+                    ScSsrProto.defaultScreen
+                }
+              }
+              .getOrElse {
+                // Missing or invalid User-Agent header.
+                LOGGER.debug(s"$logPrefix SSR-Screen: Cannot understand user ${siteLogic.userAgentOpt} for screen-size detection.")
+                ScSsrProto.defaultScreen
+              }
+
             val scQs = MScQs(
               common = MScCommonQs(
                 locEnv = MLocEnv(
@@ -395,6 +426,7 @@ final class ScSite @Inject() (
                     .map( MGeoLoc(_, None, None) )
                     .toList,
                 ),
+                screen = Some( ssrScreen ),
               ),
               search = MAdsSearchReq(
                 rcvrId = mainScreen.nodeId
@@ -408,7 +440,13 @@ final class ScSite @Inject() (
                 geoIntoRcvr = false,
                 retUserLoc = false,
                 returnEphemeral = false,
-                withWelcome = false,
+                withWelcome = {
+                  // withWelcome: false for web-crawlers, true - for web-browsers.
+                  userAgentParsedOpt.exists { userAgent =>
+                    val renderWelcomeFor = UserAgentType.MOBILE_BROWSER :: UserAgentType.BROWSER :: Nil
+                    renderWelcomeFor contains[UserAgentType] userAgent.getType
+                  }
+                },
               )),
               foc = mainScreen.focusedAdId.map { focAdId =>
                 MScFocusArgs(
@@ -428,8 +466,11 @@ final class ScSite @Inject() (
             }
             (for {
               scResp <- scApiLogic.scRespFut
+              // Lang detection separated from lang-data to implement optional language switching (do not sent lang data, if lang is NOT changed) TODO Need actor with state.
+              ssrLang = scSsrUtil.ssrLang()(ctx).value
+              ssrLangData = scSsrUtil.ssrLangDataFromRequest( ssrLang )( ctx )
               indexHtmlStrE <- scSsrUtil.renderShowcaseContent(MScSsrArgs(
-                action = SsrSetState( scQs, scResp ),
+                action = SsrSetState( scQs, scResp, ssrLangData ),
               ))
             } yield {
               indexHtmlStrE.fold[Option[Html]](
@@ -447,7 +488,6 @@ final class ScSite @Inject() (
                 LOGGER.warn(s"$logPrefix Erorr to prepare or start SSR rendering", ex)
                 None
               }
-             */
           }
         }
 

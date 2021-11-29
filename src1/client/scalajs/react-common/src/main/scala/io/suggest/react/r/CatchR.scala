@@ -19,7 +19,7 @@ object CatchR {
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_C { propsChildren =>
-      <.div(
+      React.Fragment(
         propsChildren
       )
     }

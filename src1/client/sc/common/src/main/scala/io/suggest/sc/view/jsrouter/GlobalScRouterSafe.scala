@@ -7,7 +7,7 @@ import org.scalajs.dom.Window
 import scala.language.implicitConversions
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.{JSGlobalScope, JSName}
 
 /**
  * Suggest.io
@@ -16,14 +16,15 @@ import scala.scalajs.js.annotation.JSName
  * Description: Расширение DOM Window API для доступа к play js routes, т.е. к роутеру, которого может и не быть.
  */
 @js.native
-sealed trait WindowWithScRouterSafe extends js.Object {
+@JSGlobalScope
+object GlobalScRouterSafe extends js.Object {
 
   /**
    * Доступ к необязательному объекту-коду jsRoutes через window.
    * @return Роутер или undefined.
    */
   @JSName( JsRoutesConst.GLOBAL_NAME )
-  def jsRoutes: UndefOr[routes.type] = js.native
+  def jsRoutes: js.UndefOr[routes.type] = js.native
 
   /**
    * Доступ к функции иниализации при асинхронной подгрузке js-роутера.
@@ -32,16 +33,6 @@ sealed trait WindowWithScRouterSafe extends js.Object {
    * @return function() или undefined.
    */
   @JSName( ScConstants.JsRouter.ASYNC_INIT_FNAME )
-  var sioScJsRoutesAsyncInit: UndefOr[js.Function0[_]] = js.native
-
-}
-
-
-object WindowWithScRouterSafe {
-
-  /** Приведение окна к вышеуказанному API. */
-  implicit def wnd2routerWnd(wnd: Window): WindowWithScRouterSafe = {
-    wnd.asInstanceOf[WindowWithScRouterSafe]
-  }
+  var sioScJsRoutesAsyncInit: js.UndefOr[js.Function0[_]] = js.native
 
 }
