@@ -314,8 +314,7 @@ final class YooKassaUtil @Inject() (
     (for {
       // Parse remote client IP-address:
       remoteIpAddr <- {
-        val ipTry = request.remoteClientIpTry
-        ipTry.fold(
+        request.remoteClientIpTry.fold(
           {ex =>
             LOGGER.error(s"$logPrefix No valid ip-address found in request. Nginx configuration bug? remoteClientAddr=${request.remoteClientAddress} remoteAddr=${request.remoteAddress}: (${ex.getClass.getSimpleName}: ${ex.getMessage})")
             None

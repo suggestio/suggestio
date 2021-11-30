@@ -36,7 +36,7 @@ import io.suggest.sc.ssr.{MScSsrArgs, ScSsrProto, SsrSetState}
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc.SiteTpl
 import japgolly.univeq._
-import net.sf.uadetector.{ReadableUserAgent, UserAgentType}
+import net.sf.uadetector.UserAgentType
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
 import scalaz.NonEmptyList
@@ -198,10 +198,14 @@ final class ScSite @Inject() (
     def resultFut: Future[Result] = {
       for (rargs <- renderArgsFut) yield {
         val render = siteTpl(rargs)(ctx)
-        Ok(render)
-          .cacheControl( 600 )
-          .withCspHeader( customCspPolicyOpt )
+        mkResult( Ok, render )
       }
+    }
+
+    def mkResult(status: Status, respBody: Html): Result = {
+      status( respBody )
+        .cacheControl( 600 )
+        .withCspHeader( customCspPolicyOpt )
     }
 
     // User agent data shared between SSR and for statistics.
@@ -489,6 +493,15 @@ final class ScSite @Inject() (
               }
           } else {
             Future.successful( None )
+          }
+
+          override def mkResult(status: scCtlUtil.sioControllerApi.Status, respBody: Html): Result = {
+            super
+              .mkResult(status, respBody)
+              .withHeaders(
+                // inlineIndex is rendered or no (and is rendered how exactly) - depends on User-Agent header.
+                VARY -> USER_AGENT,
+              )
           }
         }
 

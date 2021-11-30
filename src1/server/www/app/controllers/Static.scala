@@ -223,7 +223,7 @@ final class Static @Inject() (
           {cspViol =>
             // Сам результат парсинга не особо важен, это скорее контроль контента.
             val userSaOptFut = statUtil.userSaOptFutFromRequest()
-            val _ctx = implicitly[Context]
+            implicit val _ctx = implicitly[Context]
 
             for {
               _userSaOpt <- userSaOptFut
@@ -260,7 +260,7 @@ final class Static @Inject() (
                 logTail = Json.prettyPrint(request.body)
               )
 
-              LOGGER.trace( s"$logPrefix Done: CSP-report#$r from ${stat2.remoteAddr.remoteAddr}" )
+              LOGGER.trace( s"$logPrefix Done: CSP-report#$r from ${_ctx.request.remoteClientAddress}" )
               NoContent
             }
           }

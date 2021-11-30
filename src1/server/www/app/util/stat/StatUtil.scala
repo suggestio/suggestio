@@ -19,7 +19,6 @@ import net.sf.uadetector.service.UADetectorServiceFactory
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.inject.Injector
 import play.mvc.Http.HeaderNames
-import util.geo.GeoIpUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -41,7 +40,6 @@ final class StatUtil @Inject()(
 
   private lazy val playStatSaver = injector.instanceOf[PlayStatSaver]
   private lazy val contextUtil = injector.instanceOf[ContextUtil]
-  private lazy val geoIpUtil = injector.instanceOf[GeoIpUtil]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   @inline implicit def osFamilyUe: UnivEq[OperatingSystemFamily] = UnivEq.force
@@ -161,15 +159,9 @@ final class StatUtil @Inject()(
     /** stat action для описания текущего юзера. Можно получить его через userSaOptFut() или userSaOptFutFromRequest(). */
     def userSaOpt: Option[MAction]
 
-    /** Оверрайдить при уже наличии нормального адреса. */
-    def remoteAddr = geoIpUtil.fixRemoteAddr( ctx.request.remoteClientAddress )
-
     /** Является ли текущий клиент "локальным", т.е. не очень-то интересным для статистики. */
-    def isLocalClient: Boolean = {
-      (remoteAddr.isLocal contains true) ||
-      ctx.request.user.isSuper
-    }
-
+    def isLocalClient: Boolean =
+      ctx.request.remoteIpIsLocal
 
     /** generation seed, если есть. */
     def gen: Option[Long] = None
@@ -186,7 +178,7 @@ final class StatUtil @Inject()(
             CordovaApp :: acc0
           } else {
             if (!(xRqWith startsWith HttpConst.Headers.XRequestedWith.XRW_VALUE))
-              LOGGER.debug(s"uaTypes(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$userAgentOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+              LOGGER.debug(s"uaTypes(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$userAgentOpt\n from ${ctx.request.remoteClientAddress}\n => ${ctx.request.uri}")
 
             acc0
           }
@@ -254,10 +246,10 @@ final class StatUtil @Inject()(
     def mcommon: MCommonStat = {
       MCommonStat(
         components      = MComponents.Sc :: components,
-        ip              = Some( remoteAddr.remoteAddr ),
+        ip              = Some( ctx.request.remoteClientAddress ),
         uri             = uri,
         domain3p        = domain3p,
-        isLocalClient   = Some(isLocalClient),
+        isLocalClient   = Some( ctx.request.remoteIpIsLocal ),
         gen             = gen
       )
     }
@@ -439,8 +431,17 @@ final class StatUtil @Inject()(
 
   /** Отправить v2-статистику на сохранение в БД. */
   def saveStat(stat2: Stat2): Future[_] = {
-    playStatSaver.BACKEND
-      .save( stat2.mstat )
+    if (
+      stat2.ctx.request.remoteIpIsLocal &&
+      stat2.userAgentOpt.exists(_ startsWith "Zabbix")
+    ) {
+      LOGGER.trace(s"saveStat(): Ignored stats from internal monitoring services.")
+      dontSaveStat( stat2, infoLogLevel = false )
+      Future.successful(())
+
+    } else {
+      playStatSaver.BACKEND save stat2.mstat
+    }
   }
 
 }

@@ -53,9 +53,8 @@ final class AdvGeoLocUtil @Inject() (
     * @return Фьючерс с начальной гео-точкой.
     */
   def getGeoPointFromRemoteAddr(remoteAddress: String): Future[Option[MGeoPoint]] = {
-    val raInfo = geoIpUtil.fixRemoteAddr( remoteAddress )
     for {
-      findIpResOpt <- geoIpUtil.findIpCached( raInfo.remoteAddr )
+      findIpResOpt <- geoIpUtil.findIpCached( remoteAddress )
     } yield {
       for (r <- findIpResOpt) yield {
         r.center

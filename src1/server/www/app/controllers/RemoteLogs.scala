@@ -61,10 +61,9 @@ final class RemoteLogs @Inject() (
   def receive() = {
     maybeAuth( U.PersonNode ).async( _logReceiverBP ) { implicit request =>
       //lazy val logPrefix = s"receive(${System.currentTimeMillis()}) [${request.remoteClientAddress}]:"
-      val remoteAddrFixed = geoIpUtil.fixRemoteAddr( request.remoteClientAddress )
 
       // Запустить геолокацию текущего юзера по IP.
-      val geoLocOptFut = geoIpUtil.findIpCached( remoteAddrFixed.remoteAddr )
+      val geoLocOptFut = geoIpUtil.findIpCached( request.remoteClientAddress )
       // Запустить получение инфы о юзере. Без https тут всегда None.
       val userSaOptFut = statUtil.userSaOptFutFromRequest()
       implicit val _ctx = implicitly[Context]

@@ -674,9 +674,6 @@ final class ScIndex @Inject()(
       val _indexNodeFut     = indexNodeFutVal
       val _geoIpResOptFut   = _geoIpInfo.geoIpResOptFut
 
-      // Исполнение синхронных задач.
-      val _remoteIp         = _geoIpInfo.remoteIp
-
       // Сборка асинхронного результата.
       for {
         _userSaOpt          <- _userSaOptFut
@@ -700,7 +697,6 @@ final class ScIndex @Inject()(
             inxSa :: Nil
           }
           override def components = MComponents.Index :: super.components
-          override def remoteAddr = _remoteIp
           override def devScreenOpt = _qs.common.screen
           override def locEnvOpt = Some( _qs.common.locEnv )
           override def geoIpLoc = _geoIpResOpt

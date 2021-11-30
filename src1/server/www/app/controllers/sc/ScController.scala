@@ -92,13 +92,10 @@ final class ScCtlUtil @Inject()(
 
   case class GeoIpInfo(_qs: MScQs)(implicit request: IReqHdr) extends MacroLogsImplLazy {
 
-    /** Подчищенные нормализованные данные о remote-адресе. */
-    lazy val remoteIp = geoIpUtil.fixedRemoteAddrFromRequest
-
     /** Пошаренный результат ip-geo-локации. */
     lazy val geoIpResOptFut: Future[Option[IGeoFindIpResult]] = {
-      val _remoteIp = remoteIp
-      val findFut = geoIpUtil.findIpCached( _remoteIp.remoteAddr )
+      val _remoteIp = request.remoteClientAddress
+      val findFut = geoIpUtil.findIpCached( _remoteIp )
       if (LOGGER.underlying.isTraceEnabled()) {
         findFut.onComplete { res =>
           LOGGER.trace(s"$geoIpResOptFut geoIpResOptFut[${_remoteIp}]:: tried to geolocate by ip => $res")

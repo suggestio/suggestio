@@ -124,6 +124,11 @@ trait ExtReqHdr extends RequestHeader {
   }
 
 
+  /** true, if remote client ip-address is local-networks-related address. */
+  lazy val remoteIpIsLocal: Boolean =
+    remoteClientIpTry.toOption.exists(_.isLocal)
+
+
   /** У нас тут своя методика определения хоста: используя X-Forwarded-Host. */
   override lazy val host: String = {
     // Попытаться извлечь запрошенный хостнейм из данных форварда.
