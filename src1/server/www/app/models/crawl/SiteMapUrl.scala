@@ -23,7 +23,9 @@ object ChangeFreqs extends Enum[ChangeFreq] {
   case object hourly extends ChangeFreq
   case object daily extends ChangeFreq
   case object weekly extends ChangeFreq
-  //... always, monthly, yearly, never
+  case object monthly extends ChangeFreq
+  case object yearly extends ChangeFreq
+  //... always, never
 
   override def values = findValues
 }

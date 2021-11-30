@@ -36,7 +36,7 @@ import play.api.{Application, Configuration}
 import play.api.http.{HeaderNames, HttpEntity, HttpErrorHandler, HttpProtocol}
 import play.filters.csrf.CSRF
 import play.twirl.api.Xml
-import views.txt.static.robotsTxtTpl
+import views.txt.static.RobotsTxtTpl
 import io.suggest.playx._
 
 import java.net.URI
@@ -85,6 +85,7 @@ final class Static @Inject() (
   implicit private lazy val mat = injector.instanceOf[Materializer]
   implicit private lazy val actorSystem = injector.instanceOf[ActorSystem]
 
+  private lazy val robotsTxtTpl = injector.instanceOf[RobotsTxtTpl]
 
   private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"
 
@@ -94,6 +95,7 @@ final class Static @Inject() (
       .getOptional[Boolean]( _IGNORE_CSP_REPORS_CONF_KEY )
       .getOrElseFalse
   }
+
 
   /**
    * Страница с политикой приватности.
@@ -596,9 +598,11 @@ final class Static @Inject() (
   def siteMapXml() = ignoreAuth() { implicit request =>
     import views.xml.static.sitemap._
 
+    implicit val ctx = implicitly[Context]
+
     // Собираем асинхронный неупорядоченный источник sitemap-ссылок:
     val urls = siteMapUtil
-      .sitemapUrlsSrc()
+      .sitemapUrlsSrc()( ctx )
       // Рендерим каждую ссылку в текст
       .map( _urlTpl.apply )
       .recover { case ex: Throwable =>
@@ -631,12 +635,18 @@ final class Static @Inject() (
     if (current.mode.isDev) 5 else 120
 
   /** Раздача содержимого robots.txt. */
-  def robotsTxt() = ignoreAuth() { implicit request =>
-    Ok( robotsTxtTpl() )
-      .withHeaders(
-        //CONTENT_TYPE  -> "text/plain; charset=utf-8",
-        CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
-      )
+  def robotsTxt() = ignoreAuth().async { implicit request =>
+    implicit val ctx = implicitly[Context]
+    for {
+      domain3pNodeOpt <- ctx.domainNode3pOptFut
+    } yield {
+      val hostPort3pOpt = domain3pNodeOpt.map(_ => request.host)
+      Ok( robotsTxtTpl(hostPort3pOpt)(ctx) )
+        .withHeaders(
+          //CONTENT_TYPE  -> "text/plain; charset=utf-8",
+          CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
+        )
+    }
   }
 
 

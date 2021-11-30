@@ -1,11 +1,12 @@
 package util.showcase
 
 import java.time.LocalDate
-
 import akka.stream.scaladsl.Source
+import io.suggest.common.empty.OptionUtil
+
 import javax.inject.Inject
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
-import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
@@ -13,9 +14,11 @@ import io.suggest.spa.SioPages
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl}
-import models.mctx.ContextUtil
+import models.mctx.{Context, ContextUtil}
 import play.api.inject.Injector
 import util.seo.SiteMapXmlCtl
+
+import scala.concurrent.ExecutionContext
 
 
 /**
@@ -39,6 +42,23 @@ class ScSitemapsXml @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val ctxUtil = injector.instanceOf[ContextUtil]
+  private implicit lazy val ec = injector.instanceOf[ExecutionContext]
+
+
+  /** Sometimes, it is needed to recrawl the site after some major change.
+    * This lower date bound, helps to achieve recrawl: type here last major change date for all pages. */
+  private val LAST_MODIFIED_DATE_AT_LEAST: Option[LocalDate] =
+    Some( LocalDate.of(2021, 11, 30) )
+
+  private val nodeAdvPreds: List[MPredicate] =
+    MPredicates.Receiver ::
+    MPredicates.TaggedBy.DirectTag ::
+    Nil
+
+  private val allAdvPreds: List[MPredicate] =
+    MPredicates.AdvGeoPlace ::
+    MPredicates.TaggedBy.AdvGeoTag ::
+    nodeAdvPreds
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -46,62 +66,114 @@ class ScSitemapsXml @Inject() (
    * Кравлер может ждать ответа долго, а xml может быть толстая, поэтому у нас упор на легковесность
    * и поточность, а не на скорость исполнения.
    */
-  override def siteMapXmlSrc(): Source[SiteMapUrl, _] = {
-    val adSearch = new MNodeSearch {
+  override def siteMapXmlSrc()(implicit ctx: Context): Source[SiteMapUrl, _] = {
+    Source.lazyFutureSource { () =>
+      for {
+        domainNode3pOpt <- ctx.domainNode3pOptFut
+      } yield {
+        val rcvrId3p = domainNode3pOpt.flatMap(_.id)
 
-      override val isEnabled = Some(true)
+        val adSearch = new MNodeSearch {
 
-      override val nodeTypes: Seq[MNodeType] = {
-        MNodeTypes.Ad ::
-          // TODO Теги тоже надо индексировать, по идее. Но надо разобраться с выдачей по-лучше на предмет тегов, URL и их заголовков.
-          // TODO А что с узлами-ресиверами, с плиткой которые?
-          Nil
+          override val isEnabled = OptionUtil.SomeBool.someTrue
+
+          override val nodeTypes: Seq[MNodeType] = {
+            MNodeTypes.Ad ::
+              // TODO Теги тоже надо индексировать, по идее. Но надо разобраться с выдачей по-лучше на предмет тегов, URL и их заголовков.
+              // TODO А что с узлами-ресиверами, с плиткой которые?
+              Nil
+          }
+
+          override val outEdges: MEsNestedSearch[Criteria] = {
+            val crs: Seq[Criteria] = if (rcvrId3p.isEmpty) {
+              // Render all suggest.io sitemap:
+              for (p <- allAdvPreds) yield {
+                Criteria(
+                  predicates = p :: Nil,
+                )
+              }
+
+            } else {
+              // Criterias only for 3p-domain receivers:
+              for {
+                nodeAdvPred <- nodeAdvPreds
+              } yield {
+                Criteria(
+                  predicates      = nodeAdvPred :: Nil,
+                  nodeIds         = rcvrId3p.toList,
+                  nodeIdsMatchAll = false,
+                )
+              }
+            }
+
+            MEsNestedSearch.plain( crs: _* )
+          }
+
+          // Кол-во узлов за одну порцию.
+          override def limit = 25
+        }
+
+        lazy val logPrefix = s"siteMapXmlSrc()[${System.currentTimeMillis()}]:"
+
+        // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
+        val today = LocalDate.now()
+
+        val siteMapUrlPrefix = domainNode3pOpt.fold( ctxUtil.SC_URL_PREFIX ) { _ =>
+          ctxUtil.PROTO + "://" + ctx.request.host
+        }
+
+        import mNodes.Implicits._
+        import streamsUtil.Implicits._
+        import esModel.api._
+
+        val scAdsSrc = mNodes
+          .source[MNode]( adSearch.toEsQuery )
+          .mapConcat { mad =>
+            try {
+              nodeToSiteMapUrl( mad, today, siteMapUrlPrefix, rcvrId3p )
+            } catch {
+              // Подавить возможные ошибки рендера ссылок для текущего узла:
+              case ex: Throwable =>
+                LOGGER.error(s"$logPrefix Failed to render sitemap URL from node#${mad.id.orNull}", ex)
+                Nil
+            }
+          }
+          // Записать в логи кол-во пройденных узлов. Обычно оно эквивалентно кол-ву сгенеренных URL.
+          .maybeTraceCount(this) { totalCount =>
+            s"$logPrefix Total nodes found: $totalCount"
+          }
+
+        val staticsSrc = staticSiteMap( siteMapUrlPrefix, rcvrId3p )
+
+        staticsSrc ++ scAdsSrc
       }
+    }
+  }
 
-      override val outEdges: MEsNestedSearch[Criteria] = {
-        val preds = MPredicates.AdvGeoPlace ::
-          MPredicates.Receiver ::
-          MPredicates.TaggedBy.AdvGeoTag ::
-          MPredicates.TaggedBy.DirectTag ::
-          Nil
-        MEsNestedSearch.plain(
-          (for (p <- preds) yield {
-            Criteria(
-              predicates = p :: Nil,
-            )
-          }): _*,
-        )
-      }
 
-      // Кол-во узлов за одну порцию.
-      override def limit = 25
+  /** Render some static and special non-rdbms page-urls for indexing. */
+  private def staticSiteMap(urlPrefix: String, rcvrId3p: Option[String]): Source[SiteMapUrl, _] = {
+    var acc = List.empty[SiteMapUrl]
+
+    // Don't index suggest.io offero and privacy links for 3p-domains:
+    if (rcvrId3p.isEmpty) {
+      acc ::= SiteMapUrl(
+        loc = urlPrefix + controllers.routes.Static.offero().url,
+        changeFreq = Some( ChangeFreqs.monthly ),
+      )
+      acc ::= SiteMapUrl(
+        loc = urlPrefix + controllers.routes.Static.privacyPolicy().url,
+        changeFreq = Some( ChangeFreqs.yearly ),
+      )
     }
 
-    lazy val logPrefix = s"siteMapXmlSrc()[${System.currentTimeMillis()}]:"
+    // Add current domain main page:
+    acc ::= SiteMapUrl(
+      loc = urlPrefix + controllers.sc.routes.ScSite.geoSite().url,
+      changeFreq = Some( ChangeFreqs.hourly ),
+    )
 
-    // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
-    val today = LocalDate.now()
-
-    import mNodes.Implicits._
-    import streamsUtil.Implicits._
-    import esModel.api._
-
-    mNodes
-      .source[MNode]( adSearch.toEsQuery )
-      .mapConcat { mad =>
-        try {
-          mad2sxu(mad, today)
-        } catch {
-          // Подавить возможные ошибки рендера ссылок для текущего узла:
-          case ex: Throwable =>
-            LOGGER.error(s"$logPrefix Failed to render sitemap URL from node#${mad.id.orNull}", ex)
-            Nil
-        }
-      }
-      // Записать в логи кол-во пройденных узлов. Обычно оно эквивалентно кол-ву сгенеренных URL.
-      .maybeTraceCount(this) { totalCount =>
-        s"$logPrefix Total nodes found: $totalCount"
-      }
+    Source( acc )
   }
 
 
@@ -113,12 +185,13 @@ class ScSitemapsXml @Inject() (
    * @return Экземпляры SiteMapUrl.
    *         Если карточка на годится для индексации, то пустой список.
    */
-  protected def mad2sxu(mad: MNode, today: LocalDate): List[SiteMapUrl] = {
-
-    val rcvrIdOpt = mad.edges
-      .withPredicateIter(MPredicates.Receiver, MPredicates.OwnedBy)
-      .flatMap(_.nodeIds)
-      .nextOption()
+  private def nodeToSiteMapUrl(mad: MNode, today: LocalDate, urlPrefix: String, rcvrId3p: Option[String]): List[SiteMapUrl] = {
+    val rcvrIdOpt = rcvrId3p orElse {
+      mad.edges
+        .withPredicateIter( nodeAdvPreds: _* )
+        .flatMap(_.nodeIds)
+        .nextOption()
+    }
 
     // Поиска текущую геоточку, если карточка там размещена, и на узле её не отобразить.
     val gpOpt = if (rcvrIdOpt.isEmpty) {
@@ -141,19 +214,18 @@ class ScSitemapsXml @Inject() (
       locEnv       = gpOpt
     )
 
-    val url = controllers.sc.routes.ScSite.geoSite(jsState).url
     val lastDt = mad.meta.basic.dateEditedOrCreated
-    val lastDate = lastDt.toLocalDate
+    var lastDate = lastDt.toLocalDate
+    for {
+      minDate <- LAST_MODIFIED_DATE_AT_LEAST
+      if lastDate isBefore minDate
+    } {
+      lastDate = minDate
+    }
 
     val smu = SiteMapUrl(
-      loc         = ctxUtil.SC_URL_PREFIX + url,
-      lastMod     = Some(lastDate),
-      changeFreq  = Some {
-        if (lastDate isBefore today)
-          ChangeFreqs.daily
-        else
-          ChangeFreqs.hourly
-      }
+      loc         = urlPrefix + controllers.sc.routes.ScSite.geoSite(jsState).url,
+      lastMod     = Some( lastDate ),
     )
 
     smu :: Nil

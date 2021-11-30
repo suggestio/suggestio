@@ -30,6 +30,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom
 import play.api.libs.json.Json
 
@@ -109,26 +110,44 @@ class GridR(
         val mroot = p.value
 
         gridRenderer( mgridCore ) {
+          val _div = <.div
+
           for {
             adPtrsTree <- mgridCore.ads.adsTreePot.iterator
-
-            isLinkContainer = gridRenderer.preferLinkContainer || SmartTvUtil.isSmartTvUserAgentCached
-            // Prepare possible js-routes generator:
-            linkJsRoutesOpt = mroot.internals.jsRouter.jsRoutesOpt
-              .filter( _ => isLinkContainer )
 
             // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
             // для кликов подсвечиваются только ссылки.
             // Поэтому для SmartTV используется <A>-тег, хотя это вызовет ошибку ссылка-внутри-ссылки и ругань react-dev.
-            gridElTag: TagOf[html.Element] = {
-              if (isLinkContainer) <.a
-              else <.div
-            }
+            isLinkContainer = gridRenderer.preferLinkContainer || SmartTvUtil.isSmartTvUserAgentCached
 
-            scAdDataLoc <- adPtrsTree.loc.onlyLowest.iterator
+            // Prepare possible js-routes generator:
+            linkJsRoutesOpt = mroot.internals.jsRouter.jsRoutesOpt
+              .filter( _ => isLinkContainer )
+
+            interactWithNodeLocOpt = mgridCore.ads.interactAdOpt
+
+            scAdDataLoc <- adPtrsTree
+              .loc
+              .onlyLowest
+              .iterator
             scAdData = scAdDataLoc.getLabel
             // TODO Pot().iterator: Надо отрабатывать рендером pending и прочие состояния конкретной карточки.
             adData <- scAdData.data.iterator
+
+            // Don't render <a> container, if this is currently focused ad (or parent-focused):
+            isReallyUseLinkContainer = isLinkContainer &&
+              interactWithNodeLocOpt.exists { adTreeLoc =>
+                adTreeLoc
+                  .path
+                  .iterator
+                  .exists( _ ===* scAdData )
+              }
+
+            // Grid element container will be rendered using this HTML tag:
+            gridElTag: TagOf[html.Element] = {
+              if (isReallyUseLinkContainer) <.a
+              else _div
+            }
 
             // TODO Нужно тут как-то перехватывать возможные ошибки рендера текущей карточки, чтобы нарушение в рендере одной карточки не приводило к падению всего.
 
@@ -171,7 +190,7 @@ class GridR(
               // anchor's: outer block href + possible inside-content links).
               (for {
                 jsRoutes <- linkJsRoutesOpt
-                if isLinkContainer
+                if isReallyUseLinkContainer
                 adIdOpt = adData.doc.tagId.nodeId
                 if adIdOpt.nonEmpty
               } yield {
