@@ -24,10 +24,10 @@ case class MYkPayment(
                        refundable             : Boolean,
                        receiptRegistration    : Option[String] = None,
                        metadata               : Option[JsObject] = None,
-                       cancellationDetails    : Option[MYkPaymentCancellationDetails] = None,
+                       cancellationDetails    : Option[MYkCancellationDetails] = None,
                        authorizationDetails   : Option[MYkPaymentAuthorizationDetails] = None,
                        transfers              : Option[JsObject] = None,
-                       deal                   : Option[JsObject] = None,
+                       deal                   : Option[MYkPaymentDeal] = None,
                        merchantCustomerId     : Option[String] = None,
                        // TODO -- 22 args here -- play-json not compatible with 23+-arg classes.
                      )
@@ -56,10 +56,10 @@ object MYkPayment {
       (__ \ "refundable").format[Boolean] and
       (__ \ "receipt_registration").formatNullable[String] and
       (__ \ "metadata").formatNullable[JsObject] and
-      (__ \ "cancellation_details").formatNullable[MYkPaymentCancellationDetails] and
+      (__ \ "cancellation_details").formatNullable[MYkCancellationDetails] and
       (__ \ "authorization_details").formatNullable[MYkPaymentAuthorizationDetails] and
       (__ \ "transfers").formatNullable[JsObject] and
-      (__ \ "deal").formatNullable[JsObject] and
+      (__ \ "deal").formatNullable[MYkPaymentDeal] and
       (__ \ "merchant_customer_id").formatNullable[String]
     )(apply, unlift(unapply))
   }

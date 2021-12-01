@@ -170,7 +170,8 @@ class ScSitemapsXml @Inject() (
     // Add current domain main page:
     acc ::= SiteMapUrl(
       loc = urlPrefix + controllers.sc.routes.ScSite.geoSite().url,
-      changeFreq = Some( ChangeFreqs.hourly ),
+      // By now, 3p-domains changes rare.
+      changeFreq = Some( if (rcvrId3p.isEmpty) ChangeFreqs.hourly else ChangeFreqs.daily ),
     )
 
     Source( acc )

@@ -1,13 +1,12 @@
 package io.suggest.sc.view.grid
 
-import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import com.materialui.{MuiCircularProgress, MuiCircularProgressClasses, MuiCircularProgressProps, MuiColorTypes}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.CssR
-import io.suggest.grid.{GridBuilderUtilJs, GridConst, IGridRenderer, ScGridScrollUtil}
+import io.suggest.grid.{GridConst, IGridRenderer, ScGridScrollUtil}
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdCss, JdCssStatic, JdR, JdRrr}
 import io.suggest.n2.edge.MEdgeFlags

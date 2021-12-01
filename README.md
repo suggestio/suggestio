@@ -62,13 +62,15 @@ Such code includes common models and utilities, protocols, etc.
 ## Requirements
 
 ### Runtime
-TODO Pre-build images/binaries not-yet ready, so see [Development](#development).
-- Java 8-15
+- GraalVM jdk 11-15
 - sbt 1.3+
 - ElasticSearch 7 - Distibuted primary storage.
 - PostgreSQL (Used for billing)
 - SeaWeedFS (Distributed storage for pictures and other files)
 - ImageMagick
+- openjdk-8 for building cordova android app.
+ 
+TODO Pre-build images/binaries not-yet ready, so see [Development](#development).
 
 ### Development
 - sbt 1.3+
@@ -77,7 +79,7 @@ TODO Pre-build images/binaries not-yet ready, so see [Development](#development)
 
 ## Getting started
 0. Install needed system packages:
-  - `pikaur -Sy jdk-openjdk imagemagick sbt elasticsearch-xpack postgresql seaweedfs`
+  - `pikaur -Sy jdk11-graalvm-bin imagemagick sbt elasticsearch-xpack postgresql seaweedfs`
 1. Ensure elasticsearch, postgresql, seaweedfs master and volumes started.
 2. Go to main server sub-directory:
   - `cd src1/server/www`

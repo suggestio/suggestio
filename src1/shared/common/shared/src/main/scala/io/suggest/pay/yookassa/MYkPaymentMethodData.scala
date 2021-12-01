@@ -10,7 +10,7 @@ case class MYkPaymentMethodData(
                                  pmType              : MYkPaymentMethodType,
                                  login               : Option[String] = None,
                                  phone               : Option[String] = None,
-                                 card                : Option[MYkBankCard] = None,
+                                 card                : Option[MYkBankCardInfo] = None,
                                  paymentPurpose      : Option[String] = None,
                                  vatData             : Option[MYkVatData] = None,
                                  paymentData         : Option[String] = None,
@@ -19,7 +19,7 @@ case class MYkPaymentMethodData(
                                  id                  : Option[String] = None,
                                  saved               : Option[Boolean] = None,
                                  title               : Option[String] = None,
-                                 payerBankDetails    : Option[JsObject] = None,  // TODO https://yookassa.ru/developers/api#payment_object_payment_method_b2b_sberbank_payer_bank_details
+                                 payerBankDetails    : Option[JsObject] = None, // TODO https://yookassa.ru/developers/api#payment_object_payment_method_b2b_sberbank_payer_bank_details
                                  accountNumber       : Option[String] = None,
                                )
 
@@ -51,7 +51,7 @@ object MYkPaymentMethodData {
       (__ \ F.TYPE).format[MYkPaymentMethodType] and
       (__ \ F.LOGIN).formatNullable[String] and
       (__ \ F.PHONE).formatNullable[String] and
-      (__ \ F.CARD).formatNullable[MYkBankCard] and
+      (__ \ F.CARD).formatNullable[MYkBankCardInfo] and
       (__ \ F.PAYMENT_PURPOSE).formatNullable[String] and
       (__ \ F.VAT_DATA).formatNullable[MYkVatData] and
       (__ \ F.PAYMENT_DATA).formatNullable[String] and
