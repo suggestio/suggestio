@@ -70,7 +70,7 @@ class EdgeEditFormR(
                 p.wrap( _.edge.order )( orderR.component.apply ),
 
                 // под-редактор edge.info
-                p.wrap( _.edge.info )( edgeInfoR.component.apply ),
+                edgeInfoR.component(p),
 
                 // edge media
                 p.wrap { m =>
@@ -92,7 +92,7 @@ class EdgeEditFormR(
 
                   // Кнопка сохранения
                   p.wrap { m =>
-                    OptionUtil.SomeBool( m.edit.saveReq.isPending )
+                    Option.when( m.isDisableSaveBtn )( m.edit.saveReq.isPending )
                   }( saveBtnR.component.apply ),
                 ),
 

@@ -29,6 +29,9 @@ class EdgeEditModule {
   lazy val textNiR = wire[TextNiR]
   lazy val extServiceR = wire[ExtServiceR]
   lazy val osFamilyR = wire[OsFamilyR]
+  lazy val paySystemR = wire[PaySystemR]
+  lazy val payOutTypeR = wire[PayOutTypeR]
+  lazy val payOutDataR = wire[PayOutDataR]
 
   // edge.media
   lazy val mediaR = wire[MediaR]

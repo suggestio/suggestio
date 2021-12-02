@@ -4,7 +4,8 @@ import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiCol
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.n2.edge.edit.m.TextNiSet
+import io.suggest.n2.edge.{MEdge, MEdgeInfo}
+import io.suggest.n2.edge.edit.m.UpdateWithLens
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
@@ -33,7 +34,7 @@ class TextNiR(
   class Backend( $: BackendScope[Props, State] ) {
 
     private def _doDispatch(textNiOpt: Option[String]): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, TextNiSet(textNiOpt) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, UpdateWithLens.edge(MEdge.info andThen MEdgeInfo.textNi, textNiOpt ) )
 
     private val _onCheckBoxChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val textNiOpt = Option.when( e.target.checked )("")

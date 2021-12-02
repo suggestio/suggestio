@@ -1,11 +1,13 @@
 package io.suggest.n2.edge.edit.v.inputs.info
 
-import com.materialui.{Mui, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiPaper}
+import com.materialui.{Mui, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiPaper, MuiSx}
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.n2.edge.MEdgeInfo
+import io.suggest.n2.edge.edit.m.MEdgeEditRoot
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -18,16 +20,21 @@ class EdgeInfoR(
                  textNiR              : TextNiR,
                  extServiceR          : ExtServiceR,
                  osFamilyR            : OsFamilyR,
+                 paySystemR           : PaySystemR,
+                 payOutTypeR          : PayOutTypeR,
+                 payOutDataR          : PayOutDataR,
                  crCtxProv            : React.Context[MCommonReactCtx],
                ) {
 
-  type Props_t = MEdgeInfo
+  type Props_t = MEdgeEditRoot
   type Props = ModelProxy[Props_t]
 
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
-    def render(p: Props): VdomElement = {
+    def render(mrootProxy: Props): VdomElement = {
+      val p = mrootProxy.zoom(_.edge.info)
+
       MuiPaper()(
         MuiList()(
 
@@ -64,6 +71,23 @@ class EdgeInfoR(
             MuiListItemText()(
               p.wrap( _.osFamily )( osFamilyR.component.apply ),
             )
+          ),
+
+          MuiListItem()(
+            MuiListItemText()(
+              p.wrap( _.paySystem )( paySystemR.component.apply ),
+            )
+          ),
+
+          MuiListItem(
+            new MuiListItemProps {
+              override val sx = new MuiSx {
+                override val flexDirection = js.defined( "column" )
+              }
+            }
+          )(
+            payOutTypeR.component( mrootProxy ),
+            payOutDataR.component( mrootProxy ),
           ),
 
         )

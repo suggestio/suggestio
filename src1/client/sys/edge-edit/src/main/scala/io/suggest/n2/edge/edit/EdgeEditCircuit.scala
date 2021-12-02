@@ -11,7 +11,7 @@ import io.suggest.lk.m.img.MUploadAh
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.n2.edge.edit.c.{EdgeEditAh, ErrorDiaAh, FileExistAh}
-import io.suggest.n2.edge.edit.m.{MEdgeEditRoot, MEdgeEditS, PredicateSet}
+import io.suggest.n2.edge.edit.m.{UpdateWithLens, MEdgeEditRoot, MEdgeEditS}
 import io.suggest.n2.edge.edit.u.{EdgeEditApiHttp, IEdgeEditApi}
 import io.suggest.n2.media.MEdgeMedia
 import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData, MStorages}
@@ -56,6 +56,7 @@ class EdgeEditCircuit
         conf = state0.edgeId,
         edit = MEdgeEditS(
           nodeIds  = edge1.nodeIds.toList,
+          payoutData = Pot fromOption edge1.info.payOut.map(_.data.toString()),
         ),
       )
     })
@@ -269,7 +270,7 @@ class EdgeEditCircuit
       (!(mroot.edge.predicate eqOrHasParent MPredicates.Blob.File)) &&
       (currUploadPotProxy.value !=* Pot.empty)
     ) {
-      dispatch( PredicateSet( MPredicates.Blob.File ) )
+      dispatch( UpdateWithLens.edge( MEdge.predicate, MPredicates.Blob.File ) )
     }
   }
 

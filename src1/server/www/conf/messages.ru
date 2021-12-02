@@ -536,6 +536,7 @@ _transaction.type.r=Возврат средств
 _transaction.type.i=Доход
 _transaction.type.c=Отменено
 
+Pay.system=Платёжная система
 Pay=Оплатить
 Payment=Платеж
 Payment.comment=Комментарий к платежу
@@ -786,6 +787,7 @@ edge.predicate.qp=Номер телефона
 edge.predicate.qi=Идентификатор
 edge.predicate.qw=Пароль
 edge.predicate.u=Короткая ссылка
+edge.predicate.payoutData=Выплаты
 
 jd.action.type.a=Добавить карточку
 
@@ -1208,3 +1210,8 @@ Advertising.services=Рекламные услуги
 User.agreement=Пользовательское соглашение
 _accept.privacy.policy=политику приватности
 Offero=Оферта
+
+Payout=Выплата
+pay.out.type.wallet=Электронный кошелёк
+pay.out.type.bank_card=Банковская карта
+

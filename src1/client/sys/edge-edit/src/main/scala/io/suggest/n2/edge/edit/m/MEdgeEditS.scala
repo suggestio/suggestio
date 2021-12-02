@@ -32,13 +32,14 @@ object MEdgeEditS {
 
   @inline implicit def univEq: UnivEq[MEdgeEditS] = UnivEq.derive
 
-  lazy val nodeIds     = GenLens[MEdgeEditS]( _.nodeIds )
-  lazy val upload      = GenLens[MEdgeEditS]( _.upload )
-  lazy val saveReq     = GenLens[MEdgeEditS]( _.saveReq )
-  lazy val deleteDia   = GenLens[MEdgeEditS]( _.deleteDia )
-  lazy val fileJs      = GenLens[MEdgeEditS]( _.fileJs )
-  val      errorDia    = GenLens[MEdgeEditS]( _.errorDia )
-  val fileExistNodeId  = GenLens[MEdgeEditS]( _.fileExistNodeId )
+  def nodeIds          = GenLens[MEdgeEditS]( _.nodeIds )
+  def upload           = GenLens[MEdgeEditS]( _.upload )
+  def saveReq          = GenLens[MEdgeEditS]( _.saveReq )
+  def deleteDia        = GenLens[MEdgeEditS]( _.deleteDia )
+  def fileJs           = GenLens[MEdgeEditS]( _.fileJs )
+  val errorDia         = GenLens[MEdgeEditS]( _.errorDia )
+  def fileExistNodeId  = GenLens[MEdgeEditS]( _.fileExistNodeId )
+  def payoutData       = GenLens[MEdgeEditS]( _.payoutData )
 
 }
 
@@ -59,4 +60,11 @@ case class MEdgeEditS(
                        fileJs             : Option[MJsFileInfo]   = None,
                        errorDia           : Option[MErrorPopupS]  = None,
                        fileExistNodeId    : Option[String]        = None,
-                     )
+                       payoutData         : Pot[String]           = Pot.empty,
+                     ) {
+
+  lazy val isDisableSave: Boolean = {
+    saveReq.isPending || payoutData.isPending || payoutData.isFailed
+  }
+
+}

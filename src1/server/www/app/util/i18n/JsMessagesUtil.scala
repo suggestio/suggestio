@@ -19,6 +19,8 @@ import io.suggest.mbill2.m.txn.MTxnTypes
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
+import io.suggest.n2.edge.payout.MEdgePayoutTypes
+import io.suggest.pay.MPaySystems
 import play.api.inject.Injector
 
 /**
@@ -605,12 +607,15 @@ final class JsMessagesUtil @Inject() (
       MC.`empty` ::
       MC.`Info` ::
       MC.`Operating.system.family` ::
+      MC.`Pay.system` :: MC.`Payout` ::
       Nil
 
     // Оптовые списки сообщений - тут:
     ( heads #::
       MPredicates.values.iterator.map(_.singular) #::
       MExtServices.values.iterator.map(_.nameI18N) #::
+      MPaySystems.values.iterator.map(_.nameI18n) #::
+      MEdgePayoutTypes.values.iterator.map(_.singularI18n) #::
       LazyList.empty
     )
       .iterator

@@ -11,6 +11,8 @@ import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
+import io.suggest.n2.edge.payout.MEdgePayOut
+import io.suggest.pay.MPaySystem
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.ueq.UnivEqUtil._
@@ -48,6 +50,8 @@ object MEdgeInfo
     val GEO_POINT_FN      = "geoPoints"
     val EXT_SERVICE_FN    = "externalService"
     val OS_FAMILY_FN      = "osFamily"
+    val PAY_SYSTEM_FN     = "paySystem"
+    val PAYOUT_FN         = "payout"
 
     /** Поле тегов внутри является multi-field. Это нужно для аггрегации, например. */
     object Tags extends PrefixedFn {
@@ -83,6 +87,15 @@ object MEdgeInfo
       def FLAG_FN = _fullFn( Fs.FLAG_FN )
     }
 
+
+    /** Field names for edge's payOut sub-model. */
+    object PayOut extends PrefixedFn {
+      import MEdgePayOut.{Fields => F}
+
+      override protected def _PARENT_FN = PAYOUT_FN
+      def TYPE_FN = _fullFn( F.TYPE )
+    }
+
   }
 
 
@@ -115,7 +128,9 @@ object MEdgeInfo
           { gps => if (gps.nonEmpty) Some(gps) else None }
         ) and
       (__ \ F.EXT_SERVICE_FN).formatNullable[MExtService] and
-      (__ \ F.OS_FAMILY_FN).formatNullable[MOsFamily]
+      (__ \ F.OS_FAMILY_FN).formatNullable[MOsFamily] and
+      (__ \ F.PAY_SYSTEM_FN).formatNullable[MPaySystem] and
+      (__ \ F.PAYOUT_FN).formatNullable[MEdgePayOut]
     )(apply, unlift(unapply))
   }
 
@@ -161,6 +176,8 @@ object MEdgeInfo
       F.GEO_POINT_FN -> FGeoPoint.indexedJs,
       F.EXT_SERVICE_FN -> FKeyWord.indexedJs,
       F.OS_FAMILY_FN -> FKeyWord.indexedJs,
+      F.PAY_SYSTEM_FN -> FKeyWord.indexedJs,
+      F.PAYOUT_FN -> FObject.plain( MEdgePayOut ),
     )
   }
 
@@ -175,6 +192,8 @@ object MEdgeInfo
   def geoPoints = GenLens[MEdgeInfo](_.geoPoints)
   def extService = GenLens[MEdgeInfo](_.extService)
   def osFamily = GenLens[MEdgeInfo](_.osFamily)
+  def paySystem = GenLens[MEdgeInfo](_.paySystem)
+  def payOut = GenLens[MEdgeInfo](_.payOut)
 
   @inline implicit def univEq: UnivEq[MEdgeInfo] = UnivEq.derive
 
@@ -198,6 +217,7 @@ object MEdgeInfo
   * @param geoPoints Некие опорные геокоординаты, если есть.
   * @param extService id внешнего сервиса, с которым ангажированна данная связь.
   * @param osFamily Привязка эджа к семейству операционных систем.
+  * @param paySystem Payment system, if any.
   */
 final case class MEdgeInfo(
                             date         : Option[OffsetDateTime]  = None,
@@ -211,6 +231,8 @@ final case class MEdgeInfo(
                             geoPoints    : Seq[MGeoPoint]          = Nil,
                             extService   : Option[MExtService]     = None,
                             osFamily     : Option[MOsFamily]       = None,
+                            paySystem    : Option[MPaySystem]      = None,
+                            payOut       : Option[MEdgePayOut]     = None,
                           )
   extends EmptyProduct
 {
@@ -221,21 +243,8 @@ final case class MEdgeInfo(
     .to( Map )
 
   /** Форматирование для вывода в шаблонах. */
-  override def toString: String = StringUtil.toStringHelper(null, delimiter = ' ') { f =>
-    val F = MEdgeInfo.Fields
-
-    textNi foreach f( F.TEXT_NO_INDEX_FN )
-    flag foreach f( F.FLAG_FN )
-    flags foreach f( F.FLAGS_FN )
-    if (tags.nonEmpty) f(F.TAGS_FN)(tags)
-    if (geoShapes.nonEmpty) f(F.GEO_SHAPES_FN)(geoShapes)
-    if (geoPoints.nonEmpty) f(F.GEO_POINT_FN)(geoPoints)
-    extService foreach f(F.EXT_SERVICE_FN)
-    osFamily foreach f(F.OS_FAMILY_FN)
-
-    // low-priority information:
-    date foreach f( F.DATE_FN )
-    dateNi foreach f( F.DATE_NO_INDEX_FN )
+  override def toString: String = StringUtil.toStringHelper(null, delimiter = ' ') {
+    StringUtil.toStringRenderProduct(this)
   }
 
 }

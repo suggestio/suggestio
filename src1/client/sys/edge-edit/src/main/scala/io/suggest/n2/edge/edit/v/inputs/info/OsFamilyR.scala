@@ -6,7 +6,8 @@ import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import io.suggest.css.Css
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.n2.edge.edit.m.OsFamilySet
+import io.suggest.n2.edge.{MEdge, MEdgeInfo}
+import io.suggest.n2.edge.edit.m.UpdateWithLens
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
@@ -34,7 +35,7 @@ class OsFamilyR(
 
     private val _onOsChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val osf = MOsFamilies.withValueOpt( e.target.value )
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, OsFamilySet(osf))
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, UpdateWithLens.edge( MEdge.info andThen MEdgeInfo.osFamily, osf ) )
     }
 
     def render(s: State): VdomElement = {

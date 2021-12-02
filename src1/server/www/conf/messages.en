@@ -531,6 +531,7 @@ _transaction.type.r=Refund
 _transaction.type.i=Income
 _transaction.type.c=Cancelled
 
+Pay.system=Payment system
 Pay=Pay
 Payment=Payment
 Payment.comment=Payment comment
@@ -778,6 +779,7 @@ edge.predicate.qp=Phone number
 edge.predicate.qi=Identifier
 edge.predicate.qw=Password
 edge.predicate.u=Short link
+edge.predicate.payoutData=Payout data
 
 jd.action.type.a=Insert ad-card
 
@@ -1200,3 +1202,8 @@ Advertising.services=Advertising services
 User.agreement=User agreement
 _accept.privacy.policy=privacy policy
 Offero=Offero
+
+Payout=Payout
+pay.out.type.wallet=PaySystem Wallet
+pay.out.type.bank_card=Banking card
+

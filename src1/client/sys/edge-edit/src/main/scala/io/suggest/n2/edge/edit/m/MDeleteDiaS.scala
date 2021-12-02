@@ -26,8 +26,8 @@ object MDeleteDiaS {
 
   @inline implicit def univEq: UnivEq[MDeleteDiaS] = UnivEq.derive
 
-  val opened      = GenLens[MDeleteDiaS]( _.opened )
-  val deleteReq   = GenLens[MDeleteDiaS]( _.deleteReq )
+  def opened      = GenLens[MDeleteDiaS]( _.opened )
+  def deleteReq   = GenLens[MDeleteDiaS]( _.deleteReq )
 
 }
 

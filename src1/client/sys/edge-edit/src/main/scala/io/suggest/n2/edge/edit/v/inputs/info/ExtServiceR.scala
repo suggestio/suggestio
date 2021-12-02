@@ -6,7 +6,8 @@ import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import io.suggest.css.Css
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.n2.edge.edit.m.ExtServiceSet
+import io.suggest.n2.edge.{MEdge, MEdgeInfo}
+import io.suggest.n2.edge.edit.m.UpdateWithLens
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
@@ -40,7 +41,7 @@ class ExtServiceR(
         extService <- MExtServices.withValueOpt( extServiceRaw )
       } yield extService
 
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, ExtServiceSet(extServiceOpt) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, UpdateWithLens.edge( MEdge.info andThen MEdgeInfo.extService, extServiceOpt ) )
     }
 
     def render(s: State): VdomElement = {

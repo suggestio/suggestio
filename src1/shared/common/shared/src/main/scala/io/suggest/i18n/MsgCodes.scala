@@ -551,4 +551,7 @@ object MsgCodes {
   val `Offero` = "Offero"
   val `_accept.privacy.policy` = "_accept.privacy.policy"
 
+  val `Pay.system` = "Pay.system"
+  val `Payout` = "Payout"
+
 }

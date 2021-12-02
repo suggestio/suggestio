@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, ExtServiceSet, FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, OsFamilySet, PredicateSet, Save, SaveResp, TextNiSet}
+import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, UpdateWithLens, EdgeUpdateWithTraverse, FileHashEdit, FileHashFlagSet, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, Save, SaveResp}
 import io.suggest.n2.edge.edit.u.IEdgeEditApi
 import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
@@ -31,22 +31,6 @@ class EdgeEditAh[M](
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
-
-    // Смена предиката.
-    case m: PredicateSet =>
-      val v0 = value
-
-      val lens = MEdgeEditRoot.edge
-        .andThen( MEdge.predicate )
-
-      if ( m.pred2 ==* lens.get(v0) ) {
-        noChange
-
-      } else {
-        val v2 = (lens replace m.pred2)(v0)
-        updated(v2)
-      }
-
 
     // Редактирования id узла из списка узлов.
     case m: NodeIdChange =>
@@ -109,66 +93,27 @@ class EdgeEditAh[M](
       }
 
 
-    // Сигнал выставления порядка эджей.
-    case m: OrderSet =>
+    case m: UpdateWithLens[_] =>
       val v0 = value
 
-      val lens = MEdgeEditRoot.edge
-        .andThen( MEdge.order )
-
-      if (lens.get(v0) ==* m.order) {
+      if (m.isNewValueEqualsTo( m.lens.get(v0) ) ) {
         noChange
       } else {
-        val v2 = (lens replace m.order)(v0)
+        val v2 = m.lens.replace( m.newValue )(v0)
         updated( v2 )
       }
 
 
-    // Редактирование неиндексируемого текста.
-    case m: TextNiSet =>
+    case m: EdgeUpdateWithTraverse[_] =>
       val v0 = value
+      val trav = MEdgeEditRoot.edge
+        .andThen( m.traverse )
 
-      val lens = MEdgeEditRoot.edge
-        .andThen( MEdge.info )
-        .andThen( MEdgeInfo.textNi )
-
-      if (lens.get(v0) ==* m.commentNi) {
+      if (trav.exist( m.isNewValueEqualsTo )(v0)) {
         noChange
       } else {
-        val v2 = (lens replace m.commentNi)(v0)
-        updated(v2)
-      }
-
-
-    // Редактирование внешнего сервиса.
-    case m: ExtServiceSet =>
-      val v0 = value
-
-      val lens = MEdgeEditRoot.edge
-        .andThen( MEdge.info )
-        .andThen( MEdgeInfo.extService )
-
-      if (lens.get(v0) ==* m.extServiceOpt) {
-        noChange
-      } else {
-        val v2 = (lens replace m.extServiceOpt)(v0)
-        updated(v2)
-      }
-
-
-    // Редактирование семейства ОС.
-    case m: OsFamilySet =>
-      val v0 = value
-
-      val lens = MEdgeEditRoot.edge
-        .andThen( MEdge.info )
-        .andThen( MEdgeInfo.osFamily )
-
-      if (lens.get(v0) ==* m.osFamilyOpt) {
-        noChange
-      } else {
-        val v2 = (lens replace m.osFamilyOpt)(v0)
-        updated(v2)
+        val v2 = trav.replace( m.newValue )(v0)
+        updated( v2 )
       }
 
 
@@ -298,51 +243,6 @@ class EdgeEditAh[M](
       }
 
 
-    // Редактирование MIME-типа файла.
-    case m: FileMimeSet =>
-      val v0 = value
-      val lens = EdgeEditAh
-        .root_edge_media_file_LENS
-        .andThen( MFileMeta.mime )
-
-      if ( lens.exist( _ ==* m.fileMime )(v0) ) {
-        noChange
-      } else {
-        val v2 = (lens replace m.fileMime)(v0)
-        updated(v2)
-      }
-
-
-    // Редактирование байтового размера файла.
-    case m: FileSizeSet =>
-      val v0 = value
-      val lens = EdgeEditAh
-        .root_edge_media_file_LENS
-        .andThen( MFileMeta.sizeB )
-
-      if ( lens.exist( _ ==* m.sizeB )(v0) ) {
-        noChange
-      } else {
-        val v2 = (lens replace m.sizeB)(v0)
-        updated(v2)
-      }
-
-
-    // Редактирование флага isOriginal
-    case m: FileIsOriginalSet =>
-      val v0 = value
-      val lens = EdgeEditAh
-        .root_edge_media_file_LENS
-        .andThen( MFileMeta.isOriginal )
-
-      if (lens.exist(_ ==* m.isOriginal)(v0)) {
-        noChange
-      } else {
-        val v2 = (lens replace m.isOriginal)(v0)
-        updated(v2)
-      }
-
-
     // Редактор хэша.
     case m: FileHashEdit =>
       val v0 = value
@@ -413,36 +313,6 @@ class EdgeEditAh[M](
           updated(v2)
         }
 
-
-    // Смена типа хранилища.
-    case m: FileStorageTypeSet =>
-      val v0 = value
-      val lens = EdgeEditAh
-        .root_edge_media_storage_LENS
-        .andThen( MStorageInfo.storage )
-
-      if ( lens.exist(_ ==* m.storageType)(v0) ) {
-        noChange
-      } else {
-        val v2 = lens.replace( m.storageType )(v0)
-        updated(v2)
-      }
-
-
-    case m: FileStorageMetaDataSet =>
-      val v0 = value
-      val lens = EdgeEditAh
-        .root_edge_media_storage_LENS
-        .andThen( MStorageInfo.data )
-        .andThen( MStorageInfoData.meta )
-
-      if ( lens.exist(_ ==* m.storageData)(v0) ) {
-        noChange
-      } else {
-        val v2 = lens.replace( m.storageData )(v0)
-        updated(v2)
-      }
-
   }
 
 }
@@ -459,11 +329,6 @@ object EdgeEditAh {
   private def root_edge_media_file_LENS = {
     root_edge_media_LENS
       .andThen( MEdgeMedia.file )
-  }
-  private def root_edge_media_storage_LENS = {
-    root_edge_media_LENS
-      .andThen( MEdgeMedia.storage )
-      .andThen( Traversal.fromTraverse[Option, MStorageInfo] )
   }
 
   private def root_edit_nodeIds_LENS = {

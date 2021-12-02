@@ -4,7 +4,7 @@ import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiCircularProgress, 
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.n2.media.{MEdgeMedia, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
+import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
 import diode.react.ReactPot._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -13,12 +13,13 @@ import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.m.UploadFile
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
-import io.suggest.n2.edge.edit.m.{FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet}
+import io.suggest.n2.edge.edit.m.{EdgeUpdateWithTraverse, FileHashEdit, FileHashFlagSet}
 import io.suggest.n2.edge.edit.v.EdgeEditCss
-import io.suggest.n2.media.storage.{MStorage, MStorages}
+import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import io.suggest.n2.edge.MEdge
 import io.suggest.routes.routes
 import io.suggest.sjs.dom2.DomListSeq
 import japgolly.scalajs.react._
@@ -26,6 +27,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.{MFileUploadS, MUploadResp}
 import io.suggest.xplay.json.PlayJsonSjsUtil
+import monocle.Traversal
 import play.api.libs.json.Json
 
 import scala.util.Try
@@ -70,6 +72,16 @@ class MediaR(
                     edgeIdQsOptC            : ReactConnectProxy[Option[MNodeEdgeIdQs]],
                   )
 
+  private def edge_media_LENS = MEdge.media
+    .andThen( Traversal.fromTraverse[Option, MEdgeMedia] )
+  private def edge_media_file_LENS =
+    edge_media_LENS andThen MEdgeMedia.file
+  private def root_edge_media_storage_LENS = {
+    edge_media_LENS
+      .andThen( MEdgeMedia.storage )
+      .andThen( Traversal.fromTraverse[Option, MStorageInfo] )
+  }
+
   class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на изменение файлового ввода. */
@@ -87,18 +99,19 @@ class MediaR(
       } yield {
         v2
       })
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileMimeSet(mimeOpt) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EdgeUpdateWithTraverse(edge_media_file_LENS andThen MFileMeta.mime, mimeOpt) )
     }
 
     private lazy val _onFileSizeChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val szBytes = Try( e.target.value.toLong )
         .toOption
         .filter(_ >= 0)
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileSizeSet(szBytes) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EdgeUpdateWithTraverse(edge_media_file_LENS andThen MFileMeta.sizeB, szBytes) )
     }
 
     private lazy val _onFileIsOriginalChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileIsOriginalSet( e.target.checked ) )
+      val isOriginal = e.target.checked
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EdgeUpdateWithTraverse(edge_media_file_LENS andThen MFileMeta.isOriginal, isOriginal) )
     }
 
     private def _onFileHashChange(mhash: MHash) = {
@@ -122,13 +135,13 @@ class MediaR(
     }
 
     private lazy val _onFileStorageTypeChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
-      val stor2 = MStorages.withValue( e.target.value )
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileStorageTypeSet(stor2) )
+      val storage2 = MStorages.withValue( e.target.value )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EdgeUpdateWithTraverse(root_edge_media_storage_LENS andThen MStorageInfo.storage, storage2) )
     }
 
     private lazy val _onFileStorageMetaDataChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
-      val stor2 = e.target.value
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileStorageMetaDataSet(stor2) )
+      val storageMeta2 = e.target.value
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EdgeUpdateWithTraverse(root_edge_media_storage_LENS andThen MStorageInfo.data andThen MStorageInfoData.meta, storageMeta2) )
     }
 
     def render(s: State): VdomElement = {

@@ -237,6 +237,14 @@ object MPredicates extends StringEnum[MPredicate] {
   case object ShortUrl extends MPredicate("u")
 
 
+  /** Payout edge contains information about external payout target/account (bank card, wallet, etc) for receiving money.
+    * info.paySystem should be defined.
+    * info.payOut is defined.
+    * doc.edgeUid may be defined.
+    */
+  case object PayoutData extends MPredicate("payoutData")
+
+
   /** Используется только в конструкторе, в тестах, в редкой sys edgeForm. */
   override def values = findValues
 

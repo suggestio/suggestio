@@ -4,7 +4,8 @@ import com.materialui.{MuiFormControlClasses, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.n2.edge.edit.m.OrderSet
+import io.suggest.n2.edge.MEdge
+import io.suggest.n2.edge.edit.m.UpdateWithLens
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
@@ -36,7 +37,7 @@ class OrderR(
     private val _onChangeCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val orderOpt = Try( e.target.value.toInt )
         .toOption
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, OrderSet(orderOpt) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, UpdateWithLens.edge( MEdge.order, orderOpt ) )
     }
 
     def render(s: State): VdomElement = {

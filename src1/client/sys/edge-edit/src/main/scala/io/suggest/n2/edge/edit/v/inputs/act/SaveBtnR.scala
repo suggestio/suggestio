@@ -20,12 +20,12 @@ class SaveBtnR(
                 crCtxProv            : React.Context[MCommonReactCtx],
               ) {
 
-  type Props_t = Some[Boolean]
+  type Props_t = Option[Boolean]
   type Props = ModelProxy[Props_t]
 
 
   case class State(
-                    isPendingSomeC    : ReactConnectProxy[Some[Boolean]],
+                    isBlockedPendingOptC    : ReactConnectProxy[Option[Boolean]],
                   )
 
   class Backend( $: BackendScope[Props, State] ) {
@@ -41,13 +41,14 @@ class SaveBtnR(
         override val root = Css.flat( EdgeEditCss.input.htmlClass, EdgeEditCss.w200.htmlClass )
       }
 
-      s.isPendingSomeC { isPendingSomeProxy =>
-        val isPending = isPendingSomeProxy.value.value
+      s.isBlockedPendingOptC { isBlockedPendingOptProxy =>
+        val isBlockedPendingOpt = isBlockedPendingOptProxy.value
+        val isPending = isBlockedPendingOpt contains[Boolean] true
         MuiFab(
           new MuiFabProps {
             override val variant  = MuiFabVariants.extended
             override val onClick  = _onSaveClick
-            override val disabled = isPending
+            override val disabled = isBlockedPendingOpt.nonEmpty
             override val classes  = css
           }
         )(
@@ -72,7 +73,7 @@ class SaveBtnR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        isPendingSomeC = propsProxy.connect( identity(_) ),
+        isBlockedPendingOptC = propsProxy.connect( identity(_) ),
       )
     }
     .renderBackend[Backend]

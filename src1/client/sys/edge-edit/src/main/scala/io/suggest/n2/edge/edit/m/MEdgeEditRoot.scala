@@ -69,4 +69,9 @@ case class MEdgeEditRoot(
                           edge      : MEdge,
                           conf      : MNodeEdgeIdQs,
                           edit      : MEdgeEditS,
-                        )
+                        ) {
+
+  def isDisableSaveBtn: Boolean =
+    edit.isDisableSave
+
+}
