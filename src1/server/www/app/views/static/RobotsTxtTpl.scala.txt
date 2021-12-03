@@ -20,6 +20,8 @@ Disallow: /captcha/
 Disallow: /upload/
 Disallow: /_/
 Disallow: /.well-known/
+Disallow: *?r=/*
+
 
 @defining( hostPort3pOpt getOrElse ctxUtil.SC_HOST_PORT ) { hostPort =>
 Sitemap: @ctxUtil.PROTO://@hostPort@routes.Static.siteMapXml()

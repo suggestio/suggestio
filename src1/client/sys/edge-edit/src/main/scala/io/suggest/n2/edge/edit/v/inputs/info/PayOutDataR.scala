@@ -14,7 +14,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.JsUnivEqUtil._
 import monocle.Traversal
-import org.scalajs.dom
 import play.api.libs.json.{JsObject, Json}
 import io.suggest.ueq.UnivEqUtil._
 
@@ -37,9 +36,6 @@ final class PayOutDataR(
 
 
   class Backend( $: BackendScope[Props, State] ) {
-
-    private val _ref = Ref[dom.html.Element]
-
 
     private val _onChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val newValue = e.target.value
@@ -84,7 +80,7 @@ final class PayOutDataR(
       s.dataStrPotC { dataStrPotProxy =>
         val dataStrPot = dataStrPotProxy.value
         dataStrPot.toOption.whenDefinedEl { dataStr =>
-          MuiTextField.component.withRef(_ref)(
+          MuiTextField.component(
             new MuiTextFieldProps {
               override val multiline = true
               override val value = dataStr

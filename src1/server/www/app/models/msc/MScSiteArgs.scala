@@ -24,9 +24,5 @@ final case class MScSiteArgs(
                               apiVsn        : MScApiVsn,
                               jsStateOpt    : Option[SioPages.Sc3] = None,
                               mainScreen    : SioPages.Sc3,
-                            ) {
-
-  def syncRender: Boolean = false
-
-}
+                            )
 

@@ -29,6 +29,7 @@ import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react.ReactDOM
+import japgolly.scalajs.react.vdom.VdomElement
 
 import scala.scalajs.js
 import scala.util.Try
@@ -40,6 +41,11 @@ import scala.util.Try
   * Description: Запускалка выдачи третьего поколения.
   */
 object Sc3Main extends Log {
+
+  /** Allowed to mix SSR and CSR renderings via react-hydrate.
+    * @return false, because sc3-sjs implementation not yet ready to render properly.
+    */
+  private def CAN_HYDRATE = false
 
   implicit private class TryOps[T]( val tryRes: Try[T] ) extends AnyVal {
 
@@ -174,12 +180,13 @@ object Sc3Main extends Log {
     // Отрендерить компонент spa-роутера в целевой контейнер.
     for {
       ex <- Try {
-        ReactDOM.hydrateOrRender(
-          element = modules.sc3SpaRouter
-            .state
-            .router(),
-          container = rootDiv,
-        )
+        val comp: VdomElement = modules.sc3SpaRouter.state.router()
+
+        if (CAN_HYDRATE) {
+          ReactDOM.hydrateOrRender( comp, rootDiv )
+        } else {
+          comp.renderIntoDOM( rootDiv )
+        }
       }
         .failed
     } {

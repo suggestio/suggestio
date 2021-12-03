@@ -396,7 +396,16 @@ final class ScSite @Inject() (
           override def _mainScreen = mainScreen
 
           /** Sync server-side showcase content rendering for web-crawlers. */
-          override def inlineIndexFut: Future[Option[Html]] = if (SSR_ENABLED && userAgentParsedOpt.exists(_.getType == UserAgentType.ROBOT)) {
+          override def inlineIndexFut: Future[Option[Html]] = if (
+            SSR_ENABLED && (
+              userAgentOpt.exists { userAgent =>
+                (userAgent contains "Googlebot/") ||
+                (userAgent contains "YandexBot/") ||
+                (userAgent contains "YandexMetrika/")
+              } ||
+              userAgentParsedOpt.exists(_.getType == UserAgentType.ROBOT)
+            )
+          ) {
             // Render static markup: for react-hydrate & web-crawlers.
             val ssrScreen = siteLogic.userAgentParsedOpt
               .map { userAgent =>
@@ -469,6 +478,7 @@ final class ScSite @Inject() (
             }
             (for {
               scResp <- scApiLogic.scRespFut
+              startedAtMs = System.currentTimeMillis()
               // Lang detection separated from lang-data to implement optional language switching (do not sent lang data, if lang is NOT changed) TODO Need actor with state.
               ssrLang = scSsrUtil.ssrLang()(ctx).value
               ssrLangData = scSsrUtil.ssrLangDataFromRequest( ssrLang )( ctx )
@@ -482,7 +492,7 @@ final class ScSite @Inject() (
                   None
                 },
                 {htmlStr =>
-                  LOGGER.trace(s"$logPrefix Successfully rendered showcase SSR HTML[${htmlStr.length}ch]")
+                  LOGGER.debug(s"$logPrefix Successfully rendered showcase SSR HTML[${htmlStr.length}ch] in ${System.currentTimeMillis() - startedAtMs}ms: \n User-Agent: ${ctx.userAgent.orNull}\n ")
                   Some( Html( htmlStr ) )
                 }
               )

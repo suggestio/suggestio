@@ -48,7 +48,7 @@ class ScSitemapsXml @Inject() (
   /** Sometimes, it is needed to recrawl the site after some major change.
     * This lower date bound, helps to achieve recrawl: type here last major change date for all pages. */
   private val LAST_MODIFIED_DATE_AT_LEAST: Option[LocalDate] =
-    Some( LocalDate.of(2021, 11, 30) )
+    Some( LocalDate.of(2021, 12, 3) )
 
   private val nodeAdvPreds: List[MPredicate] =
     MPredicates.Receiver ::
