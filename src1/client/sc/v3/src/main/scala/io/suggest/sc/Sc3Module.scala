@@ -364,7 +364,10 @@ final class Sc3Module extends ScCommonModule { outer =>
       argsRO          = rcvrsMapUrlRO,
       isOnlineRoOpt   = Some( onLineRW.zoom(_.isOnline) ),
     )
-    def advRcvrsMapApi = wire[AdvRcvrsMapApiHttpViaUrl]
+    def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl(
+      // Prefer to use Okhttp or AFNetworking to prevent suprises with CORS over CDN in WebView or other suprises.
+      httpClientConfig = ScHttpConf.mkRootHttpClientConfigF,
+    )
 
     override def scRoutingAh: HandlerFunction = new ScRoutingAh(
       modelRW               = rootRW,

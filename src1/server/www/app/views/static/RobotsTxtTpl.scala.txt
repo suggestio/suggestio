@@ -4,18 +4,19 @@
 @import ctx.api.ctxUtil
 
 User-Agent: *
-Disallow: /id
-Disallow: /lk
+Disallow: /id/*
+Disallow: /id?*
+Disallow: /lk/*
 Allow: /lk/help/
 Disallow: *?csrfToken=*
 Disallow: *&csrfToken=*
-Disallow: /sys/
+Disallow: /sys
+Disallow: /syslang/
 Disallow: /vassets/
 Disallow: /assets/
 Disallow: /log/
 Disallow: /api/
 Disallow: /pay/
-Disallow: /syslang/
 Disallow: /captcha/
 Disallow: /upload/
 Disallow: /_/

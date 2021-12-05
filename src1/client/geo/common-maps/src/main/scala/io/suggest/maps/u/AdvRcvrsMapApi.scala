@@ -3,6 +3,7 @@ package io.suggest.maps.u
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp, MRcvrsMapUrlArgs}
+import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model._
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -25,10 +26,24 @@ trait IAdvRcvrsMapApi {
 
 }
 
+object AdvRcvrsMapApiHttpViaUrl {
+
+  def httpClientConfigDefault() = {
+    // Запретить X-Requested-With, т.к. тут CORS через CDN.
+    HttpClientConfig(
+      baseHeaders = Map.empty,
+    )
+  }
+
+}
 
 /** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку.
   */
-class AdvRcvrsMapApiHttpViaUrl() extends IAdvRcvrsMapApi {
+class AdvRcvrsMapApiHttpViaUrl(
+                                httpClientConfig: () => HttpClientConfig = AdvRcvrsMapApiHttpViaUrl.httpClientConfigDefault,
+                              )
+  extends IAdvRcvrsMapApi
+{
 
   override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {
     val __mkRoute = routes.controllers.Static.advRcvrsMapJson _
@@ -45,9 +60,10 @@ class AdvRcvrsMapApiHttpViaUrl() extends IAdvRcvrsMapApi {
           rewriteUrl = Some( HttpClient.route2url(__mkRoute(js.undefined)) ),
         ),
         // Запретить X-Requested-With, т.к. тут CORS через CDN.
-        config = HttpClientConfig(
-          baseHeaders = Map.empty,
-        ),
+        // TODO Still need this crunch for browsers? Need to re-investigate, because now (since december-2021) cordova already uses native fetch for this resource (so late, yeah).
+        config = HttpClientConfig.baseHeaders.modify(
+          _ removed HttpConst.Headers.XRequestedWith.XRW_NAME
+        )( httpClientConfig() ),
         // Кукисы не нужны, т.к. запрос обычно идёт через CDN и кэшируется. Кэширование стареющих кукисов может вызывать некоторые сложности.
         credentials = Some(false),
       )

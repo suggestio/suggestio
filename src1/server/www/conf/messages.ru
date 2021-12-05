@@ -1214,4 +1214,5 @@ Offero=Оферта
 Payout=Выплата
 pay.out.type.wallet=Электронный кошелёк
 pay.out.type.bank_card=Банковская карта
+YooKassa=ЮКасса
 

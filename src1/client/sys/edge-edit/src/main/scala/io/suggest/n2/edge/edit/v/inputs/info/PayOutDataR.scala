@@ -21,6 +21,7 @@ import scala.scalajs.js
 import scala.util.Try
 
 
+/** Component for editing pay-system payout metadata. */
 final class PayOutDataR(
                          crCtxProv: React.Context[MCommonReactCtx],
                        ) {
@@ -59,6 +60,7 @@ final class PayOutDataR(
           }
         )
 
+      // payoutData update action depends on VARiable `newValueOpt`, so must be go AFTER Try(parse).fold(), or logical error will be here.
       actionsAcc ::= UpdateWithLens( MEdgeEditRoot.edit andThen MEdgeEditS.payoutData, newValuePot )
 
       actionsAcc

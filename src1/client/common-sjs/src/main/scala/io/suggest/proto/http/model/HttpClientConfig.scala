@@ -21,6 +21,7 @@ object HttpClientConfig {
   @inline implicit def univEq: UnivEq[HttpClientConfig] = UnivEq.force
 
   def csrfToken = GenLens[HttpClientConfig]( _.csrfToken )
+  def baseHeaders = GenLens[HttpClientConfig]( _.baseHeaders )
 
 }
 

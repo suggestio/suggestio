@@ -89,7 +89,6 @@ final class CorsUtil @Inject() (
     // Для GET-запросов достаточно коротких хидеров. Остальное требует указать allow-method и всё остальное.
     reqHdr.method match {
       case HttpVerbs.GET  => GET_CORS_HEADERS
-      // TODO POST from 3p-domains to suggest.io suffering from CORS: X-Requested-with header is not in Access-Control-Allow-Headers.
       case _              => preflightCorsHeaders( allowXRequestedWith )
     }
   }

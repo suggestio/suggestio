@@ -30,6 +30,7 @@ import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
 import util.support.SupportUtil
 
+import scala.util.Try
 import scala.util.matching.Regex
 
 /**
@@ -47,7 +48,9 @@ final class ContextUtil @Inject() (
                                     env           : Environment,
                                     domains3pUtil : Domains3pUtil,
                                     configuration : Configuration
-                                  ) {
+                                  )
+  extends MacroLogsImpl
+{
 
   val isIpadRe = "iPad".r.unanchored
 
@@ -135,7 +138,18 @@ final class ContextUtil @Inject() (
     domains3pUtil.find3pDomainNode(
       domain = request.headers
         .get(ORIGIN)
-        .map( url => UrlUtil.urlHostStripPort(UrlUtil.url2dkey( url )) )
+        .flatMap { url =>
+          val dkeyTry = Try {
+            // This code will throw on not-too-valid URLs. WkWebView may send "null" as Origin URL.
+            UrlUtil.urlHostStripPort(
+              UrlUtil.url2dkey( url ) )
+          }
+
+          for (ex <- dkeyTry.failed)
+            LOGGER.debug( s"domainNode3pOptFut(): Failed to parse header <<Origin: $url>>\n request from ${request.remoteClientAddress} :: ${request.method} [${request.host}] ${request.uri}", ex )
+
+          dkeyTry.toOption
+        }
         .getOrElse( request.domain )
     )
   }

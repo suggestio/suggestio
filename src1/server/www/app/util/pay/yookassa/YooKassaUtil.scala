@@ -13,7 +13,7 @@ import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystems
-import io.suggest.pay.yookassa.{MYkAmount, MYkCustomer, MYkEventTypes, MYkItem, MYkObject, MYkObjectTypes, MYkPayment, MYkPaymentConfirmation, MYkPaymentConfirmationTypes, MYkPaymentCreate, MYkPaymentStatuses, MYkPaymentSubjects, MYkReceipt, MYkVatCodes, YooKassaConst}
+import io.suggest.pay.yookassa.{MYkAmount, MYkCustomer, MYkDeal, MYkDealCreate, MYkEventTypes, MYkItem, MYkObject, MYkObjectTypes, MYkPayment, MYkPaymentConfirmation, MYkPaymentConfirmationTypes, MYkPaymentCreate, MYkPaymentStatuses, MYkPaymentSubjects, MYkPayout, MYkPayoutCreate, MYkReceipt, MYkVatCodes, YooKassaConst}
 import io.suggest.proto.http.HttpConst
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -24,7 +24,7 @@ import japgolly.univeq._
 import models.req.IReq
 import org.apache.commons.codec.binary.Base64
 import play.api.http.{HeaderNames, HttpErrorHandler, MimeTypes}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{JsObject, Json, OWrites, Reads}
 import play.api.mvc.{AnyContent, Result, Results}
 import util.acl.SioControllerApi
 import util.billing.{Bill2Util, BillDebugUtil}
@@ -666,6 +666,37 @@ final class YooKassaUtil @Inject() (
       }
   }
 
+
+  private def _mkPost[Body: OWrites, Resp: Reads](logPrefix: => String, profile: YooKassaProfile, url: String, body: Body)
+                                                 (idemptUpdate: MessageDigest => Unit = {md => md update body.toString.getBytes()}): Future[Resp] = {
+    val idemptKey = mkIdemptKeyHash( idemptUpdate )
+    LOGGER.trace(s"$logPrefix Requesting YooKassa#$profile Idempotence-Key=$idemptKey ...")
+
+    wsClient
+      .url( url )
+      .addHttpHeaders(
+        HttpConst.Headers.IDEMPOTENCE_KEY -> idemptKey,
+      )
+      .withAuth(
+        username = profile.shopId,
+        password = profile.secretKey,
+        scheme   = WSAuthScheme.BASIC,
+      )
+      .post( Json.toJsObject( body ) )
+      .map { resp =>
+        if (resp.status ==* 200) {
+          val respJson = resp.json
+          LOGGER.trace(s"$logPrefix Successfully request YooKassa (${resp.status} ${resp.statusText}):\n${Json.prettyPrint(respJson)}")
+          respJson.as[Resp]
+        } else {
+          val msg = s"API request failed: ${resp.status} ${resp.statusText}\n${resp.body}"
+          LOGGER.info(s"$logPrefix $msg")
+          throw new RuntimeException( msg )
+        }
+      }
+  }
+
+
   /** Non-captured money transaction cancelling. Do not usable for already-success transactions.
     *
     * @param profile YooKassa profile.
@@ -675,29 +706,45 @@ final class YooKassaUtil @Inject() (
     */
   def earlyCancelPayment(profile: YooKassaProfile, paymentId: String): Future[MYkPayment] = {
     lazy val logPrefix = s"earlyCancelPayment($paymentId):"
-    LOGGER.trace(s"$logPrefix Will cancelling payment on YooKassa...")
-    val idemptKey = mkIdemptKeyHash( _.update( paymentId.getBytes ) )
-    wsClient
-      .url( s"$REST_API_ENDPOINT/payments/$paymentId/cancel" )
-      .addHttpHeaders(
-        HttpConst.Headers.IDEMPOTENCE_KEY -> idemptKey,
-      )
-      .withAuth(
-        username = profile.shopId,
-        password = profile.secretKey,
-        scheme   = WSAuthScheme.BASIC,
-      )
-      .post( Json.toJsObject( Json.obj() ) )
-      .map { resp =>
-        if (resp.status ==* 200) {
-          LOGGER.trace(s"$logPrefix Successfully cancelled payment on YooKassa")
-          resp.json.as[MYkPayment]
-        } else {
-          val msg = s"Failed to cancel payment: ${resp.status} ${resp.statusText}\n${resp.body}"
-          LOGGER.warn(s"$logPrefix $msg")
-          throw new RuntimeException( msg )
-        }
-      }
+    _mkPost[JsObject, MYkPayment](
+      logPrefix, profile,
+      url = s"$REST_API_ENDPOINT/payments/$paymentId/cancel",
+      body = JsObject.empty
+    )( _.update(paymentId.getBytes()) )
+  }
+
+
+  /** Deal-starting API.
+    *
+    * @param profile YooKassa profile credentials.
+    * @param dealInfo Deal-create instance.
+    * @return Future with newly created deal info.
+    */
+  def startDeal(profile: YooKassaProfile, dealInfo: MYkDealCreate): Future[MYkDeal] = {
+    lazy val logPrefix = s"startDeal(${profile.shopId}):"
+
+    _mkPost[MYkDealCreate, MYkDeal](
+      logPrefix, profile,
+      url = s"$REST_API_ENDPOINT/deals",
+      body = dealInfo,
+    )()
+  }
+
+
+  /** Create outgoing money payout.
+    *
+    * @param profile YooKassa profile credentials.
+    * @param payoutInfo Information about payout.
+    * @return Future with processed payout.
+    */
+  def payOut(profile: YooKassaProfile, payoutInfo: MYkPayoutCreate): Future[MYkPayout] = {
+    lazy val logPrefix = s"payOut(${payoutInfo.amount})#${System.currentTimeMillis()}:"
+
+    _mkPost[MYkPayoutCreate, MYkPayout](
+      logPrefix, profile,
+      url = s"$REST_API_ENDPOINT/payouts",
+      body = payoutInfo,
+    )()
   }
 
 }
