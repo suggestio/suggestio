@@ -276,4 +276,6 @@ object ErrorMsgs {
   def WIFI_SSID_INVALID = "Wifi.ssid.invalid"
   def CANNOT_CONNECT_TO_REMOTE_SYSTEM = "Cannot.connect.to.remote.system"
 
+  def JS_ROUTER_ERROR = "Js.router.error"
+
 }

@@ -1,14 +1,16 @@
 package io.suggest.sc.controller.jsrr
 
 import diode._
+import diode.Implicits._
 import io.suggest.sc.model._
 import io.suggest.sc.model.in.MJsRouterS
-import io.suggest.sc.view.jsrouter.SrvRouter
+import io.suggest.sc.view.jsrouter.{GlobalScRouterSafe, JsRouterTag}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2.DomQuick
+import io.suggest.sjs.common.vm.doc.SafeBody
 import io.suggest.spa.DiodeUtil.Implicits._
+import scala.concurrent.duration._
 
-import scala.util.Success
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -24,52 +26,55 @@ class JsRouterInitAh[M <: AnyRef](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Команда к запуску инициализации js-роутера.
+    // Action: ensure/initialize js-router.
     case m: JsRouterInit =>
       val v0 = value
 
       if (m.status.isEmpty && !m.status.isFailed) {
-        if (v0.jsRoutes.isReady || v0.jsRoutes.isPending) {
-          // Инициализация уже запущена или выполнена ранее.
+        if (v0.jsRoutes.isReady) {
+          // Already done, nothing to do.
           noChange
 
         } else {
-          // Нужно запустить инициалиазацию js-роутера:
-          val fx = Effect {
-            SrvRouter
-              .ensureJsRouter()
-              .transform { tryRes =>
-                val m2 = m.copy(
-                  status = m.status withTry tryRes,
-                )
-                Success( m2 )
+          // Let's initialize js-router:
+          val fx = Effect.action {
+            val routesStaticTry =
+              Try( GlobalScRouterSafe.jsRoutes )
+                .flatMap( m => Try(m.get) )
+
+            // If nothing loaded yet, try to find js-router tag in html page.
+            // SSR: no html-page may be here, because of missing document.
+            // TODO Move this piece of script-tag code into views?
+            if (routesStaticTry.isFailure) Try {
+              if (JsRouterTag.find().isEmpty) {
+                // Inject router tag into DOM. Usually, this is never called.
+                val tag = JsRouterTag()
+                SafeBody.append(tag)
               }
+            }
+
+            JsRouterInit.status.modify( _ withTry routesStaticTry )(m)
           }
+
           val v2 = MJsRouterS.jsRouter
             .replace( m.status.pending() )(v0)
 
-          // silent - потому что pending никого не интересует.
-          updatedSilent(v2, fx)
+          updatedSilent( v2, fx )
         }
+
+      } else if (m.status.isFailed || m.status.isUnavailable) {
+        // Keep error in pending state, because BootAh monitoring checks isPending() for readyness.
+        val v2 = (MJsRouterS.jsRouter replace m.status.pending())(v0)
+        val fx = Effect.action {
+          JsRouterInit()
+        }
+          .after( 300.millis )
+        updatedSilent(v2, fx)
 
       } else {
-        // Сигнал готовности и проблеме инициализации роутера.
-        var stateMods = MJsRouterS.jsRouter.replace( m.status )
-        var fxsAcc = List.empty[Effect]
-
-        // Если неудача, то надо попробовать ещё раз:
-        if (m.status.isFailed || m.status.isUnavailable) {
-          fxsAcc ::= Effect {
-            DomQuick
-              .timeoutPromiseT( 300 )( JsRouterInit() )
-              .fut
-          }
-        }
-
-        // Обновить состояние и закончить.
-        val v2 = stateMods( v0 )
-
-        ah.updatedMaybeEffect( v2, fxsAcc.mergeEffects )
+        // Now, jsRouter is ready. Non-silent update, so subscribers can feel model changes ASAP.
+        val v2 = (MJsRouterS.jsRouter replace m.status)(v0)
+        updated( v2 )
       }
 
   }

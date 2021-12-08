@@ -7,13 +7,13 @@ import io.suggest.pick.JsBinaryUtil
 import io.suggest.radio.{MRadioSignal, MRadioSignalJs, MRadioSignalTypes}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.model.dia.first.{MWzFrames, MWzPhases, WzDebugView}
-import io.suggest.sc.model.{SetDebug, UpdateUnsafeScreenOffsetBy}
+import io.suggest.sc.model.{JsRouterInit, SetDebug, UpdateUnsafeScreenOffsetBy}
 import io.suggest.sc.model.inx.{GetIndex, MScSwitchCtx, UnIndex}
 import io.suggest.spa.{DAction, DoNothing}
 import org.scalajs.dom
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel, JSName}
 import scala.scalajs.js.timers.SetIntervalHandle
 import scala.util.Random
 
@@ -25,13 +25,21 @@ import scala.util.Random
   *
   * Используется длинное неповторимое глобальное имя, т.к. короткое "Sc" приводило к name clash после js-минификации.
   */
-@JSExportTopLevel("___Sio___Sc___")
+@JSExportTopLevel( ScConstants.SC3_JS_API_GLOBAL_NAME )
 object Sc3JsApi extends Log {
 
+  private def _dispatch( action: DAction ): Unit =
+    Sc3Module.ref.sc3Circuit.dispatch( action )
+
+  @JSExport( ScConstants.JsRouter.ASYNC_INIT_FNAME )
+  def jsRouterReady(): Unit =
+    _dispatch( JsRouterInit() )
+
   // Инлайнинга нет, т.к. код и так срезается в ClosureCompiler при production build.
-  private def _d( action: => DAction ) =
+  private def _d( action: => DAction ): Unit = {
     if (scalajs.LinkingInfo.developmentMode)
-      Sc3Module.ref.sc3Circuit.dispatch( action )
+      _dispatch( action )
+  }
 
   private def _ifDev[T](f: => T): Option[T] =
     Option.when( scalajs.LinkingInfo.developmentMode )(f)

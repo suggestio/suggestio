@@ -49,6 +49,9 @@ sealed trait IScJsRouterInitAction extends IScRootAction
 
 /** Запустить инициализацию js-роутера. */
 case class JsRouterInit( status: Pot[routes.type] = Pot.empty ) extends IScJsRouterInitAction
+object JsRouterInit {
+  def status = GenLens[JsRouterInit](_.status)
+}
 
 
 trait IScScreenAction extends IScRootAction

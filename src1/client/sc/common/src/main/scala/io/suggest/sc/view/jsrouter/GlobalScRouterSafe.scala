@@ -7,7 +7,7 @@ import org.scalajs.dom.Window
 import scala.language.implicitConversions
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSGlobalScope, JSName}
+import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobalScope, JSName}
 
 /**
  * Suggest.io
@@ -24,15 +24,6 @@ object GlobalScRouterSafe extends js.Object {
    * @return Роутер или undefined.
    */
   @JSName( JsRoutesConst.GLOBAL_NAME )
-  def jsRoutes: js.UndefOr[routes.type] = js.native
-
-  /**
-   * Доступ к функции иниализации при асинхронной подгрузке js-роутера.
-   * js-код роутера вызовет эту функцию, как только будет загружен в память.
-   * Функция может быть перевыставлена несколько раз в случае активной долбежки роутера, это нормально.
-   * @return function() или undefined.
-   */
-  @JSName( ScConstants.JsRouter.ASYNC_INIT_FNAME )
-  var sioScJsRoutesAsyncInit: js.UndefOr[js.Function0[_]] = js.native
+  var jsRoutes: js.UndefOr[routes.type] = js.native
 
 }

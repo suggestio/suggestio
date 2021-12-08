@@ -9,11 +9,10 @@ import io.suggest.log.remote.RemoteLogAppender
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
-import io.suggest.sc.model.{ScreenResetPrepare, SetErrorState}
+import io.suggest.sc.model.{JsRouterInit, ScreenResetPrepare, SetErrorState}
 import io.suggest.log.{Log, LogSeverities, Logging}
 import io.suggest.sc.model.dia.err.MScErrorDia
 import io.suggest.sc.view.styl.ScCssStatic
-import io.suggest.sc.view.jsrouter.SrvRouter
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -73,8 +72,7 @@ object Sc3Main extends Log {
     PlayJsonSjsUtil.init()
 
     val modules = new Sc3Module
-    if (scalajs.LinkingInfo.developmentMode)
-      Sc3Module.ref = modules
+    Sc3Module.ref = modules
 
     // Если не доступно HTML5 geolocation API, то заменить его через cdv-bg-geolocation внутри leaflet'а.
     /*
@@ -103,7 +101,10 @@ object Sc3Main extends Log {
       .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
 
     // Сразу поискать js-роутер на странице.
-    SrvRouter.ensureJsRouter()
+    Try {
+      modules.sc3Circuit.dispatch( JsRouterInit() )
+    }
+      .logFailure( ErrorMsgs.JS_ROUTER_ERROR )
 
     val doc  = DocumentVm()
     val docLoc = doc._underlying.location

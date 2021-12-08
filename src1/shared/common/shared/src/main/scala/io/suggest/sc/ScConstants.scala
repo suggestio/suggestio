@@ -2,7 +2,6 @@ package io.suggest.sc
 
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.{MOsFamilies, MOsFamily}
-import io.suggest.routes.JsRoutesConst
 
 /**
  * Suggest.io
@@ -185,7 +184,7 @@ object ScConstants {
   object JsRouter {
 
     /** window.NAME - название функции function(), которая будет вызвана  */
-    final val ASYNC_INIT_FNAME = JsRoutesConst.GLOBAL_NAME + "AsyncInit"
+    final val ASYNC_INIT_FNAME = "jsRouterReady"
 
     /** id script-тега js-роутера. HTML5 разрешает script.id. */
     final def DOM_ID = "scJsRouterCont"
@@ -282,5 +281,9 @@ object ScConstants {
     final def SWITCH_ASK_COMPACTED_LIST_LEN_MIN = 5
 
   }
+
+
+  /** Global name of object with exported pure JS API. */
+  final val SC3_JS_API_GLOBAL_NAME = "___Sio___Sc___"
 
 }
