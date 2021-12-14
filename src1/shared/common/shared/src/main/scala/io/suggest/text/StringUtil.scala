@@ -234,10 +234,12 @@ object StringUtil {
 
     render( __append )
 
-    // Отбросить финальную запятую:
-    val lastCharIndex = sb.length() - 1
-    if (sb.charAt(lastCharIndex) ==* delimiter )
-      sb.setLength( lastCharIndex )
+    // Strip final comma, if any:
+    if (sb.nonEmpty) {
+      val lastCharIndex = sb.length() - 1
+      if (lastCharIndex >= 0 && sb.charAt(lastCharIndex) ==* delimiter )
+        sb.setLength( lastCharIndex )
+    }
 
     if (that != null)
       sb.append( ')' )

@@ -233,7 +233,7 @@ final class ExtRscUtil @Inject()(
       })
         .toMap
 
-      LOGGER.info(s"$logPrefix Done ensuring ${allNodesMap.size} video-ext-nodes from ${videoUrls.size} urls into result[${resMap.size}]:\n ${resMap.mkString("\n ")}")
+      LOGGER.info(s"$logPrefix Done ensuring ${allNodesMap.size} video-ext-nodes from ${videoUrls.size} urls into result[${resMap.size}]:\n ${resMap.keys.mkString("\n ")}")
 
       resMap
     }
