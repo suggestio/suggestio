@@ -570,34 +570,33 @@ final class DynImgUtil @Inject() (
         val edgesByUid = mnode.edges.edgesByUid
         val logPrefix2 = s"$logPrefix Node#${mnode.idOrNull}:"
 
-        val jdImgEdgeIdsIter: IterableOnce[MJdEdgeId] = mnode.common.ntype match {
-          // Рекламная карточка. Растрясти шаблон документа карточки:
-          case MNodeTypes.Ad =>
-            (for {
-              doc <- mnode.extras.doc.toEphemeralStream
-              imgEdgeUidsCache = new JdTag.HtmlImgEdgeUidsCache
-              jdtLoc <- doc.template.cobindTreeLoc.flatten
-              imgEdge <- jdtLoc.allImgEdgeUids( imgEdgeUidsCache )
-            } yield {
-              imgEdge
-            })
-              .iterator
-
-          // Adn-узел. Проверить MAdnResView:
-          case MNodeTypes.AdnNode =>
-            // Собрать данные для запроса по id к MMedia:
-            mnode.extras.adn
-              .iterator
-              .flatMap(_.resView.edgeUids)
-
-          // Should never happen.
-          case other =>
-            LOGGER.error(s"$logPrefix2 Unexpected ntype#$other. Skipping. Should never happen here.")
-            Nil
-        }
-
         val mediaId2edgeUid = (for {
-          jdEdgeId  <- jdImgEdgeIdsIter.iterator
+          jdEdgeId <- (mnode.common.ntype match {
+            // Рекламная карточка. Растрясти шаблон документа карточки:
+            case MNodeTypes.Ad =>
+              (for {
+                doc <- mnode.extras.doc.toEphemeralStream
+                imgEdgeUidsCache = new JdTag.HtmlImgEdgeUidsCache
+                jdtLoc <- doc.template.cobindLoc.flatten
+                imgEdge <- jdtLoc.allImgEdgeUids(imgEdgeUidsCache)
+              } yield {
+                imgEdge
+              })
+                .iterator
+
+            // Adn-узел. Проверить MAdnResView:
+            case MNodeTypes.AdnNode =>
+              // Собрать данные для запроса по id к MMedia:
+              mnode.extras.adn
+                .iterator
+                .flatMap(_.resView.edgeUids)
+
+            // Should never happen.
+            case other =>
+              LOGGER.error(s"$logPrefix2 Unexpected ntype#$other. Skipping. Should never happen here.")
+              Iterator.empty
+          }): Iterator[MJdEdgeId]
+
           medge     <- edgesByUid.get( jdEdgeId.edgeUid ).iterator
           if medge.predicate ==* MPredicates.JdContent.Image
           imgNodeId <- medge.nodeIds

@@ -21,6 +21,7 @@ object MTxn {
   object Fields {
     final def METADATA = "metadata"
     final def PAY_SYSTEM = "pay_system"
+    final def PS_DEAL_ID = "ps_deal_id"
   }
 
   /** Поддержка play-json. */
@@ -36,9 +37,11 @@ object MTxn {
       (__ \ "c").formatNullable[String] and
       (__ \ F.PAY_SYSTEM).formatNullable[MPaySystem] and
       (__ \ "u").formatNullable[String] and
+      (__ \ F.PS_DEAL_ID).formatNullable[String] and
       (__ \ "a").formatNullable[OffsetDateTime](dtFmt) and
       (__ \ "p").format[OffsetDateTime](dtFmt) and
-      (__ \ F.METADATA).formatNullable[JsValue] and
+      // metadata: before 2021-12-08 was used, but these test payments does not matter.
+      (__ \ F.METADATA).formatNullable[MTxnMetaData] and
       (__ \ "i").formatNullable[Gid_t]
     )(apply, unlift(unapply))
   }
@@ -54,6 +57,7 @@ object MTxn {
     def toClientSide = mtxn.copy(
       metadata      = None,
       psTxnUidOpt   = None,
+      psDealIdOpt   = None,
       dateProcessed = mtxn.dateProcessed.withNano(0),
       datePaid      = mtxn.datePaid.map(_.withNano(0)),
     )
@@ -72,9 +76,10 @@ final case class MTxn(
                  paymentComment    : Option[String]            = None,
                  paySystem         : Option[MPaySystem]        = None,
                  psTxnUidOpt       : Option[String]            = None,
+                 psDealIdOpt       : Option[String]            = None,
                  datePaid          : Option[OffsetDateTime]    = None,
                  dateProcessed     : OffsetDateTime            = OffsetDateTime.now(),
-                 metadata          : Option[JsValue]           = None,
+                 metadata          : Option[MTxnMetaData]      = None,
                  override val id   : Option[Gid_t]             = None
                )
   extends OptId[Gid_t]

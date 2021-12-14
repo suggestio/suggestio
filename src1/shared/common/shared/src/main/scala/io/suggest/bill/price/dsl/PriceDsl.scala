@@ -243,7 +243,7 @@ object PriceDsl {
     }
 
 
-    def findOpt[T](f: Tree[PriceDsl] => Option[T]): Option[T] = {
+    def findMapBottom[T](f: Tree[PriceDsl] => Option[T]): Option[T] = {
       priceDslTree
         .cobind(identity)
         .flatten
@@ -254,11 +254,11 @@ object PriceDsl {
 
 
     def findWithReasonType(rtypes: MReasonType*): Option[Tree[PriceDsl]] = {
-      findOpt { priceDslSubtree =>
+      findMapBottom { priceDslSubtree =>
         priceDslSubtree
           .rootLabel
           .reason
-          .find { reason =>
+          .filter { reason =>
             rtypes contains[MReasonType] reason.reasonType
           }
           .map(_ => priceDslSubtree)

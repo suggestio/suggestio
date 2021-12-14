@@ -251,7 +251,7 @@ object JdTag {
     def allImgEdgeUids: EphemeralStream[MJdEdgeId] = {
       val htmlImgEdgeUidsCache = new HtmlImgEdgeUidsCache
       tree
-        .cobindTreeLoc
+        .cobindLoc
         .flatten
         .flatMap { treeLoc =>
           (treeLoc.getLabel: JdTag).legacyEdgeUids ++

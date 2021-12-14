@@ -30,6 +30,9 @@ object MTxnTypes extends StringEnum[MTxnType] {
     * Stored to handle cases, when cancelled, but payment is received later after cancel. */
   case object Cancelled extends MTxnType("c")
 
+  /** Payout transaction type. May be draft, if datePaid is empty. */
+  case object Payout extends MTxnType("o")
+
 
   override def values = findValues
 

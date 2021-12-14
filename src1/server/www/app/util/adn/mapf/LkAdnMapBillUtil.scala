@@ -144,6 +144,7 @@ final class LkAdnMapBillUtil @Inject() (
               // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
               rcvrIdOpt     = None,
               geoShape      = Some( formRes.mapCursor ),
+              priceDsl      = Some( priceTerm )
             )
           }
           .map { itm =>

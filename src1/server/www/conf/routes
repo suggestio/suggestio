@@ -12,8 +12,8 @@ GET  /                                  @controllers.sc.ScSite.geoSite(a: io.sug
 GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 HEAD /img/dyn                           @controllers.Img.dynImgHead(i: im.MImgT)
 
-## Restrict access to client-side debug stuff (fastopt, js-maps, etc) in production only for superusers.
-GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt(-bundle)?\.js).*>       @controllers.Static.vassetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
+## Restrict access to client-side debug stuff (configs, etc) in production only for superusers.
+GET  /vassets/$file<.+\.(conf).*>       @controllers.Static.vassetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
 
 ## Map static resources from the /public folder to the /assets URL path
 GET  /vassets/*file                     @controllers.Assets.versioned(path = ASSETS_PUBLIC_ROOT, file: Asset)

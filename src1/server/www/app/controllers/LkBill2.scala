@@ -4,12 +4,11 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
-import io.suggest.bill.cart.{MCartConf, MCartIdeas, MCartInit, MCartPayInfo, MCartSubmitQs, MCartSubmitResult, MOrderContent}
+import io.suggest.bill.cart.{MCartConf, MCartIdeas, MCartInit, MCartSubmitQs, MCartSubmitResult, MOrderContent}
 import io.suggest.bill.price.dsl.{MReasonType, MReasonTypes}
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.color.MColors
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
@@ -20,6 +19,7 @@ import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
+import io.suggest.n2.bill.tariff.daily.MTfDaily
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.{MPaySystem, MPaySystems}
 import io.suggest.req.ReqUtil
@@ -30,6 +30,7 @@ import io.suggest.xplay.qsb.QsbSeq
 import japgolly.univeq._
 import models.mbill._
 import models.mctx.Context
+import models.mpay.MCartNeedMoneyArgs
 import models.req._
 import play.api.http.HttpVerbs
 import play.api.libs.json.Json
@@ -116,16 +117,16 @@ final class LkBill2 @Inject() (
           mad <- madOpt
           blockModulesCount <- advUtil.adModulesCount( mad )
         } yield {
-          val madTf = tfDaily.withClauses(
-            tfDaily.clauses
-              .view
+          val madTf = MTfDaily.clauses.modify {
+            _ .view
               .mapValues { mdc =>
                 mdc.withAmount(
                   mdc.amount * blockModulesCount
                 )
               }
               .toMap
-          )
+          }(tfDaily)
+
           MAdTfInfo(blockModulesCount, madTf)
         }
 
@@ -830,7 +831,7 @@ final class LkBill2 @Inject() (
             paySysUid <- txn.psTxnUidOpt.iterator
             // Decode transaction metadata into valid query-string args for cartSubmit() action:
             submitQsOpt = txn.metadata
-              .flatMap( _.asOpt[MCartSubmitQs] )
+              .flatMap( _.cartQs )
               .iterator
             cancelFut <- paySystem match {
               case MPaySystems.YooKassa =>
@@ -886,8 +887,8 @@ final class LkBill2 @Inject() (
       // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
       for {
         personNode  <- request.user.personNodeFut
-        userContract <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
-        contractId  = userContract.contract.id.get
+        personContract <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
+        contractId  = personContract.contract.id.get
 
         // Дальше надо бы делать транзакцию
         // Произвести чтение, анализ и обработку товарной корзины:
@@ -917,59 +918,29 @@ final class LkBill2 @Inject() (
             case MCartIdeas.NeedMoney =>
               val paySystem = MPaySystems.default
               val cartOrder = cartResolution.newCart getOrElse cartWithItems0
-              paySystem match {
-                case MPaySystems.YooKassa =>
-                  val payPrices = cartResolution.needMoney.get
-                  require(payPrices.lengthIs == 1, s"Only one currency allowed for $paySystem")
-                  val Seq(payPrice) = payPrices
-                  val ykProfile = yooKassaUtil
-                    .findProfile( qs.payVia )
-                    .get
+              val paySysArgs = MCartNeedMoneyArgs(
+                cartResolution  = cartResolution,
+                cartOrder       = cartOrder,
+                personContract  = personContract.contract,
+                personNode      = personNode,
+                cartQs          = qs
+              )
 
-                  for {
-                    paymentStarted <- yooKassaUtil.preparePayment(
-                      // TODO payProfile: Detect test/prod using URL qs args, filtering by request.user.isSuper
-                      profile   = ykProfile,
-                      orderItem = cartOrder,
-                      payPrice  = payPrice,
-                      personOpt = Some( personNode ),
-                    )(ctx)
-                    // Store started not-yet-completed transaction:
-                    _ <- slick.db.run {
-                      (for {
-                        userBalance0 <- bill2Util.ensureBalanceFor( contractId, payPrice.currency )
-                        txn <- bill2Util.openPaySystemTxn(
-                          balanceId   = userBalance0.id.get,
-                          payAmount   = payPrice.amount,
-                          orderIdOpt  = cartOrder.order.id,
-                          psTxnId     = paymentStarted.payment.id,
-                          paySystem   = paySystem,
-                          txnMetadata = Option.when( qs.nonEmpty )( Json.toJsObject( qs ) ),
-                        )
-                        // Ensure, that cart order contract is same as user contractId.
-                        orderHold <- bill2Util.holdOrder( cartOrder.order )
-                      } yield {
-                        LOGGER.trace(s"$logPrefix Hold order#${orderHold.id.orNull}, hold pending txn#${txn.id}, will await payment confirmation.")
-                        None
-                      })
-                        .transactionally
-                    }
-                  } yield {
-                    MCartSubmitResult(
-                      cartIdea  = cartResolution.idea,
-                      pay = Some( MCartPayInfo(
-                        paySystem,
-                        metadata = Some( paymentStarted.metadata ),
-                        prefmtFooter = OptionUtil.maybeOpt( request.user.isSuper ) {
-                          yooKassaUtil.prefmtFooter( ykProfile )
-                        },
-                      )),
-                    )
-                  }
+              // Call paysystem-related stuff for processing payment.
+              for {
+                payInfo <- paySystem match {
+                  case MPaySystems.YooKassa =>
+                    yooKassaUtil.handleCartNeedsMoneyPay( paySysArgs )(ctx)
 
-                // Deprecated. Support will be removed and not implemented here.
-                case MPaySystems.YaKa =>
-                  throw new UnsupportedOperationException("Deprecated, won't be implemented.")
+                  // Deprecated. Support will be removed and not implemented here.
+                  case MPaySystems.YaKa =>
+                    throw new UnsupportedOperationException("Deprecated, won't be implemented.")
+                }
+              } yield {
+                MCartSubmitResult(
+                  cartIdea = cartResolution.idea,
+                  pay = Some( payInfo ),
+                )
               }
 
             // Order was closed, using user's internal balance.

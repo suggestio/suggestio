@@ -65,6 +65,7 @@ object Common {
       * И SLF4J депендится только в некоторых тестах.
       *
       * 2017.jul.6: Версии 1.7 и 1.8 несовместимы из-за jigsaw, нужно и logback тоже обновлять.
+      * 2021-12-10: Logback 1.2.3 in classpath can work only with slf4j-* 1.7.x. Need play-framework update >2.9.
       */
     val SLF4J      = "1.7.+"
 
@@ -72,7 +73,7 @@ object Common {
       * es-5.0 -> log4j-2.7
       * @see [[https://github.com/elastic/elasticsearch/issues/19415#issuecomment-257840940]]
       */
-    val LOG4J      = "2.11.1"
+    val LOG4J      = "2.+"
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
     val THREETEN_EXTRA = "1.5.+"

@@ -2,9 +2,11 @@ package util.billing
 
 import akka.actor.ActorSystem
 import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsDyn
+
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.inject.Injector
@@ -29,6 +31,9 @@ class Bill2Conf @Inject() (
   private def _esModel = injector.instanceOf[EsModel]
   private def actorSystem = injector.instanceOf[ActorSystem]
   private def configuration = injector.instanceOf[Configuration]
+
+  /** Are safe-deals & payouts enabled for billing? */
+  lazy val DEAL_PAYOUTS_ENABLED = configuration.getOptional[Boolean]("bill.deal.payout.enabled").getOrElseFalse
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
   lazy val CBCA_NODE_ID: String = {

@@ -1,7 +1,8 @@
 package io.suggest.mbill2.m.item
 
-import java.time.OffsetDateTime
+import io.suggest.bill.price.dsl.PriceDsl
 
+import java.time.OffsetDateTime
 import io.suggest.bill.{IMPrice, MPrice}
 import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.geo.IGeoShape
@@ -9,10 +10,12 @@ import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.primo.id.OptId
+import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.Tree
 
 
 /**
@@ -40,6 +43,7 @@ object MItem {
     final def TAG_NODE_ID = "y"
     final def DATE_STATUS = "u"
     final def ID = "i"
+    final def PRICE_DSL = "price_dsl"
   }
 
   /** Поддержка play-json для инстансом [[MItem]]. */
@@ -60,6 +64,7 @@ object MItem {
       (__ \ F.TAG_FACE).formatNullable[String] and
       (__ \ F.TAG_NODE_ID).formatNullable[String] and
       (__ \ F.DATE_STATUS).format[OffsetDateTime](dtFmt) and
+      (__ \ F.PRICE_DSL).formatNullable[Tree[PriceDsl]] and
       (__ \ F.ID).formatNullable[Gid_t]
     )(apply, unlift(unapply))
   }
@@ -89,6 +94,7 @@ final case class MItem(
                   tagFaceOpt              : Option[String]          = None,
                   tagNodeIdOpt            : Option[String]          = None,
                   dateStatus              : OffsetDateTime          = OffsetDateTime.now(),
+                  priceDsl                : Option[Tree[PriceDsl]],
                   override val id         : Option[Gid_t]           = None
                 )
   extends OptId[Gid_t]

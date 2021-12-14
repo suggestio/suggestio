@@ -57,6 +57,7 @@ final class MItems @Inject() (
   with MAdItemIdsSlick
   with MAdItemStatusesSlick
   with TagNodeIdOptSlick
+  with PriceDslSlick
 {
 
   override lazy val mOrders = injector.instanceOf[MOrders]
@@ -92,11 +93,12 @@ final class MItems @Inject() (
     with TagFaceOptColumn
     with DateStatusColumn
     with TagNodeIdOptColumn
+    with PriceDslColumn
   {
 
     override def * : ProvenShape[MItem] = {
       (orderId, iType, status, price, nodeId, dateStartOpt, dateEndOpt, rcvrIdOpt, reasonOpt, geoShapeOpt,
-        tagFaceOpt, tagNodeIdOpt, dateStatus, id.?) <> (
+        tagFaceOpt, tagNodeIdOpt, dateStatus, priceDslOpt, id.?) <> (
         (MItem.apply _).tupled, MItem.unapply
       )
     }

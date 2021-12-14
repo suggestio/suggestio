@@ -1216,3 +1216,4 @@ pay.out.type.wallet=Электронный кошелёк
 pay.out.type.bank_card=Банковская карта
 YooKassa=ЮКасса
 
+Deal.for.0=Сделка по {0}

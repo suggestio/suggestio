@@ -1,11 +1,11 @@
 package io.suggest.mbill2.m.order
 
 import java.time.OffsetDateTime
-
 import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.mbill2.m.gid._
 import io.suggest.primo.id.OptId
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -36,6 +36,8 @@ object MOrder {
     UnivEq.derive
   }
 
+  def status = GenLens[MOrder](_.status)
+
 }
 
 
@@ -47,14 +49,3 @@ case class MOrder(
                    id            : Option[Gid_t]     = None
                  )
   extends OptId[Gid_t]
-{
-
-  def withStatus(status1: MOrderStatus): MOrder = {
-    copy(
-      status      = status1,
-      dateStatus  = OffsetDateTime.now()
-    )
-  }
-
-}
-

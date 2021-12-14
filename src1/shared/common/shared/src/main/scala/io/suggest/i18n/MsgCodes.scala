@@ -553,5 +553,6 @@ object MsgCodes {
 
   val `Pay.system` = "Pay.system"
   val `Payout` = "Payout"
+  val `Deal.for.0` = "Deal.for.0"
 
 }

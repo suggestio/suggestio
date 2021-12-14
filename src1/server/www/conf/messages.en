@@ -1208,3 +1208,4 @@ pay.out.type.wallet=PaySystem Wallet
 pay.out.type.bank_card=Banking card
 YooKassa=YooKassa
 
+Deal.for.0=Deal for {0}

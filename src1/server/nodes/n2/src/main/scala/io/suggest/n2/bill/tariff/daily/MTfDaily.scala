@@ -58,19 +58,10 @@ object MTfDaily
     )
   }
 
+  def currency = GenLens[MTfDaily](_.currency)
+  def clauses = GenLens[MTfDaily](_.clauses)
   def comissionPc = GenLens[MTfDaily](_.comissionPc)
 
-}
-
-
-/** Интерфейс для тарифного поля с описаловом тарифа размещения. */
-trait ITfClauses extends IMCurrency {
-  def clauses       : ClausesMap_t
-}
-
-/** Интерфейс для поля с %комиссией. */
-trait ITfComissionPc extends IMCurrency {
-  def comissionPc   : Option[Double]
 }
 
 
@@ -83,14 +74,14 @@ trait ITfComissionPc extends IMCurrency {
  * @param comissionPc Комиссия suggest.io за размещение.
  *                    Например: 1.0 означает 100% уходит в CBCA.
  *                    None означает значение по умолчанию. Изначально = 1.0, но не обязательно.
- */
+  */
 case class MTfDaily(
-  override val currency      : MCurrency,
-  override val clauses       : ClausesMap_t,
-  override val comissionPc   : Option[Double] = None
-)
-  extends ITfClauses
-  with ITfComissionPc
+                     override val currency      : MCurrency,
+                     clauses                    : ClausesMap_t,
+                     // TODO comissionPc: Need exact/predictable Int type (== percents or promille) or BigDecimal (with stricted fractional part), instead of inexact Double type.
+                     comissionPc                : Option[Double] = None
+                   )
+  extends IMCurrency
 {
 
   private def _err(msg: String) = throw new IllegalArgumentException(msg)
@@ -119,9 +110,5 @@ case class MTfDaily(
   def calIds: Set[String] = {
     calIdsIter.toSet
   }
-
-
-  def withClauses(clauses2: ClausesMap_t) = copy(clauses = clauses2)
-  def withComission(c: Option[Double]) = copy(comissionPc = c)
 
 }

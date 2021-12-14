@@ -205,7 +205,7 @@ final class TfDailyUtil @Inject()(
         if (tfDaily0.comissionPc.isEmpty) {
           // Комиссия не задана. Брать её из cbca.
           for (fallbackTf <- fallbackTfFut) yield
-            tfDaily0.withComission( fallbackTf.comissionPc )
+            (MTfDaily.comissionPc replace fallbackTf.comissionPc)(tfDaily0)
         } else {
           // Задана какая-то комиссия. CBCA не интересен.
           Future.successful( tfDaily0 )

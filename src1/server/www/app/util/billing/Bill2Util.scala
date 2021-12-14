@@ -19,7 +19,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
-import io.suggest.mbill2.m.txn.{MTxn, MTxnType, MTxnTypes, MTxns}
+import io.suggest.mbill2.m.txn.{MTxn, MTxnMetaData, MTxnType, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystem
@@ -34,11 +34,12 @@ import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.streams.StreamsUtil
+import io.suggest.text.StringUtil
 import io.suggest.util.JmxBase
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.Configuration
 import play.api.inject.Injector
-import play.api.libs.json.JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -73,7 +74,7 @@ final class Bill2Util @Inject() (
   lazy val mDebugs = injector.instanceOf[MDebugs]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
-  protected[this] lazy val slickHolder = injector.instanceOf[SlickHolder]
+  lazy val slickHolder = injector.instanceOf[SlickHolder]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
   implicit private lazy val mat = injector.instanceOf[Materializer]
 
@@ -424,14 +425,14 @@ final class Bill2Util @Inject() (
     * Считается, что все оплаты уже посчитаны, проверены и списаны.
     * Т.е. это жесткое закрытие ордера, и не всегда уместно.
     *
-    * @param order Обрабатываемый ордер вместе с item'ами.
+    * @param orderWithItems Обрабатываемый ордер вместе с item'ами.
     * @return DBIO-экшен, с какими-то данными или без них.
     */
-  def closeOrder(order: MOrderWithItems): DBIOAction[MOrderWithItems, NoStream, Effect.Write] = {
+  def closeOrder(orderWithItems: MOrderWithItems): DBIOAction[MOrderWithItems, NoStream, Effect.Write] = {
     for {
       // Обновляем статус ордера.
       morder3 <- {
-        val morder2 = order.order.withStatus( MOrderStatuses.Closed )
+        val morder2 = (MOrder.status replace MOrderStatuses.Closed)( orderWithItems.order )
         for {
           ordersUpdated <- mOrders.saveStatus( morder2 )
           if ordersUpdated ==* 1
@@ -442,7 +443,7 @@ final class Bill2Util @Inject() (
 
       // Обновляем item'ы ордера, возвращаем обновлённые инстансы.
       mitems3 <- {
-        val actions = for (itm <- order.items) yield {
+        val actions = for (itm <- orderWithItems.items) yield {
           val itm2 = itm.withStatus( orderClosedItemStatus(itm.iType) )
           for {
             itemsUpdated <- mItems.updateStatus(itm2)
@@ -766,14 +767,17 @@ final class Bill2Util @Inject() (
             }
           }
 
+          orderDealTxnIdOpt <- orderDealTransactionId( owi.order.id.get )
+
           // Закрыть статус текущего ордера.
           morder9 <- {
-            val morder2 = owi.order.withStatus( MOrderStatuses.Closed )
+            val nextOrderStatus = MOrderStatuses.afterPaymentStatus( orderDealTxnIdOpt.nonEmpty )
+            val morder2 = (MOrder.status replace MOrderStatuses.Closed)( owi.order )
             for {
               ordersUpdated <- mOrders.saveStatus( morder2 )
               if ordersUpdated ==* 1
             } yield {
-              LOGGER.debug(s"$logPrefix Order#$orderId closed.")
+              LOGGER.debug(s"$logPrefix Order#$orderId status updated to $nextOrderStatus, paySysDeal txnId#${orderDealTxnIdOpt.orNull}.")
               morder2
             }
           }
@@ -797,6 +801,35 @@ final class Bill2Util @Inject() (
       .transactionally
   }
 
+
+  def orderDealTransactionQuery(orderId: Gid_t): Query[mTxns.MTxnsTable, MTxn, Seq] = {
+    mTxns
+      .query
+      .filter { tx =>
+        (tx.orderIdOpt === orderId) &&
+        (tx.txTypeStr === MTxnTypes.Payment.value) &&
+        (tx.psTxnUidOpt.nonEmpty) &&
+        (tx.psDealIdOpt.nonEmpty) &&
+        (tx.metadataJson.nonEmpty) &&
+        (tx.datePaidOpt.nonEmpty)
+      }
+      .take( 1 )
+  }
+
+  /** Next order status after payment.
+    * @return Deal-data transaction id#.
+    */
+  def orderDealTransactionId(orderId: Gid_t): DBIOAction[Option[Gid_t], NoStream, Effect.Read] = {
+    for {
+      txnIdOpt <- orderDealTransactionQuery( orderId )
+        .map( _.id )
+        .result
+        .headOption
+    } yield {
+      LOGGER.trace(s"orderAfterPaymentStatus($orderId): Order have paysystem-deal transaction?${txnIdOpt.orNull}")
+      txnIdOpt
+    }
+  }
 
 
   /** Логика заливки на баланс денег. Обычно используется для нужд валютных кошельков CBCA.
@@ -1010,12 +1043,77 @@ final class Bill2Util @Inject() (
   }
 
 
+  def prepareAllMoneyReceivers(items: Iterable[MItem]): Future[Iterable[MoneyRcvrData]] = {
+    for {
+      allMoneyRcvrsRaw <- Future.traverse( items )( prepareMoneyReceivers )
+    } yield {
+      allMoneyRcvrsRaw.flatten
+    }
+  }
+
+
+  /** Here method prepares steps for making a p2p+sio deal via payment system.
+    *
+    * @param paySystem Payment system.
+    * @param isDealSupportedPaySys Is payment system supports deals now? Logically, this may be filtered outside here, but for code deduplication it lives here.
+    * @param moneyRcvrs
+    * @return Optional result with deal prices.
+    */
+  def prepareDealData(paySystem: MPaySystem, isDealSupportedPaySys: Boolean, moneyRcvrs: Iterable[MoneyRcvrData]): Option[ExtDealPrepareResult] = {
+    lazy val logPrefix = s"prepareDealData($paySystem?$isDealSupportedPaySys, [${moneyRcvrs.size}]):"
+
+    for {
+      _ <- Option.when( isDealSupportedPaySys && moneyRcvrs.nonEmpty && bill2Conf.DEAL_PAYOUTS_ENABLED )(())
+
+      // Find paysystems and deals:
+      dealCanPayRes = canPayExtTxn( paySystem, moneyRcvrs )
+      if {
+        val r = dealCanPayRes.dealWith.nonEmpty
+        if (r) LOGGER.trace(s"$logPrefix Found ${dealCanPayRes.dealWith.size} dealable money-rcvrs: [${dealCanPayRes.dealWith.iterator.flatMap(_.enc.mnode.id).mkString(",")}], and ${dealCanPayRes.outOfDeal.size} non-dealable.")
+        else   LOGGER.debug(s"$logPrefix Not found any dealable money-rcvrs with payout. Will grab money for rest ${dealCanPayRes.outOfDeal.size} money-rcvrs.")
+        r
+      }
+
+      // Now, let's move sio-comission from dealCanPayRes into comissionDeal prices.
+      (dealSioComissions, dealSellersOnly) = dealCanPayRes.dealWith.partition { _.isSioComissionPrice }
+
+      if {
+        // Self-control: ensure non-emptyness of both deal-parts.
+        val r = dealSioComissions.nonEmpty
+        // If r.isEmpty,  here invalid situation. If continue, all deal money goes to sellers party.
+        // So, suggest.io will have no profit. Also, Suggest.io will pay comission to external pay-system from suggest.io own money.
+        if (!r) LOGGER.error( s"$logPrefix No s.io comission detected in dealWith list. Should never happen." )
+        r
+      } && {
+        // No sellers after s.io-comission partitioning? => Nobody to deal money with and zero deal payout price.
+        val r = dealSellersOnly.nonEmpty
+        if (!r) LOGGER.warn(s"$logPrefix Only s.io comission deceted in dealWith, and no sellers. This is normal? Normally, this conditions should be filtered on upper levels of code.")
+        r
+      }
+
+      // Untoched for opening deal moneyRcvr info, packed into original deal decision:
+      dealRcvrsForPaySystem = {
+        LOGGER.trace(s"$logPrefix Moving s.io comission from dealWith to outOfDeal:\n s.io comission = ${dealSioComissions.mkString(", ")}\n retained payouts = ${dealSellersOnly.mkString(", ")}")
+        dealCanPayRes.copy(
+          dealWith  = dealSellersOnly,
+          outOfDeal = dealSioComissions ++ dealCanPayRes.outOfDeal,
+        )
+      }
+
+    } yield {
+      val dealData = ExtDealPrepareResult( dealRcvrsForPaySystem )
+      LOGGER.trace(s"$logPrefix Done, deal is available: $dealData")
+      dealData
+    }
+  }
+
+
   /** Распедалить по бенефициарам деньги в случае проведения указанного item'а.
     *
     * @param mitem Item, который планируется проводить.
     * @return Список данные по узлам-бенефециарам, куда пойдёт сколько денег.
     */
-  def prepareMoneyReceivers(mitem: MItem): Future[List[MoneyRcvrInfo]] = {
+  def prepareMoneyReceivers(mitem: MItem): Future[List[MoneyRcvrData]] = {
     // Нужна Map[nodeId -> EnsuredNodeContract] в зависимости от itype, тарифа (комиссии s.io) и прочего.
     lazy val logPrefix = s"prepareMoneyReceivers(${mitem.id.orNull}):"
     if (mitem.price.amount <= 0) {
@@ -1023,6 +1121,8 @@ final class Bill2Util @Inject() (
       Future.successful( Nil )
 
     } else {
+      val items = mitem :: Nil
+
       mitem
         .rcvrIdOpt
         .filter { rcvrId =>
@@ -1038,7 +1138,7 @@ final class Bill2Util @Inject() (
           for {
             enc <- prepareMoneyReceiver(mrNodeId)
           } yield {
-            MoneyRcvrInfo(mitem.price, enc) :: Nil
+            MoneyRcvrData( mitem.price, enc, isSioComissionPrice = true, items ) :: Nil
           }
         } { rcvrId =>
           for {
@@ -1073,16 +1173,18 @@ final class Bill2Util @Inject() (
 
             // Подготовить данные по всем бенефициарам:
             resp <- Future.traverse {
-              (bill2Conf.CBCA_NODE_ID -> cbcaComissedPriceOpt0) ::
-              (rcvrId                 -> rcvrPriceOpt0) ::
+              (bill2Conf.CBCA_NODE_ID, cbcaComissedPriceOpt0, true) ::
+              (rcvrId, rcvrPriceOpt0, false) ::
               Nil
-            } { case (nodeId, priceOptRaw) =>
+            } { case (nodeId, priceOptRaw, isSioComission) =>
               // Чтобы гарантировано не было неправильных или нулевых транзакций, фильтруем результаты
               val priceOpt = priceOptRaw
                 .filter(_.amount > 0)
               FutureUtil.optFut2futOpt(priceOpt) { mprice =>
-                for (enc <- prepareMoneyReceiver(nodeId)) yield {
-                  val mri = MoneyRcvrInfo(mprice, enc)
+                for {
+                  enc <- prepareMoneyReceiver(nodeId)
+                } yield {
+                  val mri = MoneyRcvrData( mprice, enc, isSioComission, items )
                   Some( mri )
                 }
               }
@@ -1095,6 +1197,51 @@ final class Bill2Util @Inject() (
           }
         }
     }
+  }
+
+
+  def mergeMoneyReceiversByNodeId( moneyRcvrsLists: Iterable[MoneyRcvrData] ): Map[String, Iterable[MoneyRcvrData]] = {
+    lazy val logPrefix = s"mergeMoneyReceiversByNodeId(${moneyRcvrsLists.size}):"
+
+    val rcv_price_amount_LENS = MoneyRcvrData.price
+      .andThen( MPrice.amount )
+
+    moneyRcvrsLists
+      .groupBy( _.enc.mnode.id.get )
+      .map { case (nodeId, rcvInfos) =>
+        val rcvrInfos2 = rcvInfos
+          .groupMapReduce { rcvInfo =>
+            rcvInfo.enc.contract.id -> rcvInfo.price.currency
+          } ( identity ) { (rcvInfo0, rcvInfo1) =>
+            rcv_price_amount_LENS.modify( _ + rcvInfo1.price.amount )( rcvInfo0 )
+          }
+          .values
+
+        LOGGER.trace(s"$logPrefix For node#$nodeId price sums reduces: ${rcvInfos.size}=>${rcvrInfos2.size}")
+        nodeId -> rcvrInfos2
+      }
+  }
+
+
+  /** Is it allowed to launch external deal for semi-direct money transfers between payer and seller.
+    * @param moneyRcvrs Result of [[prepareMoneyReceivers]] or other moneyRcvrInfos.
+    * @return
+    */
+  def canPayExtTxn(paySystem: MPaySystem, moneyRcvrs: Iterable[MoneyRcvrData]): ExtDealPreDecision = {
+    val (can, cant) = moneyRcvrs
+      .partition { rcvInfo =>
+        rcvInfo.enc.mnode.edges
+          .withPredicateIter( MPredicates.PayoutData )
+          .exists { e =>
+            e.info.paySystem
+              .fold( true )( _ ==* paySystem )
+          }
+      }
+
+    ExtDealPreDecision(
+      dealWith      = can,
+      outOfDeal     = cant,
+    )
   }
 
 
@@ -1116,8 +1263,14 @@ final class Bill2Util @Inject() (
       // Запустить В ФОНЕ вне транзакции сбор базовой инфы о получателе денег. "mr" означает "Money Receiver".
       mrsFut = prepareMoneyReceivers(mitem0)
 
+      orderOpt <- mOrders.getById( mitem0.orderId )
+      order = orderOpt.get
+
       // Получить и заблокировать баланс покупателя
-      balance0 <- _item2balance(mitem0)
+      balanceOpt0 <- mBalances
+        .getByContractCurrency( order.contractId, mitem0.price.currency )
+        .forUpdate
+      balance0 = balanceOpt0.get
 
       // Списать blocked amount с баланса покупателя
       usrAmtBlocked2 <- mBalances.incrBlockedBy(balance0.id.get, -mitem0.price.amount)
@@ -1145,29 +1298,72 @@ final class Bill2Util @Inject() (
         }
       }
 
-      // Залить деньги получателю денег, если возможно.
+      // Check, if there are payouts after items processing:
+      isDealOrder = order.status ==* MOrderStatuses.Paid
+      // If this is a deal, let's check info about possible payout for current item.
+      itemPayoutTxnIdOpt <- if (isDealOrder) {
+        mTxns
+          .query
+          .filter { tx =>
+            (tx.itemIdOpt === itemId) &&
+            (tx.txTypeStr === MTxnTypes.Payout.value) &&
+            (tx.datePaidOpt.isEmpty)
+          }
+          .map(_.id)
+          .take(1)
+          .result
+          .headOption
+      } else {
+        DBIO.successful( None )
+      }
+
       mrs <- DBIO.from( mrsFut )
 
       // Организовать зачисление денег на счета бенефициаров:
       _ <- {
-        LOGGER.trace(s"$logPrefix item[${mitem2.id.orNull}] status: ${mitem0.status} => ${mitem2.status}")
+        LOGGER.trace(s"$logPrefix item[${mitem2.id.orNull}] status: ${mitem0.status} => ${mitem2.status}, order#${mitem0.orderId} isDealOrder?$isDealOrder payoutTxn#${itemPayoutTxnIdOpt.orNull}")
 
         if (mrs.isEmpty) {
           LOGGER.warn(s"$logPrefix Money income skipped, so they are lost.")
           DBIO.successful(None)
         } else {
           // Есть бенефициары, зачислить им всем на балансы.
+          val now = OffsetDateTime.now()
           val actions = for (mr <- mrs) yield {
-            // TODO Отработать комиссию с item'а здесь? Если да, то откуда её брать? С тарифа узла и типа item'а?
+            val contractId = mr.enc.contract.id.get
             for {
               // Найти/создать кошелек получателя денег
-              mrBalance0    <- ensureBalanceFor(mr.enc.contract.id.get, mr.price.currency)
+              mrBalance0    <- ensureBalanceFor( contractId, mr.price.currency )
               // Зачислить деньги на баланс.
               // TODO В будущем, когда будет нормальная торговля между юзерами, надо будет проводить какие-то транзакции на стороне seller'а.
-              // TODO И по идее надо будет зачислять селлеру как blocked, т.к. продавца надо держать на поводке.
-              mrAmount2Opt  <- mBalances.incrAmountBy(mrBalance0.id.get, mr.price.amount)
+              mrAmount2Opt  <- {
+                if (itemPayoutTxnIdOpt.isDefined && !mr.isSioComissionPrice) {
+                  LOGGER.trace(s"$logPrefix Ignoring money-receiver balance, because item#$itemId of price=${mr.price} already have payout txn#${itemPayoutTxnIdOpt.orNull}, and money receiver#${mr.enc.mnode.id.orNull} contract#$contractId is not Suggest.io comission target")
+                  //mBalances.incrBlockedBy( mrBalanceId, mrBalanceAmountDelta )
+                  DBIO.successful( None )
+                } else {
+                  val mrBalanceId = mrBalance0.id.get
+                  val mrBalanceAmountDelta = mr.price.amount
+                  for {
+                    mrAmount2 <- mBalances.incrAmountBy( mrBalanceId, mrBalanceAmountDelta )
+                    // Save transaction for receiver's balance:
+                    mrIncrTxn <- mTxns insertOne MTxn(
+                      balanceId   = mrBalanceId,
+                      amount      = mrBalanceAmountDelta,
+                      txType      = MTxnTypes.Income,
+                      orderIdOpt  = Some( mitem0.orderId ),
+                      itemId      = Some( itemId ),
+                      // TODO dateStatus of item may not equal to real datePaid. Maybe need to fix this?
+                      datePaid    = Some( mitem0.dateStatus ),
+                      dateProcessed = now,
+                    )
+                  } yield {
+                    LOGGER.trace(s"$logPrefix Created txn#${mrIncrTxn.id.orNull} for income ${mr.price} to balance#${mrBalanceId} of contract#$contractId node#${mr.enc.mnode.id.orNull}")
+                    mrAmount2
+                  }
+                }
+              }
               // seller-транзакцию не создаём, т.к. она на раннем этапе не нужна: будет куча ненужного мусора в txn-таблице.
-              // Возможно, транзакции потом будут храниться в elasticsearch, в т.ч. для статистики.
             } yield {
               // foreach в виде map, т.к. DBIO не подразумевает foreach
               val mrAmount2 = mrAmount2Opt.get
@@ -1239,6 +1435,7 @@ final class Bill2Util @Inject() (
       balance0 <- _item2balance(mitem0)
 
       // Разблокировать на балансе сумму с этого item'а
+      // TODO What about external deals? transactions for deals? and no money on balance.
       amount2 <- mBalances.incrAmountAndBlockedBy(balance0, mitem0.price.amount)
 
       // Отметить item как отказанный в размещении
@@ -1614,7 +1811,7 @@ final class Bill2Util @Inject() (
       DBIO.successful(mOrder)
     } else {
       // Ордер не является замороженным. Заменяем ему статус.
-      val o2 = mOrder.withStatus( holdStatus )
+      val o2 = (MOrder.status replace holdStatus)( mOrder )
       for {
         rowsUpdated <- mOrders.saveStatus( o2 )
         if rowsUpdated ==* 1
@@ -1641,7 +1838,7 @@ final class Bill2Util @Inject() (
       // Выполнять какие-то действия, только если позволяет текущий статус ордера.
       res <- {
         if (morder.status ==* MOrderStatuses.Hold) {
-          val morder22 = morder.withStatus( MOrderStatuses.Draft )
+          val morder22 = (MOrder.status replace MOrderStatuses.Draft)( morder )
           for {
             // Поискать текущую корзину, вдруг юзер ещё что-то в корзину швырнул, пока текущий ордер был HOLD.
             cartOrderOpt    <- getCartOrder(morder.contractId)
@@ -2120,7 +2317,7 @@ final class Bill2Util @Inject() (
     * Payment will be done in nearest future from pay-system, and this transaction will updated & closed.
     */
   def openPaySystemTxn(paySystem: MPaySystem, balanceId: Gid_t, payAmount: Amount_t, orderIdOpt: Option[Gid_t],
-                       psTxnId: String, txnMetadata: Option[JsValue] = None): DBIOAction[MTxn, NoStream, Effect.Write] = {
+                       psTxnId: String, psDealIdOpt: Option[String], txnMetadata: Option[MTxnMetaData] = None): DBIOAction[MTxn, NoStream, Effect.Write] = {
     mTxns insertOne MTxn(
       balanceId   = balanceId,
       amount      = payAmount,
@@ -2130,6 +2327,7 @@ final class Bill2Util @Inject() (
       datePaid    = None,
       paySystem   = Some( paySystem ),
       metadata    = txnMetadata,
+      psDealIdOpt = psDealIdOpt,
     )
   }
 
@@ -2194,6 +2392,117 @@ final class Bill2Util @Inject() (
       .transactionally
   }
 
+
+  /** Check, if all order items are already passed Draft or AwaitMdr statuses, and now are in some next statuses. */
+  def isAllOrderItemsProcessed(orderId: Rep[Gid_t]): Rep[Boolean] = {
+    mItems
+      .query
+      .filter { item =>
+        (item.orderId === orderId)
+      }
+      .filterNot { item =>
+        val forbidStatuses = MItemStatuses.AwaitingMdr.value :: MItemStatuses.Draft.value :: Nil
+        (item.statusStr inSet forbidStatuses)
+      }
+      .exists
+  }
+
+  /** Query for grepping transactions, awaiting for payout. */
+  def orderTxnsWaitingPayout(orderId: Rep[Gid_t]): Query[mTxns.MTxnsTable, MTxn, Seq] = {
+    mTxns
+      .query
+      .filter { tx =>
+        (tx.orderIdOpt === orderId) &&
+        (tx.txTypeStr === MTxnTypes.Payout.value) &&
+        (tx.datePaidOpt.isEmpty)
+      }
+  }
+
+  /** Find ordmTxns
+          .query
+          .filter { tx =>
+            (tx.orderIdOpt === orderId) &&
+            (tx.txTypeStr === MTxnTypes.Payout.value) &&
+            (tx.datePaidOpt.isEmpty)
+          }ers, awaiting for payout action (everything else is ready). */
+  def findPaidReadyToPayoutOrders(): DBIOAction[Seq[Gid_t], Streaming[Gid_t], Effect.Read] = {
+    mOrders
+      .query
+      .filter { order =>
+        (order.statusStr === MOrderStatuses.Paid.value)
+      }
+      .map(_.id)
+      .filter {
+        // Order have all items processed?
+        isAllOrderItemsProcessed
+      }
+      .filter { orderId =>
+        // Order have incomplete payouts?
+        orderTxnsWaitingPayout( orderId ).exists
+      }
+      .result
+  }
+
+
+  /** Open draft payout transactions for deal money receivers.
+    *
+    * @param orderIdOpt id of current cart order.
+    * @param paySystem payment system id.
+    * @param psDealId PaySystem-side deal.
+    * @param moneyRcvrs Money receivers list.
+    * @return All created transactions.
+    */
+  def openDealPayoutTxns(orderIdOpt: Option[Gid_t], paySystem: MPaySystem, psDealId: String,
+                         moneyRcvrs: Iterable[MoneyRcvrData] ): DBIOAction[Iterable[MTxn], NoStream, RWT] = {
+    lazy val logPrefix = s"openPayoutDealTxn(order#${orderIdOpt.orNull}, $paySystem#$psDealId, [${moneyRcvrs.size}]):"
+
+    val psDealIdSome = Some( psDealId )
+    val paySystemSome = Some( paySystem )
+    val now = OffsetDateTime.now()
+
+    DBIO
+      .sequence(
+        moneyRcvrs
+          .groupBy { mrd =>
+            mrd.enc.contract.id.get -> mrd.price.currency
+          }
+          .map { case ((contractId, currency), contractMoneyRcvrs) =>
+            for {
+              balance <- ensureBalanceFor( contractId, currency )
+              txns <- DBIO.sequence {
+                for {
+                  moneyRcvr <- contractMoneyRcvrs
+                } yield {
+                  for {
+                    txn <- mTxns insertOne MTxn(
+                      balanceId   = balance.id.get,
+                      amount      = moneyRcvr.price.amount,
+                      itemId      = moneyRcvr.items
+                        .headOption
+                        .flatMap(_.id),
+                      txType      = MTxnTypes.Payout,
+                      orderIdOpt  = orderIdOpt,
+                      paySystem   = paySystemSome,
+                      psDealIdOpt = psDealIdSome,
+                      dateProcessed = now,
+                      datePaid    = None,
+                    )
+                  } yield {
+                    LOGGER.trace(s"$logPrefix Opened draft payout txn#${txn.id.orNull} for ${moneyRcvr.price} to balance#${balance.id.orNull} of contact#$contractId of node#${moneyRcvr.enc.mnode.id.orNull}")
+                    txn
+                  }
+                }
+              }
+            } yield {
+              txns
+            }
+          }
+      )
+      .transactionally
+      // Lazy flatten, because these transactions are mostly unused.
+      .map( _.iterator.flatten.to(LazyList) )
+  }
+
 }
 
 
@@ -2205,7 +2514,13 @@ object Bill2Util {
                                    result         : ForceFinalizeOrderRes,
                                  )
 
-  sealed case class EnsuredNodeContract( contract: MContract, mnode: MNode )
+  sealed case class EnsuredNodeContract( contract: MContract, mnode: MNode ) {
+    override def toString: String = StringUtil.toStringHelper("") { f =>
+      val noNameF = f("")
+      noNameF( contract.id.orNull )
+      noNameF( mnode.id.orNull )
+    }
+  }
 
   sealed case class ForceFinalizeOrderRes(
                                           closedOrder         : MOrder,
@@ -2218,11 +2533,26 @@ object Bill2Util {
     *
     * @param price Цена, которая отходит указанному бенефициару.
     * @param enc Данные по узлу и его контракту.
+    * @param isSioComissionPrice true - this money exclusively goes into s.io.
+    *                            false - this money goes to ad placement owner (ble beacon owner, etc).
+    *                            None - Uncertain. For example, several different prices are merged into one.
     */
-  final case class MoneyRcvrInfo(
+  final case class MoneyRcvrData(
                                   price : MPrice,
-                                  enc   : EnsuredNodeContract
-                                )
+                                  enc   : EnsuredNodeContract,
+                                  isSioComissionPrice: Boolean,
+                                  items : List[MItem],
+                                ) extends IMPrice {
+    override def toString: String = StringUtil.toStringHelper("") { f =>
+      val noNameF = f("")
+      noNameF( price )
+      noNameF( enc )
+      f("commission?")(isSioComissionPrice)
+    }
+  }
+  object MoneyRcvrData {
+    def price = GenLens[MoneyRcvrData](_.price)
+  }
 
   /** Контейнер результата экшена аппрува item'а. */
   sealed case class ApproveItemResult(override val mitem: MItem)
@@ -2231,6 +2561,27 @@ object Bill2Util {
   /** Результат исполнения экшена refuseItemAction(). */
   sealed case class RefuseItemResult(override val mitem: MItem, mtxn: MTxn)
     extends IMItem
+
+
+  /** Container of external dealing result.
+    *
+    * @param dealWith Deal direct transaction may be launched against these public.
+    * @param outOfDeal No possible deal with rest of money-receivers.
+    */
+  case class ExtDealPreDecision(
+                                 dealWith          : Iterable[MoneyRcvrData],
+                                 outOfDeal         : Iterable[MoneyRcvrData],
+                               )
+
+
+  case class ExtDealPrepareResult(
+                                   decision: ExtDealPreDecision,
+                                 ) {
+    val payoutPrices = MPrice.toSumPricesByCurrency( decision.dealWith )
+    val payoutPrice = payoutPrices.head._2
+    lazy val comissionDealPrices = MPrice.toSumPricesByCurrency( decision.outOfDeal )
+    lazy val sioPayInPrice = comissionDealPrices.head._2
+  }
 
 }
 

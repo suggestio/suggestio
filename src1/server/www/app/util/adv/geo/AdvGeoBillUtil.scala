@@ -229,7 +229,8 @@ final class AdvGeoBillUtil @Inject() (
                   // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
                   rcvrIdOpt     = None,
                   tagFaceOpt    = Some( tagFace ),
-                  geoShape      = gsOpt
+                  geoShape      = gsOpt,
+                  priceDsl      = Some( term2 ),
                 )
               }
               // Проверить на geo + onMainScreen
@@ -248,7 +249,8 @@ final class AdvGeoBillUtil @Inject() (
                       dateStartOpt  = dtStartOpt,
                       dateEndOpt    = dtEndOpt,
                       rcvrIdOpt     = None,
-                      geoShape      = gsOpt
+                      geoShape      = gsOpt,
+                      priceDsl      = Some( term2 ),
                     )
                   }
               }
@@ -279,7 +281,8 @@ final class AdvGeoBillUtil @Inject() (
                       dateEndOpt    = dtEndOpt,
                       rcvrIdOpt     = Some(rcvrId),
                       tagFaceOpt    = Some( tagFace ),
-                      geoShape      = None
+                      geoShape      = None,
+                      priceDsl      = Some( term2 ),
                     )
                   }
                   // Проверить на rcvr + OMS
@@ -298,7 +301,8 @@ final class AdvGeoBillUtil @Inject() (
                           dateStartOpt  = dtStartOpt,
                           dateEndOpt    = dtEndOpt,
                           rcvrIdOpt     = Some(rcvrId),
-                          geoShape      = None
+                          geoShape      = None,
+                          priceDsl      = Some( term2 ),
                         )
                       }
                   }

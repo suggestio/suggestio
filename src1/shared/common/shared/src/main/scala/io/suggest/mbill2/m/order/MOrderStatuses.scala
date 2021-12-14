@@ -27,10 +27,12 @@ object MOrderStatuses extends StringEnum[MOrderStatus] {
     */
   case object Hold extends MOrderStatus("h")
 
+  /** Paid, but not closed status means, that something should be done with order after all items will be processed.
+    * For example, current opened deal on paysystem-side should be completed with final payout to seller. */
+  case object Paid extends MOrderStatus("p")
 
   /** Оплата заказа проведена. Дальше всё происходит на уровне item'ов заказа. */
   case object Closed extends MOrderStatus("d")
-
 
   /** Статус ордера-корзины суперюзера, куда от суперюзеров сваливаются всякие мгновенные бесплатные "покупки".
     * Т.е. с использованием галочки "размещать бесплатно без подтверждения".
@@ -59,6 +61,17 @@ object MOrderStatuses extends StringEnum[MOrderStatus] {
     values
       .iterator
       .filter(_.canGoToPaySys)
+  }
+
+
+  /** Order status after successful payment processing.
+    *
+    * @param orderHasPaySystemDeal Is order have transaction with paysystem-level deal?
+    *                              See Bill2Util.orderDealTransactionId()
+    * @return Next order status after payment received.
+    */
+  def afterPaymentStatus(orderHasPaySystemDeal: Boolean): MOrderStatus = {
+    if (orderHasPaySystemDeal) Paid else Closed
   }
 
 }

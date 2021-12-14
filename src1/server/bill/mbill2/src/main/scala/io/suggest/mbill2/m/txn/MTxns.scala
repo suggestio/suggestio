@@ -13,7 +13,7 @@ import io.suggest.pay.{MPaySystem, MPaySystems}
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import play.api.inject.Injector
 import japgolly.univeq._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import slick.lifted.ProvenShape
 
 import scala.concurrent.ExecutionContext
@@ -77,10 +77,23 @@ final class MTxns @Inject() (
     def psTxnUidOpt     = column[Option[String]](PS_TXN_UID_FN)
     def psTxnUidKey     = index(PgaNamesMaker.uniq(TABLE_NAME, PS_TXN_UID_FN), psTxnUidOpt, unique = true)
 
+    def psDealIdOpt     = column[Option[String]]( MTxn.Fields.PS_DEAL_ID )
+    def psDealIdInx     = index( "txn_ps_deal_id_inx", psDealIdOpt, unique = false )
+
     def txTypeStr       = column[String](TX_TYPE_FN)
     def txType          = txTypeStr <> (MTxnTypes.withValue, MTxnType.unapplyStrId)
 
-    def metadata        = column[Option[JsValue]]( MTxn.Fields.METADATA )
+    def metadataJson    = column[Option[JsValue]]( MTxn.Fields.METADATA )
+    def metadata        = metadataJson <> (
+      {x: Option[JsValue] =>
+        x.flatMap( _.asOpt[MTxnMetaData] )
+      },
+      {s: Option[MTxnMetaData] =>
+        s.map { txMd =>
+          Some( Json toJson txMd )
+        }
+      }
+    )
 
     def paySystemStr    = column[Option[String]]( MTxn.Fields.PAY_SYSTEM )
     def paySystem       = paySystemStr <> (
@@ -91,7 +104,7 @@ final class MTxns @Inject() (
     )
 
     override def * : ProvenShape[MTxn] = {
-      (balanceId, amount, txType, orderIdOpt, itemIdOpt, paymentComment, paySystem, psTxnUidOpt, datePaidOpt, dateProcessed, metadata, id.?) <> (
+      (balanceId, amount, txType, orderIdOpt, itemIdOpt, paymentComment, paySystem, psTxnUidOpt, psDealIdOpt, datePaidOpt, dateProcessed, metadata, id.?) <> (
         (MTxn.apply _).tupled, MTxn.unapply
       )
     }

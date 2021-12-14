@@ -148,9 +148,11 @@ object ZTreeUtil {
     }
 
 
-    /** Short alias for cobinding tree items against its TreeLoc. */
-    def cobindTreeLoc: Tree[TreeLoc[A]] =
-      tree.cobind(_.loc)
+    /** Short alias for cobinding tree items against its TreeLoc (preserving parent stuff).
+      * Usually, it may be enought to tree.cobind(_.loc), but it losing parent information in loc's.
+      */
+    def cobindLoc: Tree[TreeLoc[A]] =
+      tree.loc.cojoin.tree
 
   }
 

@@ -1,6 +1,6 @@
 package io.suggest.slick.profile
 
-import slick.jdbc.JdbcProfile
+import io.suggest.slick.profile.pg.SioPgSlickProfileT
 
 /**
  * Suggest.io
@@ -10,6 +10,6 @@ import slick.jdbc.JdbcProfile
  */
 trait IProfile {
 
-  protected val profile: JdbcProfile
+  protected val profile: SioPgSlickProfileT
 
 }

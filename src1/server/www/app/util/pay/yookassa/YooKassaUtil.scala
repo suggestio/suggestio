@@ -1,19 +1,21 @@
 package util.pay.yookassa
 
+import cats.data.OptionT
 import inet.ipaddr.IPAddressString
 import io.suggest.bill.MPrice
-import io.suggest.bill.cart.{MCartSubmitQs, MPayableVia}
+import io.suggest.bill.cart.{MCartPayInfo, MPayableVia}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.order.MOrderWithItems
-import io.suggest.mbill2.m.txn.MTxnTypes
+import io.suggest.mbill2.m.txn.{MMoneyReceiverInfo, MTxnMetaData, MTxnTypes}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystems
-import io.suggest.pay.yookassa.{MYkAmount, MYkCustomer, MYkDeal, MYkDealCreate, MYkEventTypes, MYkItem, MYkObject, MYkObjectTypes, MYkPayment, MYkPaymentConfirmation, MYkPaymentConfirmationTypes, MYkPaymentCreate, MYkPaymentStatuses, MYkPaymentSubjects, MYkPayout, MYkPayoutCreate, MYkReceipt, MYkVatCodes, YooKassaConst}
+import io.suggest.pay.yookassa._
 import io.suggest.proto.http.HttpConst
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -21,6 +23,7 @@ import play.api.Configuration
 import play.api.libs.ws.{WSAuthScheme, WSClient}
 import util.TplDataFormatUtil
 import japgolly.univeq._
+import models.mpay.MCartNeedMoneyArgs
 import models.req.IReq
 import org.apache.commons.codec.binary.Base64
 import play.api.http.{HeaderNames, HttpErrorHandler, MimeTypes}
@@ -55,6 +58,8 @@ final class YooKassaUtil @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val esModel = injector.instanceOf[EsModel]
 
+  /** Current paysystem is YooKassa. */
+  def PAY_SYSTEM = MPaySystems.YooKassa
 
   /** Force time-based idempotence key rotation.
     * This is needed to prevent duplication for continious payment requests. */
@@ -66,6 +71,8 @@ final class YooKassaUtil @Inject() (
     "185.71.76.0/27" ::
     "185.71.77.0/27" ::
     "77.75.153.0/25" ::
+    "77.75.156.11/32" ::
+    "77.75.156.35/32" ::
     "77.75.154.128/25" ::
     Nil
   }
@@ -88,11 +95,16 @@ final class YooKassaUtil @Inject() (
         .iterator
       profileConf <- profilesConf
     } yield {
-      YooKassaProfile(
-        shopId    = profileConf.get[String]("shop_id"),
-        secretKey = profileConf.get[String]("secret"),
-        isTest    = profileConf.get[Boolean]("test"),
-      )
+      new YooKassaProfile {
+        override lazy val shopId =
+          profileConf.get[String]("shop_id")
+        override private[yookassa] lazy val secretKey =
+          profileConf.get[String]("secret")
+        override lazy val isTest =
+          profileConf.get[Boolean]("test")
+        override lazy val isDealSupported =
+          profileConf.getOptional[Boolean]("deal").getOrElseFalse
+      }
     })
       .to( LazyList )
   }
@@ -104,6 +116,11 @@ final class YooKassaUtil @Inject() (
 
   def findProfile(mpv: MPayableVia): Option[YooKassaProfile] =
     yooProfiles.find( _.isTest ==* mpv.isTest )
+
+
+  /** @return true, if safe deals are supported by current paysystem profile. */
+  def isSafeDealsSupported(profile: YooKassaProfile): Boolean =
+    profile.isDealSupported
 
 
   def payableVias: Seq[MPayableVia] = {
@@ -140,6 +157,13 @@ final class YooKassaUtil @Inject() (
     }
   }
 
+  def priceToYkAmount(price: MPrice): MYkAmount = {
+    MYkAmount(
+      value     = TplDataFormatUtil.formatPriceAmountPlain( price ),
+      currency  = price.currency,
+    )
+  }
+
 
   /** Zero-step of payment procedure: seed remote PaySystem with payment data.
     *
@@ -150,17 +174,14 @@ final class YooKassaUtil @Inject() (
     * @param ctx Rendering context.
     * @return Future with parsed pay-system response.
     */
-  def preparePayment(profile: YooKassaProfile, orderItem: MOrderWithItems, payPrice: MPrice, personOpt: Option[MNode])
+  def preparePayment(profile: YooKassaProfile, orderItem: MOrderWithItems, payPrice: MPrice, personOpt: Option[MNode], deal: Option[MYkPaymentDeal])
                     (implicit ctx: Context): Future[YooKassaPaymentPrepareResult] = {
     val orderId = orderItem.order.id.get
 
     lazy val logPrefix = s"startPayment(order#$orderId/+${orderItem.items.length}, U#${ctx.request.user.personIdOpt.orNull}):"
     LOGGER.trace(s"$logPrefix Starting, $profile, price=$payPrice")
 
-    val ykAmountTotal = MYkAmount(
-      value     = TplDataFormatUtil.formatPriceAmountPlain( payPrice ),
-      currency  = payPrice.currency,
-    )
+    val ykAmountTotal = priceToYkAmount( payPrice )
 
     def _getFirstEdgeNodeId( pred: MPredicate ): Option[String] = {
       (for {
@@ -302,7 +323,7 @@ final class YooKassaUtil @Inject() (
       case "notify" =>
         handleHttpNotify()
       case other =>
-        httpErrorHandler.onClientError(request, NOT_FOUND, s"- $other - invalid REST endpoint for paySystem[${MPaySystems.YooKassa}]")
+        httpErrorHandler.onClientError(request, NOT_FOUND, s"- $other - invalid REST endpoint for paySystem[$PAY_SYSTEM]")
     }
   }
 
@@ -464,7 +485,7 @@ final class YooKassaUtil @Inject() (
           .query
           .filter { t =>
             (t.psTxnUidOpt === payment.id) &&
-            (t.paySystemStr === MPaySystems.YooKassa.value)
+            (t.paySystemStr === PAY_SYSTEM.value)
           }
           .take( 1 )
           .result
@@ -511,7 +532,7 @@ final class YooKassaUtil @Inject() (
                   contractId = contractId,
                   payPrice   = priceAmount,
                   paySysUid  = payment.id,
-                  paySystem  = MPaySystems.YooKassa,
+                  paySystem  = PAY_SYSTEM,
                   txn        = txnOpt,
                 )
               } yield {
@@ -536,14 +557,13 @@ final class YooKassaUtil @Inject() (
                   )(ctx)
 
                   // May be, notify s.io staff about possible problems with order closing:
-                  val cartSkipsNotifyFut = mdrUtil.maybeNotifyCartSkippedItems( MPaySystems.YooKassa, payResult )
+                  val cartSkipsNotifyFut = mdrUtil.maybeNotifyCartSkippedItems( PAY_SYSTEM, payResult )
 
                   // Notify payer about changes in money balance.
-                  // TODO Do not payer+detect. OnNodeId must be extracted from txn.metadata
                   val userPaymentNotifyFut = (for {
-                    txnMeta <- txn.metadata
-                    cartSubmitQs <- txnMeta.asOpt[MCartSubmitQs]
-                    onNodeId <- cartSubmitQs.onNodeId
+                    txnMeta       <- txn.metadata
+                    cartSubmitQs  <- txnMeta.cartQs
+                    onNodeId      <- cartSubmitQs.onNodeId
                   } yield {
                     LOGGER.trace(s"$logPrefix Found onNodeId=$onNodeId for order#$txnOrderId in txn#${txn.id.orNull} metadata")
                     mdrUtil.paymentNotifyPayer(
@@ -591,6 +611,7 @@ final class YooKassaUtil @Inject() (
             )
 
           // User is refused to pay. Need to unhold order, drop incompleted transaction.
+          // TODO Refund status here. Need to test this in future when refunds will be implemented. Because refunds are not implemented a.t.m. then this status was coded here.
           case MYkEventTypes.PaymentCancelled | MYkEventTypes.RefundSucceeded =>
             txn.datePaid.fold {
               LOGGER.trace(s"$logPrefix Cancelling of pending transaction#${txn.id.orNull} psUid#${payment.id}.")
@@ -624,9 +645,9 @@ final class YooKassaUtil @Inject() (
                         -Math.abs( amount0 )
                       }( reducePriceBy ),
                       psTxnUid   = billDebugUtil.ROLLBACKED_PAYMENT_UID_PREFIX + payment.id,
-                      paySystem  = MPaySystems.YooKassa,
+                      paySystem  = PAY_SYSTEM,
                       orderIdOpt = txn.orderIdOpt,
-                      comment    = Some( s"${payment.cancellationDetails.fold(MPaySystems.YooKassa.toString)(_.party)} cancelled payment${payment.cancellationDetails.fold("")(cr => " (" + cr.reason + ")")}. Rollback transaction#${txn.id.orNull}." ),
+                      comment    = Some( s"${payment.cancellationDetails.fold(PAY_SYSTEM.toString)(_.party)} cancelled payment${payment.cancellationDetails.fold("")(cr => " (" + cr.reason + ")")}. Rollback transaction#${txn.id.orNull}." ),
                       txType     = MTxnTypes.ReturnToBalance,
                     )
                   }
@@ -670,7 +691,7 @@ final class YooKassaUtil @Inject() (
   private def _mkPost[Body: OWrites, Resp: Reads](logPrefix: => String, profile: YooKassaProfile, url: String, body: Body)
                                                  (idemptUpdate: MessageDigest => Unit = {md => md update body.toString.getBytes()}): Future[Resp] = {
     val idemptKey = mkIdemptKeyHash( idemptUpdate )
-    LOGGER.trace(s"$logPrefix Requesting YooKassa#$profile Idempotence-Key=$idemptKey ...")
+    LOGGER.trace(s"$logPrefix Requesting $PAY_SYSTEM#$profile Idempotence-Key=$idemptKey ...")
 
     wsClient
       .url( url )
@@ -686,7 +707,7 @@ final class YooKassaUtil @Inject() (
       .map { resp =>
         if (resp.status ==* 200) {
           val respJson = resp.json
-          LOGGER.trace(s"$logPrefix Successfully request YooKassa (${resp.status} ${resp.statusText}):\n${Json.prettyPrint(respJson)}")
+          LOGGER.trace(s"$logPrefix Successfully request $PAY_SYSTEM(${resp.status} ${resp.statusText}):\n${Json.prettyPrint(respJson)}")
           respJson.as[Resp]
         } else {
           val msg = s"API request failed: ${resp.status} ${resp.statusText}\n${resp.body}"
@@ -747,17 +768,164 @@ final class YooKassaUtil @Inject() (
     )()
   }
 
+
+  /** Billing thinks, that user need to pay some money via YooKassa payment system.
+    *
+    * @param args Arguments container.
+    * @param ctx Current user's HTTP request context.
+    * @return Payment information for client-side js.
+    */
+  def handleCartNeedsMoneyPay(args: MCartNeedMoneyArgs)(implicit ctx: Context): Future[MCartPayInfo] = {
+    lazy val logPrefix = s"handleCartNeedsMoneyPay(o#${args.cartOrder.order.id.orNull})#${System.currentTimeMillis()}:"
+
+    val payPrices = args.cartResolution.needMoney.get
+    val paySystem = PAY_SYSTEM
+    require(payPrices.lengthIs == 1, s"Only one currency allowed for $paySystem")
+    val Seq(payPrice) = payPrices
+    val ykProfile = findProfile( args.cartQs.payVia ).get
+
+    for {
+      // Collect all money receivers before payment/deal, because
+      moneyRcvrs <- bill2Util.prepareAllMoneyReceivers( args.cartOrder.items )
+
+      // If deals feature is supported by paysystem, we need to find money-receivers on current paysystem.
+      // From all money-receivers, check for money-receivers with payouts configured for current paysystem.
+      // If any dealable-receiver, let's open new deal on paysystem, save deal-transaction for order.
+      ykDealInfoOpt <- (for {
+        dealData <- OptionT.fromOption[Future] {
+          bill2Util.prepareDealData(
+            paySystem       = paySystem,
+            isDealSupportedPaySys = isSafeDealsSupported( ykProfile ),
+            moneyRcvrs      = moneyRcvrs,
+          )
+        }
+        // Lets open paySystem deal on payment-system side:
+        ykDeal <- OptionT.liftF {
+          startDeal(
+            ykProfile,
+            MYkDealCreate(
+              dealType = MYkDealTypes.SafeDeal,
+              feeMoment = MYkDealFeeMoments.DealClosed,
+              description = Some {
+                ctx.messages( MsgCodes.`Deal.for.0`,
+                  ctx.messages( MsgCodes.`Order.N`, args.cartOrder.order.id.get ),
+                )
+              },
+            )
+          )
+        }
+      } yield {
+        // New deal created on paySystem-side. Let's bypass needed data to next phase:
+        LOGGER.debug(s"$logPrefix Created new deal#${ykDeal.id} on $paySystem till ${ykDeal.expiresAt}")
+        (ykDeal, dealData)
+      })
+        .value
+
+      paymentStarted <- preparePayment(
+        // TODO payProfile: Detect test/prod using URL qs args, filtering by request.user.isSuper
+        profile   = ykProfile,
+        orderItem = args.cartOrder,
+        payPrice  = payPrice,
+        personOpt = Some( args.personNode ),
+        deal      = for {
+          (ykDeal, dealData) <- ykDealInfoOpt
+        } yield {
+          MYkPaymentDeal(
+            id = ykDeal.id,
+            settlements = MYkPaymentDealSettlement(
+              typ = MYkPaymentDealSettlementTypes.Payout,
+              amount = priceToYkAmount( dealData.payoutPrice ),
+            ) :: Nil,
+          )
+        },
+      )(ctx)
+
+      // Store started not-yet-completed transaction:
+      _ <- slick.db.run {
+        import slickHolder.slick.profile.api._
+
+        val contractId = args.personContract.id.get
+        (for {
+          userBalance0 <- bill2Util.ensureBalanceFor( contractId, payPrice.currency )
+          txn <- bill2Util.openPaySystemTxn(
+            balanceId   = userBalance0.id.get,
+            payAmount   = payPrice.amount,
+            orderIdOpt  = args.cartOrder.order.id,
+            psTxnId     = paymentStarted.payment.id,
+            paySystem   = paySystem,
+            psDealIdOpt = ykDealInfoOpt.map(_._1.id),
+            txnMetadata = Some( MTxnMetaData(
+              cartQs = Option.when( args.cartQs.nonEmpty )(args.cartQs),
+              // TODO Remove this receivers: they are converted into transactions.
+              moneyRcvrs = moneyRcvrs
+                .iterator
+                .map { mri =>
+                  MMoneyReceiverInfo(
+                    contractId      = mri.enc.contract.id.get,
+                    price           = mri.price,
+                    isSioComission  = mri.isSioComissionPrice,
+                  )
+                }
+                .toSeq,
+              psPayload = ykDealInfoOpt.map { case (ykDeal, _) =>
+                Json toJson MTxnMetaYkPayload(
+                  deal = Some( ykDeal ),
+                )
+              },
+            ))
+              .filter(_.nonEmpty),
+          )
+
+          // Save draft payout transactions, if any:
+          payoutTxnsOpt <- DBIO.sequenceOption {
+            for {
+              (ykDeal, dealData) <- ykDealInfoOpt
+            } yield {
+              bill2Util.openDealPayoutTxns(
+                orderIdOpt  = args.cartOrder.order.id,
+                paySystem   = paySystem,
+                psDealId    = ykDeal.id,
+                moneyRcvrs  = dealData.decision.dealWith,
+              )
+            }
+          }
+
+          // Mark current cart order as Hold.
+          orderHold <- {
+            if (payoutTxnsOpt.exists(_.nonEmpty))
+              LOGGER.trace(s"$logPrefix Created ${payoutTxnsOpt.iterator.flatten.size} payout draft transactions")
+            bill2Util.holdOrder( args.cartOrder.order )
+          }
+        } yield {
+          LOGGER.trace(s"$logPrefix Hold order#${orderHold.id.orNull}, hold pending txn#${txn.id}, will await payment confirmation.")
+          None
+        })
+          .transactionally
+      }
+    } yield {
+      MCartPayInfo(
+        paySystem,
+        metadata = Some( paymentStarted.metadata ),
+        prefmtFooter = OptionUtil.maybeOpt( ctx.request.user.isSuper ) {
+          prefmtFooter( ykProfile )
+        },
+      )
+    }
+  }
+
 }
 
 
-protected final case class YooKassaProfile(
-                                            shopId    : String,
-                                            private[yookassa] val secretKey : String,
-                                            isTest    : Boolean,
-                                          ) {
+protected trait YooKassaProfile {
 
-  override def toString: String =
-    s"${productPrefix}($shopId,test?$isTest)"
+  def shopId    : String
+  private[yookassa] def secretKey : String
+  def isTest    : Boolean
+  def isDealSupported: Boolean
+
+  override final def toString: String = {
+    s"${getClass.getSimpleName}($shopId,test?$isTest)"
+  }
 
 }
 
