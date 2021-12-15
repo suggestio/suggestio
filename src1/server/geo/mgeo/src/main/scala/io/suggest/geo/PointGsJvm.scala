@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.PointBuilder
+import org.elasticsearch.geometry.{Point => EsPoint}
 import au.id.jazzy.play.geojson.{LngLat, Point}
 
 /**
@@ -21,8 +21,17 @@ object PointGsJvm extends GsStaticJvmQuerable {
     toPlayGeoJsonGeom( gs.coord )
   }
 
-  override def toEsShapeBuilder(gs: Shape_t) =
-    new PointBuilder( gs.coord.lon.doubleValue, gs.coord.lat.doubleValue )
+  override def toEsShapeBuilder(gs: Shape_t): EsPoint =
+    GeoPoint.toEsPoint( gs.coord )
+
+
+  /** Convert to spatial4j shape. */
+  override def toSpatialShape(gs: PointGs) = {
+    GeoShapeJvm
+      .S4J_CONTEXT
+      .getShapeFactory
+      .pointXY( gs.coord.lon.doubleValue, gs.coord.lat.doubleValue )
+  }
 
 }
 

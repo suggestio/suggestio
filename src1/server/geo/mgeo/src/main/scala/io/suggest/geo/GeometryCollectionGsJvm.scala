@@ -1,6 +1,8 @@
 package io.suggest.geo
 
 import au.id.jazzy.play.geojson.{Geometry, GeometryCollection, LngLat}
+import org.locationtech.spatial4j.shape.Shape
+import scala.jdk.CollectionConverters._
 
 /**
  * Suggest.io
@@ -26,6 +28,23 @@ object GeometryCollectionGsJvm extends GsStaticJvm {
         .map( GeoShapeJvm.toPlayGeoJsonGeom )
         .toSeq
     )
+  }
+
+  /** Convert to spatial4j shape. */
+  override def toSpatialShape(gs: GeometryCollectionGs): Shape = {
+    GeoShapeJvm
+      .S4J_CONTEXT
+      .getShapeFactory
+      .multiShape(
+        (for {
+          subGs <- gs.geoms.iterator
+          subCompanion = GsTypesJvm.jvmCompanionFor( subGs.shapeType )
+        } yield {
+          subCompanion.toSpatialShape( subGs.asInstanceOf[subCompanion.Shape_t] )
+        })
+          .toList
+          .asJava
+      )
   }
 
 }

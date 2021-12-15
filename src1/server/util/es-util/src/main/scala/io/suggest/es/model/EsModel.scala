@@ -32,8 +32,7 @@ import org.elasticsearch.action.support.ActiveShardCount
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy
 import org.elasticsearch.cluster.metadata.{IndexMetadata, MappingMetadata}
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.common.xcontent.XContentType
+import org.elasticsearch.core.TimeValue
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -42,6 +41,7 @@ import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
+import org.elasticsearch.xcontent.XContentType
 import play.api.inject.Injector
 import play.api.libs.json.{JsObject, Json}
 import scalaz.Need
@@ -404,7 +404,7 @@ final class EsModel @Inject()(
           QueryBuilders.matchAllQuery()
         }
         val req = model
-          .prepareScroll(new TimeValue(keepAliveMs))
+          .prepareScroll( TimeValue.timeValueMillis(keepAliveMs) )
           .setQuery(query)
           .setSize(resultsPerScroll)
           .setFetchSource(true)

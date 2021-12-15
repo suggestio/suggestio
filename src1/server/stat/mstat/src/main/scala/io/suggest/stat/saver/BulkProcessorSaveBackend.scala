@@ -7,7 +7,8 @@ import io.suggest.es.util.IEsClient
 import io.suggest.stat.m.{MStat, MStats}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
-import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
+import org.elasticsearch.common.unit.ByteSizeValue
+import org.elasticsearch.core.TimeValue
 import play.api.inject.Injector
 
 import scala.concurrent.Future

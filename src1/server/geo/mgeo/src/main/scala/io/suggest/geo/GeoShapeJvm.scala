@@ -1,8 +1,10 @@
 package io.suggest.geo
 
 import io.suggest.util.logs.MacroLogsDyn
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import au.id.jazzy.play.geojson.{Geometry, LngLat}
+import org.elasticsearch.geometry.{Geometry => EsGeometry}
+import org.locationtech.spatial4j.context.jts.JtsSpatialContext
+import org.locationtech.spatial4j.shape.{Shape => Spatial4jShape}
 
 /**
   * Suggest.io
@@ -16,6 +18,9 @@ import au.id.jazzy.play.geojson.{Geometry, LngLat}
 
 object GeoShapeJvm extends MacroLogsDyn {
 
+  def S4J_CONTEXT = JtsSpatialContext.GEO
+  def S4J_FACTORY = S4J_CONTEXT.getShapeFactory.getGeometryFactory
+
   def toPlayGeoJsonGeom(gs: IGeoShape): Geometry[LngLat] = {
     val c = GsTypesJvm.jvmCompanionFor(gs.shapeType)
     // TODO Нужна higher-kinds метод, занимающийся этим без asInstanceOf.
@@ -27,10 +32,17 @@ object GeoShapeJvm extends MacroLogsDyn {
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
     */
-  def toEsShapeBuilder(gs: IGeoShapeQuerable): AnyEsShapeBuilder_t = {
+  def toEsShapeBuilder(gs: IGeoShapeQuerable): EsGeometry = {
     val c = GsTypesJvm.jvmCompanionFor( gs.shapeType )
       .asInstanceOf[GsStaticJvmQuerable]
     c.toEsShapeBuilder( gs.asInstanceOf[c.Shape_t] )
+  }
+
+
+  def toSpatialShape(geoShape: IGeoShape): Spatial4jShape = {
+    val gsCompanion = GsTypesJvm
+      .jvmCompanionFor( geoShape.shapeType )
+    gsCompanion.toSpatialShape( geoShape.asInstanceOf[gsCompanion.Shape_t] )
   }
 
 }
@@ -50,6 +62,9 @@ trait GsStaticJvm {
     */
   def toPlayGeoJsonGeom(gs: Shape_t): Geometry[LngLat]
 
+  /** Convert to spatial4j shape. */
+  def toSpatialShape(gs: Shape_t): Spatial4jShape
+
 }
 
 
@@ -64,6 +79,6 @@ trait GsStaticJvmQuerable extends GsStaticJvm {
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
     */
-  def toEsShapeBuilder(gs: Shape_t): AnyEsShapeBuilder_t
+  def toEsShapeBuilder(gs: Shape_t): EsGeometry
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.core.TimeValue
 import org.elasticsearch.index.query.QueryBuilder
 
 /**
@@ -14,7 +14,7 @@ final case class MScrollArgs(
                               query              : QueryBuilder,
                               model              : EsModelCommonStaticT,
                               sourcingHelper     : IEsSrbMutator,
-                              keepAlive          : TimeValue         = new TimeValue(EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT),
+                              keepAlive          : TimeValue         = TimeValue.timeValueMillis( EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT ),
                               maxResults         : Option[Long]      = None,
                               resultsPerScroll   : Int               = EsModelUtil.SCROLL_SIZE_DFLT
                             )

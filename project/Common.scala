@@ -56,7 +56,7 @@ object Common {
 
 
     /** Версия elasticsearch. */
-    val ELASTIC_SEARCH = "7.13.0"
+    val ELASTIC_SEARCH = "7.16.1"
     val JTS = "1.15.0"
     val SPATIAL4J = "0.7"
 

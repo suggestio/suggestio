@@ -2,6 +2,7 @@ package io.suggest.geo
 
 import org.elasticsearch.common.unit.DistanceUnit
 import org.elasticsearch.common.unit.DistanceUnit.{Distance => EsDistance}
+import org.elasticsearch.geometry.Geometry
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.libs.json._
 
@@ -70,11 +71,10 @@ trait IToEsQueryFn {
 
 case class GeoShapeToEsQuery( gs: IGeoShapeQuerable ) extends IToEsQueryFn {
 
-  def esShapeBuilder: AnyEsShapeBuilder_t = GeoShapeJvm.toEsShapeBuilder(gs)
+  def esShapeBuilder: Geometry = GeoShapeJvm.toEsShapeBuilder(gs)
 
-  override def toEsQuery(fn: String): QueryBuilder = {
-    QueryBuilders.geoShapeQuery( fn, esShapeBuilder.buildGeometry() )
-  }
+  override def toEsQuery(fn: String): QueryBuilder =
+    QueryBuilders.geoShapeQuery( fn, esShapeBuilder )
 
   override def toString = gs.toString
 

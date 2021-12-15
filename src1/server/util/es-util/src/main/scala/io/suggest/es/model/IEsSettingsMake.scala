@@ -2,7 +2,7 @@ package io.suggest.es.model
 
 import io.suggest.es.MappingDsl
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.xcontent.XContentType
+import org.elasticsearch.xcontent.XContentType
 import play.api.libs.json.Json
 
 /** Converter from any type to ES Settings instance. */

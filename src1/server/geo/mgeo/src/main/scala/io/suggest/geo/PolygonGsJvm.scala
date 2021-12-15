@@ -1,7 +1,10 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.{PolygonBuilder, CoordinatesBuilder}
+import org.elasticsearch.geometry.{Polygon => EsPolygon}
 import au.id.jazzy.play.geojson.{LngLat, Polygon}
+import org.locationtech.spatial4j.shape.Shape
+
+import scala.jdk.CollectionConverters._
 
 /**
  * Suggest.io
@@ -27,15 +30,35 @@ object PolygonGsJvm extends GsStaticJvmQuerable {
     )
   }
 
-  override def toEsShapeBuilder(gs: Shape_t): PolygonBuilder = {
-    val inner = new CoordinatesBuilder()
-      .coordinates( MultiPointGsJvm.geoPoints2esCoords(gs.outer.coords) )
-      .close()
-
-    gs.holes.foldLeft( new PolygonBuilder( inner ) ) { (pb, lsGs) =>
-      val lsb = LineStringGsJvm.toEsShapeBuilder( lsGs )
-      pb.hole( lsb, true )
-    }
+  override def toEsShapeBuilder(gs: Shape_t): EsPolygon = {
+    new EsPolygon(
+      LineStringGsJvm.toEsLinearRing( gs.outer ),
+      gs.holes
+        .iterator
+        .map( LineStringGsJvm.toEsLinearRing )
+        .toList
+        .asJava
+    )
   }
+
+
+  def toSpatialShapeBuilder(gs: PolygonGs) = {
+    val builder = GeoShapeJvm.S4J_CONTEXT.getShapeFactory.polygon()
+    for (pt <- gs.outer.coords)
+      builder.pointXY( pt.lon.doubleValue, pt.lat.doubleValue )
+
+    for (hole <- gs.holes) {
+      val holeBuilder = builder.hole()
+
+      for (holePt <- hole.coords)
+        holeBuilder.pointXY( holePt.lon.doubleValue, holePt.lat.doubleValue )
+
+      holeBuilder.endHole()
+    }
+
+    builder
+  }
+  override def toSpatialShape(gs: PolygonGs): Shape =
+    toSpatialShapeBuilder( gs ).build()
 
 }

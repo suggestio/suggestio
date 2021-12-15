@@ -9,8 +9,9 @@ import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.LngLat
 import io.suggest.xplay.qsb.{AbstractQueryStringBindable, CrossQsBindable}
-import org.locationtech.jts.geom.Coordinate
+import org.elasticsearch.geometry.{Point => EsPoint}
 import io.suggest.url.bind.QueryStringBindableUtil._
+import org.locationtech.jts.geom.Coordinate
 
 /**
   * Suggest.io
@@ -40,8 +41,9 @@ object GeoPoint extends MacroLogsImpl {
   }
 
 
-  /** Пространственная координата в терминах JTS. */
-  def toJtsCoordinate(gp: MGeoPoint) = new Coordinate(gp.lon.doubleValue, gp.lat.doubleValue)
+  /** Convert into elasticsearch geometry point. */
+  def toEsPoint(gp: MGeoPoint) = new EsPoint( gp.lon.doubleValue, gp.lat.doubleValue )
+  def toJts(gp: MGeoPoint) = new Coordinate( gp.lon.doubleValue, gp.lat.doubleValue )
 
   /** (Lon,lat,alt) является основным порядком гео.координат в sio2. */
   def toLngLat(gp: MGeoPoint): LngLat = {

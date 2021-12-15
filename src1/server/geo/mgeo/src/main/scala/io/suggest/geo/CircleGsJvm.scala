@@ -1,8 +1,9 @@
 package io.suggest.geo
 
 import au.id.jazzy.play.geojson.{Geometry, LngLat}
-import org.elasticsearch.common.geo.builders.CircleBuilder
 import org.elasticsearch.common.unit.DistanceUnit
+import org.elasticsearch.geometry.Circle
+import org.locationtech.spatial4j.shape.Shape
 
 /**
  * Suggest.io
@@ -34,10 +35,20 @@ object CircleGsJvm extends GsStaticJvmQuerable {
 
   def distance(circle: CircleGs) = Distance.meters( circle.radiusM )
 
-  override def toEsShapeBuilder(gs: Shape_t) = {
-    new CircleBuilder()
-      .center(gs.center.lon.doubleValue, gs.center.lat.doubleValue)
-      .radius(gs.radiusM, DistanceUnit.METERS)
+  override def toEsShapeBuilder(gs: Shape_t) =
+    new Circle( gs.center.lon.doubleValue, gs.center.lat.doubleValue, gs.radiusM )
+
+  override def toSpatialShape(gs: CircleGs): Shape = {
+    GeoShapeJvm
+      .S4J_CONTEXT
+      .getShapeFactory
+      .circle(
+        PointGsJvm.toSpatialShape( PointGs( gs.center ) ),
+        // Calculate radius in spatial-coordinates distance:
+        // EarthCircumference == earth equator len in meters ~== 2 pi * earth radius.
+        // Earth radius == 6378137 meters
+        360 * gs.radiusM / DistanceUnit.DEFAULT.getEarthCircumference,
+      )
   }
 
 }

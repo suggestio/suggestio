@@ -1,8 +1,8 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.MultiPointBuilder
 import au.id.jazzy.play.geojson.{LngLat, MultiPoint}
-import org.locationtech.jts.geom.Coordinate
+import org.elasticsearch.geometry.{MultiPoint => EsMultiPoint, Point => EsPoint}
+import org.locationtech.spatial4j.shape.Shape
 
 import java.{util => ju}
 
@@ -22,14 +22,25 @@ object MultiPointGsJvm extends MultiPointShapeStatic {
     )
   }
 
-  override def toEsShapeBuilder(gs: MultiPointGs) =
-    new MultiPointBuilder( gsCoords2esCoords(gs) )
+  override def toEsShapeBuilder(gs: MultiPointGs) = {
+    new EsMultiPoint( gsCoords2esCoords(gs) )
+  }
 
-  def geoPoints2esCoords(points: Seq[MGeoPoint]): ju.List[Coordinate] = {
+  def geoPoints2esCoords(points: Seq[MGeoPoint]): ju.List[EsPoint] = {
     import scala.jdk.CollectionConverters._
     points
-      .map { GeoPoint.toJtsCoordinate }
+      .map { GeoPoint.toEsPoint }
       .asJava
+  }
+
+  /** Convert to spatial4j shape. */
+  override def toSpatialShape(gs: MultiPointGs): Shape = {
+    val builder = GeoShapeJvm.S4J_CONTEXT.getShapeFactory.multiPoint()
+
+    for (pt <- gs.coords)
+      builder.pointXY( pt.lon.doubleValue, pt.lat.doubleValue )
+
+    builder.build()
   }
 
 }
@@ -49,7 +60,7 @@ trait MultiPointShapeStatic extends GsStaticJvmQuerable {
       .toSeq
   }
 
-  def gsCoords2esCoords(gs: Shape_t): ju.List[Coordinate] = {
+  def gsCoords2esCoords(gs: Shape_t): ju.List[EsPoint] = {
     MultiPointGsJvm.geoPoints2esCoords( gs.coords )
   }
 

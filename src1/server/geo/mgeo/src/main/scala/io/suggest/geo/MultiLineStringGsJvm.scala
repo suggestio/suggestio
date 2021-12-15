@@ -1,7 +1,10 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.MultiLineStringBuilder
+import org.elasticsearch.geometry.{MultiLine => EsMultiLine}
 import au.id.jazzy.play.geojson.{LngLat, MultiLineString}
+import org.locationtech.spatial4j.shape.Shape
+
+import scala.jdk.CollectionConverters._
 
 
 /**
@@ -29,14 +32,22 @@ object MultiLineStringGsJvm extends GsStaticJvmQuerable {
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
-  override def toEsShapeBuilder(gs: Shape_t): MultiLineStringBuilder = {
-    // Заливаем линии
-    gs.lines.foldLeft( new MultiLineStringBuilder() ) {
-      (acc0, coordLine) =>
-        // Заливаем все точки в линию
-        val lsb = LineStringGsJvm.toEsShapeBuilder(coordLine)
-        acc0.linestring(lsb)
+  override def toEsShapeBuilder(gs: Shape_t): EsMultiLine = {
+    new EsMultiLine(
+      gs.lines
+        .iterator
+        .map( LineStringGsJvm.toEsShapeBuilder )
+        .toList
+        .asJava
+    )
+  }
+
+  override def toSpatialShape(gs: MultiLineStringGs): Shape = {
+    val builder = GeoShapeJvm.S4J_CONTEXT.getShapeFactory.multiLineString()
+    for (lineGs <- gs.lines) {
+      builder.add( LineStringGsJvm.toSpatialShapeBuilder( lineGs ) )
     }
+    builder.build()
   }
 
 }

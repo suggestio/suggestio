@@ -2,8 +2,8 @@ package io.suggest.es.model
 
 import japgolly.univeq._
 import org.elasticsearch.action.get.GetResponse
-import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
 import org.elasticsearch.index.mapper.{IdFieldMapper, RoutingFieldMapper, SourceFieldMapper, VersionFieldMapper}
+import org.elasticsearch.xcontent.{ToXContent, XContentFactory}
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
@@ -86,7 +86,7 @@ object EsModelUtil {
         .prettyPrint()
 
       try {
-        getResp.toXContent(xc, ToXContent.EMPTY_PARAMS)
+        getResp.toXContent( xc, ToXContent.EMPTY_PARAMS )
       } finally {
         xc.close()
       }

@@ -5,7 +5,7 @@ import io.suggest.primo.id.OptStrId
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.search.SearchRequestBuilder
-import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.core.TimeValue
 import org.elasticsearch.search.SearchHit
 
 import scala.concurrent.Future
@@ -28,7 +28,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def MAX_RESULTS_DFLT = EsModelUtil.MAX_RESULTS_DFLT
   def OFFSET_DFLT = EsModelUtil.OFFSET_DFLT
   def SCROLL_KEEPALIVE_MS_DFLT = EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT
-  def SCROLL_KEEPALIVE_DFLT = new TimeValue(SCROLL_KEEPALIVE_MS_DFLT)
+  def SCROLL_KEEPALIVE_DFLT = TimeValue.timeValueMillis( SCROLL_KEEPALIVE_MS_DFLT )
   def SCROLL_SIZE_DFLT = EsModelUtil.SCROLL_SIZE_DFLT
   def BULK_PROCESSOR_BULK_SIZE_DFLT = EsModelUtil.BULK_PROCESSOR_BULK_SIZE_DFLT
 

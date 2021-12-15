@@ -517,9 +517,8 @@ final class ScIndex @Inject()(
                         edgeShape <- Some( gs.shape )
                           .collect { case gsQ: IGeoShapeQuerable => gsQ }
                         pointS4J <- Option {
-                          GeoShapeToEsQuery( edgeShape )
-                            .esShapeBuilder
-                            .buildS4J()
+                          GeoShapeJvm
+                            .toSpatialShape( edgeShape )
                             .getCenter
                         }
                       } yield {
@@ -606,20 +605,18 @@ final class ScIndex @Inject()(
       def intersectionsWith(geoLocs: Iterable[MGeoLoc]) = {
         val geoLocsS4J = geoLocs
           .map { geoLoc =>
-            val s4j = _geoLocToEsShape( geoLoc )
-              .esShapeBuilder
-              .buildS4J()
-            geoLoc -> s4j
+            val geoShape = _geoLocToEsShape( geoLoc ).gs
+            val shapeS4j = GeoShapeJvm.toSpatialShape( geoShape )
+            geoLoc -> shapeS4j
           }
+
         for {
           nodeLocEdge <- mnode.edges.withPredicateIter( _nodeLocPredicates: _* )
           edgeGs <- nodeLocEdge.info.geoShapes.iterator
           edgeShape <- Some( edgeGs.shape )
             .collect { case gsQ: IGeoShapeQuerable => gsQ }
             .iterator
-          edgeShapeS4J = GeoShapeToEsQuery( edgeShape )
-            .esShapeBuilder
-            .buildS4J()
+          edgeShapeS4J = GeoShapeJvm.toSpatialShape( edgeShape )
           (geoLoc, qShapeS4J) <- geoLocsS4J.iterator
           relation = edgeShapeS4J relate qShapeS4J
           isShapesIntersects = (relation != SpatialRelation.DISJOINT)
