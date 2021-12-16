@@ -11,7 +11,7 @@ import org.scalajs.linker.interface.ESVersion
 object Common {
 
   /** Версия scala для сервной части и дефолтовая версия для scala.js. */
-  val SCALA_VSN = "2.13.6"
+  val SCALA_VSN = "2.13.7"
   
 
   /** Версия scala для scala.js. */
