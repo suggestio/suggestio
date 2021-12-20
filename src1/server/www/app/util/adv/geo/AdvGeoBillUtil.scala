@@ -194,18 +194,18 @@ final class AdvGeoBillUtil @Inject() (
       .splitOnSumTillItemLevel
       .iterator
       .flatMap { term =>
-        val term2 = advUtil.prepareForSave(term)
-        lazy val logPrefix2 = s"$logPrefix (${term2.getClass.getSimpleName}#${term2.hashCode()}) "
+        val priceDslForSave = advUtil.prepareForSave(term)
+        lazy val logPrefix2 = s"$logPrefix (${priceDslForSave.getClass.getSimpleName}#${priceDslForSave.hashCode()}) "
 
         // Для бесплатных размещений надо выставлять нулевую цену.
         val price = if (isFreeAdv)
           bill2Conf.zeroPrice
         else
-          term2.price
+          priceDslForSave.price
 
-        LOGGER.trace(s"$logPrefix2 term = $term2, price => $price")
+        LOGGER.trace(s"$logPrefix2 term = $priceDslForSave, price => $price")
 
-        term2
+        priceDslForSave
           .findWithReasonType( MReasonTypes.GeoArea )
           .flatMap { geoSubTerm =>
             val gsOpt = abc.res.radCircle
@@ -230,7 +230,7 @@ final class AdvGeoBillUtil @Inject() (
                   rcvrIdOpt     = None,
                   tagFaceOpt    = Some( tagFace ),
                   geoShape      = gsOpt,
-                  priceDsl      = Some( term2 ),
+                  //priceDsl      = Some( priceDslForSave ), // TODO Disabled, need compression for long date ranges.
                 )
               }
               // Проверить на geo + onMainScreen
@@ -250,14 +250,14 @@ final class AdvGeoBillUtil @Inject() (
                       dateEndOpt    = dtEndOpt,
                       rcvrIdOpt     = None,
                       geoShape      = gsOpt,
-                      priceDsl      = Some( term2 ),
+                      //priceDsl      = Some( priceDslForSave ), // TODO Disabled, need compression for long date ranges.
                     )
                   }
               }
           }
           // Проверить на rcvr-размещение.
           .orElse {
-            term2
+            priceDslForSave
               .findWithReasonType( MReasonTypes.Rcvr )
               .flatMap { rcvrSubTerm =>
                 // Это прямое размещение на каком-то ресивере. У него обязан быть выставленный id.
@@ -282,7 +282,7 @@ final class AdvGeoBillUtil @Inject() (
                       rcvrIdOpt     = Some(rcvrId),
                       tagFaceOpt    = Some( tagFace ),
                       geoShape      = None,
-                      priceDsl      = Some( term2 ),
+                      //priceDsl      = Some( priceDslForSave ), // TODO Disabled, need compression for long date ranges.
                     )
                   }
                   // Проверить на rcvr + OMS
@@ -302,18 +302,18 @@ final class AdvGeoBillUtil @Inject() (
                           dateEndOpt    = dtEndOpt,
                           rcvrIdOpt     = Some(rcvrId),
                           geoShape      = None,
-                          priceDsl      = Some( term2 ),
+                          //priceDsl      = Some( priceDslForSave ), // TODO Disabled, need compression for long date ranges.
                         )
                       }
                   }
               }
           }
           .map { itm =>
-            itm -> OptionUtil.maybe(!isFreeAdv)(term2)
+            itm -> OptionUtil.maybe(!isFreeAdv)(priceDslForSave)
           }
           .orElse {
             // Какая-то логическая ошибка в коде: этот метод не понимает выхлоп из calcAdvGeoPrice().
-            throw new UnsupportedOperationException(s"Not supported price term: $term2 Please check current billing class code.")
+            throw new UnsupportedOperationException(s"Not supported price term: $priceDslForSave Please check current billing class code.")
             // Давим ошибку. Лишнего с юзера не спишется, а оплата в целом пройдёт.
             //None
           }

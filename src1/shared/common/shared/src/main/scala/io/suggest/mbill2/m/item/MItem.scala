@@ -94,7 +94,7 @@ final case class MItem(
                   tagFaceOpt              : Option[String]          = None,
                   tagNodeIdOpt            : Option[String]          = None,
                   dateStatus              : OffsetDateTime          = OffsetDateTime.now(),
-                  priceDsl                : Option[Tree[PriceDsl]],
+                  priceDsl                : Option[Tree[PriceDsl]]  = None,
                   override val id         : Option[Gid_t]           = None
                 )
   extends OptId[Gid_t]
