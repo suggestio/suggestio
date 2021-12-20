@@ -293,7 +293,7 @@ final class SysAd @Inject()(
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = csrf.Check {
     isSuMad(adId).async { implicit request =>
       // Запускаем спиливание ресивера для указанной рекламной карточки.
-      val madSavedFut = advRcvrsUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
+      val madSavedFut = advRcvrsUtil.advUnInstallNodeOn(request.mad, rcvrIdOpt.toSet)
 
       lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
       // Радуемся в лог.

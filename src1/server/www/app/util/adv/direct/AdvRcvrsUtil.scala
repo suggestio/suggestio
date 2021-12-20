@@ -144,13 +144,12 @@ class AdvRcvrsUtil @Inject()(
     * @param rcvrIdOpt id ресивера. Если пусто, то все ресиверы вообще.
     * @return Boolean, который обычно не имеет смысла.
     */
-  def depublishAdOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
+  def advUnInstallNodeOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
     import esModel.api._
     for {
       mnodeOpt <- mNodes.getByIdCache(adId)
       mnode = mnodeOpt.get
-      if mnode.common.ntype eqOrHasParent MNodeTypes.Ad
-      mnode2 <- depublishAdOn(mnode, rcvrIdOpt.toSet)
+      mnode2 <- advUnInstallNodeOn(mnode, rcvrIdOpt.toSet)
     } yield {
       mnode2
     }
@@ -163,7 +162,7 @@ class AdvRcvrsUtil @Inject()(
     * @param rcvrIds id удаляемых из карточки ресиверов.
     * @return Фьючерс с обновлённой сохраненной карточкой.
     */
-  def depublishAdOn(mad: MNode, rcvrIds: Set[String]): Future[MNode] = {
+  def advUnInstallNodeOn(mad: MNode, rcvrIds: Set[String]): Future[MNode] = {
     val adId = mad.id.get
     lazy val logPrefix = s"removeAdRcvr(ad[$adId],${if (rcvrIds.isEmpty) "*" else "[" + rcvrIds.size + "]"}):"
 
@@ -189,7 +188,7 @@ class AdvRcvrsUtil @Inject()(
       .result
 
     // Собираем логику грядущей транзакции:
-    val txnLogic = for {
+    val txnLogic = (for {
       // Получить список размещений для обработки. Список может быть пустой.
       // TODO Opt через forUpdate помечаются все ряды, даже те которые обновлять пока не планируется.
       allMitems <- onlineItemsAction.forUpdate
@@ -238,10 +237,11 @@ class AdvRcvrsUtil @Inject()(
 
     } yield {
       tuData2.acc.mnode
-    }
+    })
+      .transactionally
 
     // Запуск транзакции на исполнение
-    slick.db.run( txnLogic.transactionally )
+    slick.db.run( txnLogic )
   }
 
   private def _mkBuilderAcc(mnode: MNode) = {
@@ -380,7 +380,7 @@ trait AdvRcvrsUtilJmxMBean {
     *
     * @param adId id рекламной карточки.
     */
-  def depublishAd(adId: String): String
+  def advUnInstallNode(adId: String): String
 
   /**
     * Депубликация рекламной карточки на указанном узле.
@@ -388,23 +388,24 @@ trait AdvRcvrsUtilJmxMBean {
     * @param adId id рекламной карточки.
     * @param rcvrId id ресивера.
     */
-  def depublishAdAt(adId: String, rcvrId: String): String
+  def advUnInstallNodeOn(adId: String, rcvrId: String): String
 }
 
 
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
 final class AdvRcvrsUtilJmx @Inject()(
-                                       esModel                      : EsModel,
-                                       advRcvrsUtil                 : AdvRcvrsUtil,
-                                       mNodes                       : MNodes,
-                                       implicit private val ec      : ExecutionContext
+                                       injector: Injector,
                                      )
   extends AdvRcvrsUtilJmxMBean
   with JmxBase
 {
 
-  import esModel.api._
   import io.suggest.util.JmxBase._
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private def advRcvrsUtil = injector.instanceOf[AdvRcvrsUtil]
+  private def mNodes = injector.instanceOf[MNodes]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
 
   override def _jmxType = Types.UTIL
@@ -418,6 +419,8 @@ final class AdvRcvrsUtilJmx @Inject()(
   }
 
   override def resetReceiversForAd(adId: String): String = {
+    import esModel.api._
+
     val s = mNodes.getByIdCache(adId).flatMap {
       case Some(mad) =>
         for (_ <- advRcvrsUtil.resetReceiversFor(mad)) yield {
@@ -430,16 +433,16 @@ final class AdvRcvrsUtilJmx @Inject()(
     awaitString(s)
   }
 
-  override def depublishAd(adId: String): String = {
-    _depublishAd(adId, None)
+  override def advUnInstallNode(adId: String): String = {
+    _advUnInstallNodeOn(adId, None)
   }
 
-  override def depublishAdAt(adId: String, rcvrId: String): String = {
-    _depublishAd(adId, Some(rcvrId))
+  override def advUnInstallNodeOn(adId: String, rcvrId: String): String = {
+    _advUnInstallNodeOn(adId, Some(rcvrId))
   }
 
-  private def _depublishAd(adId: String, rcvrIdOpt: Option[String]): String = {
-    val rmFut = advRcvrsUtil.depublishAdOn(adId, rcvrIdOpt)
+  private def _advUnInstallNodeOn(adId: String, rcvrIdOpt: Option[String]): String = {
+    val rmFut = advRcvrsUtil.advUnInstallNodeOn(adId, rcvrIdOpt)
     val fut = for (isOk <- rmFut) yield {
       "Result: " + isOk
     }
