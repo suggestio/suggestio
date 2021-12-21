@@ -1114,7 +1114,7 @@ final class LkNodes @Inject() (
             request.user.personIdOpt.fold {
               Future.successful( Map.empty[String, Boolean] )
             } { _ =>
-              Future.traverse( bcnIdsClearedSet.toIterable ) { bcnId =>
+              Future.traverse( bcnIdsClearedSet: Iterable[String] ) { bcnId =>
                 isNodeAdmin.isNodeAdminUpFrom(
                   nodeId = bcnId,
                   user   = request.user,
