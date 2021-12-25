@@ -36,7 +36,7 @@ case object MImgFormats extends StringEnum[MImgFormat] {
     /** @see [[http://www.imagemagick.org/Usage/anim_opt/#optimize]] General Purpose GIF Optimizer of ImageMagick */
     override def layersOptimize = true
     override def imFinalRepage = true
-    override def uploadMaxFileSizeKb = 2 * bInKb
+    override def uploadMaxFileSizeKb = PNG.uploadMaxFileSizeKb
     override def uploadSideSizeMaxPx = 3000
   }
 
